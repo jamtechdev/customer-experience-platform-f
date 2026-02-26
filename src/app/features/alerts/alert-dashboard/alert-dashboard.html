@@ -1,0 +1,102 @@
+<div class="alerts-container">
+  <div class="header-section">
+    <h1>Alerts Dashboard</h1>
+    <p class="subtitle">Monitor important CX events and trends</p>
+  </div>
+
+  <div *ngIf="loading()" class="loading-container">
+    <mat-spinner></mat-spinner>
+    <p>Loading alerts...</p>
+  </div>
+
+  <div *ngIf="!loading()" class="content-section">
+    <div class="alert-summary">
+      <mat-card class="summary-card">
+        <mat-card-content>
+          <div class="summary-header">
+            <mat-icon>notifications_active</mat-icon>
+            <span>Active Alerts</span>
+          </div>
+          <div class="summary-value">{{ activeAlertsCount() }}</div>
+        </mat-card-content>
+      </mat-card>
+
+      <mat-card class="summary-card">
+        <mat-card-content>
+          <div class="summary-header">
+            <mat-icon>check_circle</mat-icon>
+            <span>Acknowledged</span>
+          </div>
+          <div class="summary-value">{{ acknowledgedAlertsCount() }}</div>
+        </mat-card-content>
+      </mat-card>
+    </div>
+
+    <mat-card>
+      <mat-card-header>
+        <mat-card-title>Recent Alerts</mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <div *ngIf="alerts().length === 0" class="empty-state">
+          <div class="empty-state-content">
+            <mat-icon>check_circle</mat-icon>
+            <h3>No Alerts</h3>
+            <p>All systems are operating normally. No alerts to display.</p>
+          </div>
+        </div>
+        <table *ngIf="alerts().length > 0" mat-table [dataSource]="alerts()" class="alerts-table">
+          <ng-container matColumnDef="title">
+            <th mat-header-cell *matHeaderCellDef>Title</th>
+            <td mat-cell *matCellDef="let alert">{{ alert.title }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="type">
+            <th mat-header-cell *matHeaderCellDef>Type</th>
+            <td mat-cell *matCellDef="let alert">
+              <mat-chip>{{ alert.type }}</mat-chip>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="priority">
+            <th mat-header-cell *matHeaderCellDef>Priority</th>
+            <td mat-cell *matCellDef="let alert">
+              <mat-chip [color]="getPriorityColor(alert.priority)">
+                {{ alert.priority }}
+              </mat-chip>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="createdAt">
+            <th mat-header-cell *matHeaderCellDef>Created</th>
+            <td mat-cell *matCellDef="let alert">{{ alert.createdAt | date:'short' }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="status">
+            <th mat-header-cell *matHeaderCellDef>Status</th>
+            <td mat-cell *matCellDef="let alert">
+              <mat-chip [color]="alert.acknowledged ? 'primary' : 'warn'">
+                {{ alert.acknowledged ? 'Acknowledged' : 'Active' }}
+              </mat-chip>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="actions">
+            <th mat-header-cell *matHeaderCellDef>Actions</th>
+            <td mat-cell *matCellDef="let alert">
+              <button
+                mat-icon-button
+                *ngIf="!alert.acknowledged"
+                (click)="acknowledgeAlert(alert)"
+                color="primary">
+                <mat-icon>check</mat-icon>
+              </button>
+            </td>
+          </ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+          <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+        </table>
+      </mat-card-content>
+    </mat-card>
+  </div>
+</div>

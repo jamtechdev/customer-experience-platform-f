@@ -1,0 +1,60 @@
+<div class="profile-container">
+  <div class="profile-header">
+    <h1>{{ t('nav.profile') }}</h1>
+    <p class="subtitle">{{ t('app.details') }}</p>
+  </div>
+
+  <div class="profile-content">
+    <!-- User Information Card -->
+    <mat-card class="profile-card">
+      <mat-card-header>
+        <mat-card-title>
+          <mat-icon>person</mat-icon>
+          {{ t('app.details') }}
+        </mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="user-info">
+          <div class="info-item">
+            <span class="info-label">{{ t('auth.email') }}</span>
+            <span class="info-value">{{ currentUser()?.email }}</span>
+          </div>
+          <div class="info-item">
+            <span class="info-label">{{ t('app.name') }}</span>
+            <span class="info-value">{{ currentUser()?.firstName }} {{ currentUser()?.lastName }}</span>
+          </div>
+          <div class="info-item">
+            <span class="info-label">{{ t('app.status') }}</span>
+            <span class="info-value">{{ currentUser()?.role }}</span>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Language Settings Card -->
+    <mat-card class="profile-card">
+      <mat-card-header>
+        <mat-card-title>
+          <mat-icon>language</mat-icon>
+          {{ t('app.settings') }}
+        </mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="settings-section">
+          <div class="setting-item">
+            <div class="setting-label">
+              <mat-icon>translate</mat-icon>
+              <span>{{ t('app.language') || 'Language' }}</span>
+            </div>
+            <div class="setting-control">
+              <app-language-switcher></app-language-switcher>
+            </div>
+          </div>
+          <p class="setting-description">
+            {{ t('app.languageDescription') || 'Select your preferred language for the interface' }}
+          </p>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+</div>

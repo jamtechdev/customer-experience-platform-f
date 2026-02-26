@@ -1,6 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, BehaviorSubject } from 'rxjs';
+import { tap } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
 import { ApiResponse } from '../models';
 
@@ -148,11 +149,21 @@ export class SettingsService {
     }
   }
 
+  deleteSettings(): Observable<ApiResponse<void>> {
+    return this.http.delete<ApiResponse<void>>(this.baseUrl).pipe(
+      tap(() => {
+        const defaults = this.getDefaultSettings();
+        this.settingsSubject.next(defaults);
+        this.saveToLocalStorage(defaults);
+      })
+    );
+  }
+
   resetSettings(): void {
     const defaults = this.getDefaultSettings();
     this.settingsSubject.next(defaults);
     this.saveToLocalStorage(defaults);
-    this.http.delete(this.baseUrl).subscribe();
+    this.deleteSettings().subscribe();
   }
 
   // Quick getters

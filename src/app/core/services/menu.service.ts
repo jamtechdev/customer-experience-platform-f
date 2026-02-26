@@ -14,7 +14,7 @@ export class MenuService {
 
   getMenuItems(): MenuItem[] {
     const user = this.authService.currentUser();
-    const userRole = user?.role || UserRole.VIEWER;
+    const userRole = user?.role || UserRole.USER;
     const currentLang = this.translationService.currentLang();
     const stats = this.menuStatsService.stats();
     const t = (key: string) => this.translationService.translate(key);
@@ -26,36 +26,36 @@ export class MenuService {
     const menuItems: MenuItem[] = [
       {
         id: 'dashboard',
-        label: t('dashboard'),
+        label: t('nav.dashboard'),
         icon: 'layout-dashboard',
         route: '/app/dashboard'
       },
       {
-        id: 'feedback',
-        label: t('feedback'),
-        icon: 'message-square',
-        route: '/app/feedback'
+        id: 'data-sources',
+        label: t('nav.dataSources'),
+        icon: 'database',
+        route: '/app/data-sources'
       },
       {
         id: 'cx',
-        label: t('customerJourney'),
+        label: t('nav.cxJourney'),
         icon: 'map',
         children: [
           {
             id: 'cx-journeys',
-            label: t('customerJourneys'),
+            label: t('nav.journeyList'),
             icon: 'route',
             route: '/app/cx/journeys'
           },
           {
             id: 'cx-touchpoints',
-            label: t('touchpoints'),
+            label: t('nav.touchpoints'),
             icon: 'mouse-pointer',
             route: '/app/cx/touchpoints'
           },
           {
             id: 'cx-action-plans',
-            label: t('actionPlans'),
+            label: t('nav.actionPlans'),
             icon: 'clipboard-list',
             route: '/app/cx/action-plans'
           }
@@ -63,103 +63,65 @@ export class MenuService {
       },
       {
         id: 'analysis',
-        label: t('analysis'),
+        label: t('nav.analysis'),
         icon: 'bar-chart',
         children: [
           {
             id: 'analysis-sentiment',
-            label: t('sentimentAnalysis'),
+            label: t('nav.sentimentAnalysis'),
             icon: 'heart',
             route: '/app/analysis/sentiment'
           },
           {
             id: 'analysis-root-cause',
-            label: t('rootCauseAnalysis'),
+            label: t('nav.rootCause'),
             icon: 'search',
             route: '/app/analysis/root-cause'
           },
           {
-            id: 'analysis-recommendations',
-            label: t('aiRecommendations'),
-            icon: 'lightbulb',
-            route: '/app/analysis/recommendations'
-          },
-          {
             id: 'analysis-competitor',
-            label: t('competitorAnalysis'),
+            label: t('nav.competitorAnalysis'),
             icon: 'trending-up',
             route: '/app/analysis/competitor'
           },
           {
-            id: 'analysis-trends',
-            label: t('trendAnalysis'),
-            icon: 'activity',
-            route: '/app/analysis/trends'
+            id: 'analysis-nps',
+            label: t('nav.surveys'),
+            icon: 'trending-up',
+            route: '/app/analytics/nps-analysis'
           }
         ]
       },
       {
-        id: 'tasks',
-        label: t('tasks'),
-        icon: 'check-square',
-        route: '/app/tasks',
-        badge: stats.tasks ? (stats.tasks.pending || 0) + (stats.tasks.pendingApproval || 0) : undefined
-      },
-      {
-        id: 'data-sources',
-        label: t('dataSources'),
-        icon: 'database',
-        route: '/app/data-sources'
-      },
-      {
         id: 'reports',
-        label: t('reports'),
+        label: t('nav.reports'),
         icon: 'file-text',
         children: [
           {
             id: 'reports-list',
-            label: t('reports'),
+            label: t('nav.reports'),
             icon: 'file-text',
             route: '/app/reports'
           },
           {
-            id: 'reports-kpis',
-            label: t('kpiDashboard'),
-            icon: 'bar-chart-2',
-            route: '/app/reports/kpis'
-          },
-          {
             id: 'reports-builder',
-            label: t('reportBuilder'),
+            label: t('nav.reportBuilder'),
             icon: 'edit',
             route: '/app/reports/builder'
-          },
-          {
-            id: 'reports-scheduled',
-            label: t('scheduledReports'),
-            icon: 'clock',
-            route: '/app/reports/scheduled'
           }
         ]
       },
       {
-        id: 'surveys',
-        label: t('surveys'),
-        icon: 'clipboard',
-        children: [
-          {
-            id: 'surveys-list',
-            label: t('surveys'),
-            icon: 'clipboard',
-            route: '/app/surveys'
-          },
-          {
-            id: 'surveys-builder',
-            label: t('surveyBuilder'),
-            icon: 'plus-circle',
-            route: '/app/surveys/builder'
-          }
-        ]
+        id: 'social-media',
+        label: t('nav.feedback'),
+        icon: 'share-2',
+        route: '/app/social-media'
+      },
+      {
+        id: 'alerts',
+        label: t('nav.tasks'),
+        icon: 'bell',
+        route: '/app/alerts'
       }
     ];
 
@@ -167,41 +129,27 @@ export class MenuService {
     if (userRole === UserRole.ADMIN) {
       menuItems.push({
         id: 'admin',
-        label: t('admin'),
+        label: t('nav.admin'),
         icon: 'settings',
         permissions: ['admin'],
         children: [
           {
             id: 'admin-users',
-            label: t('userManagement'),
+            label: t('nav.userManagement'),
             icon: 'users',
             route: '/app/admin/users',
             permissions: ['admin']
           },
           {
             id: 'admin-roles',
-            label: t('roleManagement'),
+            label: t('nav.roleManagement'),
             icon: 'user-check',
             route: '/app/admin/roles',
             permissions: ['admin']
           },
           {
-            id: 'admin-data-dictionary',
-            label: t('dataDictionary'),
-            icon: 'book',
-            route: '/app/admin/data-dictionary',
-            permissions: ['admin']
-          },
-          {
-            id: 'admin-audit-logs',
-            label: t('auditLogs'),
-            icon: 'file-text',
-            route: '/app/admin/audit-logs',
-            permissions: ['admin']
-          },
-          {
             id: 'admin-settings',
-            label: t('systemSettings'),
+            label: t('nav.systemSettings'),
             icon: 'settings',
             route: '/app/admin/settings',
             permissions: ['admin']
@@ -210,16 +158,6 @@ export class MenuService {
       });
     }
 
-    // Add Maker-Checker menu for checker role
-    if (userRole === UserRole.CHECKER) {
-      menuItems.push({
-        id: 'maker-checker',
-        label: t('makerChecker'),
-        icon: 'user-check',
-        route: '/app/tasks/maker-checker',
-        permissions: ['checker']
-      });
-    }
 
     // Filter menu items based on permissions
     return this.filterMenuItemsByPermissions(menuItems, userRole);

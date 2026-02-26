@@ -49,6 +49,24 @@ export class CustomerJourneyService {
     return this.http.post<ApiResponse<CustomerJourney>>(`${this.baseUrl}/${id}/publish`, {});
   }
 
+  // Journey Analysis - matches backend /api/journey routes
+  getStages(): Observable<ApiResponse<any[]>> {
+    return this.http.get<ApiResponse<any[]>>(`${this.baseUrl}/stages`);
+  }
+
+  analyzeJourney(companyId?: number): Observable<ApiResponse<any>> {
+    let params = new HttpParams();
+    if (companyId) params = params.set('companyId', companyId.toString());
+    return this.http.get<ApiResponse<any>>(`${this.baseUrl}/analysis`, { params });
+  }
+
+  getJourneyTrends(companyId?: number, period?: 'day' | 'week' | 'month'): Observable<ApiResponse<any>> {
+    let params = new HttpParams();
+    if (companyId) params = params.set('companyId', companyId.toString());
+    if (period) params = params.set('period', period);
+    return this.http.get<ApiResponse<any>>(`${this.baseUrl}/trends`, { params });
+  }
+
   // Stages
   addStage(journeyId: string, stage: Partial<JourneyStage>): Observable<ApiResponse<JourneyStage>> {
     return this.http.post<ApiResponse<JourneyStage>>(`${this.baseUrl}/${journeyId}/stages`, stage);

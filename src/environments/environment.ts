@@ -19,7 +19,18 @@ export const environment = {
   appTitle: getEnv('NG_APP_TITLE', 'Albaraka Türk Müşteri Deneyimi Platformu'),
   
   // API Configuration - Node.js Backend
-  apiUrl: getEnv('NG_APP_API_URL', 'http://localhost:3000/api'),
+  // Construct API URL from environment variables
+  apiUrl: (() => {
+    const apiUrl = getEnv('NG_APP_API_URL', '');
+    if (apiUrl) return apiUrl;
+    
+    // Build from components if not provided
+    const apiHost = getEnv('NG_APP_API_HOST', 'localhost');
+    const apiPort = getEnv('NG_APP_API_PORT', '5000');
+    const apiPath = getEnv('NG_APP_API_PATH', '/api');
+    const apiProtocol = getEnv('NG_APP_API_PROTOCOL', 'http');
+    return `${apiProtocol}://${apiHost}:${apiPort}${apiPath}`;
+  })(),
   apiVersion: getEnv('NG_APP_API_VERSION', 'v1'),
   apiTimeout: getEnvNumber('NG_APP_API_TIMEOUT', 30000), // 30 seconds
   
@@ -31,10 +42,20 @@ export const environment = {
     refreshTokenExpiry: getEnvNumber('NG_APP_REFRESH_TOKEN_EXPIRY', 604800), // 7 days in seconds
   },
   
-  // WebSocket Configuration (for real-time updates)
+  // WebSocket Configuration (for real-time updates) - DISABLED: No WebSocket support in this project
   websocket: {
-    enabled: getEnvBoolean('NG_APP_WEBSOCKET_ENABLED', false),
-    url: getEnv('NG_APP_WEBSOCKET_URL', 'ws://localhost:3000/ws'),
+    enabled: false, // Disabled - project uses CSV upload only, no real-time connections
+    url: (() => {
+      const wsUrl = getEnv('NG_APP_WEBSOCKET_URL', '');
+      if (wsUrl) return wsUrl;
+      
+      // Build from components if not provided
+      const wsHost = getEnv('NG_APP_WEBSOCKET_HOST', getEnv('NG_APP_API_HOST', 'localhost'));
+      const wsPort = getEnv('NG_APP_WEBSOCKET_PORT', getEnv('NG_APP_API_PORT', '5000'));
+      const wsPath = getEnv('NG_APP_WEBSOCKET_PATH', '/ws');
+      const wsProtocol = getEnv('NG_APP_WEBSOCKET_PROTOCOL', 'ws');
+      return `${wsProtocol}://${wsHost}:${wsPort}${wsPath}`;
+    })(),
     reconnectInterval: getEnvNumber('NG_APP_WEBSOCKET_RECONNECT_INTERVAL', 5000),
     maxReconnectAttempts: getEnvNumber('NG_APP_WEBSOCKET_MAX_RECONNECT_ATTEMPTS', 10),
   },
@@ -174,7 +195,16 @@ export const environment = {
   
   // AI Model Configuration (Internal offline processing)
   ai: {
-    modelEndpoint: getEnv('NG_APP_AI_MODEL_ENDPOINT', 'http://localhost:3000/api/analysis/offline-ai'),
+    modelEndpoint: (() => {
+      const endpoint = getEnv('NG_APP_AI_MODEL_ENDPOINT', '');
+      if (endpoint) return endpoint;
+      
+      // Build from API URL if not provided
+      const apiHost = getEnv('NG_APP_API_HOST', 'localhost');
+      const apiPort = getEnv('NG_APP_API_PORT', '5000');
+      const apiProtocol = getEnv('NG_APP_API_PROTOCOL', 'http');
+      return `${apiProtocol}://${apiHost}:${apiPort}/api/analysis/offline-ai`;
+    })(),
     confidenceThreshold: getEnvNumber('NG_APP_AI_CONFIDENCE_THRESHOLD', 0.7),
     maxTokens: getEnvNumber('NG_APP_AI_MAX_TOKENS', 2048),
   },

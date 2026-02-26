@@ -1,0 +1,66 @@
+.language-switcher-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 8px;
+  min-width: auto;
+}
+
+.language-switcher-button mat-icon {
+  font-size: 24px;
+  width: 24px;
+  height: 24px;
+}
+
+.language-menu {
+  min-width: 200px;
+}
+
+.language-menu button[mat-menu-item] {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 16px;
+}
+
+.menu-flag {
+  font-size: 24px;
+  line-height: 1;
+  width: 32px;
+  text-align: center;
+}
+
+.menu-name {
+  flex: 1;
+  font-weight: 500;
+}
+
+.menu-english {
+  font-size: 12px;
+  color: rgba(0, 0, 0, 0.6);
+  font-weight: normal;
+}
+
+[dir="rtl"] .menu-english {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.check-icon {
+  margin-left: auto;
+  color: var(--mat-primary-color, #1976d2);
+}
+
+.language-menu button[mat-menu-item].active {
+  background-color: rgba(0, 0, 0, 0.04);
+}
+
+[dir="rtl"] .language-menu button[mat-menu-item].active {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+/* Responsive design */
+@media (max-width: 600px) {
+  .language-switcher-button {
+    padding: 0 4px;
+  }
+}

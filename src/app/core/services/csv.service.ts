@@ -93,4 +93,8 @@ export class CSVService {
     }
     return this.http.get<ApiResponse<CSVMapping[]>>(`${this.baseUrl}/mappings`, { params });
   }
+
+  getImportStatus(importId: number): Observable<ApiResponse<CSVImport>> {
+    return this.http.get<ApiResponse<CSVImport>>(`${this.baseUrl}/imports/${importId}`);
+  }
 }

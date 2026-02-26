@@ -1,0 +1,102 @@
+<div class="dashboard-container">
+  <div class="dashboard-header">
+    <h1>{{ t('dashboard.title') }}</h1>
+    <p class="subtitle">{{ t('dashboard.subtitle') }}</p>
+  </div>
+
+  <div *ngIf="loading()" class="loading-container">
+    <mat-spinner diameter="50"></mat-spinner>
+    <p>{{ t('app.loading') }}</p>
+  </div>
+
+  <div *ngIf="!loading()" class="dashboard-content">
+    <div class="kpi-grid">
+      <mat-card *ngFor="let kpi of kpiCards()" class="kpi-card">
+        <mat-card-content>
+          <div class="kpi-header">
+            <mat-icon [class]="'kpi-icon ' + kpi.color">{{ kpi.icon }}</mat-icon>
+            <span class="kpi-title">{{ kpi.title }}</span>
+          </div>
+          <div class="kpi-value">{{ kpi.value }}</div>
+          <div *ngIf="kpi.change !== 0" class="kpi-change" [class.positive]="kpi.change > 0" [class.negative]="kpi.change < 0">
+            <mat-icon>{{ kpi.change > 0 ? 'arrow_upward' : 'arrow_downward' }}</mat-icon>
+            <span>{{ Math.abs(kpi.change) }}%</span>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    </div>
+
+    <div class="charts-section">
+      <mat-card class="chart-card">
+        <mat-card-header>
+          <mat-card-title>{{ t('dashboard.sentimentDistribution') }}</mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <div *ngIf="dashboardData()" class="sentiment-summary">
+            <div class="sentiment-item">
+              <span class="sentiment-label positive">{{ t('dashboard.positive') }}</span>
+              <span class="sentiment-value">{{ dashboardData()!.sentiment.positive }}</span>
+            </div>
+            <div class="sentiment-item">
+              <span class="sentiment-label neutral">{{ t('dashboard.neutral') }}</span>
+              <span class="sentiment-value">{{ dashboardData()!.sentiment.neutral }}</span>
+            </div>
+            <div class="sentiment-item">
+              <span class="sentiment-label negative">{{ t('dashboard.negative') }}</span>
+              <span class="sentiment-value">{{ dashboardData()!.sentiment.negative }}</span>
+            </div>
+          </div>
+          <div *ngIf="!dashboardData()" class="chart-placeholder">
+            <mat-icon>bar_chart</mat-icon>
+            <p>{{ t('app.loading') }}</p>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <mat-card class="chart-card">
+        <mat-card-header>
+          <mat-card-title>{{ t('dashboard.npsScore') }}</mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <div *ngIf="dashboardData()" class="nps-summary">
+            <div class="nps-score">{{ Math.round(dashboardData()!.nps.score) }}</div>
+            <div class="nps-breakdown">
+              <div class="nps-item">
+                <span>{{ t('dashboard.positive') }}: {{ dashboardData()!.nps.promoters }}</span>
+              </div>
+              <div class="nps-item">
+                <span>{{ t('dashboard.neutral') }}: {{ dashboardData()!.nps.passives }}</span>
+              </div>
+              <div class="nps-item">
+                <span>{{ t('dashboard.negative') }}: {{ dashboardData()!.nps.detractors }}</span>
+              </div>
+            </div>
+          </div>
+          <div *ngIf="!dashboardData()" class="chart-placeholder">
+            <mat-icon>show_chart</mat-icon>
+            <p>{{ t('app.loading') }}</p>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    </div>
+
+    <div *ngIf="dashboardData()?.alerts?.recent && dashboardData()!.alerts!.recent.length > 0" class="alerts-section">
+      <mat-card class="alerts-card">
+        <mat-card-header>
+          <mat-card-title>{{ t('dashboard.activeAlarms') }}</mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="alerts-list">
+            <div *ngFor="let alert of dashboardData()!.alerts!.recent" class="alert-item">
+              <mat-icon [class]="'alert-icon ' + alert.priority">{{ alert.priority === 'critical' ? 'error' : 'warning' }}</mat-icon>
+              <div class="alert-content">
+                <div class="alert-title">{{ alert.title }}</div>
+                <div class="alert-message">{{ alert.message }}</div>
+              </div>
+            </div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    </div>
+  </div>
+</div>

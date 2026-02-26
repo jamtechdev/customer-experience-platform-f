@@ -31,9 +31,9 @@ export const environment = {
     refreshTokenExpiry: getEnvNumber('NG_APP_REFRESH_TOKEN_EXPIRY', 604800), // 7 days in seconds
   },
   
-  // WebSocket Configuration (for real-time updates)
+  // WebSocket Configuration (for real-time updates) - DISABLED: No WebSocket support in this project
   websocket: {
-    enabled: getEnvBoolean('NG_APP_WEBSOCKET_ENABLED', true),
+    enabled: false, // Disabled - project uses CSV upload only, no real-time connections
     url: getEnv('NG_APP_WEBSOCKET_URL', 'wss://api.example.com/ws'),
     reconnectInterval: getEnvNumber('NG_APP_WEBSOCKET_RECONNECT_INTERVAL', 5000),
     maxReconnectAttempts: getEnvNumber('NG_APP_WEBSOCKET_MAX_RECONNECT_ATTEMPTS', 10),

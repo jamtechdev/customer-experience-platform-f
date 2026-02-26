@@ -1,0 +1,206 @@
+.nps-container {
+  padding: 24px;
+}
+
+.header-section {
+  margin-bottom: 24px;
+}
+
+.header-section h1 {
+  font-size: 2rem;
+  font-weight: 600;
+  margin-bottom: 8px;
+  color: #111827;
+}
+
+.subtitle {
+  color: #6b7280;
+  font-size: 1rem;
+}
+
+.filters-section {
+  margin-bottom: 24px;
+}
+
+.filter-card mat-form-field {
+  min-width: 200px;
+}
+
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 64px;
+  gap: 16px;
+}
+
+.nps-score-section {
+  margin-bottom: 24px;
+}
+
+.nps-score-card {
+  max-width: 400px;
+  margin: 0 auto;
+  text-align: center;
+  padding: 32px;
+}
+
+.score-label {
+  font-size: 1rem;
+  color: #6b7280;
+  margin-bottom: 16px;
+  font-weight: 500;
+}
+
+.score-value {
+  font-size: 4rem;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+
+.score-category {
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin-bottom: 16px;
+}
+
+.score-description {
+  font-size: 0.875rem;
+  color: #6b7280;
+}
+
+.nps-score-card.excellent .score-value,
+.nps-score-card.excellent .score-category {
+  color: #22c55e;
+}
+
+.nps-score-card.good .score-value,
+.nps-score-card.good .score-category {
+  color: #3b82f6;
+}
+
+.nps-score-card.needs-improvement .score-value,
+.nps-score-card.needs-improvement .score-category {
+  color: #f59e0b;
+}
+
+.nps-score-card.poor .score-value,
+.nps-score-card.poor .score-category {
+  color: #ef4444;
+}
+
+.segmentation-section {
+  margin-bottom: 24px;
+}
+
+.segmentation-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 24px;
+}
+
+.segment-card {
+  text-align: center;
+}
+
+.segment-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 16px;
+  color: #6b7280;
+  font-weight: 500;
+}
+
+.segment-value {
+  font-size: 2.5rem;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+
+.segment-percentage {
+  font-size: 1.25rem;
+  color: #6b7280;
+  margin-bottom: 8px;
+}
+
+.segment-description {
+  font-size: 0.875rem;
+  color: #9ca3af;
+}
+
+.segment-card.promoters .segment-value {
+  color: #22c55e;
+}
+
+.segment-card.passives .segment-value {
+  color: #f59e0b;
+}
+
+.segment-card.detractors .segment-value {
+  color: #ef4444;
+}
+
+.calculation-card {
+  margin-top: 24px;
+}
+
+.calculation-formula {
+  padding: 16px;
+  background: #f9fafb;
+  border-radius: 8px;
+}
+
+.calculation-formula p {
+  margin: 8px 0;
+  font-size: 1.125rem;
+}
+
+.empty-state {
+  padding: 64px 24px;
+}
+
+.empty-state-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 16px;
+}
+
+.empty-state-content mat-icon {
+  font-size: 64px;
+  width: 64px;
+  height: 64px;
+  color: #9ca3af;
+}
+
+.empty-state-content h3 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #111827;
+  margin: 0;
+}
+
+.empty-state-content p {
+  font-size: 1rem;
+  color: #6b7280;
+  margin: 0;
+}
+
+@media (max-width: 768px) {
+  .nps-container {
+    padding: 16px;
+  }
+
+  .segmentation-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .nps-score-card {
+    max-width: 100%;
+  }
+}

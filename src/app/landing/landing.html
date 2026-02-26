@@ -1,0 +1,78 @@
+<div class="landing-container">
+  <!-- Navigation Bar -->
+  <nav class="landing-nav">
+    <div class="nav-content">
+      <div class="logo">
+        <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="24" cy="24" r="24" fill="var(--primary-color)"/>
+          <path d="M16 32V20L24 14L32 20V32H26V26H22V32H16Z" fill="white"/>
+          <circle cx="24" cy="22" r="3" fill="white"/>
+        </svg>
+        <span class="logo-text">{{ t('landing.loginTitle') }}</span>
+      </div>
+      <div class="nav-links">
+        <app-language-switcher></app-language-switcher>
+        <a routerLink="/login" class="nav-link">{{ t('landing.login') }}</a>
+        <a routerLink="/signup" class="nav-link">{{ t('landing.signup') }}</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Hero Section -->
+  <section class="hero-section">
+    <div class="hero-bg">
+      <div class="circle circle-1"></div>
+      <div class="circle circle-2"></div>
+      <div class="circle circle-3"></div>
+    </div>
+    <div class="hero-content">
+      <h1 class="hero-title">{{ t('landing.landingTitle') }}</h1>
+      <p class="hero-subtitle">{{ t('landing.landingSubtitle') }}</p>
+      <p class="hero-description">{{ t('landing.landingDescription') }}</p>
+      <div class="hero-actions">
+        <a routerLink="/signup" class="btn-primary">{{ t('landing.getStarted') }}</a>
+        <a routerLink="/login" class="btn-secondary">{{ t('landing.login') }}</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Features Section -->
+  <section class="features-section">
+    <div class="container">
+      <h2 class="section-title">{{ t('landing.features') }}</h2>
+      <p class="section-subtitle">{{ t('landing.landingDescription') }}</p>
+      <div class="features-grid">
+        <div *ngFor="let feature of features" class="feature-card">
+          <div class="feature-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"/>
+              <path d="M12 6v6l4 2"/>
+            </svg>
+          </div>
+          <h3 class="feature-title">{{ t('landing.' + feature.titleKey) }}</h3>
+          <p class="feature-description">{{ t('landing.' + feature.descriptionKey) }}</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA Section -->
+  <section class="cta-section">
+    <div class="container">
+      <h2 class="cta-title">{{ t('landing.getStarted') }}</h2>
+      <p class="cta-subtitle">{{ t('landing.landingDescription') }}</p>
+      <div class="cta-actions">
+        <a routerLink="/signup" class="btn-primary btn-large">{{ t('landing.signupButton') }}</a>
+        <a routerLink="/login" class="btn-secondary btn-large">{{ t('landing.loginButton') }}</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="landing-footer">
+    <div class="container">
+      <p class="copyright">&copy; {{ currentYear }} Albaraka Türk Katılım Bankası</p>
+      <p class="version">CX Platform v1.0.0</p>
+    </div>
+  </footer>
+</div>

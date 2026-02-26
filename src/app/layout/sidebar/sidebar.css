@@ -1,0 +1,58 @@
+.sidebar-nav {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  background: #ffffff;
+}
+
+.sidebar-header {
+  padding: 20px 16px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.sidebar-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #111827;
+  margin: 0;
+}
+
+.menu-list {
+  flex: 1;
+  padding: 8px 0;
+  overflow-y: auto;
+}
+
+.menu-item {
+  color: #6b7280;
+  transition: background-color 0.2s, color 0.2s;
+}
+
+.menu-item:hover {
+  background-color: #f3f4f6;
+  color: #111827;
+}
+
+.menu-item.active {
+  background-color: #e0e7ff;
+  color: #667eea;
+  font-weight: 500;
+}
+
+.menu-item.active mat-icon {
+  color: #667eea;
+}
+
+::ng-deep .menu-item .mdc-list-item__content {
+  padding: 0 16px;
+}
+
+@media (max-width: 600px) {
+  .sidebar-header {
+    padding: 16px 12px;
+  }
+
+  .sidebar-title {
+    font-size: 1.125rem;
+  }
+}

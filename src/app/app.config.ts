@@ -1,6 +1,6 @@
 import { ApplicationConfig, provideBrowserGlobalErrorListeners } from '@angular/core';
-import { provideRouter } from '@angular/router';
-import { provideHttpClient, withInterceptors } from '@angular/common/http';
+import { provideRouter, withComponentInputBinding } from '@angular/router';
+import { provideHttpClient, withInterceptors, withFetch } from '@angular/common/http';
 
 import { routes } from './app.routes';
 import { provideClientHydration, withEventReplay } from '@angular/platform-browser';
@@ -14,9 +14,15 @@ import {
 export const appConfig: ApplicationConfig = {
   providers: [
     provideBrowserGlobalErrorListeners(),
-    provideRouter(routes),
+    provideRouter(
+      routes,
+      // Use component input binding instead of blocking navigation
+      // Guards will handle async auth initialization properly
+      withComponentInputBinding()
+    ),
     provideClientHydration(withEventReplay()),
     provideHttpClient(
+      withFetch(), // Enable fetch API for better SSR performance
       withInterceptors([
         apiUrlInterceptor,
         authInterceptor,

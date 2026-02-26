@@ -1,0 +1,95 @@
+<div class="csv-upload-container">
+  <div class="upload-header">
+    <h1>{{ t('dataSources.title') }}</h1>
+    <p class="subtitle">{{ t('dataSources.list') || 'Upload CSV files containing customer feedback data' }}</p>
+  </div>
+
+  <mat-card class="upload-card">
+    <mat-card-content>
+      <div
+        class="upload-area"
+        [class.drag-over]="dragOver()"
+        (dragover)="onDragOver($event)"
+        (dragleave)="onDragLeave($event)"
+        (drop)="onDrop($event)">
+        <input
+          type="file"
+          id="file-input"
+          accept=".csv"
+          (change)="onFileSelected($event)"
+          style="display: none;">
+        
+        <div *ngIf="!selectedFile" class="upload-placeholder">
+          <mat-icon class="upload-icon">cloud_upload</mat-icon>
+          <p class="upload-text">{{ t('dataSources.add') || 'Drag and drop your CSV file here' }}</p>
+          <p class="upload-hint">{{ t('app.all') || 'or' }}</p>
+          <button mat-raised-button color="primary" (click)="document.getElementById('file-input')?.click()">
+            <mat-icon>folder_open</mat-icon>
+            {{ t('dataSources.add') || 'Browse Files' }}
+          </button>
+        </div>
+
+        <div *ngIf="selectedFile" class="file-selected">
+          <mat-icon class="file-icon">description</mat-icon>
+          <div class="file-info">
+            <p class="file-name">{{ selectedFile.name }}</p>
+            <p class="file-size">{{ (selectedFile.size / 1024).toFixed(2) }} KB</p>
+          </div>
+          <button mat-icon-button (click)="removeFile()" class="remove-button" [disabled]="uploading()">
+            <mat-icon>close</mat-icon>
+          </button>
+        </div>
+      </div>
+
+      <!-- Processing Status Indicator -->
+      <div *ngIf="processingStatus() !== 'idle'" class="processing-status">
+        <div class="status-header">
+          <mat-icon [class]="'status-icon ' + processingStatus()">
+            {{ processingStatus() === 'completed' ? 'check_circle' : 
+               processingStatus() === 'error' ? 'error' : 
+               processingStatus() === 'processing' ? 'sync' : 'upload' }}
+          </mat-icon>
+          <span class="status-text">{{ processingMessage() }}</span>
+        </div>
+        <mat-progress-bar 
+          mode="determinate" 
+          [value]="uploadProgress()"
+          [color]="processingStatus() === 'error' ? 'warn' : 'primary'">
+        </mat-progress-bar>
+        <div *ngIf="processingStatus() === 'processing'" class="processing-steps">
+          <mat-chip>{{ t('dataSources.sync') || 'Uploading' }}</mat-chip>
+          <mat-chip>{{ t('analysis.sentimentAnalysis') || 'Analyzing sentiment' }}</mat-chip>
+          <mat-chip>{{ t('analysis.rootCauseAnalysis') || 'Root cause analysis' }}</mat-chip>
+          <mat-chip>{{ t('nav.cxJourney') || 'Journey mapping' }}</mat-chip>
+        </div>
+      </div>
+
+      <div class="upload-actions">
+        <button
+          mat-raised-button
+          color="primary"
+          (click)="uploadFile()"
+          [disabled]="!selectedFile || uploading() || processingStatus() === 'processing'"
+          class="upload-button">
+          <mat-icon>upload</mat-icon>
+          {{ t('dataSources.sync') || 'Upload File' }}
+        </button>
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  <mat-card class="info-card">
+    <mat-card-header>
+      <mat-card-title>{{ t('dataSources.title') || 'CSV Format Requirements' }}</mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+      <ul class="requirements-list">
+        <li>{{ t('dataSources.format') || 'File must be in CSV format (.csv extension)' }}</li>
+        <li>{{ t('dataSources.headers') || 'First row should contain column headers' }}</li>
+        <li>{{ t('dataSources.required') || 'Required columns: content, date, source' }}</li>
+        <li>{{ t('dataSources.optional') || 'Optional columns: author, rating, company, competitor' }}</li>
+        <li>{{ t('dataSources.maxSize') || 'Maximum file size: 10MB' }}</li>
+      </ul>
+    </mat-card-content>
+  </mat-card>
+</div>

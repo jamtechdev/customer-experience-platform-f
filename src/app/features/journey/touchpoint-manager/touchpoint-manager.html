@@ -1,0 +1,68 @@
+<div class="touchpoint-container">
+  <div class="header-section">
+    <h1>Touchpoint Manager</h1>
+    <p class="subtitle">Manage customer touchpoints across the journey</p>
+  </div>
+
+  <div class="actions-section">
+    <button mat-raised-button color="primary">
+      <mat-icon>add</mat-icon>
+      Add Touchpoint
+    </button>
+  </div>
+
+  <div *ngIf="loading()" class="loading-container">
+    <mat-spinner></mat-spinner>
+    <p>Loading touchpoints...</p>
+  </div>
+
+  <div *ngIf="!loading()" class="content-section">
+    <mat-card>
+      <mat-card-content>
+        <table mat-table [dataSource]="touchpoints()" class="touchpoint-table">
+          <ng-container matColumnDef="name">
+            <th mat-header-cell *matHeaderCellDef>Name</th>
+            <td mat-cell *matCellDef="let touchpoint">{{ touchpoint.name }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="stage">
+            <th mat-header-cell *matHeaderCellDef>Stage</th>
+            <td mat-cell *matCellDef="let touchpoint">
+              <mat-chip>{{ touchpoint.stage }}</mat-chip>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="type">
+            <th mat-header-cell *matHeaderCellDef>Type</th>
+            <td mat-cell *matCellDef="let touchpoint">{{ touchpoint.type }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="feedbackCount">
+            <th mat-header-cell *matHeaderCellDef>Feedback Count</th>
+            <td mat-cell *matCellDef="let touchpoint">{{ touchpoint.feedbackCount }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="satisfactionScore">
+            <th mat-header-cell *matHeaderCellDef>Satisfaction Score</th>
+            <td mat-cell *matCellDef="let touchpoint">{{ touchpoint.satisfactionScore }}%</td>
+          </ng-container>
+
+          <ng-container matColumnDef="actions">
+            <th mat-header-cell *matHeaderCellDef>Actions</th>
+            <td mat-cell *matCellDef="let touchpoint">
+              <button mat-icon-button>
+                <mat-icon>edit</mat-icon>
+              </button>
+              <button mat-icon-button>
+                <mat-icon>delete</mat-icon>
+              </button>
+            </td>
+          </ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+          <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+        </table>
+      </mat-card-content>
+    </mat-card>
+  </div>
+</div>

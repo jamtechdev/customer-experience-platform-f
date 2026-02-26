@@ -28,11 +28,7 @@ export interface User {
 
 export enum UserRole {
   ADMIN = 'ADMIN',
-  MANAGER = 'MANAGER',
-  ANALYST = 'ANALYST',
-  VIEWER = 'VIEWER',
-  MAKER = 'MAKER',
-  CHECKER = 'CHECKER'
+  USER = 'USER'
 }
 
 export enum UserStatus {

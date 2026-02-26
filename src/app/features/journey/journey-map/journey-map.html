@@ -1,0 +1,57 @@
+<div class="journey-container">
+  <div class="header-section">
+    <h1>Customer Journey Map</h1>
+    <p class="subtitle">Map customer touchpoints and identify satisfaction points</p>
+  </div>
+
+  <div *ngIf="loading()" class="loading-container">
+    <mat-spinner></mat-spinner>
+    <p>Loading journey data...</p>
+  </div>
+
+  <div *ngIf="!loading()" class="journey-stages">
+    <div *ngFor="let stage of journeyStages(); let i = index" class="stage-card-wrapper">
+      <mat-card class="stage-card" [class]="getSatisfactionColor(stage.satisfactionScore)">
+        <mat-card-header>
+          <mat-card-title>
+            <span class="stage-number">{{ i + 1 }}</span>
+            {{ stage.name }}
+          </mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="stage-metrics">
+            <div class="metric">
+              <mat-icon>sentiment_satisfied</mat-icon>
+              <span class="metric-value">{{ stage.satisfactionScore }}%</span>
+              <span class="metric-label">Satisfaction</span>
+            </div>
+            <div class="metric">
+              <mat-icon>sentiment_dissatisfied</mat-icon>
+              <span class="metric-value">{{ stage.dissatisfactionScore }}%</span>
+              <span class="metric-label">Dissatisfaction</span>
+            </div>
+            <div class="metric">
+              <mat-icon>feedback</mat-icon>
+              <span class="metric-value">{{ stage.feedbackCount }}</span>
+              <span class="metric-label">Feedback</span>
+            </div>
+          </div>
+
+          <div *ngIf="stage.satisfactionPoints.length > 0" class="points-section">
+            <h4>Satisfaction Points</h4>
+            <div class="chips-container">
+              <mat-chip *ngFor="let point of stage.satisfactionPoints">{{ point }}</mat-chip>
+            </div>
+          </div>
+
+          <div *ngIf="stage.painPoints.length > 0" class="points-section">
+            <h4>Pain Points</h4>
+            <div class="chips-container">
+              <mat-chip *ngFor="let point of stage.painPoints" color="warn">{{ point }}</mat-chip>
+            </div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    </div>
+  </div>
+</div>

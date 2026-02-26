@@ -1,0 +1,85 @@
+<div class="root-cause-container">
+  <div class="header-section">
+    <h1>Root Cause Analysis</h1>
+    <p class="subtitle">Identify and analyze root causes of customer complaints</p>
+  </div>
+
+  <div *ngIf="loading()" class="loading-container">
+    <mat-spinner></mat-spinner>
+    <p>Loading root causes...</p>
+  </div>
+
+  <div *ngIf="!loading()" class="content-section">
+    <mat-card>
+      <mat-card-header>
+        <mat-card-title>Top Root Causes</mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <div *ngIf="rootCauses().length === 0" class="empty-state">
+          <div class="empty-state-content">
+            <mat-icon>info</mat-icon>
+            <h3>No Root Causes Found</h3>
+            <p>Upload CSV files with customer complaints to analyze root causes.</p>
+          </div>
+        </div>
+        <table *ngIf="rootCauses().length > 0" mat-table [dataSource]="getPaginatedData()" class="root-cause-table">
+          <ng-container matColumnDef="title">
+            <th mat-header-cell *matHeaderCellDef>Root Cause</th>
+            <td mat-cell *matCellDef="let cause">{{ cause.title }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="category">
+            <th mat-header-cell *matHeaderCellDef>Category</th>
+            <td mat-cell *matCellDef="let cause">
+              <mat-chip>{{ cause.category }}</mat-chip>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="priority">
+            <th mat-header-cell *matHeaderCellDef>Priority</th>
+            <td mat-cell *matCellDef="let cause">
+              <mat-chip [color]="getPriorityColor(cause.priority)">
+                {{ cause.priority }}
+              </mat-chip>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="frequency">
+            <th mat-header-cell *matHeaderCellDef>Frequency</th>
+            <td mat-cell *matCellDef="let cause">{{ cause.frequency }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="severity">
+            <th mat-header-cell *matHeaderCellDef>Severity</th>
+            <td mat-cell *matCellDef="let cause">
+              <div class="severity-bar">
+                <div class="severity-fill" [style.width.%]="cause.severity"></div>
+              </div>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="actions">
+            <th mat-header-cell *matHeaderCellDef>Actions</th>
+            <td mat-cell *matCellDef="let cause">
+              <button mat-icon-button>
+                <mat-icon>visibility</mat-icon>
+              </button>
+            </td>
+          </ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+          <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+        </table>
+
+        <mat-paginator
+          *ngIf="rootCauses().length > 0"
+          [length]="totalItems"
+          [pageSize]="pageSize"
+          [pageIndex]="pageIndex"
+          [pageSizeOptions]="[5, 10, 25, 50]"
+          (page)="onPageChange($event)">
+        </mat-paginator>
+      </mat-card-content>
+    </mat-card>
+  </div>
+</div>

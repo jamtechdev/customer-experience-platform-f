@@ -1,0 +1,52 @@
+<div class="admin-dashboard-container">
+  <div class="admin-header">
+    <div class="header-content">
+      <div>
+        <h1>{{ t('admin') || 'Admin' }} {{ t('dashboard') }}</h1>
+        <p class="subtitle">System Management & Analytics</p>
+      </div>
+      <div class="user-info">
+        @if (currentUser(); as user) {
+          <span>{{ user.firstName }} {{ user.lastName }}</span>
+        }
+        <button class="btn-logout" (click)="authService.logout()">{{ t('logout') }}</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="admin-content">
+    <div class="stats-grid">
+      <div *ngFor="let stat of stats" class="stat-card">
+        <div class="stat-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"/>
+          </svg>
+        </div>
+        <div class="stat-content">
+          <p class="stat-label">{{ stat.label }}</p>
+          <p class="stat-value">{{ stat.value }}</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="admin-sections">
+      <div class="section-card">
+        <h2>{{ t('userManagement') }}</h2>
+        <p>Manage users, roles, and permissions</p>
+        <a routerLink="/admin/users" class="btn-primary">Manage Users</a>
+      </div>
+
+      <div class="section-card">
+        <h2>{{ t('systemSettings') }}</h2>
+        <p>Configure system settings and preferences</p>
+        <a routerLink="/admin/settings" class="btn-primary">Settings</a>
+      </div>
+
+      <div class="section-card">
+        <h2>{{ t('auditLogs') }}</h2>
+        <p>View system activity and audit logs</p>
+        <a routerLink="/admin/logs" class="btn-primary">View Logs</a>
+      </div>
+    </div>
+  </div>
+</div>

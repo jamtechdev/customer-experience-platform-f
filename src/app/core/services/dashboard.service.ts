@@ -65,6 +65,55 @@ export interface DashboardStats {
   }>;
 }
 
+export interface ExecutiveDashboardData {
+  kpis: {
+    totalFeedback: number;
+    sentimentIndex: number;
+    sentimentTrend: 'up' | 'down' | 'stable';
+    sentimentChange: number;
+    npsScore: number;
+    npsTrend: 'up' | 'down' | 'stable';
+    npsChange: number;
+    positiveRate: number;
+    negativeRate: number;
+    criticalAlertsCount: number;
+    competitorCount: number;
+  };
+  sentiment: {
+    index: number;
+    trend: 'up' | 'down' | 'stable';
+    change: number;
+    positive: number;
+    negative: number;
+    neutral: number;
+  };
+  nps: {
+    score: number;
+    trend: 'up' | 'down' | 'stable';
+    change: number;
+    promoters: number;
+    passives: number;
+    detractors: number;
+    total: number;
+  };
+  competitors: Array<{
+    id: number;
+    name: string;
+    sentimentScore: number;
+    npsScore: number;
+    gap: number;
+  }>;
+  criticalAlerts: Array<{
+    id: number;
+    title: string;
+    message: string;
+    priority: string;
+    type: string;
+    createdAt: Date;
+  }>;
+  lastUpdated: string;
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -96,6 +145,10 @@ export class DashboardService {
     if (endDate) params = params.set('endDate', endDate.toISOString());
     
     return this.http.get<ApiResponse<any>>(`${this.baseUrl}/sentiment`, { params });
+  }
+
+  getDashboardStats(): Observable<ApiResponse<DashboardStats>> {
+    return this.http.get<ApiResponse<DashboardStats>>(`${this.baseUrl}/stats`);
   }
 
   getNPSDashboard(
@@ -146,5 +199,17 @@ export class DashboardService {
     }
     
     return this.http.get<ApiResponse<any>>(`${this.baseUrl}/alerts`, { params });
+  }
+
+  getExecutiveDashboard(
+    companyId: number,
+    startDate?: Date,
+    endDate?: Date
+  ): Observable<ApiResponse<ExecutiveDashboardData>> {
+    let params = new HttpParams().set('companyId', companyId.toString());
+    if (startDate) params = params.set('startDate', startDate.toISOString());
+    if (endDate) params = params.set('endDate', endDate.toISOString());
+    
+    return this.http.get<ApiResponse<ExecutiveDashboardData>>(`${this.baseUrl}/executive`, { params });
   }
 }

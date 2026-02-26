@@ -1,0 +1,144 @@
+<div class="executive-dashboard-container">
+  <div class="dashboard-header">
+    <h1>{{ t('dashboard.title') }}</h1>
+    <p class="subtitle">{{ t('dashboard.welcome') }}</p>
+    <button mat-raised-button color="primary" (click)="downloadReport()" class="download-btn">
+      <mat-icon>download</mat-icon>
+      <span>{{ t('reports.download') }}</span>
+    </button>
+  </div>
+
+  <div *ngIf="loading()" class="loading-container">
+    <mat-spinner diameter="50"></mat-spinner>
+    <p>{{ t('app.loading') }}</p>
+  </div>
+
+  <div *ngIf="!loading() && dashboardData()" class="dashboard-content">
+    <!-- High-level KPIs -->
+    <div class="kpi-grid">
+      <mat-card class="kpi-card">
+        <mat-card-content>
+          <div class="kpi-header">
+            <mat-icon class="kpi-icon primary">feedback</mat-icon>
+            <span class="kpi-title">{{ t('dashboard.totalFeedback') }}</span>
+          </div>
+          <div class="kpi-value">{{ dashboardData()!.kpis.totalFeedback.toLocaleString() }}</div>
+        </mat-card-content>
+      </mat-card>
+
+      <mat-card class="kpi-card">
+        <mat-card-content>
+          <div class="kpi-header">
+            <mat-icon class="kpi-icon" [class]="'kpi-icon ' + getTrendColor(dashboardData()!.sentiment.trend)">
+              {{ getTrendIcon(dashboardData()!.sentiment.trend) }}
+            </mat-icon>
+            <span class="kpi-title">{{ t('dashboard.averageSentimentScore') }}</span>
+          </div>
+          <div class="kpi-value">{{ dashboardData()!.kpis.sentimentIndex.toFixed(2) }}</div>
+          <div class="kpi-trend" [class]="getTrendColor(dashboardData()!.sentiment.trend)">
+            <mat-icon>{{ getTrendIcon(dashboardData()!.sentiment.trend) }}</mat-icon>
+            <span>{{ Math.abs(dashboardData()!.sentiment.change).toFixed(2) }}</span>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <mat-card class="kpi-card">
+        <mat-card-content>
+          <div class="kpi-header">
+            <mat-icon class="kpi-icon" [class]="'kpi-icon ' + getTrendColor(dashboardData()!.nps.trend)">
+              {{ getTrendIcon(dashboardData()!.nps.trend) }}
+            </mat-icon>
+            <span class="kpi-title">{{ t('dashboard.npsScore') }}</span>
+          </div>
+          <div class="kpi-value">{{ Math.round(dashboardData()!.kpis.npsScore) }}</div>
+          <div class="kpi-trend" [class]="getTrendColor(dashboardData()!.nps.trend)">
+            <mat-icon>{{ getTrendIcon(dashboardData()!.nps.trend) }}</mat-icon>
+            <span>{{ Math.abs(dashboardData()!.nps.change).toFixed(1) }}</span>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <mat-card class="kpi-card">
+        <mat-card-content>
+          <div class="kpi-header">
+            <mat-icon class="kpi-icon warn">notifications</mat-icon>
+            <span class="kpi-title">{{ t('dashboard.criticalAlarms') }}</span>
+          </div>
+          <div class="kpi-value">{{ dashboardData()!.kpis.criticalAlertsCount }}</div>
+        </mat-card-content>
+      </mat-card>
+    </div>
+
+    <!-- NPS Gauge -->
+    <mat-card class="nps-card">
+      <mat-card-header>
+        <mat-card-title>{{ t('dashboard.npsScore') }}</mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="nps-gauge">
+          <div class="nps-score-large">{{ Math.round(dashboardData()!.kpis.npsScore) }}</div>
+          <div class="nps-breakdown">
+            <div class="nps-segment">
+              <span class="segment-label">{{ t('dashboard.positive') }}</span>
+              <span class="segment-value">{{ dashboardData()!.nps.promoters }}</span>
+            </div>
+            <div class="nps-segment">
+              <span class="segment-label">{{ t('dashboard.neutral') }}</span>
+              <span class="segment-value">{{ dashboardData()!.nps.passives }}</span>
+            </div>
+            <div class="nps-segment">
+              <span class="segment-label">{{ t('dashboard.negative') }}</span>
+              <span class="segment-value">{{ dashboardData()!.nps.detractors }}</span>
+            </div>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Competitor Comparison -->
+    <mat-card *ngIf="dashboardData()!.competitors.length > 0" class="competitor-card">
+      <mat-card-header>
+        <mat-card-title>{{ t('analysis.competitorAnalysis') }}</mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="competitor-list">
+          <div *ngFor="let competitor of dashboardData()!.competitors" class="competitor-item">
+            <div class="competitor-name">{{ competitor.name }}</div>
+            <div class="competitor-metrics">
+              <div class="metric">
+                <span class="metric-label">{{ t('dashboard.averageSentimentScore') }}</span>
+                <span class="metric-value">{{ competitor.sentimentScore.toFixed(2) }}</span>
+              </div>
+              <div class="metric">
+                <span class="metric-label">{{ t('dashboard.npsScore') }}</span>
+                <span class="metric-value">{{ Math.round(competitor.npsScore) }}</span>
+              </div>
+              <div class="metric gap" [class.positive]="competitor.gap > 0" [class.negative]="competitor.gap < 0">
+                <span class="metric-label">{{ t('dashboard.comparison') }}</span>
+                <span class="metric-value">{{ competitor.gap > 0 ? '+' : '' }}{{ competitor.gap.toFixed(2) }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Critical Alerts -->
+    <mat-card *ngIf="dashboardData()!.criticalAlerts.length > 0" class="alerts-card">
+      <mat-card-header>
+        <mat-card-title>{{ t('dashboard.criticalAlarms') }}</mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="alerts-list">
+          <div *ngFor="let alert of dashboardData()!.criticalAlerts" class="alert-item" [class.critical]="alert.priority === 'critical'">
+            <mat-icon class="alert-icon">{{ alert.priority === 'critical' ? 'error' : 'warning' }}</mat-icon>
+            <div class="alert-content">
+              <div class="alert-title">{{ alert.title }}</div>
+              <div class="alert-message">{{ alert.message }}</div>
+            </div>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+</div>

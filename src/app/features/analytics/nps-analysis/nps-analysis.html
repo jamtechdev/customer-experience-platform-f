@@ -1,0 +1,105 @@
+<div class="nps-container">
+  <div class="header-section">
+    <h1>NPS Analysis</h1>
+    <p class="subtitle">Net Promoter Score analysis and trends</p>
+  </div>
+
+  <div class="filters-section">
+    <mat-card class="filter-card">
+      <mat-card-content>
+        <mat-form-field appearance="outline">
+          <mat-label>Period</mat-label>
+          <mat-select [(ngModel)]="selectedPeriod" (selectionChange)="loadNPSData()" name="period">
+            <mat-option value="day">Daily</mat-option>
+            <mat-option value="week">Weekly</mat-option>
+            <mat-option value="month">Monthly</mat-option>
+          </mat-select>
+        </mat-form-field>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <div *ngIf="loading()" class="loading-container">
+    <mat-spinner></mat-spinner>
+    <p>Loading NPS data...</p>
+  </div>
+
+  <div *ngIf="!loading() && !npsData()" class="empty-state">
+    <mat-card>
+      <mat-card-content>
+        <div class="empty-state-content">
+          <mat-icon>info</mat-icon>
+          <h3>No NPS Data Available</h3>
+          <p>Upload CSV files with NPS survey data to see analysis results.</p>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <div *ngIf="!loading() && npsData()" class="nps-content">
+    <div class="nps-score-section">
+      <mat-card class="nps-score-card" [class]="getNPSColor(npsData()!.score)">
+        <mat-card-content>
+          <div class="score-label">Net Promoter Score</div>
+          <div class="score-value">{{ npsData()!.score }}</div>
+          <div class="score-category">{{ getNPSCategory(npsData()!.score) }}</div>
+          <div class="score-description">
+            Based on {{ npsData()!.total }} responses
+          </div>
+        </mat-card-content>
+      </mat-card>
+    </div>
+
+    <div class="segmentation-section">
+      <div class="segmentation-grid">
+        <mat-card class="segment-card promoters">
+          <mat-card-content>
+            <div class="segment-header">
+              <mat-icon>thumb_up</mat-icon>
+              <span>Promoters</span>
+            </div>
+            <div class="segment-value">{{ npsData()!.promoters }}</div>
+            <div class="segment-percentage">{{ npsData()!.promoterPercentage.toFixed(1) }}%</div>
+            <div class="segment-description">Score 9-10</div>
+          </mat-card-content>
+        </mat-card>
+
+        <mat-card class="segment-card passives">
+          <mat-card-content>
+            <div class="segment-header">
+              <mat-icon>thumbs_up_down</mat-icon>
+              <span>Passives</span>
+            </div>
+            <div class="segment-value">{{ npsData()!.passives }}</div>
+            <div class="segment-percentage">{{ ((npsData()!.passives / npsData()!.total) * 100).toFixed(1) }}%</div>
+            <div class="segment-description">Score 7-8</div>
+          </mat-card-content>
+        </mat-card>
+
+        <mat-card class="segment-card detractors">
+          <mat-card-content>
+            <div class="segment-header">
+              <mat-icon>thumb_down</mat-icon>
+              <span>Detractors</span>
+            </div>
+            <div class="segment-value">{{ npsData()!.detractors }}</div>
+            <div class="segment-percentage">{{ npsData()!.detractorPercentage.toFixed(1) }}%</div>
+            <div class="segment-description">Score 0-6</div>
+          </mat-card-content>
+        </mat-card>
+      </div>
+    </div>
+
+    <mat-card class="calculation-card">
+      <mat-card-header>
+        <mat-card-title>NPS Calculation</mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="calculation-formula">
+          <p><strong>NPS = % Promoters - % Detractors</strong></p>
+          <p>NPS = {{ npsData()!.promoterPercentage.toFixed(1) }}% - {{ npsData()!.detractorPercentage.toFixed(1) }}% = {{ npsData()!.score }}</p>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+</div>

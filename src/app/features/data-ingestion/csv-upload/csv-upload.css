@@ -1,0 +1,232 @@
+.csv-upload-container {
+  padding: 24px;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.upload-header {
+  margin-bottom: 32px;
+}
+
+.upload-header h1 {
+  font-size: 2rem;
+  font-weight: 600;
+  margin-bottom: 8px;
+  color: #111827;
+}
+
+.subtitle {
+  color: #6b7280;
+  font-size: 1rem;
+}
+
+.upload-card {
+  margin-bottom: 24px;
+}
+
+.upload-area {
+  border: 2px dashed #d1d5db;
+  border-radius: 8px;
+  padding: 48px;
+  text-align: center;
+  transition: all 0.3s ease;
+  background: #f9fafb;
+  min-height: 200px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.upload-area.drag-over {
+  border-color: #667eea;
+  background: #e0e7ff;
+}
+
+.upload-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
+.upload-icon {
+  font-size: 64px;
+  width: 64px;
+  height: 64px;
+  color: #9ca3af;
+}
+
+.upload-text {
+  font-size: 1.125rem;
+  font-weight: 500;
+  color: #111827;
+  margin: 0;
+}
+
+.upload-hint {
+  color: #6b7280;
+  margin: 0;
+}
+
+.file-selected {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+  padding: 16px;
+  background: #ffffff;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+}
+
+.file-icon {
+  font-size: 48px;
+  width: 48px;
+  height: 48px;
+  color: #667eea;
+}
+
+.file-info {
+  flex: 1;
+  text-align: left;
+}
+
+.file-name {
+  font-weight: 500;
+  color: #111827;
+  margin: 0 0 4px 0;
+}
+
+.file-size {
+  font-size: 0.875rem;
+  color: #6b7280;
+  margin: 0;
+}
+
+.remove-button {
+  color: #ef4444;
+}
+
+.upload-progress {
+  margin-top: 24px;
+}
+
+.progress-text {
+  text-align: center;
+  margin-top: 8px;
+  color: #6b7280;
+  font-size: 0.875rem;
+}
+
+.processing-status {
+  margin-top: 24px;
+  padding: 16px;
+  background: #f9fafb;
+  border-radius: 8px;
+  border-left: 4px solid #667eea;
+}
+
+.status-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.status-icon {
+  font-size: 24px;
+  width: 24px;
+  height: 24px;
+}
+
+.status-icon.uploading {
+  color: #667eea;
+  animation: spin 1s linear infinite;
+}
+
+.status-icon.processing {
+  color: #f59e0b;
+  animation: spin 1s linear infinite;
+}
+
+.status-icon.completed {
+  color: #22c55e;
+}
+
+.status-icon.error {
+  color: #ef4444;
+}
+
+.status-text {
+  font-weight: 500;
+  color: #111827;
+}
+
+.processing-steps {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+  flex-wrap: wrap;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.upload-actions {
+  margin-top: 24px;
+  display: flex;
+  justify-content: center;
+}
+
+.upload-button {
+  min-width: 150px;
+}
+
+.info-card {
+  margin-top: 24px;
+}
+
+.requirements-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.requirements-list li {
+  padding: 8px 0;
+  color: #6b7280;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.requirements-list li:last-child {
+  border-bottom: none;
+}
+
+.requirements-list li::before {
+  content: "✓ ";
+  color: #22c55e;
+  font-weight: 600;
+  margin-right: 8px;
+}
+
+@media (max-width: 600px) {
+  .csv-upload-container {
+    padding: 16px;
+  }
+
+  .upload-area {
+    padding: 32px 16px;
+    min-height: 150px;
+  }
+
+  .file-selected {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .file-info {
+    text-align: center;
+  }
+}

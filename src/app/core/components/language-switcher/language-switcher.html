@@ -1,0 +1,23 @@
+<button
+  mat-icon-button
+  [matMenuTriggerFor]="languageMenu"
+  [attr.aria-label]="translationService.translate('app.settings')"
+  class="language-switcher-button">
+  <mat-icon>language</mat-icon>
+</button>
+
+<mat-menu #languageMenu="matMenu" class="language-menu">
+  @for (lang of availableLanguages; track lang.code) {
+    <button
+      mat-menu-item
+      [class.active]="currentLang() === lang.code"
+      (click)="switchLanguage(lang.code)">
+      <span class="menu-flag">{{ getLanguageFlag(lang.code) }}</span>
+      <span class="menu-name">{{ lang.nativeName }}</span>
+      <span class="menu-english">{{ lang.name }}</span>
+      @if (currentLang() === lang.code) {
+        <mat-icon class="check-icon">check</mat-icon>
+      }
+    </button>
+  }
+</mat-menu>

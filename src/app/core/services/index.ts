@@ -13,3 +13,6 @@ export * from './menu.service';
 export * from './translation.service';
 export * from './branding.service';
 export * from './menu-stats.service';
+export * from './alert.service';
+export * from './touchpoint.service';
+export * from './recommendation.service';

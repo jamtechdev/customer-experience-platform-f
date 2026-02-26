@@ -1,0 +1,69 @@
+<div class="competitor-container">
+  <div class="header-section">
+    <h1>Competitor Comparison</h1>
+    <p class="subtitle">Benchmark your performance against competitors</p>
+  </div>
+
+  <div *ngIf="loading()" class="loading-container">
+    <mat-spinner></mat-spinner>
+    <p>Loading comparison data...</p>
+  </div>
+
+  <div *ngIf="!loading() && !companyData()" class="empty-state">
+    <mat-card>
+      <mat-card-content>
+        <div class="empty-state-content">
+          <mat-icon>info</mat-icon>
+          <h3>No Comparison Data Available</h3>
+          <p>Upload CSV files with competitor data to see comparison results.</p>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <div *ngIf="!loading() && companyData()" class="content-section">
+    <mat-card>
+      <mat-card-header>
+        <mat-card-title>Sentiment & NPS Comparison</mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <table mat-table [dataSource]="getAllData()" class="comparison-table">
+          <ng-container matColumnDef="name">
+            <th mat-header-cell *matHeaderCellDef>Company</th>
+            <td mat-cell *matCellDef="let row">
+              <strong *ngIf="row.name === companyData()?.name">{{ row.name }} (You)</strong>
+              <span *ngIf="row.name !== companyData()?.name">{{ row.name }}</span>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="sentimentScore">
+            <th mat-header-cell *matHeaderCellDef>Sentiment Score</th>
+            <td mat-cell *matCellDef="let row">{{ (row.sentimentScore * 100).toFixed(1) }}%</td>
+          </ng-container>
+
+          <ng-container matColumnDef="npsScore">
+            <th mat-header-cell *matHeaderCellDef>NPS Score</th>
+            <td mat-cell *matCellDef="let row">{{ row.npsScore }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="feedbackCount">
+            <th mat-header-cell *matHeaderCellDef>Feedback Count</th>
+            <td mat-cell *matCellDef="let row">{{ row.feedbackCount }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="gap">
+            <th mat-header-cell *matHeaderCellDef>Sentiment Gap</th>
+            <td mat-cell *matCellDef="let row">
+              <span [class.positive]="calculateGap(row) > 0" [class.negative]="calculateGap(row) < 0">
+                {{ calculateGap(row) > 0 ? '+' : '' }}{{ (calculateGap(row) * 100).toFixed(1) }}%
+              </span>
+            </td>
+          </ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+          <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+        </table>
+      </mat-card-content>
+    </mat-card>
+  </div>
+</div>

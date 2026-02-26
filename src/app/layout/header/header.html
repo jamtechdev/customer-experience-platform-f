@@ -1,0 +1,44 @@
+<mat-toolbar color="primary" class="header-toolbar">
+  <button mat-icon-button (click)="onToggleSidenav()" class="menu-button">
+    <mat-icon>menu</mat-icon>
+  </button>
+
+  <span class="toolbar-title">Customer Experience Platform</span>
+
+  <span class="spacer"></span>
+
+  <button mat-icon-button [matMenuTriggerFor]="notificationsMenu" class="icon-button">
+    <mat-icon [matBadge]="0" matBadgeColor="warn">notifications</mat-icon>
+  </button>
+
+  <mat-menu #notificationsMenu="matMenu">
+    <div class="notification-menu">
+      <div class="notification-header">Notifications</div>
+      <div class="notification-empty">No new notifications</div>
+    </div>
+  </mat-menu>
+
+  <app-language-switcher></app-language-switcher>
+
+  <button mat-icon-button [matMenuTriggerFor]="userMenu" class="user-menu-button">
+    <div class="user-avatar">{{ userInitials }}</div>
+  </button>
+
+  <mat-menu #userMenu="matMenu">
+    <div class="user-menu-header">
+      <div class="user-info">
+        <div class="user-name">{{ userName }}</div>
+        <div class="user-email">{{ currentUser?.email }}</div>
+      </div>
+    </div>
+    <mat-divider></mat-divider>
+    <button mat-menu-item (click)="onProfile()">
+      <mat-icon>person</mat-icon>
+      <span>Profile</span>
+    </button>
+    <button mat-menu-item (click)="onLogout()">
+      <mat-icon>logout</mat-icon>
+      <span>Logout</span>
+    </button>
+  </mat-menu>
+</mat-toolbar>
