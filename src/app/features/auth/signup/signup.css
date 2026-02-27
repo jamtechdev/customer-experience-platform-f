@@ -1,12 +1,58 @@
 .signup-container {
-  min-height: 100vh;
-  display: flex;
+   min-height: 100vh;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #1a365d 0%, #2d3748 100%);
+  background: #fff;
   padding: 20px;
   position: relative;
   overflow: hidden;
+}
+
+.auth-bg-wrapper {
+  width: 100%;
+  height: 100%;
+  border-radius: 32px;
+  background: linear-gradient(135deg, var(--primary-color, #059669), var(--primary-dark, #047857));
+  padding: 32px 32px 0;
+  display: flex;
+  align-items: end;
+  justify-content: center;
+  overflow: hidden;
+  position: relative;
+}
+
+.auth-bg-wrapper:before {
+    content: '';
+    background-size: 50px 50px;
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background-image: linear-gradient(rgba(255, 255, 255, 0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 255, 255, 0.1) 1px, transparent 1px);
+}
+
+.auth-bg-content {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  justify-content: center;
+  color: #fff;
+  text-align: center;
+  position: relative;
+}
+
+.auth-bg-content p{
+  font-size: 24px;
+  width: 100%;
+  max-width: 750px;
+  margin: auto;
+}
+
+.auth-bg-content img{
+  width: 100%;
+  max-width: 1150px;
+  margin: 0 auto -60px;
 }
 
 .signup-bg {
@@ -46,18 +92,18 @@
 }
 
 .signup-card {
-  width: 100%;
-  max-width: 500px;
+ width: 100%;
+  max-width: 600px;
   background: white;
   border-radius: 16px;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
   padding: 40px;
   position: relative;
   z-index: 1;
+  margin: auto;
 }
 
 .signup-header {
-  text-align: center;
+  text-align: left;
   margin-bottom: 32px;
 }
 
@@ -72,8 +118,20 @@
   height: 100%;
 }
 
+.signup-header .back-button a {
+  margin: 0 0 24px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.signup-header .back-button svg {
+  width: 20px;
+  height: 20px;
+}
+
 .signup-header h1 {
-  font-size: 1.5rem;
+  font-size: 2rem;
   font-weight: 700;
   color: var(--text-primary, #1f2937);
   margin-bottom: 4px;
@@ -328,4 +386,22 @@
   .divider {
     display: none;
   }
+}
+@media(max-width:991px){
+  .signup-container {
+    grid-template-columns: 1fr;
+    padding: 24px 24px 0;
+  }
+
+  .auth-bg-content p{
+    font-size: 16px;
+  }
+
+  .signup-card{
+    padding: 24px 0 !important;
+  }
+
+  .auth-bg-content img{
+  margin: 0 auto -30px;
+}
 }

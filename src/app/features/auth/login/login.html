@@ -1,16 +1,21 @@
 <div class="login-container">
+  <div class="auth-bg-wrapper">
+    <div class="auth-bg-content">
+      <p>Analyze insights from social media, app reviews, and NPS surveys to improve customer experience, increase satisfaction, and scale your business with confidence.</p>
+      <img src="https://media.whatagraph.com/Create_a_social_media_dashboard_in_minutes_747fdbe763_92a8998190.webp" />
+    </div>
+  </div>
   <div class="login-card">
     <!-- Logo & Header -->
     <div class="login-header">
-      <div class="logo">
-        <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <circle cx="24" cy="24" r="24" fill="var(--primary-color)"/>
-          <path d="M16 32V20L24 14L32 20V32H26V26H22V32H16Z" fill="white"/>
-          <circle cx="24" cy="22" r="3" fill="white"/>
-        </svg>
+      <div class="back-button">
+        <a routerLink=""> <svg width="40" height="40"
+      viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+    <path d="M19 12H5M12 19l-7-7 7-7"/>
+  </svg> Back to home</a>
       </div>
-      <h1>{{ t('loginTitle') }}</h1>
-      <p>{{ t('loginSubtitle') }}</p>
+      <h1>{{ t('Let’s Get You In') }}</h1>
+      <p>{{ t('Log in to explore your personalized experience.') }}</p>
     </div>
 
     <!-- Login Form -->
@@ -27,7 +32,7 @@
       }
 
       <div class="form-group">
-        <label for="email">{{ t('email') }}</label>
+        <label for="email">{{ t('Email') }}</label>
         <div class="input-wrapper">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
@@ -47,7 +52,7 @@
       </div>
 
       <div class="form-group">
-        <label for="password">{{ t('password') }}</label>
+        <label for="password">{{ t('Password') }}</label>
         <div class="input-wrapper">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
@@ -88,9 +93,9 @@
         <label class="checkbox-label">
           <input type="checkbox" [(ngModel)]="rememberMe" name="rememberMe" [disabled]="loaderService.isLoading()" />
           <span class="checkbox-custom"></span>
-          <span>{{ t('rememberMe') }}</span>
+          <span>{{ t('Remember me') }}</span>
         </label>
-        <a routerLink="/forgot-password" class="forgot-link">{{ t('forgotPassword') }}</a>
+        <a routerLink="/forgot-password" class="forgot-link">{{ t('Forgot password') }}</a>
       </div>
 
       <button type="submit" class="btn-login" [disabled]="loaderService.isLoading()">
@@ -98,7 +103,7 @@
           <span class="spinner"></span>
           <span>{{ t('loading') }}...</span>
         } @else {
-          <span>{{ t('loginButton') }}</span>
+          <span>{{ t('Login') }}</span>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M5 12h14M12 5l7 7-7 7"/>
           </svg>
@@ -109,7 +114,7 @@
     <!-- SSO Options -->
     <div class="sso-section">
       <div class="divider">
-        <span>veya</span>
+        <span>OR</span>
       </div>
 
       <button class="btn-sso" (click)="onSSOLogin('azure')" [disabled]="loaderService.isLoading()">
@@ -122,21 +127,7 @@
 
     <!-- Footer -->
     <div class="login-footer">
-      <div class="nav-links">
-        <a routerLink="/" class="nav-link">{{ t('goToHome') || 'Go to Home' }}</a>
-        <span class="divider">|</span>
-        <a routerLink="/signup" class="nav-link">{{ t('signup') }}</a>
-      </div>
-      <p class="footer-text">{{ t('noAccount') }} <a routerLink="/signup" class="link">{{ t('signup') }}</a></p>
-      <p class="copyright">&copy; {{ currentYear }} Albaraka Türk Katılım Bankası</p>
-      <p class="version">CX Platform v1.0.0</p>
+      <p class="footer-text">{{ t('Don’t have an account?') }} <a routerLink="/signup" class="link">{{ t('Sign up') }}</a></p>
     </div>
-  </div>
-
-  <!-- Background Decoration -->
-  <div class="login-bg">
-    <div class="circle circle-1"></div>
-    <div class="circle circle-2"></div>
-    <div class="circle circle-3"></div>
   </div>
 </div>

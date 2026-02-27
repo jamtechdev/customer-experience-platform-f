@@ -4,27 +4,22 @@
     <div class="nav-content">
       <div class="logo">
         <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <circle cx="24" cy="24" r="24" fill="var(--primary-color)"/>
-          <path d="M16 32V20L24 14L32 20V32H26V26H22V32H16Z" fill="white"/>
-          <circle cx="24" cy="22" r="3" fill="white"/>
+          <circle cx="24" cy="24" r="24" fill="#fff"/>
+          <path d="M16 32V20L24 14L32 20V32H26V26H22V32H16Z" fill="var(--primary-color)"/>
+          <circle cx="24" cy="22" r="3" fill="var(--primary-color)"/>
         </svg>
         <span class="logo-text">{{ t('landing.loginTitle') }}</span>
       </div>
       <div class="nav-links">
+        <a routerLink="/login" class="btn-secondary">{{ t('landing.login') }}</a>
+        <a routerLink="/signup" class="btn-nav-outline">{{ t('landing.signup') }}</a>
         <app-language-switcher></app-language-switcher>
-        <a routerLink="/login" class="nav-link">{{ t('landing.login') }}</a>
-        <a routerLink="/signup" class="nav-link">{{ t('landing.signup') }}</a>
       </div>
     </div>
   </nav>
 
   <!-- Hero Section -->
   <section class="hero-section">
-    <div class="hero-bg">
-      <div class="circle circle-1"></div>
-      <div class="circle circle-2"></div>
-      <div class="circle circle-3"></div>
-    </div>
     <div class="hero-content">
       <h1 class="hero-title">{{ t('landing.landingTitle') }}</h1>
       <p class="hero-subtitle">{{ t('landing.landingSubtitle') }}</p>
@@ -33,6 +28,7 @@
         <a routerLink="/signup" class="btn-primary">{{ t('landing.getStarted') }}</a>
         <a routerLink="/login" class="btn-secondary">{{ t('landing.login') }}</a>
       </div>
+      <img src="https://media.whatagraph.com/Create_a_social_media_dashboard_in_minutes_747fdbe763_92a8998190.webp" />
     </div>
   </section>
 
@@ -62,14 +58,75 @@
       <h2 class="cta-title">{{ t('landing.getStarted') }}</h2>
       <p class="cta-subtitle">{{ t('landing.landingDescription') }}</p>
       <div class="cta-actions">
-        <a routerLink="/signup" class="btn-primary btn-large">{{ t('landing.signupButton') }}</a>
-        <a routerLink="/login" class="btn-secondary btn-large">{{ t('landing.loginButton') }}</a>
+        <a routerLink="/signup" class="btn-nav-outline">{{ t('landing.signupButton') }}</a>
+        <a routerLink="/login" class="btn-secondary">{{ t('landing.loginButton') }}</a>
       </div>
     </div>
   </section>
+  
+ <!-- FAQ -->
+  <section class="faq-section">
+  <div class="faq-container">
+    <h2 class="faq-title">Frequently Asked Questions</h2>
+
+    <div class="faq-item">
+      <div class="faq-question">
+        <h3>What services do you provide?</h3>
+        <span class="faq-icon">+</span>
+      </div>
+      <div class="faq-answer">
+        <p>
+          We provide web development, UI/UX design, e-commerce solutions,
+          and performance optimization services for modern businesses.
+        </p>
+      </div>
+    </div>
+
+    <div class="faq-item">
+      <div class="faq-question">
+        <h3>How long does a project take?</h3>
+        <span class="faq-icon">+</span>
+      </div>
+      <div class="faq-answer">
+        <p>
+          Project timelines vary depending on requirements, but most
+          websites are delivered within 2–4 weeks.
+        </p>
+      </div>
+    </div>
+
+    <div class="faq-item">
+      <div class="faq-question">
+        <h3>Do you offer support after launch?</h3>
+        <span class="faq-icon">+</span>
+      </div>
+      <div class="faq-answer">
+        <p>
+          Yes, we provide ongoing maintenance, updates, and technical
+          support after project completion.
+        </p>
+      </div>
+    </div>
+
+  </div>
+</section>
 
   <!-- Footer -->
   <footer class="landing-footer">
+    <div class="logo">
+        <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="24" cy="24" r="24" fill="#fff"/>
+          <path d="M16 32V20L24 14L32 20V32H26V26H22V32H16Z" fill="var(--primary-color)"/>
+          <circle cx="24" cy="22" r="3" fill="var(--primary-color)"/>
+        </svg>
+        <span class="logo-text">{{ t('landing.loginTitle') }}</span>
+      </div>
+      <div class="footer-link">
+        <a href="">Privacy policy</a>
+        <a href="">Terms & condition</a>
+        <a href="">Legal information</a>
+        <a href="">Cookies</a>
+      </div>
     <div class="container">
       <p class="copyright">&copy; {{ currentYear }} Albaraka Türk Katılım Bankası</p>
       <p class="version">CX Platform v1.0.0</p>
