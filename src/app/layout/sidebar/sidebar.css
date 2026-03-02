@@ -6,26 +6,31 @@
 }
 
 .sidebar-header {
-  padding: 20px 16px;
+  padding: 16px;
   border-bottom: 1px solid #e5e7eb;
 }
 
 .sidebar-title {
-  font-size: 1.25rem;
+  font-size: 1.5rem;
   font-weight: 600;
-  color: #111827;
+  color: #059568;
+  text-align: center;
   margin: 0;
 }
 
 .menu-list {
   flex: 1;
-  padding: 8px 0;
+  padding: 12px 0;
   overflow-y: auto;
 }
 
 .menu-item {
-  color: #6b7280;
-  transition: background-color 0.2s, color 0.2s;
+color: #6b7280;
+    transition: background-color 0.2s, color 0.2s;
+    max-width: 90%;
+    margin: 0 auto 12px;
+    border-radius: 50px !important;
+    height: 45px !important;
 }
 
 .menu-item:hover {
@@ -34,13 +39,16 @@
 }
 
 .menu-item.active {
-  background-color: #e0e7ff;
-  color: #667eea;
+  background-color: #0595682e;
   font-weight: 500;
 }
 
 .menu-item.active mat-icon {
-  color: #667eea;
+  color: #059568;
+}
+
+.menu-item mat-icon {
+ margin: 0 0 0 32px;
 }
 
 ::ng-deep .menu-item .mdc-list-item__content {

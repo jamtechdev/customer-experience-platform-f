@@ -1,8 +1,9 @@
 .footer-toolbar {
-  background: #ffffff;
   border-top: 1px solid #e5e7eb;
-  height: 64px;
   position: relative;
+  background: linear-gradient(135deg, var(--primary-color, #059669), var(--primary-dark, #047857));
+    height: auto;
+    padding: 8px;
 }
 
 .footer-content {
@@ -11,7 +12,7 @@
   justify-content: center;
   align-items: center;
   font-size: 0.875rem;
-  color: #6b7280;
+  color: #fff;
 }
 
 @media (max-width: 600px) {

@@ -1,8 +1,12 @@
 .header-toolbar {
-  position: sticky;
-  top: 0;
-  z-index: 1000;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+ position: sticky;
+    top: 0;
+    z-index: 1000;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    background: linear-gradient(135deg, var(--primary-color, #059669), var(--primary-dark, #047857));
+    max-width: 98%;
+    margin: 16px auto 0;
+    border-radius: 50px;
 }
 
 .menu-button {
@@ -23,7 +27,11 @@
 }
 
 .user-menu-button {
-  margin-left: 8px;
+ margin-left: 8px;
+    align-items: center;
+    justify-content: center;
+    display: flex;
+    padding: 0;
 }
 
 .user-avatar {
