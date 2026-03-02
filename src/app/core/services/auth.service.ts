@@ -46,7 +46,8 @@ export class AuthService {
   // Start with false, will be set to true after initialization
   readonly authReady$ = new BehaviorSubject<boolean>(false);
   readonly isAdmin = computed(() => this.currentUser()?.role === UserRole.ADMIN);
-  readonly isUser = computed(() => this.currentUser()?.role === UserRole.USER);
+  readonly isAnalyst = computed(() => this.currentUser()?.role === UserRole.ANALYST);
+  readonly isViewer = computed(() => this.currentUser()?.role === UserRole.VIEWER);
 
   constructor() {
     // Initialize from storage only in browser
@@ -174,6 +175,7 @@ export class AuthService {
     if (!user) return false;
     
     if (user.role === UserRole.ADMIN) return true;
+    if (user.role === UserRole.ANALYST && (permission.includes('read') || permission.includes('write'))) return true;
     return user.permissions.includes(permission);
   }
 

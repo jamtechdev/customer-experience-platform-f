@@ -14,7 +14,7 @@ export class MenuService {
 
   getMenuItems(): MenuItem[] {
     const user = this.authService.currentUser();
-    const userRole = user?.role || UserRole.USER;
+    const userRole = user?.role || UserRole.VIEWER;
     const currentLang = this.translationService.currentLang();
     const stats = this.menuStatsService.stats();
     const t = (key: string) => this.translationService.translate(key);

@@ -1,88 +1,63 @@
-import { Component, inject } from '@angular/core';
-import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
-import { MatCardModule } from '@angular/material/card';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInputModule } from '@angular/material/input';
-import { MatButtonModule } from '@angular/material/button';
-import { MatIconModule } from '@angular/material/icon';
-import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
-import { AuthService } from '../../../core/services/auth.service';
+import { Component, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { Router, RouterModule } from '@angular/router';
+import { AuthService } from '../../../core/services/auth.service';
+import { TranslationService } from '../../../core/services/translation.service';
+import { LoaderService } from '../../../core/services/loader.service';
 
 @Component({
   selector: 'app-forgot-password',
-  imports: [
-    CommonModule,
-    ReactiveFormsModule,
-    MatCardModule,
-    MatFormFieldModule,
-    MatInputModule,
-    MatButtonModule,
-    MatIconModule,
-    MatSnackBarModule,
-    RouterLink
-  ],
+  standalone: true,
+  imports: [CommonModule, FormsModule, RouterModule],
   templateUrl: './forgot-password.html',
   styleUrl: './forgot-password.css',
 })
 export class ForgotPassword {
-  private fb = inject(FormBuilder);
-  private authService = inject(AuthService);
   private router = inject(Router);
-  private snackBar = inject(MatSnackBar);
+  private authService = inject(AuthService);
+  private translationService = inject(TranslationService);
+  protected loaderService = inject(LoaderService);
 
-  forgotPasswordForm: FormGroup;
-  loading = false;
-  submitted = false;
+  email = '';
+  submitted = signal(false);
+  errorMessage = signal('');
 
-  constructor() {
-    this.forgotPasswordForm = this.fb.group({
-      email: ['', [Validators.required, Validators.email]]
-    });
-  }
+  currentYear = new Date().getFullYear();
+
+  // Translation getter
+  t = (key: string): string => this.translationService.translate(key);
 
   onSubmit(): void {
-    if (this.forgotPasswordForm.valid) {
-      this.loading = true;
-      this.authService.forgotPassword(this.forgotPasswordForm.value.email).subscribe({
-        next: (response) => {
-          this.loading = false;
-          this.submitted = true;
-          if (response.success) {
-            this.snackBar.open(
-              'If the email exists, a password reset code has been sent to your email.',
-              'Close',
-              { duration: 5000 }
-            );
-          }
-        },
-        error: (error) => {
-          this.loading = false;
-          const message = error.error?.message || 'Failed to send reset code. Please try again.';
-          this.snackBar.open(message, 'Close', { duration: 5000 });
+    if (!this.email) {
+      this.errorMessage.set(this.t('validationError') || 'Email is required');
+      return;
+    }
+
+    // Basic email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(this.email)) {
+      this.errorMessage.set(this.t('invalidEmail') || 'Please enter a valid email address');
+      return;
+    }
+
+    this.errorMessage.set('');
+    this.loaderService.show(this.t('loading') || 'Loading...');
+
+    this.authService.forgotPassword(this.email).subscribe({
+      next: (response) => {
+        this.loaderService.hide();
+        if (response.success) {
+          this.submitted.set(true);
+        } else {
+          this.errorMessage.set(response.message || this.t('forgotPasswordError') || 'Failed to send reset code');
         }
-      });
-    } else {
-      this.markFormGroupTouched(this.forgotPasswordForm);
-    }
-  }
-
-  private markFormGroupTouched(formGroup: FormGroup): void {
-    Object.keys(formGroup.controls).forEach(key => {
-      const control = formGroup.get(key);
-      control?.markAsTouched();
+      },
+      error: (error) => {
+        this.loaderService.hide();
+        const message = error.error?.message || error.message || this.t('forgotPasswordError') || 'Failed to send reset code. Please try again.';
+        this.errorMessage.set(message);
+      }
     });
-  }
-
-  getErrorMessage(): string {
-    const control = this.forgotPasswordForm.get('email');
-    if (control?.hasError('required')) {
-      return 'Email is required';
-    }
-    if (control?.hasError('email')) {
-      return 'Please enter a valid email address';
-    }
-    return '';
   }
 }
