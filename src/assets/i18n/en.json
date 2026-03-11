@@ -72,11 +72,22 @@
     "auditLogs": "Audit Logs",
     "systemSettings": "System Settings",
     "settings": "Settings",
+    "executiveDashboard": "Executive Dashboard",
+    "executiveSummary": "Executive Summary",
+    "journeyStages": "Journey Stages",
+    "methodology": "Methodology",
+    "socialAnalysis": "Social Analysis",
     "profile": "Profile",
     "notifications": "Notifications",
     "logout": "Logout"
   },
+  "roles": {
+    "admin": "Admin",
+    "cxManager": "CX Manager",
+    "executive": "Executive"
+  },
   "auth": {
+    "role": "Role",
     "login": "Login",
     "logout": "Logout",
     "email": "Email",
@@ -121,6 +132,7 @@
   "dashboard": {
     "title": "Dashboard",
     "subtitle": "Customer experience general overview",
+    "downloadSample": "Download sample CSV",
     "welcome": "Welcome",
     "totalFeedback": "Total Feedback",
     "averageSentimentScore": "Average Sentiment Score",

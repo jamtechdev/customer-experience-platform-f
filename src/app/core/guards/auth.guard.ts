@@ -106,7 +106,7 @@ export const guestGuard: CanActivateFn = (route, state) => {
         if (state.url === '/' || state.url === '') {
           return true;
         }
-        // If user has token and is trying to access login/signup, redirect to dashboard
+        // If user has token and is trying to access login/signup, redirect to app dashboard
         if (state.url === '/login' || state.url === '/signup' || state.url === '/forgot-password' || state.url === '/reset-password') {
           router.navigate(['/app/dashboard'], { replaceUrl: true });
           return false;
@@ -181,4 +181,48 @@ export const adminGuard: CanActivateFn = (route, state) => {
 
   router.navigate(['/unauthorized']);
   return false;
+};
+
+/** Allows Admin and CX Manager (analyst). Redirects Executive (viewer) to dashboard. Client §13. */
+export const analystOrAdminGuard: CanActivateFn = (route, state) => {
+  const authService = inject(AuthService);
+  const router = inject(Router);
+  const user = authService.currentUser();
+  if (!user) {
+    router.navigate(['/app/dashboard'], { replaceUrl: true });
+    return false;
+  }
+  if (user.role === UserRole.ADMIN || user.role === UserRole.ANALYST) {
+    return true;
+  }
+  router.navigate(['/app/dashboard'], { replaceUrl: true });
+  return false;
+};
+
+/** Executive Dashboard: only Executive (viewer) role. Others redirect to main dashboard. */
+export const executiveOnlyGuard: CanActivateFn = (route, state) => {
+  const authService = inject(AuthService);
+  const router = inject(Router);
+  const user = authService.currentUser();
+  if (!user) {
+    router.navigate(['/app/dashboard'], { replaceUrl: true });
+    return false;
+  }
+  if (user.role === UserRole.VIEWER) {
+    return true;
+  }
+  router.navigate(['/app/dashboard'], { replaceUrl: true });
+  return false;
+};
+
+/** Redirect Executive (viewer) to executive-dashboard when they try to open main dashboard. */
+export const dashboardRedirectGuard: CanActivateFn = (route, state) => {
+  const authService = inject(AuthService);
+  const router = inject(Router);
+  const user = authService.currentUser();
+  if (user?.role === UserRole.VIEWER) {
+    router.navigate(['/app/executive-dashboard'], { replaceUrl: true });
+    return false;
+  }
+  return true;
 };

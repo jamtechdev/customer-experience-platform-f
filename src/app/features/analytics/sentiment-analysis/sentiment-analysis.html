@@ -41,6 +41,7 @@
   </div>
 
   <div *ngIf="!loading() && stats()" class="stats-section">
+    <p *ngIf="(stats()?.total ?? 0) === 0" class="empty-hint">No sentiment data in this period. Feedback uploaded via CSV is analyzed automatically; data will appear here once processing is complete.</p>
     <div class="stats-grid">
       <mat-card class="stat-card positive">
         <mat-card-content>
@@ -49,7 +50,7 @@
             <span>Positive</span>
           </div>
           <div class="stat-value">{{ stats()?.positive || 0 }}</div>
-          <div class="stat-percentage">{{ ((stats()?.positive || 0) / (stats()?.total || 1) * 100).toFixed(1) }}%</div>
+          <div class="stat-percentage">{{ stats()?.total ? ((stats()!.positive || 0) / stats()!.total * 100).toFixed(1) : '0.0' }}%</div>
         </mat-card-content>
       </mat-card>
 
@@ -60,7 +61,7 @@
             <span>Neutral</span>
           </div>
           <div class="stat-value">{{ stats()?.neutral || 0 }}</div>
-          <div class="stat-percentage">{{ ((stats()?.neutral || 0) / (stats()?.total || 1) * 100).toFixed(1) }}%</div>
+          <div class="stat-percentage">{{ stats()?.total ? ((stats()!.neutral || 0) / stats()!.total * 100).toFixed(1) : '0.0' }}%</div>
         </mat-card-content>
       </mat-card>
 
@@ -71,7 +72,7 @@
             <span>Negative</span>
           </div>
           <div class="stat-value">{{ stats()?.negative || 0 }}</div>
-          <div class="stat-percentage">{{ ((stats()?.negative || 0) / (stats()?.total || 1) * 100).toFixed(1) }}%</div>
+          <div class="stat-percentage">{{ stats()?.total ? ((stats()!.negative || 0) / stats()!.total * 100).toFixed(1) : '0.0' }}%</div>
         </mat-card-content>
       </mat-card>
 
@@ -125,6 +126,44 @@
 
           <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
           <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+        </table>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card class="list-card">
+      <mat-card-header>
+        <mat-card-title>All feedback (from CSV upload &amp; other sources)</mat-card-title>
+        <mat-card-subtitle>Total: {{ feedbackTotal() }} items with sentiment analysis</mat-card-subtitle>
+      </mat-card-header>
+      <mat-card-content>
+        <p *ngIf="feedbackList().length === 0" class="empty-hint">No feedback in this period. Upload a CSV to see data here.</p>
+        <table *ngIf="feedbackList().length > 0" mat-table [dataSource]="feedbackList()" class="feedback-table">
+          <ng-container matColumnDef="content">
+            <th mat-header-cell *matHeaderCellDef>Content</th>
+            <td mat-cell *matCellDef="let row" class="content-cell">{{ row.content }}</td>
+          </ng-container>
+          <ng-container matColumnDef="source">
+            <th mat-header-cell *matHeaderCellDef>Source</th>
+            <td mat-cell *matCellDef="let row">{{ row.source }}</td>
+          </ng-container>
+          <ng-container matColumnDef="date">
+            <th mat-header-cell *matHeaderCellDef>Date</th>
+            <td mat-cell *matCellDef="let row">{{ formatDate(row.date) }}</td>
+          </ng-container>
+          <ng-container matColumnDef="sentiment">
+            <th mat-header-cell *matHeaderCellDef>Sentiment</th>
+            <td mat-cell *matCellDef="let row">
+              <mat-chip-set>
+                <mat-chip [class]="'sentiment-chip ' + row.sentiment?.toLowerCase()">{{ row.sentiment || '—' }}</mat-chip>
+              </mat-chip-set>
+            </td>
+          </ng-container>
+          <ng-container matColumnDef="score">
+            <th mat-header-cell *matHeaderCellDef>Score</th>
+            <td mat-cell *matCellDef="let row">{{ (row.score ?? 0).toFixed(2) }}</td>
+          </ng-container>
+          <tr mat-header-row *matHeaderRowDef="listColumns"></tr>
+          <tr mat-row *matRowDef="let row; columns: listColumns;"></tr>
         </table>
       </mat-card-content>
     </mat-card>

@@ -45,22 +45,6 @@
       <mat-card class="kpi-card">
         <mat-card-content>
           <div class="kpi-header">
-            <mat-icon class="kpi-icon" [class]="'kpi-icon ' + getTrendColor(dashboardData()!.nps.trend)">
-              {{ getTrendIcon(dashboardData()!.nps.trend) }}
-            </mat-icon>
-            <span class="kpi-title">{{ t('dashboard.npsScore') }}</span>
-          </div>
-          <div class="kpi-value">{{ Math.round(dashboardData()!.kpis.npsScore) }}</div>
-          <div class="kpi-trend" [class]="getTrendColor(dashboardData()!.nps.trend)">
-            <mat-icon>{{ getTrendIcon(dashboardData()!.nps.trend) }}</mat-icon>
-            <span>{{ Math.abs(dashboardData()!.nps.change).toFixed(1) }}</span>
-          </div>
-        </mat-card-content>
-      </mat-card>
-
-      <mat-card class="kpi-card">
-        <mat-card-content>
-          <div class="kpi-header">
             <mat-icon class="kpi-icon warn">notifications</mat-icon>
             <span class="kpi-title">{{ t('dashboard.criticalAlarms') }}</span>
           </div>

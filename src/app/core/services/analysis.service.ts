@@ -29,6 +29,20 @@ export class AnalysisService {
     return this.http.get<ApiResponse<any>>(`${this.baseUrl}/sentiment`, { params });
   }
 
+  getFeedbackWithSentiment(
+    companyId?: number,
+    startDate?: Date,
+    endDate?: Date,
+    page: number = 1,
+    limit: number = 50
+  ): Observable<ApiResponse<{ list: Array<{ id: number; content: string; source: string; date: string; author?: string; sentiment: string; score: number }>; total: number }>> {
+    let params = new HttpParams().set('page', page.toString()).set('limit', limit.toString());
+    if (companyId) params = params.set('companyId', companyId.toString());
+    if (startDate) params = params.set('startDate', startDate.toISOString());
+    if (endDate) params = params.set('endDate', endDate.toISOString());
+    return this.http.get<ApiResponse<{ list: any[]; total: number }>>(`${this.baseUrl}/sentiment/list`, { params });
+  }
+
   // Root Cause Analysis - matches backend /api/analysis/root-cause
   analyzeRootCauses(companyId: number, limit: number = 50): Observable<ApiResponse<RootCauseAnalysis[]>> {
     return this.http.post<ApiResponse<RootCauseAnalysis[]>>(`${this.baseUrl}/root-cause`, { companyId, limit });

@@ -10,6 +10,7 @@ import { MatMenuModule } from '@angular/material/menu';
 import { MatDialogModule } from '@angular/material/dialog';
 import { UserService } from '../../../core/services/admin.service';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { getRoleLabel } from '../../../core/models/user.model';
 
 interface User {
   id: number;
@@ -40,6 +41,7 @@ interface User {
 export class UserManagement implements OnInit {
   private userService = inject(UserService);
   private snackBar = inject(MatSnackBar);
+  getRoleLabel = getRoleLabel;
 
   loading = signal(false);
   users = signal<User[]>([]);

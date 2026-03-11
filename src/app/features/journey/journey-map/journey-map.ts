@@ -6,6 +6,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatChipsModule } from '@angular/material/chips';
 import { CustomerJourneyService } from '../../../core/services/customer-journey.service';
+import { AuthService } from '../../../core/services/auth.service';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 
 interface JourneyStage {
@@ -34,6 +35,7 @@ interface JourneyStage {
 })
 export class JourneyMap implements OnInit {
   private journeyService = inject(CustomerJourneyService);
+  private authService = inject(AuthService);
   private snackBar = inject(MatSnackBar);
 
   loading = signal(false);
@@ -45,7 +47,8 @@ export class JourneyMap implements OnInit {
 
   loadJourneyData(): void {
     this.loading.set(true);
-    this.journeyService.analyzeJourney().subscribe({
+    const companyId = this.authService.currentUser()?.settings?.companyId ?? 1;
+    this.journeyService.analyzeJourney(companyId).subscribe({
       next: (response) => {
         if (response.success && response.data) {
           const data = response.data;

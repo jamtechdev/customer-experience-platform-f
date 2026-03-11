@@ -1,12 +1,12 @@
 .header-toolbar {
- position: sticky;
-    top: 0;
-    z-index: 1000;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    background: linear-gradient(135deg, var(--primary-color, #059669), var(--primary-dark, #047857));
-    max-width: 98%;
-    margin: 16px auto 0;
-    border-radius: 50px;
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  flex-shrink: 0;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  background: linear-gradient(135deg, var(--primary-color, #059669), var(--primary-dark, #047857));
+  width: 100%;
+  border-radius: 0;
 }
 
 .menu-button {
@@ -26,12 +26,36 @@
   margin-right: 8px;
 }
 
+.user-and-role {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-left: 8px;
+}
+.role-badge {
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.25);
+  color: #fff;
+  white-space: nowrap;
+}
 .user-menu-button {
- margin-left: 8px;
-    align-items: center;
-    justify-content: center;
-    display: flex;
-    padding: 0;
+  align-items: center;
+  justify-content: center;
+  display: flex;
+  padding: 0;
+}
+.user-role {
+  font-size: 0.7rem;
+  color: rgba(255, 255, 255, 0.9);
+  margin-top: 4px;
+  font-weight: 500;
+}
+.user-menu-header .user-role {
+  color: #6b7280;
+  font-weight: 600;
 }
 
 .user-avatar {
@@ -86,6 +110,12 @@
   color: #6b7280;
 }
 
+.menu-divider {
+  height: 1px;
+  margin: 8px 0;
+  background: rgba(0, 0, 0, 0.12);
+}
+
 @media (max-width: 600px) {
   .toolbar-title {
     font-size: 1rem;
@@ -94,5 +124,9 @@
 
   .spacer {
     flex: 0.5;
+  }
+
+  .role-badge {
+    display: none;
   }
 }

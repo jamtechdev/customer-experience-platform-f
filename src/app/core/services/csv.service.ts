@@ -39,12 +39,24 @@ export interface CSVImportResult {
   dataType: 'social_media' | 'app_review' | 'nps_survey' | 'complaint' | 'unknown';
 }
 
+export interface CSVFormat {
+  requiredColumns: string[];
+  optionalColumns: string[];
+  maxFileSizeBytes: number;
+  acceptedExtensions?: string[];
+  firstRowHeaders?: boolean;
+}
+
 @Injectable({
   providedIn: 'root'
 })
 export class CSVService {
   private readonly http = inject(HttpClient);
   private readonly baseUrl = '/api/csv';
+
+  getFormat(): Observable<ApiResponse<CSVFormat>> {
+    return this.http.get<ApiResponse<CSVFormat>>(`${this.baseUrl}/format`);
+  }
 
   uploadCSV(file: File): Observable<ApiResponse<{ importId: number; filename: string; rowCount: number }>> {
     const formData = new FormData();

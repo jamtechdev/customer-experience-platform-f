@@ -12,6 +12,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatChipsModule } from '@angular/material/chips';
 import { FormsModule } from '@angular/forms';
 import { AnalysisService } from '../../../core/services/analysis.service';
+import { AuthService } from '../../../core/services/auth.service';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 
 interface SentimentStats {
@@ -44,44 +45,86 @@ interface SentimentStats {
 })
 export class SentimentAnalysis implements OnInit {
   private analysisService = inject(AnalysisService);
+  private authService = inject(AuthService);
   private snackBar = inject(MatSnackBar);
 
   loading = signal(false);
   stats = signal<SentimentStats | null>(null);
+  feedbackList = signal<Array<{ id: number; content: string; source: string; date: string; author?: string; sentiment: string; score: number }>>([]);
+  feedbackTotal = signal(0);
   selectedPeriod = signal<'day' | 'week' | 'month'>('month');
   startDate = signal<Date | null>(null);
   endDate = signal<Date | null>(null);
 
   displayedColumns: string[] = ['sentiment', 'count', 'percentage', 'bar'];
+  listColumns: string[] = ['content', 'source', 'date', 'sentiment', 'score'];
 
   ngOnInit(): void {
     this.loadSentimentStats();
+    this.loadFeedbackList();
+  }
+
+  getCompanyId(): number | undefined {
+    const id = this.authService.currentUser()?.settings?.companyId;
+    return id ?? 1;
+  }
+
+  getDateRange(): { start: Date; end: Date } {
+    const defaultStart = new Date();
+    defaultStart.setFullYear(defaultStart.getFullYear() - 1);
+    return {
+      start: this.startDate() || defaultStart,
+      end: this.endDate() || new Date()
+    };
   }
 
   loadSentimentStats(): void {
     this.loading.set(true);
-    const start = this.startDate() || new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
-    const end = this.endDate() || new Date();
+    const companyId = this.getCompanyId();
+    const { start, end } = this.getDateRange();
 
-    this.analysisService.getSentimentStats(undefined, start, end).subscribe({
+    this.analysisService.getSentimentStats(companyId, start, end).subscribe({
       next: (response) => {
-        if (response.success) {
-          // Transform data for display
-          const data = response.data;
-          const total = (data.positive || 0) + (data.negative || 0) + (data.neutral || 0);
-          this.stats.set({
-            positive: data.positive || 0,
-            negative: data.negative || 0,
-            neutral: data.neutral || 0,
-            total,
-            averageScore: data.averageScore || 0
-          });
-        }
+        const data = response?.data ?? {};
+        const total = data.total ?? (data.positive || 0) + (data.negative || 0) + (data.neutral || 0);
+        this.stats.set({
+          positive: data.positive ?? 0,
+          negative: data.negative ?? 0,
+          neutral: data.neutral ?? 0,
+          total,
+          averageScore: data.averageScore ?? 0
+        });
         this.loading.set(false);
       },
-      error: (error) => {
+      error: () => {
+        this.stats.set({ positive: 0, negative: 0, neutral: 0, total: 0, averageScore: 0 });
         this.loading.set(false);
         this.snackBar.open('Failed to load sentiment data', 'Close', { duration: 3000 });
+      }
+    });
+  }
+
+  loadFeedbackList(): void {
+    const companyId = this.getCompanyId();
+    const { start, end } = this.getDateRange();
+
+    this.analysisService.getFeedbackWithSentiment(companyId, start, end, 1, 100).subscribe({
+      next: (response) => {
+        if (response?.success && response?.data) {
+          const list = (response.data.list || []).map((row: any) => ({
+            ...row,
+            date: typeof row.date === 'string' ? row.date : row.date?.toISOString?.() ?? ''
+          }));
+          this.feedbackList.set(list);
+          this.feedbackTotal.set(response.data.total ?? list.length);
+        } else {
+          this.feedbackList.set([]);
+          this.feedbackTotal.set(0);
+        }
+      },
+      error: () => {
+        this.feedbackList.set([]);
+        this.feedbackTotal.set(0);
       }
     });
   }
@@ -89,24 +132,39 @@ export class SentimentAnalysis implements OnInit {
   getSentimentData() {
     const stats = this.stats();
     if (!stats) return [];
+    const total = stats.total || 0;
+    const pct = (n: number) => (total === 0 ? '0.0' : ((n / total) * 100).toFixed(1));
     return [
-      { sentiment: 'Positive', count: stats.positive, percentage: (stats.positive / stats.total * 100).toFixed(1) },
-      { sentiment: 'Neutral', count: stats.neutral, percentage: (stats.neutral / stats.total * 100).toFixed(1) },
-      { sentiment: 'Negative', count: stats.negative, percentage: (stats.negative / stats.total * 100).toFixed(1) }
+      { sentiment: 'Positive', count: stats.positive, percentage: pct(stats.positive) },
+      { sentiment: 'Neutral', count: stats.neutral, percentage: pct(stats.neutral) },
+      { sentiment: 'Negative', count: stats.negative, percentage: pct(stats.negative) }
     ];
   }
 
   getBarWidth(percentage: string): string {
-    return `${percentage}%`;
+    const n = parseFloat(percentage);
+    if (Number.isNaN(n) || n < 0) return '0%';
+    return `${Math.min(100, n)}%`;
   }
 
   onPeriodChange(): void {
     this.loadSentimentStats();
+    this.loadFeedbackList();
   }
 
   onDateChange(): void {
     if (this.startDate() && this.endDate()) {
       this.loadSentimentStats();
+      this.loadFeedbackList();
+    }
+  }
+
+  formatDate(d: string): string {
+    if (!d) return '';
+    try {
+      return new Date(d).toLocaleDateString(undefined, { dateStyle: 'short' });
+    } catch {
+      return d;
     }
   }
 }

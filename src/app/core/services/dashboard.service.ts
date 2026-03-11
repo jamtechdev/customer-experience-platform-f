@@ -212,4 +212,50 @@ export class DashboardService {
     
     return this.http.get<ApiResponse<ExecutiveDashboardData>>(`${this.baseUrl}/executive`, { params });
   }
+
+  /** Admin-only: system stats for admin dashboard. */
+  getAdminStats(): Observable<ApiResponse<AdminDashboardStats>> {
+    return this.http.get<ApiResponse<AdminDashboardStats>>(`${this.baseUrl}/admin-stats`);
+  }
+
+  /** Periodic trends for dashboard reports: sentiment and NPS over time. */
+  getDashboardTrends(
+    companyId: number,
+    period: 'day' | 'week' | 'month' = 'week',
+    days: number = 90
+  ): Observable<ApiResponse<DashboardTrends>> {
+    const params = new HttpParams()
+      .set('companyId', companyId.toString())
+      .set('period', period)
+      .set('days', days.toString());
+    return this.http.get<ApiResponse<DashboardTrends>>(`${this.baseUrl}/trends`, { params });
+  }
+}
+
+export interface AdminDashboardStats {
+  totalUsers: number;
+  activeSessions: number;
+  systemHealth: string;
+  systemStatus?: 'healthy' | 'degraded' | 'unhealthy';
+  pendingTasks: number;
+  pendingApprovals: number;
+  criticalAlerts: number;
+}
+
+export interface DashboardTrends {
+  sentimentTrends: Array<{
+    period: string;
+    positive: number;
+    negative: number;
+    neutral: number;
+    averageScore: number;
+    total: number;
+  }>;
+  npsTrends: Array<{
+    period: string;
+    npsScore: number;
+    count: number;
+  }>;
+  period: string;
+  days: number;
 }

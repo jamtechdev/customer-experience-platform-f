@@ -1,12 +1,42 @@
 <div class="report-builder-container">
   <div class="header-section">
     <h1>Report Builder</h1>
-    <p class="subtitle">Create custom reports with selected metrics and visualizations</p>
+    <p class="subtitle">Create custom reports with selected metrics and export to PDF or Excel.</p>
   </div>
 
   <mat-card>
+    <mat-card-header>
+      <mat-card-title>Build Report</mat-card-title>
+      <mat-card-subtitle>Choose report type and format, then export.</mat-card-subtitle>
+    </mat-card-header>
     <mat-card-content>
-      <p>Report builder component - Implementation in progress</p>
+      <div class="builder-form">
+        <mat-form-field appearance="outline">
+          <mat-label>Report Type</mat-label>
+          <mat-select [value]="reportType()" (valueChange)="reportType.set($event)">
+            <mat-option value="executive">Executive Summary</mat-option>
+            <mat-option value="full">Full CX Report</mat-option>
+          </mat-select>
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>Format</mat-label>
+          <mat-select [value]="reportFormat()" (valueChange)="reportFormat.set($event)">
+            <mat-option value="pdf">PDF</mat-option>
+            <mat-option value="excel">Excel</mat-option>
+          </mat-select>
+        </mat-form-field>
+        <div class="export-actions">
+          <button
+            mat-raised-button
+            color="primary"
+            (click)="exportReport()"
+            [disabled]="exporting()">
+            <mat-icon>download</mat-icon>
+            {{ exporting() ? 'Exporting...' : 'Export Report' }}
+          </button>
+        </div>
+      </div>
+      <p class="hint">Executive Summary and Full CX Report include sentiment, NPS, competitor comparison, root causes, journey analysis, and alerts. Full report is available in both PDF and Excel.</p>
     </mat-card-content>
   </mat-card>
 </div>

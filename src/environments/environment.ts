@@ -18,18 +18,15 @@ export const environment = {
   appVersion: getEnv('NG_APP_VERSION', '1.0.0'),
   appTitle: getEnv('NG_APP_TITLE', 'Albaraka Türk Müşteri Deneyimi Platformu'),
   
-  // API Configuration - Node.js Backend
-  // Construct API URL from environment variables
+  // API Configuration - no proxy: frontend calls backend directly (dev default localhost:5000)
   apiUrl: (() => {
     const apiUrl = getEnv('NG_APP_API_URL', '');
     if (apiUrl) return apiUrl;
-    
-    // Build from components if not provided
-    const apiHost = getEnv('NG_APP_API_HOST', 'localhost');
-    const apiPort = getEnv('NG_APP_API_PORT', '5000');
-    const apiPath = getEnv('NG_APP_API_PATH', '/api');
-    const apiProtocol = getEnv('NG_APP_API_PROTOCOL', 'http');
-    return `${apiProtocol}://${apiHost}:${apiPort}${apiPath}`;
+    const protocol = getEnv('NG_APP_API_PROTOCOL', 'http');
+    const host = getEnv('NG_APP_API_HOST', 'localhost');
+    const port = getEnv('NG_APP_API_PORT', '5000');
+    const path = getEnv('NG_APP_API_PATH', '/api');
+    return `${protocol}://${host}${port ? ':' + port : ''}${path}`;
   })(),
   apiVersion: getEnv('NG_APP_API_VERSION', 'v1'),
   apiTimeout: getEnvNumber('NG_APP_API_TIMEOUT', 30000), // 30 seconds
@@ -49,12 +46,12 @@ export const environment = {
       const wsUrl = getEnv('NG_APP_WEBSOCKET_URL', '');
       if (wsUrl) return wsUrl;
       
-      // Build from components if not provided
-      const wsHost = getEnv('NG_APP_WEBSOCKET_HOST', getEnv('NG_APP_API_HOST', 'localhost'));
-      const wsPort = getEnv('NG_APP_WEBSOCKET_PORT', getEnv('NG_APP_API_PORT', '5000'));
+      const wsHost = getEnv('NG_APP_WEBSOCKET_HOST', '') || getEnv('NG_APP_API_HOST', '');
+      const wsPort = getEnv('NG_APP_WEBSOCKET_PORT', '') || getEnv('NG_APP_API_PORT', '');
       const wsPath = getEnv('NG_APP_WEBSOCKET_PATH', '/ws');
       const wsProtocol = getEnv('NG_APP_WEBSOCKET_PROTOCOL', 'ws');
-      return `${wsProtocol}://${wsHost}:${wsPort}${wsPath}`;
+      if (!wsHost) return '';
+      return `${wsProtocol}://${wsHost}${wsPort ? ':' + wsPort : ''}${wsPath}`;
     })(),
     reconnectInterval: getEnvNumber('NG_APP_WEBSOCKET_RECONNECT_INTERVAL', 5000),
     maxReconnectAttempts: getEnvNumber('NG_APP_WEBSOCKET_MAX_RECONNECT_ATTEMPTS', 10),
@@ -198,12 +195,11 @@ export const environment = {
     modelEndpoint: (() => {
       const endpoint = getEnv('NG_APP_AI_MODEL_ENDPOINT', '');
       if (endpoint) return endpoint;
-      
-      // Build from API URL if not provided
-      const apiHost = getEnv('NG_APP_API_HOST', 'localhost');
-      const apiPort = getEnv('NG_APP_API_PORT', '5000');
+      const apiHost = getEnv('NG_APP_API_HOST', '');
+      const apiPort = getEnv('NG_APP_API_PORT', '');
       const apiProtocol = getEnv('NG_APP_API_PROTOCOL', 'http');
-      return `${apiProtocol}://${apiHost}:${apiPort}/api/analysis/offline-ai`;
+      if (!apiHost) return '';
+      return `${apiProtocol}://${apiHost}${apiPort ? ':' + apiPort : ''}/api/analysis/offline-ai`;
     })(),
     confidenceThreshold: getEnvNumber('NG_APP_AI_CONFIDENCE_THRESHOLD', 0.7),
     maxTokens: getEnvNumber('NG_APP_AI_MAX_TOKENS', 2048),

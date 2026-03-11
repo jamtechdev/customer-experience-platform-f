@@ -25,14 +25,11 @@ Before you begin, ensure you have the following installed:
 
 3. **Configure environment (optional):**
    
-   Create a `.env.development` file in the root directory if you need to customize settings:
+   No proxy is used. The frontend calls the backend API directly. In development, the default API URL is `http://localhost:5000/api`. To override, copy `.env.example` to `.env` and set:
    ```env
-   NG_APP_API_URL=http://localhost:3000/api
-   NG_APP_NAME=Sentimenter CX
-   NG_APP_API_VERSION=v1
+   NG_APP_API_URL=http://localhost:5000/api
    ```
-   
-   **Note:** Most configuration is done in `src/environments/environment.ts`. The `.env.development` file is optional and only needed if you want to override default values.
+   Ensure the backend is running and has CORS set for your frontend origin (e.g. `FRONTEND_URL=http://localhost:4200` in backend `.env`).
 
 ## Development
 
@@ -52,10 +49,10 @@ Once the server is running, open your browser and navigate to `http://localhost:
 
 ### Backend Connection
 
-Make sure the backend API is running and accessible. By default, the frontend expects the backend at `http://localhost:3000/api`. You can configure this in:
+No proxy is used in development or production. The frontend calls the backend at the URL in `environment.apiUrl` (default in dev: `http://localhost:5000/api`).
 
-- `src/environments/environment.ts` (for development)
-- `.env.development` file (optional override)
+1. Start the backend first (see `backend/README.md`). The API runs at `http://localhost:5000` and serves routes under `/api`.
+2. Start the frontend with `npm start`. Login, register, and all API requests go directly to the backend. Ensure the backend `.env` has `FRONTEND_URL=http://localhost:4200` so CORS allows the frontend origin.
 
 ## Building
 
@@ -124,23 +121,22 @@ The application uses Angular environment files located in `src/environments/`:
 
 You can customize the following in `src/environments/environment.ts`:
 
-- **API URL:** `apiUrl` - Backend API endpoint (default: `http://localhost:3000/api`)
+- **API URL:** In development the default is `http://localhost:5000/api` (no proxy; frontend calls backend directly). Override with `NG_APP_API_URL` in `.env`. In production set `NG_APP_API_URL` at build time.
 - **API Version:** `apiVersion` - API version (default: `v1`)
 - **Feature Flags:** Enable/disable features in `features` object
 - **Languages:** Configure supported languages
 - **Pagination:** Set default page sizes
 - **Upload Settings:** Configure file upload limits
 
-### Optional Environment Variables
+### Environment Variables
 
-Create a `.env.development` file to override defaults:
+Use a `.env` file in the frontend root (copy from `.env.example`). Required for API:
 
 ```env
-NG_APP_API_URL=http://localhost:3000/api
-NG_APP_NAME=Sentimenter CX
-NG_APP_API_VERSION=v1
-NG_APP_API_TIMEOUT=30000
+NG_APP_API_URL=http://localhost:5000/api
 ```
+
+Other optional variables: `NG_APP_NAME`, `NG_APP_API_VERSION`, `NG_APP_API_TIMEOUT`, etc. See `.env.example` for the full list.
 
 ## Testing
 
@@ -197,9 +193,7 @@ ng generate --help
    - **Apache:** Point DocumentRoot to `dist/`
    - **Node.js:** Use a static file server like `serve` or `express-static`
 
-4. **Configure API proxy** (if needed):
-   - Set up reverse proxy in your web server to forward `/api` requests to backend
-   - Or configure CORS in backend to allow your frontend domain
+4. **API in production**: Set `NG_APP_API_URL` to your production API base (e.g. `https://api.yourdomain.com/api`) when building. Ensure the backend allows your frontend origin via CORS.
 
 ### Example Nginx Configuration
 
@@ -215,7 +209,7 @@ server {
     }
 
     location /api {
-        proxy_pass http://localhost:3000;
+        proxy_pass http://localhost:5000;
         proxy_http_version 1.1;
         proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection 'upgrade';
@@ -227,12 +221,25 @@ server {
 
 ## Troubleshooting
 
+### "Unexpected token '<', \"<!DOCTYPE \"... is not valid JSON"
+
+The app received HTML instead of JSON from the API. Common causes:
+
+1. **Backend not running** – Start the backend first: `cd backend && npm run dev`. It should listen on port 5000 (or the port in your backend `.env`).
+2. **CORS** – Backend must allow the frontend origin. In backend `.env` set `FRONTEND_URL=http://localhost:4200` (or your frontend URL).
+3. **Wrong API URL** – In development the default is `http://localhost:5000/api`. To override, set `NG_APP_API_URL` in frontend `.env` and ensure it matches the backend (protocol, host, port).
+
+### Login / Register API not calling
+
+- Ensure the backend is running. Open DevTools → Network; on Login/Register you should see a request to `http://localhost:5000/api/auth/login` (or your `apiUrl`). If you see a different URL or the response is HTML, the backend is not reachable or CORS is blocking.
+- No proxy is used: the frontend calls the backend directly. Check backend CORS (`FRONTEND_URL` in backend `.env`) and that the backend port matches `environment.apiUrl` (default 5000).
+
 ### Cannot Connect to Backend
 
-- Verify backend is running on the configured port (default: 3000)
-- Check `apiUrl` in `src/environments/environment.ts`
-- Verify CORS is enabled in backend
-- Check browser console for CORS errors
+- Verify backend is running on port 5000 (or the port in your API URL).
+- In development the default API URL is `http://localhost:5000/api`. Override with `NG_APP_API_URL` in `.env` if needed.
+- Verify backend CORS: set `FRONTEND_URL=http://localhost:4200` in backend `.env`.
+- In the browser Network tab, API requests should go to the backend URL and return JSON, not HTML.
 
 ### Build Errors
 

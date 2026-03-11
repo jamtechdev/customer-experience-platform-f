@@ -7,7 +7,9 @@
       </div>
       <div class="user-info">
         @if (currentUser(); as user) {
-          <span>{{ user.firstName }} {{ user.lastName }}</span>
+          <span>{{ (user.firstName || '') + (user.lastName ? ' ' + user.lastName : '') || 'N/A' }}</span>
+        } @else {
+          <span>N/A</span>
         }
         <button class="btn-logout" (click)="authService.logout()">{{ t('logout') }}</button>
       </div>
@@ -15,16 +17,84 @@
   </div>
 
   <div class="admin-content">
-    <div class="stats-grid">
-      <div *ngFor="let stat of stats" class="stat-card">
+    <div class="quick-actions">
+      <h2 class="quick-actions-title">Quick actions</h2>
+      <div class="quick-actions-buttons">
+        <a routerLink="/app/dashboard" class="quick-action-btn quick-action-dashboard">
+          <span class="quick-action-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+          </span>
+          <span class="quick-action-label">Dashboard</span>
+        </a>
+        <a routerLink="/app/executive-dashboard" class="quick-action-btn">
+          <span class="quick-action-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+          </span>
+          <span class="quick-action-label">Executive Dashboard</span>
+        </a>
+      </div>
+    </div>
+
+    <div *ngIf="loading()" class="admin-loading">
+      <mat-spinner diameter="40"></mat-spinner>
+      <p>Loading dashboard...</p>
+    </div>
+    <div *ngIf="error()" class="admin-error">
+      <p>Failed to load dashboard data. <button type="button" class="retry-link" (click)="loadAdminStats()">Retry</button></p>
+    </div>
+    <div *ngIf="!loading()" class="stats-grid">
+      <div class="stat-card">
         <div class="stat-icon">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <circle cx="12" cy="12" r="10"/>
-          </svg>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/></svg>
         </div>
         <div class="stat-content">
-          <p class="stat-label">{{ stat.label }}</p>
-          <p class="stat-value">{{ stat.value }}</p>
+          <p class="stat-label">{{ t('userManagement') || 'Total Users' }}</p>
+          <p class="stat-value">{{ stats()?.totalUsers ?? 'N/A' }}</p>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/></svg>
+        </div>
+        <div class="stat-content">
+          <p class="stat-label">Active Sessions</p>
+          <p class="stat-value">{{ stats()?.activeSessions ?? 'N/A' }}</p>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/></svg>
+        </div>
+        <div class="stat-content">
+          <p class="stat-label">System Health</p>
+          <p class="stat-value">{{ stats()?.systemHealth ?? 'N/A' }}</p>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/></svg>
+        </div>
+        <div class="stat-content">
+          <p class="stat-label">Pending Tasks</p>
+          <p class="stat-value">{{ stats()?.pendingTasks ?? 'N/A' }}</p>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/></svg>
+        </div>
+        <div class="stat-content">
+          <p class="stat-label">Pending Approvals</p>
+          <p class="stat-value">{{ stats()?.pendingApprovals ?? 'N/A' }}</p>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/></svg>
+        </div>
+        <div class="stat-content">
+          <p class="stat-label">Critical Alerts</p>
+          <p class="stat-value">{{ stats()?.criticalAlerts ?? 'N/A' }}</p>
         </div>
       </div>
     </div>

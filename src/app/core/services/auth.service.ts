@@ -108,9 +108,13 @@ export class AuthService {
     return isPlatformBrowser(this.platformId);
   }
 
-  register(data: { email: string; password: string; firstName: string; lastName: string }): Observable<ApiResponse<AuthResponse>> {
+  private get apiBase(): string {
+    return environment.apiUrl || '/api';
+  }
+
+  register(data: { email: string; password: string; firstName: string; lastName: string; role?: string }): Observable<ApiResponse<AuthResponse>> {
     this.loaderService.show('Creating account...');
-    return this.http.post<ApiResponse<AuthResponse>>(`${environment.apiUrl}/auth/register`, data).pipe(
+    return this.http.post<ApiResponse<AuthResponse>>(`${this.apiBase}/auth/register`, data).pipe(
       tap(response => {
         if (response.success && response.data) {
           // Auto-login after successful registration
@@ -128,7 +132,7 @@ export class AuthService {
 
   login(credentials: LoginRequest): Observable<ApiResponse<AuthResponse>> {
     this.loaderService.show('Signing in...');
-    return this.http.post<ApiResponse<AuthResponse>>(`${environment.apiUrl}/auth/login`, credentials).pipe(
+    return this.http.post<ApiResponse<AuthResponse>>(`${this.apiBase}/auth/login`, credentials).pipe(
       tap(response => {
         if (response.success) {
           this.setSession(response.data);
@@ -157,7 +161,7 @@ export class AuthService {
 
   refreshToken(): Observable<ApiResponse<AuthResponse>> {
     const refreshToken = this.isBrowser ? localStorage.getItem(this.REFRESH_TOKEN_KEY) : null;
-    return this.http.post<ApiResponse<AuthResponse>>(`${environment.apiUrl}/auth/refresh`, { refreshToken }).pipe(
+    return this.http.post<ApiResponse<AuthResponse>>(`${this.apiBase}/auth/refresh`, { refreshToken }).pipe(
       tap(response => {
         if (response.success) {
           this.setSession(response.data);
@@ -196,7 +200,7 @@ export class AuthService {
   }
 
   forgotPassword(email: string): Observable<ApiResponse<{ message: string }>> {
-    return this.http.post<ApiResponse<{ message: string }>>(`${environment.apiUrl}/auth/forgot-password`, { email }).pipe(
+    return this.http.post<ApiResponse<{ message: string }>>(`${this.apiBase}/auth/forgot-password`, { email }).pipe(
       catchError(error => {
         console.error('Forgot password error:', error);
         return throwError(() => error);
@@ -205,7 +209,7 @@ export class AuthService {
   }
 
   resetPassword(data: { email: string; otp: string; newPassword: string }): Observable<ApiResponse<{ message: string }>> {
-    return this.http.post<ApiResponse<{ message: string }>>(`${environment.apiUrl}/auth/reset-password`, data).pipe(
+    return this.http.post<ApiResponse<{ message: string }>>(`${this.apiBase}/auth/reset-password`, data).pipe(
       catchError(error => {
         console.error('Reset password error:', error);
         return throwError(() => error);
@@ -214,7 +218,7 @@ export class AuthService {
   }
 
   getProfile(): Observable<ApiResponse<User>> {
-    return this.http.get<ApiResponse<User>>(`${environment.apiUrl}/auth/profile`).pipe(
+    return this.http.get<ApiResponse<User>>(`${this.apiBase}/auth/profile`).pipe(
       tap(response => {
         if (response.success && response.data) {
           this.currentUser.set(response.data);

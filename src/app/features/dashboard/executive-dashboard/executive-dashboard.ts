@@ -61,9 +61,17 @@ export class ExecutiveDashboard implements OnInit {
   downloadReport(): void {
     const user = this.authService.currentUser();
     const companyId = user?.settings?.companyId || 1;
-    
-    // TODO: Implement report download
-    console.log('Downloading executive report for company:', companyId);
+    this.reportService.exportDashboardToPdf({ companyId }).subscribe({
+      next: (blob) => {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `executive-summary-${new Date().toISOString().slice(0, 10)}.pdf`;
+        a.click();
+        URL.revokeObjectURL(url);
+      },
+      error: () => {}
+    });
   }
 
   getTrendIcon(trend: 'up' | 'down' | 'stable'): string {

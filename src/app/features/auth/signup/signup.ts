@@ -24,6 +24,8 @@ export class Signup {
   email = '';
   password = '';
   confirmPassword = '';
+  /** Role for registration: analyst (CX Manager) or viewer (Executive). Admin is only via seed. */
+  role: 'analyst' | 'viewer' = 'viewer';
   
   showPassword = signal(false);
   showConfirmPassword = signal(false);
@@ -57,7 +59,8 @@ export class Signup {
       firstName: this.firstName,
       lastName: this.lastName,
       email: this.email,
-      password: this.password
+      password: this.password,
+      role: this.role
     }).subscribe({
       next: (response) => {
         this.loaderService.hide();

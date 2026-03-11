@@ -234,6 +234,24 @@
   cursor: not-allowed;
 }
 
+.select-wrapper select {
+  width: 100%;
+  padding: 14px 16px;
+  border: 1px solid var(--border-color, #e5e7eb);
+  border-radius: 10px;
+  font-size: 1rem;
+  background: #fff;
+  cursor: pointer;
+}
+.select-wrapper select:focus {
+  outline: none;
+  border-color: var(--primary-color, #059669);
+}
+.select-wrapper select:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
 .toggle-password {
   position: absolute;
   right: 12px;

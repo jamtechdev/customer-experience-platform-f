@@ -50,33 +50,49 @@ export class CustomerJourneyService {
   }
 
   // Journey Analysis - matches backend /api/journey routes
-  getStages(): Observable<ApiResponse<any[]>> {
-    return this.http.get<ApiResponse<any[]>>(`${this.baseUrl}/stages`);
+  private readonly journeyApiUrl = '/api/journey';
+
+  getStages(companyId?: number): Observable<ApiResponse<any[]>> {
+    let params = new HttpParams();
+    if (companyId != null) params = params.set('companyId', companyId.toString());
+    return this.http.get<ApiResponse<any[]>>(`${this.journeyApiUrl}/stages`, { params });
+  }
+
+  createStage(stage: { name: string; description: string; order?: number; companyId?: number }): Observable<ApiResponse<any>> {
+    return this.http.post<ApiResponse<any>>(`${this.journeyApiUrl}/stages`, stage);
+  }
+
+  updateStage(id: number, stage: { name?: string; description?: string; order?: number }): Observable<ApiResponse<any>> {
+    return this.http.put<ApiResponse<any>>(`${this.journeyApiUrl}/stages/${id}`, stage);
+  }
+
+  deleteStage(id: number): Observable<ApiResponse<void>> {
+    return this.http.delete<ApiResponse<void>>(`${this.journeyApiUrl}/stages/${id}`);
   }
 
   analyzeJourney(companyId?: number): Observable<ApiResponse<any>> {
     let params = new HttpParams();
     if (companyId) params = params.set('companyId', companyId.toString());
-    return this.http.get<ApiResponse<any>>(`${this.baseUrl}/analysis`, { params });
+    return this.http.get<ApiResponse<any>>(`${this.journeyApiUrl}/analysis`, { params });
   }
 
   getJourneyTrends(companyId?: number, period?: 'day' | 'week' | 'month'): Observable<ApiResponse<any>> {
     let params = new HttpParams();
     if (companyId) params = params.set('companyId', companyId.toString());
     if (period) params = params.set('period', period);
-    return this.http.get<ApiResponse<any>>(`${this.baseUrl}/trends`, { params });
+    return this.http.get<ApiResponse<any>>(`${this.journeyApiUrl}/trends`, { params });
   }
 
-  // Stages
+  // Stages (per-journey; for journeyId-based API)
   addStage(journeyId: string, stage: Partial<JourneyStage>): Observable<ApiResponse<JourneyStage>> {
     return this.http.post<ApiResponse<JourneyStage>>(`${this.baseUrl}/${journeyId}/stages`, stage);
   }
 
-  updateStage(journeyId: string, stageId: string, stage: Partial<JourneyStage>): Observable<ApiResponse<JourneyStage>> {
+  updateStageInJourney(journeyId: string, stageId: string, stage: Partial<JourneyStage>): Observable<ApiResponse<JourneyStage>> {
     return this.http.put<ApiResponse<JourneyStage>>(`${this.baseUrl}/${journeyId}/stages/${stageId}`, stage);
   }
 
-  deleteStage(journeyId: string, stageId: string): Observable<ApiResponse<void>> {
+  deleteStageInJourney(journeyId: string, stageId: string): Observable<ApiResponse<void>> {
     return this.http.delete<ApiResponse<void>>(`${this.baseUrl}/${journeyId}/stages/${stageId}`);
   }
 

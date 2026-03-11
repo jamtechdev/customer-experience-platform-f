@@ -1,5 +1,5 @@
 import { Routes } from '@angular/router';
-import { authGuard, guestGuard, adminGuard, checkerGuard } from './core/guards/auth.guard';
+import { authGuard, guestGuard } from './core/guards/auth.guard';
 import { adminAuthGuard } from './core/guards/admin-auth.guard';
 import { adminGuestGuard } from './core/guards/admin-guest.guard';
 
@@ -9,43 +9,42 @@ export const routes: Routes = [
     path: '',
     loadComponent: () => import('./landing/landing').then(m => m.Landing)
   },
-  // Admin routes (separate from user routes)
+  // Admin login (no layout - full page)
+  {
+    path: 'admin/login',
+    loadComponent: () => import('./features/admin/auth/admin-login/admin-login').then(m => m.AdminLogin),
+    canActivate: [adminGuestGuard]
+  },
+  // Admin routes with main layout (sidebar, header, footer) - prefix /admin
   {
     path: 'admin',
+    loadComponent: () => import('./layout/main-layout/main-layout').then(m => m.MainLayout),
+    canActivate: [adminAuthGuard],
     children: [
       {
-        path: 'login',
-        loadComponent: () => import('./features/admin/auth/admin-login/admin-login').then(m => m.AdminLogin),
-        canActivate: [adminGuestGuard]
-      },
-      {
-        path: 'dashboard',
-        loadComponent: () => import('./features/admin/dashboard/admin-dashboard/admin-dashboard').then(m => m.AdminDashboard),
-        canActivate: [adminAuthGuard],
-        data: { title: 'Admin Dashboard', breadcrumb: 'Admin Dashboard' }
+        path: '',
+        redirectTo: '/app/dashboard',
+        pathMatch: 'full'
       },
       {
         path: 'users',
         loadComponent: () => import('./features/admin/user-management/user-management').then(m => m.UserManagement),
-        canActivate: [adminAuthGuard],
         data: { title: 'User Management', breadcrumb: 'Users' }
       },
       {
         path: 'roles',
         loadComponent: () => import('./features/admin/role-management/role-management').then(m => m.RoleManagement),
-        canActivate: [adminAuthGuard],
         data: { title: 'Role Management', breadcrumb: 'Roles' }
       },
       {
         path: 'settings',
         loadComponent: () => import('./features/admin/system-settings/system-settings').then(m => m.SystemSettings),
-        canActivate: [adminAuthGuard],
         data: { title: 'System Settings', breadcrumb: 'Settings' }
       },
       {
-        path: '',
-        redirectTo: 'dashboard',
-        pathMatch: 'full'
+        path: 'journey-stages',
+        loadComponent: () => import('./features/admin/journey-stage-config/journey-stage-config').then(m => m.JourneyStageConfig),
+        data: { title: 'Journey Stages', breadcrumb: 'Journey Stages' }
       }
     ]
   },
@@ -88,9 +87,13 @@ export const routes: Routes = [
         loadComponent: () => import('./features/dashboard/main-dashboard/main-dashboard').then(m => m.MainDashboard),
         data: { title: 'Dashboard', breadcrumb: 'Dashboard' }
       },
+      {
+        path: 'executive-dashboard',
+        loadComponent: () => import('./features/dashboard/executive-dashboard/executive-dashboard').then(m => m.ExecutiveDashboard),
+        data: { title: 'Executive Dashboard', breadcrumb: 'Executive Dashboard' }
+      },
 
-
-      // CX Journey / Roadmap
+      // CX Journey
       {
         path: 'cx',
         children: [
@@ -135,7 +138,7 @@ export const routes: Routes = [
       },
 
 
-      // Data Sources
+      // Data Sources (Admin + CX Manager only)
       {
         path: 'data-sources',
         redirectTo: 'data-sources/csv-upload',
@@ -147,7 +150,7 @@ export const routes: Routes = [
         data: { title: 'CSV Upload', breadcrumb: 'CSV Upload' }
       },
 
-      // Reports
+      // Reports (list + executive-summary for all; builder for Admin + CX Manager only)
       {
         path: 'reports',
         children: [
@@ -157,16 +160,26 @@ export const routes: Routes = [
             data: { title: 'Reports', breadcrumb: 'Reports' }
           },
           {
+            path: 'dashboard-reports',
+            loadComponent: () => import('./features/reports/dashboard-reports/dashboard-reports').then(m => m.DashboardReports),
+            data: { title: 'Dashboard Reports', breadcrumb: 'Dashboard Reports' }
+          },
+          {
             path: 'builder',
             loadComponent: () => import('./features/reports/report-builder/report-builder').then(m => m.ReportBuilder),
             data: { title: 'Report Builder', breadcrumb: 'Report Builder' }
+          },
+          {
+            path: 'executive-summary',
+            loadComponent: () => import('./features/reports/executive-summary/executive-summary').then(m => m.ExecutiveSummary),
+            data: { title: 'Executive Summary', breadcrumb: 'Executive Summary' }
           }
         ]
       },
 
 
 
-      // Analytics routes
+      // Analytics
       {
         path: 'analytics',
         children: [
@@ -194,6 +207,11 @@ export const routes: Routes = [
             path: 'social-analysis',
             loadComponent: () => import('./features/social-media/social-analysis/social-analysis').then(m => m.SocialAnalysis),
             data: { title: 'Social Media Analysis', breadcrumb: 'Social Media' }
+          },
+          {
+            path: 'methodology',
+            loadComponent: () => import('./features/social-media/methodology/methodology').then(m => m.Methodology),
+            data: { title: 'Analysis Methodology', breadcrumb: 'Methodology' }
           }
         ]
       },

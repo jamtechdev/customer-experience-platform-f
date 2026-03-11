@@ -1,31 +1,45 @@
 .sidenav-container {
   height: 100vh;
-  display: flex;
-  flex-direction: column;
+  overflow: hidden;
 }
 
 .sidenav {
-  width: 260px;
+  width: 300px;
+  min-width: 300px;
+  height: 100%;
   background: #ffffff;
+  box-sizing: border-box;
 }
 
+/* Header and footer stay fixed; only main content scrolls */
 .main-content {
   display: flex;
   flex-direction: column;
   flex: 1;
-  overflow: auto;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.main-content app-header {
+  flex-shrink: 0;
 }
 
 .content-wrapper {
   flex: 1;
+  min-height: 0;
+  overflow: auto;
   padding: 24px;
-  /* background: #f5f5f5; */
-  min-height: calc(100vh - 144px);
+  -webkit-overflow-scrolling: touch;
+}
+
+.main-content app-footer {
+  flex-shrink: 0;
 }
 
 @media (max-width: 960px) {
   .sidenav {
-    width: 240px;
+    width: 280px;
+    min-width: 280px;
   }
 
   .content-wrapper {
@@ -35,11 +49,20 @@
 
 @media (max-width: 600px) {
   .sidenav {
-    width: 280px;
+    width: 300px;
+    min-width: 300px;
   }
 
   .content-wrapper {
     padding: 12px;
     min-height: calc(100vh - 112px);
+  }
+}
+
+/* Responsive: ensure content doesn't overflow on small screens */
+@media (max-width: 960px) {
+  .content-wrapper {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
   }
 }

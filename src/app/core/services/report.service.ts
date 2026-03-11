@@ -105,6 +105,10 @@ export class ReportService {
   exportDashboardToPdf(config: any): Observable<Blob> {
     return this.http.post(`${this.baseUrl}/dashboard/export/pdf`, config, { responseType: 'blob' });
   }
+
+  exportDashboardToExcel(config: any): Observable<Blob> {
+    return this.http.post(`${this.baseUrl}/dashboard/export/excel`, config, { responseType: 'blob' });
+  }
 }
 
 @Injectable({

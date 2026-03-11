@@ -23,12 +23,15 @@ export class MenuService {
     void currentLang;
     void stats;
 
+    // Single Dashboard menu for all users; route depends on role (Executive → executive-dashboard, others → main dashboard)
+    const dashboardRoute = userRole === UserRole.VIEWER ? '/app/executive-dashboard' : '/app/dashboard';
+
     const menuItems: MenuItem[] = [
       {
         id: 'dashboard',
         label: t('nav.dashboard'),
         icon: 'layout-dashboard',
-        route: '/app/dashboard'
+        route: dashboardRoute
       },
       {
         id: 'data-sources',
@@ -108,6 +111,18 @@ export class MenuService {
             label: t('nav.reportBuilder'),
             icon: 'edit',
             route: '/app/reports/builder'
+          },
+          {
+            id: 'reports-executive-summary',
+            label: t('nav.executiveSummary') || 'Executive Summary',
+            icon: 'summarize',
+            route: '/app/reports/executive-summary'
+          },
+          {
+            id: 'reports-dashboard',
+            label: t('nav.dashboardReports') || 'Dashboard Reports',
+            icon: 'bar-chart',
+            route: '/app/reports/dashboard-reports'
           }
         ]
       },
@@ -115,7 +130,20 @@ export class MenuService {
         id: 'social-media',
         label: t('nav.feedback'),
         icon: 'share-2',
-        route: '/app/social-media'
+        children: [
+          {
+            id: 'social-analysis',
+            label: t('nav.socialAnalysis') || 'Social Analysis',
+            icon: 'bar-chart',
+            route: '/app/social-media/social-analysis'
+          },
+          {
+            id: 'social-methodology',
+            label: t('nav.methodology') || 'Methodology',
+            icon: 'description',
+            route: '/app/social-media/methodology'
+          }
+        ]
       },
       {
         id: 'alerts',
@@ -125,7 +153,7 @@ export class MenuService {
       }
     ];
 
-    // Add admin menu only for admin users
+    // Add admin menu only for admin users (admin routes are under /admin, not /app)
     if (userRole === UserRole.ADMIN) {
       menuItems.push({
         id: 'admin',
@@ -137,21 +165,28 @@ export class MenuService {
             id: 'admin-users',
             label: t('nav.userManagement'),
             icon: 'users',
-            route: '/app/admin/users',
+            route: '/admin/users',
             permissions: ['admin']
           },
           {
             id: 'admin-roles',
             label: t('nav.roleManagement'),
             icon: 'user-check',
-            route: '/app/admin/roles',
+            route: '/admin/roles',
             permissions: ['admin']
           },
           {
             id: 'admin-settings',
             label: t('nav.systemSettings'),
             icon: 'settings',
-            route: '/app/admin/settings',
+            route: '/admin/settings',
+            permissions: ['admin']
+          },
+          {
+            id: 'admin-journey-stages',
+            label: t('nav.journeyStages') || 'Journey Stages',
+            icon: 'route',
+            route: '/admin/journey-stages',
             permissions: ['admin']
           }
         ]

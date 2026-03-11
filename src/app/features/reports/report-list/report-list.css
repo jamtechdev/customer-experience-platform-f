@@ -20,6 +20,16 @@
 
 .actions-section {
   margin-bottom: 24px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+}
+
+.actions-section .action-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
 }
 
 .loading-container {

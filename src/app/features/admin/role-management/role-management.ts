@@ -8,6 +8,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatChipsModule } from '@angular/material/chips';
 import { AdminService } from '../../../core/services/admin.service';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { getRoleLabel } from '../../../core/models/user.model';
 
 interface Role {
   id?: string;
@@ -34,6 +35,7 @@ interface Role {
 export class RoleManagement implements OnInit {
   private adminService = inject(AdminService);
   private snackBar = inject(MatSnackBar);
+  getRoleLabel = getRoleLabel;
 
   loading = signal(false);
   roles = signal<Role[]>([]);

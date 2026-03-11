@@ -85,10 +85,10 @@
     <mat-card-content>
       <ul class="requirements-list">
         <li>{{ t('dataSources.format') || 'File must be in CSV format (.csv extension)' }}</li>
-        <li>{{ t('dataSources.headers') || 'First row should contain column headers' }}</li>
-        <li>{{ t('dataSources.required') || 'Required columns: content, date, source' }}</li>
-        <li>{{ t('dataSources.optional') || 'Optional columns: author, rating, company, competitor' }}</li>
-        <li>{{ t('dataSources.maxSize') || 'Maximum file size: 10MB' }}</li>
+        <li *ngIf="format().firstRowHeaders !== false">{{ t('dataSources.headers') || 'First row should contain column headers' }}</li>
+        <li>Required columns: {{ requiredColumnsText() }}</li>
+        <li>Optional columns: {{ optionalColumnsText() }}</li>
+        <li>Maximum file size: {{ maxFileSizeMB() }} MB</li>
       </ul>
     </mat-card-content>
   </mat-card>

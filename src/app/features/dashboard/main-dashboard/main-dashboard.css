@@ -2,8 +2,73 @@
   padding: 24px;
 }
 
+.backend-unavailable-banner {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 12px 16px;
+  margin-bottom: 16px;
+  background: #fef3c7;
+  border: 1px solid #f59e0b;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  color: #92400e;
+}
+
+.backend-unavailable-banner mat-icon {
+  flex-shrink: 0;
+  color: #f59e0b;
+}
+
+.backend-unavailable-banner code {
+  background: rgba(0, 0, 0, 0.06);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 0.8em;
+}
+
 .dashboard-header {
   margin-bottom: 32px;
+  display: flex;
+  flex-direction: column;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.header-top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.header-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.header-actions a,
+.header-actions button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.date-filters {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.date-filters input[type="date"] {
+  padding: 0.25rem 0.5rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 4px;
+  font-size: 0.875rem;
 }
 
 .dashboard-header h1 {
@@ -29,6 +94,23 @@
 
 .loading-container p {
   color: #6b7280;
+}
+
+.dashboard-error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48px;
+  gap: 16px;
+  color: #6b7280;
+}
+
+.dashboard-error mat-icon {
+  font-size: 48px;
+  width: 48px;
+  height: 48px;
+  color: #9ca3af;
 }
 
 .dashboard-content {
@@ -141,6 +223,49 @@
   padding: 16px 0;
 }
 
+.sentiment-chart {
+  padding: 16px 0;
+}
+
+.chart-bars {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.chart-bar-row {
+  display: grid;
+  grid-template-columns: 100px 1fr 48px;
+  align-items: center;
+  gap: 12px;
+}
+
+.bar-track {
+  height: 24px;
+  background: #f3f4f6;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.bar-fill {
+  height: 100%;
+  border-radius: 4px;
+  min-width: 2px;
+  transition: width 0.4s ease;
+}
+
+.bar-fill.positive {
+  background: linear-gradient(90deg, #22c55e, #16a34a);
+}
+
+.bar-fill.neutral {
+  background: linear-gradient(90deg, #eab308, #d97706);
+}
+
+.bar-fill.negative {
+  background: linear-gradient(90deg, #ef4444, #dc2626);
+}
+
 .sentiment-item {
   display: flex;
   justify-content: space-between;
@@ -176,6 +301,19 @@
   font-size: 1.25rem;
   font-weight: 600;
   color: #111827;
+  text-align: right;
+}
+
+@media (max-width: 600px) {
+  .header-top {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .chart-bar-row {
+    grid-template-columns: 80px 1fr 40px;
+    gap: 8px;
+  }
 }
 
 .nps-summary {

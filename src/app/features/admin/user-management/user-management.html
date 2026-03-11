@@ -22,18 +22,18 @@
         <table mat-table [dataSource]="users()" class="users-table">
           <ng-container matColumnDef="name">
             <th mat-header-cell *matHeaderCellDef>Name</th>
-            <td mat-cell *matCellDef="let user">{{ user.firstName }} {{ user.lastName }}</td>
+            <td mat-cell *matCellDef="let user">{{ (user.firstName || '') + (user.lastName ? ' ' + user.lastName : '') || 'N/A' }}</td>
           </ng-container>
 
           <ng-container matColumnDef="email">
             <th mat-header-cell *matHeaderCellDef>Email</th>
-            <td mat-cell *matCellDef="let user">{{ user.email }}</td>
+            <td mat-cell *matCellDef="let user">{{ user.email || 'N/A' }}</td>
           </ng-container>
 
           <ng-container matColumnDef="role">
             <th mat-header-cell *matHeaderCellDef>Role</th>
             <td mat-cell *matCellDef="let user">
-              <mat-chip>{{ user.role }}</mat-chip>
+              <mat-chip>{{ getRoleLabel(user.role) || 'N/A' }}</mat-chip>
             </td>
           </ng-container>
 
@@ -41,7 +41,7 @@
             <th mat-header-cell *matHeaderCellDef>Status</th>
             <td mat-cell *matCellDef="let user">
               <mat-chip [color]="user.isActive ? 'primary' : ''">
-                {{ user.isActive ? 'Active' : 'Inactive' }}
+                {{ user.isActive != null ? (user.isActive ? 'Active' : 'Inactive') : 'N/A' }}
               </mat-chip>
             </td>
           </ng-container>

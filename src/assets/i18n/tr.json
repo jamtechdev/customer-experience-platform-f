@@ -72,9 +72,19 @@
     "auditLogs": "Denetim Kayıtları",
     "systemSettings": "Sistem Ayarları",
     "settings": "Ayarlar",
+    "executiveDashboard": "Yönetici Paneli",
+    "executiveSummary": "Yönetici Özeti",
+    "journeyStages": "Yolculuk Aşamaları",
+    "methodology": "Metodoloji",
+    "socialAnalysis": "Sosyal Analiz",
     "profile": "Profil",
     "notifications": "Bildirimler",
     "logout": "Çıkış"
+  },
+  "roles": {
+    "admin": "Yönetici",
+    "cxManager": "CX Yöneticisi",
+    "executive": "Üst Düzey"
   },
   "auth": {
     "login": "Giriş Yap",
@@ -121,6 +131,7 @@
   "dashboard": {
     "title": "Gösterge Paneli",
     "subtitle": "Müşteri deneyimi genel görünümü",
+    "downloadSample": "Örnek CSV indir",
     "welcome": "Hoş Geldiniz",
     "totalFeedback": "Toplam Geri Bildirim",
     "averageSentimentScore": "Ortalama Duygu Skoru",

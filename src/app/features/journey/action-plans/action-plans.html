@@ -5,63 +5,106 @@
   </div>
 
   <div class="actions-section">
-    <button mat-raised-button color="primary">
-      <mat-icon>add</mat-icon>
-      Create Action Plan
-    </button>
+    @if (!showForm()) {
+      <button mat-raised-button color="primary" (click)="openCreate()">
+        <mat-icon>add</mat-icon>
+        Create Action Plan
+      </button>
+    }
   </div>
 
-  <div *ngIf="loading()" class="loading-container">
-    <mat-spinner></mat-spinner>
-    <p>Loading action plans...</p>
-  </div>
+  @if (showForm()) {
+    <form [formGroup]="form" (ngSubmit)="saveActionPlan()" class="plan-form">
+      <mat-form-field appearance="outline">
+        <mat-label>Title</mat-label>
+        <input matInput formControlName="title" placeholder="Action plan title" />
+        @if (form.get('title')?.hasError('required')) {
+          <mat-error>Title is required</mat-error>
+        }
+      </mat-form-field>
+      <mat-form-field appearance="outline">
+        <mat-label>Description</mat-label>
+        <textarea matInput formControlName="description" rows="3" placeholder="Description"></textarea>
+        @if (form.get('description')?.hasError('required')) {
+          <mat-error>Description is required</mat-error>
+        }
+      </mat-form-field>
+      <mat-form-field appearance="outline">
+        <mat-label>Priority</mat-label>
+        <mat-select formControlName="priority">
+          <mat-option value="low">Low</mat-option>
+          <mat-option value="medium">Medium</mat-option>
+          <mat-option value="high">High</mat-option>
+          <mat-option value="critical">Critical</mat-option>
+        </mat-select>
+      </mat-form-field>
+      <mat-form-field appearance="outline">
+        <mat-label>Status</mat-label>
+        <mat-select formControlName="status">
+          <mat-option value="draft">Draft</mat-option>
+          <mat-option value="approved">Approved</mat-option>
+          <mat-option value="in_progress">In Progress</mat-option>
+          <mat-option value="completed">Completed</mat-option>
+          <mat-option value="cancelled">Cancelled</mat-option>
+        </mat-select>
+      </mat-form-field>
+      <mat-form-field appearance="outline">
+        <mat-label>Due Date</mat-label>
+        <input matInput type="date" formControlName="dueDate" />
+      </mat-form-field>
+      <div class="form-actions">
+        <button mat-button type="button" (click)="cancelForm()">Cancel</button>
+        <button mat-raised-button color="primary" type="submit" [disabled]="form.invalid">Save</button>
+      </div>
+    </form>
+  }
 
-  <div *ngIf="!loading()" class="content-section">
-    <mat-card>
-      <mat-card-content>
-        <table mat-table [dataSource]="actionPlans()" class="action-plans-table">
-          <ng-container matColumnDef="title">
-            <th mat-header-cell *matHeaderCellDef>Title</th>
-            <td mat-cell *matCellDef="let plan">{{ plan.title }}</td>
-          </ng-container>
-
-          <ng-container matColumnDef="priority">
-            <th mat-header-cell *matHeaderCellDef>Priority</th>
-            <td mat-cell *matCellDef="let plan">
-              <mat-chip [color]="getPriorityColor(plan.priority)">
-                {{ plan.priority }}
-              </mat-chip>
-            </td>
-          </ng-container>
-
-          <ng-container matColumnDef="status">
-            <th mat-header-cell *matHeaderCellDef>Status</th>
-            <td mat-cell *matCellDef="let plan">
-              <mat-chip>{{ plan.status }}</mat-chip>
-            </td>
-          </ng-container>
-
-          <ng-container matColumnDef="dueDate">
-            <th mat-header-cell *matHeaderCellDef>Due Date</th>
-            <td mat-cell *matCellDef="let plan">{{ plan.dueDate | date:'short' }}</td>
-          </ng-container>
-
-          <ng-container matColumnDef="actions">
-            <th mat-header-cell *matHeaderCellDef>Actions</th>
-            <td mat-cell *matCellDef="let plan">
-              <button mat-icon-button>
-                <mat-icon>visibility</mat-icon>
-              </button>
-              <button mat-icon-button>
-                <mat-icon>edit</mat-icon>
-              </button>
-            </td>
-          </ng-container>
-
-          <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-          <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
-        </table>
-      </mat-card-content>
-    </mat-card>
-  </div>
+  @if (loading()) {
+    <div class="loading-container">
+      <mat-spinner></mat-spinner>
+      <p>Loading action plans...</p>
+    </div>
+  } @else {
+    <div class="content-section">
+      <mat-card>
+        <mat-card-content>
+          <table mat-table [dataSource]="actionPlans()" class="action-plans-table">
+            <ng-container matColumnDef="title">
+              <th mat-header-cell *matHeaderCellDef>Title</th>
+              <td mat-cell *matCellDef="let plan">{{ plan.title }}</td>
+            </ng-container>
+            <ng-container matColumnDef="priority">
+              <th mat-header-cell *matHeaderCellDef>Priority</th>
+              <td mat-cell *matCellDef="let plan">
+                <mat-chip [color]="getPriorityColor(plan.priority)">{{ plan.priority }}</mat-chip>
+              </td>
+            </ng-container>
+            <ng-container matColumnDef="status">
+              <th mat-header-cell *matHeaderCellDef>Status</th>
+              <td mat-cell *matCellDef="let plan">
+                <mat-chip>{{ plan.status }}</mat-chip>
+              </td>
+            </ng-container>
+            <ng-container matColumnDef="dueDate">
+              <th mat-header-cell *matHeaderCellDef>Due Date</th>
+              <td mat-cell *matCellDef="let plan">{{ formatDate(plan.dueDate) }}</td>
+            </ng-container>
+            <ng-container matColumnDef="actions">
+              <th mat-header-cell *matHeaderCellDef>Actions</th>
+              <td mat-cell *matCellDef="let plan">
+                <button mat-icon-button color="warn" (click)="deletePlan(plan)" aria-label="Delete">
+                  <mat-icon>delete</mat-icon>
+                </button>
+              </td>
+            </ng-container>
+            <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+            <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+            <tr class="mat-row" *matNoDataRow>
+              <td class="mat-cell" [attr.colspan]="displayedColumns.length">No action plans. Create one to get started.</td>
+            </tr>
+          </table>
+        </mat-card-content>
+      </mat-card>
+    </div>
+  }
 </div>

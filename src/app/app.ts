@@ -25,7 +25,7 @@ export class App implements OnInit {
           errorMessage.includes('WebSocket connection') &&
           (errorMessage.includes('pusher') || 
            errorMessage.includes('Pusher') || 
-           errorMessage.includes('127.0.0.1:8080') ||
+           errorMessage.includes('ECONNREFUSED') ||
            errorMessage.includes('laravel-echo'))
         ) {
           // Silently ignore these errors - they're from browser extensions or cached scripts
@@ -42,7 +42,7 @@ export class App implements OnInit {
           (event.message.includes('WebSocket') || 
            event.message.includes('pusher') || 
            event.message.includes('Pusher') ||
-           event.message.includes('127.0.0.1:8080'))
+           event.message.includes('ECONNREFUSED'))
         ) {
           event.preventDefault();
         }

@@ -51,7 +51,7 @@ export class AdminLogin {
             if (this.rememberMe) {
               localStorage.setItem('rememberMe', 'true');
             }
-            this.router.navigate(['/admin/dashboard'], { replaceUrl: true });
+            this.router.navigate(['/app/dashboard'], { replaceUrl: true });
           } else {
             this.errorMessage.set('Access denied. Admin privileges required.');
             this.authService.logout();

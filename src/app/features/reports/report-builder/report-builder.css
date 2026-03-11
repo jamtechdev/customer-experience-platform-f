@@ -18,6 +18,28 @@
   font-size: 1rem;
 }
 
+.builder-form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.builder-form mat-form-field {
+  min-width: 180px;
+}
+
+.export-actions {
+  margin-top: 0.5rem;
+}
+
+.hint {
+  font-size: 0.875rem;
+  color: #6b7280;
+  margin-top: 1rem;
+}
+
 @media (max-width: 768px) {
   .report-builder-container {
     padding: 16px;

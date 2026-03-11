@@ -72,9 +72,19 @@
     "auditLogs": "سجلات التدقيق",
     "systemSettings": "إعدادات النظام",
     "settings": "الإعدادات",
+    "executiveDashboard": "لوحة الإدارة",
+    "executiveSummary": "ملخص تنفيذي",
+    "journeyStages": "مراحل الرحلة",
+    "methodology": "المنهجية",
+    "socialAnalysis": "تحليل اجتماعي",
     "profile": "الملف الشخصي",
     "notifications": "الإشعارات",
     "logout": "تسجيل الخروج"
+  },
+  "roles": {
+    "admin": "مدير",
+    "cxManager": "مدير تجربة العملاء",
+    "executive": "تنفيذي"
   },
   "auth": {
     "login": "تسجيل الدخول",
@@ -121,6 +131,7 @@
   "dashboard": {
     "title": "لوحة التحكم",
     "subtitle": "نظرة عامة على تجربة العملاء",
+    "downloadSample": "تحميل نموذج CSV",
     "welcome": "مرحباً",
     "totalFeedback": "إجمالي التعليقات",
     "averageSentimentScore": "متوسط درجة المشاعر",

@@ -1,5 +1,7 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { Component, inject, OnInit, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { RouterLink } from '@angular/router';
+import { HttpClient } from '@angular/common/http';
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
@@ -20,6 +22,7 @@ interface KPICard {
   selector: 'app-main-dashboard',
   imports: [
     CommonModule,
+    RouterLink,
     MatCardModule,
     MatIconModule,
     MatButtonModule,
@@ -32,16 +35,90 @@ export class MainDashboard implements OnInit {
   private dashboardService = inject(DashboardService);
   private authService = inject(AuthService);
   private translationService = inject(TranslationService);
+  private http = inject(HttpClient);
 
   loading = signal(true);
   kpiCards = signal<KPICard[]>([]);
   dashboardData = signal<DashboardStats | null>(null);
+  backendUnavailable = signal(false);
   Math = Math; // Expose Math for template
 
-  // Translation getter
   t = (key: string): string => this.translationService.translate(key);
 
+  sentimentPositiveWidth = computed(() => {
+    const d = this.dashboardData();
+    const total = d?.sentiment?.total ?? 0;
+    return total > 0 ? Math.min(100, (d!.sentiment.positive / total) * 100) : 0;
+  });
+  sentimentNeutralWidth = computed(() => {
+    const d = this.dashboardData();
+    const total = d?.sentiment?.total ?? 0;
+    return total > 0 ? Math.min(100, (d!.sentiment.neutral / total) * 100) : 0;
+  });
+  sentimentNegativeWidth = computed(() => {
+    const d = this.dashboardData();
+    const total = d?.sentiment?.total ?? 0;
+    return total > 0 ? Math.min(100, (d!.sentiment.negative / total) * 100) : 0;
+  });
+
+  downloadSampleCsv(): void {
+    const filename = 'sample-customer-feedback.csv';
+    const url = '/assets/' + filename;
+    this.http.get(url, { responseType: 'text' }).subscribe({
+      next: (csv) => {
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = filename;
+        link.click();
+        URL.revokeObjectURL(link.href);
+      },
+      error: () => {
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = filename;
+        link.target = '_blank';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      }
+    });
+  }
+
   ngOnInit(): void {
+    this.loadDashboardData();
+  }
+
+  dateRangeStart = signal<Date | null>(null);
+  dateRangeEnd = signal<Date | null>(null);
+
+  dateRangeStartValue(): string {
+    const d = this.dateRangeStart();
+    return d ? d.toISOString().slice(0, 10) : '';
+  }
+
+  dateRangeEndValue(): string {
+    const d = this.dateRangeEnd();
+    return d ? d.toISOString().slice(0, 10) : '';
+  }
+
+  onDateStartChange(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const val = input?.value;
+    this.dateRangeStart.set(val ? new Date(val) : null);
+    this.loadDashboardData();
+  }
+
+  onDateEndChange(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const val = input?.value;
+    this.dateRangeEnd.set(val ? new Date(val) : null);
+    this.loadDashboardData();
+  }
+
+  clearDateRange(): void {
+    this.dateRangeStart.set(null);
+    this.dateRangeEnd.set(null);
     this.loadDashboardData();
   }
 
@@ -49,9 +126,12 @@ export class MainDashboard implements OnInit {
     this.loading.set(true);
     
     const user = this.authService.currentUser();
-    const companyId = user?.settings?.companyId || 1; // Default to 1 if not set
+    const companyId = user?.settings?.companyId || 1;
+    const start = this.dateRangeStart();
+    const end = this.dateRangeEnd();
 
-    this.dashboardService.getStats(companyId).subscribe({
+    this.backendUnavailable.set(false);
+    this.dashboardService.getStats(companyId, start ?? undefined, end ?? undefined).subscribe({
       next: (response) => {
         if (response.success && response.data) {
           const data = response.data;
@@ -96,45 +176,11 @@ export class MainDashboard implements OnInit {
         }
         this.loading.set(false);
       },
-      error: (error) => {
-        console.error('Failed to load dashboard data:', error);
+      error: (err) => {
         this.loading.set(false);
-        // Set default empty data on error
-        this.dashboardData.set({
-          sentiment: { positive: 0, negative: 0, neutral: 0, averageScore: 0, total: 0 },
-          nps: { score: 0, promoters: 0, passives: 0, detractors: 0, total: 0 },
-          alerts: { total: 0, critical: 0, high: 0, recent: [] }
-        });
-        this.kpiCards.set([
-          {
-            title: this.t('dashboard.totalFeedback'),
-            value: '0',
-            change: 0,
-            icon: 'feedback',
-            color: 'primary'
-          },
-          {
-            title: this.t('dashboard.npsScore'),
-            value: 0,
-            change: 0,
-            icon: 'trending_up',
-            color: 'accent'
-          },
-          {
-            title: this.t('dashboard.averageSentimentScore'),
-            value: '0%',
-            change: 0,
-            icon: 'sentiment_satisfied',
-            color: 'primary'
-          },
-          {
-            title: this.t('dashboard.activeAlarms'),
-            value: 0,
-            change: 0,
-            icon: 'notifications',
-            color: 'warn'
-          }
-        ]);
+        this.backendUnavailable.set(err?.status === 0 || err?.status === undefined);
+        this.dashboardData.set(null);
+        this.kpiCards.set([]);
       }
     });
   }

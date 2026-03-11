@@ -1,0 +1,64 @@
+.executive-summary {
+  padding: 1rem;
+}
+
+.executive-summary mat-card-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1rem;
+}
+
+.executive-summary mat-card-header button {
+  margin-left: auto;
+}
+
+.loading {
+  display: flex;
+  justify-content: center;
+  padding: 2rem;
+}
+
+.summary-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.summary-card .summary-label {
+  font-size: 0.875rem;
+  color: var(--mat-sys-on-surface-variant, #666);
+}
+
+.summary-card .summary-value {
+  font-size: 1.5rem;
+  font-weight: 500;
+}
+
+.nps-breakdown .nps-row,
+.competitors .competitor-row,
+.alerts .alert-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.25rem 0;
+}
+
+.alerts .alert-row mat-icon {
+  font-size: 20px;
+  width: 20px;
+  height: 20px;
+}
+
+.last-updated {
+  margin-top: 1rem;
+  font-size: 0.875rem;
+  color: var(--mat-sys-on-surface-variant, #666);
+}
+
+@media (max-width: 600px) {
+  .summary-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}

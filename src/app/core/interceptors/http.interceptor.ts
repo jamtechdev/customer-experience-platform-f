@@ -103,9 +103,11 @@ export function errorInterceptor(req: HttpRequest<unknown>, next: HttpHandlerFn)
       }
 
       if (error.status === 0) {
-        // Network error or CORS issue
-        console.error('Network error:', req.url);
-        errorMessage = 'Network error. Please check your internet connection.';
+        // Backend not running or CORS
+        if (typeof ngDevMode === 'undefined' || ngDevMode) {
+          console.warn('API unreachable:', req.url, '(is the backend running?)');
+        }
+        errorMessage = 'Cannot reach API. Start the backend server to load data.';
       }
 
       // Create a more detailed error object

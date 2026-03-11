@@ -19,7 +19,7 @@ export const environment = {
   appTitle: getEnv('NG_APP_TITLE', 'Albaraka Türk Müşteri Deneyimi Platformu'),
   
   // API Configuration - Node.js Backend
-  apiUrl: getEnv('NG_APP_API_URL', 'https://api.example.com/api'), // Update with production URL
+  apiUrl: getEnv('NG_APP_API_URL', ''),
   apiVersion: getEnv('NG_APP_API_VERSION', 'v1'),
   apiTimeout: getEnvNumber('NG_APP_API_TIMEOUT', 30000), // 30 seconds
   
@@ -34,7 +34,7 @@ export const environment = {
   // WebSocket Configuration (for real-time updates) - DISABLED: No WebSocket support in this project
   websocket: {
     enabled: false, // Disabled - project uses CSV upload only, no real-time connections
-    url: getEnv('NG_APP_WEBSOCKET_URL', 'wss://api.example.com/ws'),
+    url: getEnv('NG_APP_WEBSOCKET_URL', ''),
     reconnectInterval: getEnvNumber('NG_APP_WEBSOCKET_RECONNECT_INTERVAL', 5000),
     maxReconnectAttempts: getEnvNumber('NG_APP_WEBSOCKET_MAX_RECONNECT_ATTEMPTS', 10),
   },

@@ -5,11 +5,11 @@
 
   <mat-nav-list class="menu-list">
     <a
+      *ngFor="let item of flatMenuItems"
       mat-list-item
-      *ngFor="let item of filteredMenuItems"
       [routerLink]="item.route"
       routerLinkActive="active"
-      [routerLinkActiveOptions]="{ exact: false }"
+      [routerLinkActiveOptions]="getLinkActiveOptions(item.route)"
       (click)="onNavigate()"
       class="menu-item">
       <mat-icon matListItemIcon>{{ item.icon }}</mat-icon>

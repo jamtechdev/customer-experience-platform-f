@@ -1,1 +1,94 @@
-<p>executive-summary works!</p>
+<div class="executive-summary">
+  <mat-card>
+    <mat-card-header>
+      <mat-card-title>Executive Summary</mat-card-title>
+      <mat-card-subtitle>High-level CX performance overview. Export to PDF for reporting.</mat-card-subtitle>
+      <button mat-raised-button color="primary" (click)="exportPdf()" [disabled]="exporting() || loading()">
+        <mat-icon>download</mat-icon>
+        {{ exporting() ? 'Exporting...' : 'Export to PDF' }}
+      </button>
+    </mat-card-header>
+    <mat-card-content>
+      @if (loading()) {
+        <div class="loading">
+          <mat-spinner diameter="40"></mat-spinner>
+        </div>
+      } @else if (data()) {
+        <div class="summary-grid">
+          <mat-card class="summary-card">
+            <mat-card-content>
+              <div class="summary-label">Total Feedback</div>
+              <div class="summary-value">{{ data()!.kpis.totalFeedback.toLocaleString() }}</div>
+            </mat-card-content>
+          </mat-card>
+          <mat-card class="summary-card">
+            <mat-card-content>
+              <div class="summary-label">Sentiment Index</div>
+              <div class="summary-value">{{ data()!.kpis.sentimentIndex.toFixed(2) }}</div>
+            </mat-card-content>
+          </mat-card>
+          <mat-card class="summary-card">
+            <mat-card-content>
+              <div class="summary-label">NPS Score</div>
+              <div class="summary-value">{{ Math.round(data()!.kpis.npsScore) }}</div>
+            </mat-card-content>
+          </mat-card>
+          <mat-card class="summary-card">
+            <mat-card-content>
+              <div class="summary-label">Critical Alerts</div>
+              <div class="summary-value">{{ data()!.kpis.criticalAlertsCount }}</div>
+            </mat-card-content>
+          </mat-card>
+        </div>
+        <mat-card class="nps-breakdown">
+          <mat-card-header>
+            <mat-card-title>NPS Breakdown</mat-card-title>
+          </mat-card-header>
+          <mat-card-content>
+            <div class="nps-row">
+              <span>Promoters</span>
+              <span>{{ data()!.nps.promoters }}</span>
+            </div>
+            <div class="nps-row">
+              <span>Passives</span>
+              <span>{{ data()!.nps.passives }}</span>
+            </div>
+            <div class="nps-row">
+              <span>Detractors</span>
+              <span>{{ data()!.nps.detractors }}</span>
+            </div>
+          </mat-card-content>
+        </mat-card>
+        @if (data()!.competitors.length > 0) {
+          <mat-card class="competitors">
+            <mat-card-header>
+              <mat-card-title>Competitor Comparison</mat-card-title>
+            </mat-card-header>
+            <mat-card-content>
+              <div class="competitor-row" *ngFor="let c of data()!.competitors">
+                <span>{{ c.name }}</span>
+                <span>Sentiment: {{ c.sentimentScore.toFixed(2) }} | NPS: {{ Math.round(c.npsScore) }} | Gap: {{ c.gap > 0 ? '+' : '' }}{{ c.gap.toFixed(2) }}</span>
+              </div>
+            </mat-card-content>
+          </mat-card>
+        }
+        @if (data()!.criticalAlerts.length > 0) {
+          <mat-card class="alerts">
+            <mat-card-header>
+              <mat-card-title>Critical Alerts</mat-card-title>
+            </mat-card-header>
+            <mat-card-content>
+              <div class="alert-row" *ngFor="let a of data()!.criticalAlerts">
+                <mat-icon>warning</mat-icon>
+                <span>{{ a.title }}: {{ a.message }}</span>
+              </div>
+            </mat-card-content>
+          </mat-card>
+        }
+        <p class="last-updated">Last updated: {{ data()!.lastUpdated }}</p>
+      } @else {
+        <p>No data available. Upload CSV data and run analysis to see the executive summary.</p>
+      }
+    </mat-card-content>
+  </mat-card>
+</div>

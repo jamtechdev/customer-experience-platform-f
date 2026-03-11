@@ -1,34 +1,52 @@
-import { Component, inject, OnInit } from '@angular/core';
+import { Component, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { TranslationService } from '../../../../core/services/translation.service';
 import { AuthService } from '../../../../core/services/auth.service';
+import { DashboardService, AdminDashboardStats } from '../../../../core/services/dashboard.service';
 
 @Component({
   selector: 'app-admin-dashboard',
   standalone: true,
-  imports: [CommonModule, RouterModule],
+  imports: [CommonModule, RouterModule, MatProgressSpinnerModule],
   templateUrl: './admin-dashboard.html',
   styleUrl: './admin-dashboard.css',
 })
 export class AdminDashboard implements OnInit {
   private translationService = inject(TranslationService);
+  private dashboardService = inject(DashboardService);
   protected authService = inject(AuthService);
 
-  // Translation getter
   t = (key: string): string => this.translationService.translate(key);
-
-  // Get currentUser signal from authService
   currentUser = this.authService.currentUser;
 
-  stats = [
-    { label: 'Total Users', value: 0, icon: 'users' },
-    { label: 'Active Sessions', value: 0, icon: 'activity' },
-    { label: 'System Health', value: '100%', icon: 'heart' },
-    { label: 'Pending Tasks', value: 0, icon: 'clock' }
-  ];
+  loading = signal(true);
+  stats = signal<AdminDashboardStats | null>(null);
+  error = signal(false);
 
   ngOnInit(): void {
-    // Load admin dashboard data
+    this.loadAdminStats();
+  }
+
+  loadAdminStats(): void {
+    this.loading.set(true);
+    this.error.set(false);
+    this.dashboardService.getAdminStats().subscribe({
+      next: (res) => {
+        if (res.success && res.data) {
+          this.stats.set(res.data);
+        } else {
+          this.stats.set(null);
+          this.error.set(true);
+        }
+        this.loading.set(false);
+      },
+      error: () => {
+        this.stats.set(null);
+        this.error.set(true);
+        this.loading.set(false);
+      },
+    });
   }
 }

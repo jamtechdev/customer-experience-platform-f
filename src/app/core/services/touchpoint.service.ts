@@ -6,14 +6,17 @@ import { ApiResponse } from '../models';
 export interface Touchpoint {
   id: number;
   name: string;
-  stage: string;
-  type: string;
-  feedbackCount: number;
-  satisfactionScore: number;
-  dissatisfactionScore: number;
-  isPainPoint: boolean;
-  positiveCount: number;
-  negativeCount: number;
+  description?: string;
+  category?: string;
+  order?: number;
+  stage?: string;
+  type?: string;
+  feedbackCount?: number;
+  satisfactionScore?: number;
+  dissatisfactionScore?: number;
+  isPainPoint?: boolean;
+  positiveCount?: number;
+  negativeCount?: number;
 }
 
 export interface TouchpointPerformance {

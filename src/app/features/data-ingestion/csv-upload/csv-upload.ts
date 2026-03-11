@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject, signal, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
@@ -6,10 +6,18 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatChipsModule } from '@angular/material/chips';
-import { CSVService } from '../../../core/services/csv.service';
+import { CSVService, CSVFormat } from '../../../core/services/csv.service';
 import { TranslationService } from '../../../core/services/translation.service';
+import { environment } from '../../../../environments/environment';
 
 type ProcessingStatus = 'idle' | 'uploading' | 'processing' | 'completed' | 'error';
+
+const DEFAULT_FORMAT: CSVFormat = {
+  requiredColumns: ['content', 'date', 'source'],
+  optionalColumns: ['author', 'rating', 'company', 'competitor'],
+  maxFileSizeBytes: environment.upload?.maxFileSize ?? 10485760,
+  firstRowHeaders: true,
+};
 
 @Component({
   selector: 'app-csv-upload',
@@ -25,7 +33,7 @@ type ProcessingStatus = 'idle' | 'uploading' | 'processing' | 'completed' | 'err
   templateUrl: './csv-upload.html',
   styleUrl: './csv-upload.css',
 })
-export class CsvUpload {
+export class CsvUpload implements OnInit {
   private csvService = inject(CSVService);
   private snackBar = inject(MatSnackBar);
   private translationService = inject(TranslationService);
@@ -39,13 +47,37 @@ export class CsvUpload {
   processingMessage = signal('');
   importId = signal<number | null>(null);
 
-  // Translation getter
-  t = (key: string): string => this.translationService.translate(key);
+  format = signal<CSVFormat>(DEFAULT_FORMAT);
+
+  readonly t = (key: string): string => this.translationService.translate(key);
+
+  ngOnInit(): void {
+    this.csvService.getFormat().subscribe({
+      next: (res) => {
+        if (res.success && res.data) {
+          this.format.set(res.data);
+        }
+      },
+      error: () => {}
+    });
+  }
+
+  requiredColumnsText(): string {
+    return this.format().requiredColumns.join(', ');
+  }
+
+  optionalColumnsText(): string {
+    return this.format().optionalColumns.join(', ');
+  }
+
+  maxFileSizeMB(): number {
+    return Math.round(this.format().maxFileSizeBytes / 1024 / 1024);
+  }
 
   onFileSelected(event: Event): void {
     const input = event.target as HTMLInputElement;
     if (input.files && input.files.length > 0) {
-      this.selectedFile = input.files[0];
+      this.setFileIfValid(input.files[0]);
     }
   }
 
@@ -69,11 +101,24 @@ export class CsvUpload {
     if (event.dataTransfer?.files && event.dataTransfer.files.length > 0) {
       const file = event.dataTransfer.files[0];
       if (file.type === 'text/csv' || file.name.endsWith('.csv')) {
-        this.selectedFile = file;
+        this.setFileIfValid(file);
       } else {
-        this.snackBar.open('Please select a CSV file', 'Close', { duration: 3000 });
+        this.snackBar.open(this.t('errors.csvOnly') || 'Please select a CSV file', this.t('app.close'), { duration: 3000 });
       }
     }
+  }
+
+  private setFileIfValid(file: File): void {
+    const maxBytes = this.format().maxFileSizeBytes;
+    if (file.size > maxBytes) {
+      this.snackBar.open(
+        (this.t('dataSources.maxSize') || 'Maximum file size') + `: ${this.maxFileSizeMB()}MB`,
+        this.t('app.close'),
+        { duration: 4000 }
+      );
+      return;
+    }
+    this.selectedFile = file;
   }
 
   uploadFile(): void {
@@ -114,8 +159,8 @@ export class CsvUpload {
         this.uploading.set(false);
         this.uploadProgress.set(0);
         this.processingStatus.set('error');
-        const message = error.error?.message || this.t('errors.generic') || 'Upload failed. Please try again.';
-        this.snackBar.open(message, this.t('app.close'), { duration: 5000 });
+        this.processingMessage.set(error.error?.message || this.t('errors.generic') || 'Upload failed. Please try again.');
+        this.snackBar.open(this.processingMessage(), this.t('app.close'), { duration: 5000 });
         setTimeout(() => {
           this.processingStatus.set('idle');
           this.processingMessage.set('');
@@ -125,7 +170,23 @@ export class CsvUpload {
   }
 
   private checkImportStatus(importId: number, progressInterval: any): void {
+    const timeoutMs = 120000; // 2 min max
+    const pollMs = 2000;
+    let pollCount = 0;
+    const maxPolls = Math.floor(timeoutMs / pollMs);
+
     const checkInterval = setInterval(() => {
+      pollCount++;
+      if (pollCount > maxPolls) {
+        clearInterval(checkInterval);
+        clearInterval(progressInterval);
+        this.uploading.set(false);
+        if (this.processingStatus() === 'processing') {
+          this.processingStatus.set('error');
+          this.processingMessage.set(this.t('errors.timeout') || 'Processing timed out. Ensure backend is running.');
+        }
+        return;
+      }
       this.csvService.getImportStatus(importId).subscribe({
         next: (response) => {
           if (response.success && response.data) {
@@ -149,14 +210,11 @@ export class CsvUpload {
             } else if (status === 'failed') {
               clearInterval(checkInterval);
               clearInterval(progressInterval);
+              this.uploading.set(false);
               this.processingStatus.set('error');
-              this.processingMessage.set(response.data.errorMessage || this.t('errors.generic') || 'Processing failed');
-              this.snackBar.open(
-                response.data.errorMessage || this.t('errors.generic'),
-                this.t('app.close'),
-                { duration: 5000 }
-              );
-              
+              const msg = response.data.errorMessage || this.t('errors.generic') || 'Processing failed';
+              this.processingMessage.set(msg);
+              this.snackBar.open(msg, this.t('app.close'), { duration: 5000 });
               setTimeout(() => {
                 this.processingStatus.set('idle');
                 this.processingMessage.set('');
@@ -167,20 +225,20 @@ export class CsvUpload {
           }
         },
         error: () => {
-          // Continue checking even if status check fails
+          // Continue polling; backend may be starting
         }
       });
-    }, 2000);
+    }, pollMs);
 
-    // Timeout after 5 minutes
     setTimeout(() => {
       clearInterval(checkInterval);
       clearInterval(progressInterval);
+      this.uploading.set(false);
       if (this.processingStatus() === 'processing') {
         this.processingStatus.set('error');
-        this.processingMessage.set(this.t('errors.timeout') || 'Processing timed out');
+        this.processingMessage.set(this.t('errors.timeout') || 'Processing timed out. Ensure backend is running.');
       }
-    }, 300000);
+    }, timeoutMs);
   }
 
   private resetUpload(): void {
