@@ -2,6 +2,15 @@
   <div class="header-section">
     <h1>Social Media Analysis</h1>
     <p class="subtitle">Analyze customer feedback across social media platforms</p>
+    <button mat-raised-button color="primary" (click)="loadSocialMediaData()" [disabled]="loading()">
+      <mat-icon>refresh</mat-icon>
+      Refresh
+    </button>
+  </div>
+
+  <div *ngIf="error()" class="error-banner">
+    <mat-icon>error</mat-icon>
+    <span>{{ error() }}</span>
   </div>
 
   <div *ngIf="loading()" class="loading-container">
@@ -74,6 +83,9 @@
 
           <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
           <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+          <tr class="mat-row" *matNoDataRow>
+            <td class="mat-cell" [attr.colspan]="displayedColumns.length">No platform data. Upload CSV feedback with source/platform column to see volume and sentiment by channel.</td>
+          </tr>
         </table>
       </mat-card-content>
     </mat-card>

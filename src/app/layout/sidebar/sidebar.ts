@@ -56,7 +56,8 @@ export class Sidebar {
       label: 'Data',
       icon: 'database',
       children: [
-        { label: 'CSV Upload', icon: 'upload', route: '/app/data-sources/csv-upload' }
+        { label: 'CSV Upload', icon: 'upload', route: '/app/data-sources/csv-upload' },
+        { label: 'Import History', icon: 'history', route: '/app/data-sources/import-history' }
       ]
     },
     {
@@ -74,8 +75,10 @@ export class Sidebar {
       icon: 'map',
       children: [
         { label: 'Journey Map', icon: 'route', route: '/app/cx/journeys' },
+        { label: 'Journey Heatmap', icon: 'grid_on', route: '/app/cx/journey-heatmap' },
         { label: 'Touchpoints', icon: 'place', route: '/app/cx/touchpoints' },
-        { label: 'Action Plans', icon: 'assignment', route: '/app/cx/action-plans' }
+        { label: 'Action Plans', icon: 'assignment', route: '/app/cx/action-plans' },
+        { label: 'Process Enhancement', icon: 'trending_up', route: '/app/cx/process-enhancement' }
       ]
     },
     {
@@ -86,7 +89,14 @@ export class Sidebar {
         { label: 'Methodology', icon: 'menu_book', route: '/app/social-media/methodology' }
       ]
     },
-    { label: 'Alerts', icon: 'notifications', route: '/app/alerts/alert-dashboard' },
+    {
+      label: 'Alerts',
+      icon: 'notifications',
+      children: [
+        { label: 'Alert Dashboard', icon: 'dashboard', route: '/app/alerts/alert-dashboard' },
+        { label: 'Alert Configuration', icon: 'tune', route: '/app/alerts/alert-configuration' }
+      ]
+    },
     {
       label: 'Administration',
       icon: 'admin_panel_settings',
@@ -94,7 +104,8 @@ export class Sidebar {
         { label: 'Users', icon: 'people', route: '/admin/users' },
         { label: 'Roles', icon: 'security', route: '/admin/roles' },
         { label: 'Settings', icon: 'settings', route: '/admin/settings' },
-        { label: 'Journey Stages', icon: 'account_tree', route: '/admin/journey-stages' }
+        { label: 'Journey Stages', icon: 'account_tree', route: '/admin/journey-stages' },
+        { label: 'Datasets', icon: 'folder', route: '/admin/datasets' }
       ]
     }
   ];

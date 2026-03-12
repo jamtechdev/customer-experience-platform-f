@@ -1,1 +1,49 @@
-<p>import-history works!</p>
+<div class="import-history-container">
+  <div class="header-section">
+    <h1>Import History</h1>
+    <p class="subtitle">View past CSV uploads and their status</p>
+    <button mat-raised-button color="primary" (click)="loadImports()" [disabled]="loading()">
+      <mat-icon>refresh</mat-icon>
+      Refresh
+    </button>
+  </div>
+
+  <mat-card>
+    <mat-card-content>
+      @if (loading()) {
+        <div class="loading-container">
+          <mat-spinner diameter="40"></mat-spinner>
+          <p>Loading import history...</p>
+        </div>
+      } @else if (imports().length === 0) {
+        <div class="empty-state">
+          <mat-icon>folder_open</mat-icon>
+          <p>No CSV imports yet. Upload a file from CSV Upload.</p>
+        </div>
+      } @else {
+        <table mat-table [dataSource]="imports()" class="imports-table">
+          <ng-container matColumnDef="filename">
+            <th mat-header-cell *matHeaderCellDef>Filename</th>
+            <td mat-cell *matCellDef="let row">{{ row.originalFilename || row.filename }}</td>
+          </ng-container>
+          <ng-container matColumnDef="rowCount">
+            <th mat-header-cell *matHeaderCellDef>Rows</th>
+            <td mat-cell *matCellDef="let row">{{ row.rowCount ?? '—' }}</td>
+          </ng-container>
+          <ng-container matColumnDef="status">
+            <th mat-header-cell *matHeaderCellDef>Status</th>
+            <td mat-cell *matCellDef="let row">
+              <mat-chip [color]="getStatusColor(row.status)">{{ row.status }}</mat-chip>
+            </td>
+          </ng-container>
+          <ng-container matColumnDef="createdAt">
+            <th mat-header-cell *matHeaderCellDef>Uploaded</th>
+            <td mat-cell *matCellDef="let row">{{ formatDate(row.createdAt) }}</td>
+          </ng-container>
+          <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+          <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+        </table>
+      }
+    </mat-card-content>
+  </mat-card>
+</div>

@@ -35,32 +35,71 @@ export class SystemSettings implements OnInit {
 
   loading = signal(false);
   settingsForm: FormGroup;
+  alertThresholdsForm: FormGroup;
+  sentimentParametersForm: FormGroup;
 
   constructor() {
     this.settingsForm = this.fb.group({
-      alertThreshold: [50, [Validators.required, Validators.min(0), Validators.max(100)]],
-      npsThreshold: [30, [Validators.required, Validators.min(-100), Validators.max(100)]],
-      sentimentThreshold: [0.6, [Validators.required, Validators.min(0), Validators.max(1)]],
       enableAlerts: [true],
       enableNotifications: [true]
+    });
+    this.alertThresholdsForm = this.fb.group({
+      sentimentDropThreshold: [20, [Validators.required, Validators.min(0), Validators.max(100)]],
+      npsDeclineThreshold: [10, [Validators.required, Validators.min(0), Validators.max(100)]],
+      complaintSpikeThreshold: [10, [Validators.required, Validators.min(1), Validators.max(1000)]],
+      competitorOutperformThreshold: [0.2, [Validators.required, Validators.min(0), Validators.max(1)]]
+    });
+    this.sentimentParametersForm = this.fb.group({
+      positiveThreshold: [0.1, [Validators.required, Validators.min(-1), Validators.max(1)]],
+      negativeThreshold: [-0.1, [Validators.required, Validators.min(-1), Validators.max(1)]]
     });
   }
 
   ngOnInit(): void {
     this.loadSettings();
+    this.loadAlertThresholds();
+    this.loadSentimentParameters();
   }
 
   loadSettings(): void {
-    this.loading.set(true);
     const settings = this.settingsService.getSettings();
     this.settingsForm.patchValue({
-      alertThreshold: settings.alerts?.thresholds?.sentiment ? Math.abs(settings.alerts.thresholds.sentiment * 100) : 50,
-      npsThreshold: settings.alerts?.thresholds?.nps || 30,
-      sentimentThreshold: settings.alerts?.thresholds?.sentiment ? Math.abs(settings.alerts.thresholds.sentiment) : 0.6,
       enableAlerts: settings.alerts?.enabled ?? true,
       enableNotifications: settings.notifications?.inApp ?? true
     });
-    this.loading.set(false);
+  }
+
+  loadAlertThresholds(): void {
+    this.loading.set(true);
+    this.settingsService.getAlertThresholds().subscribe({
+      next: (response) => {
+        if (response.success && response.data) {
+          this.alertThresholdsForm.patchValue({
+            sentimentDropThreshold: response.data.sentimentDropThreshold,
+            npsDeclineThreshold: response.data.npsDeclineThreshold,
+            complaintSpikeThreshold: response.data.complaintSpikeThreshold,
+            competitorOutperformThreshold: response.data.competitorOutperformThreshold
+          });
+        }
+        this.loading.set(false);
+      },
+      error: () => {
+        this.loading.set(false);
+      }
+    });
+  }
+
+  loadSentimentParameters(): void {
+    this.settingsService.getSentimentParameters().subscribe({
+      next: (response) => {
+        if (response.success && response.data) {
+          this.sentimentParametersForm.patchValue({
+            positiveThreshold: response.data.positiveThreshold,
+            negativeThreshold: response.data.negativeThreshold
+          });
+        }
+      }
+    });
   }
 
   saveSettings(): void {
@@ -68,21 +107,9 @@ export class SystemSettings implements OnInit {
       this.loading.set(true);
       const formValue = this.settingsForm.value;
       const settingsUpdate = {
-        alerts: {
-          enabled: formValue.enableAlerts,
-          thresholds: {
-            sentiment: -formValue.sentimentThreshold,
-            nps: formValue.npsThreshold,
-            complaint: 10
-          }
-        },
-        notifications: {
-          email: true,
-          push: false,
-          inApp: formValue.enableNotifications
-        }
-      };
-      
+        alerts: { enabled: formValue.enableAlerts },
+        notifications: { email: true, push: false, inApp: formValue.enableNotifications }
+      } as Parameters<SettingsService['updateSettings']>[0];
       this.settingsService.updateSettings(settingsUpdate).subscribe({
         next: (response) => {
           this.loading.set(false);
@@ -90,9 +117,45 @@ export class SystemSettings implements OnInit {
             this.snackBar.open('Settings saved successfully', 'Close', { duration: 3000 });
           }
         },
-        error: (error) => {
+        error: () => {
           this.loading.set(false);
           this.snackBar.open('Failed to save settings', 'Close', { duration: 3000 });
+        }
+      });
+    }
+  }
+
+  saveAlertThresholds(): void {
+    if (this.alertThresholdsForm.valid) {
+      this.loading.set(true);
+      this.settingsService.updateAlertThresholds(this.alertThresholdsForm.value).subscribe({
+        next: (response) => {
+          this.loading.set(false);
+          if (response.success) {
+            this.snackBar.open('Alert thresholds saved successfully', 'Close', { duration: 3000 });
+          }
+        },
+        error: () => {
+          this.loading.set(false);
+          this.snackBar.open('Failed to save alert thresholds', 'Close', { duration: 3000 });
+        }
+      });
+    }
+  }
+
+  saveSentimentParameters(): void {
+    if (this.sentimentParametersForm.valid) {
+      this.loading.set(true);
+      this.settingsService.updateSentimentParameters(this.sentimentParametersForm.value).subscribe({
+        next: (response) => {
+          this.loading.set(false);
+          if (response.success) {
+            this.snackBar.open('Sentiment parameters saved successfully', 'Close', { duration: 3000 });
+          }
+        },
+        error: () => {
+          this.loading.set(false);
+          this.snackBar.open('Failed to save sentiment parameters', 'Close', { duration: 3000 });
         }
       });
     }

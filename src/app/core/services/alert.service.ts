@@ -33,7 +33,9 @@ export class AlertService {
     return this.http.post<ApiResponse<Alert>>(`${this.baseUrl}/${id}/acknowledge`, {});
   }
 
-  checkAlerts(): Observable<ApiResponse<{ checked: boolean; newAlerts: number }>> {
-    return this.http.post<ApiResponse<{ checked: boolean; newAlerts: number }>>(`${this.baseUrl}/check`, {});
+  checkAlerts(companyId: number, thresholds?: Record<string, number>): Observable<ApiResponse<any[]>> {
+    const body: { companyId: number; thresholds?: Record<string, number> } = { companyId };
+    if (thresholds && Object.keys(thresholds).length > 0) body.thresholds = thresholds;
+    return this.http.post<ApiResponse<any[]>>(`${this.baseUrl}/check`, body);
   }
 }

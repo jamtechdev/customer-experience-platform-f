@@ -5,6 +5,18 @@ import { tap } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
 import { ApiResponse } from '../models';
 
+export interface AlertThresholds {
+  sentimentDropThreshold: number;
+  npsDeclineThreshold: number;
+  complaintSpikeThreshold: number;
+  competitorOutperformThreshold: number;
+}
+
+export interface SentimentParameters {
+  positiveThreshold: number;
+  negativeThreshold: number;
+}
+
 export interface AppSettings {
   theme: 'light' | 'dark' | 'auto';
   language: string;
@@ -164,6 +176,23 @@ export class SettingsService {
     this.settingsSubject.next(defaults);
     this.saveToLocalStorage(defaults);
     this.deleteSettings().subscribe();
+  }
+
+  /** System-level alert thresholds (admin/CX Manager). */
+  getAlertThresholds(): Observable<ApiResponse<AlertThresholds>> {
+    return this.http.get<ApiResponse<AlertThresholds>>(`${this.baseUrl}/alert-thresholds`);
+  }
+
+  updateAlertThresholds(thresholds: AlertThresholds): Observable<ApiResponse<AlertThresholds>> {
+    return this.http.put<ApiResponse<AlertThresholds>>(`${this.baseUrl}/alert-thresholds`, thresholds);
+  }
+
+  getSentimentParameters(): Observable<ApiResponse<SentimentParameters>> {
+    return this.http.get<ApiResponse<SentimentParameters>>(`${this.baseUrl}/sentiment-parameters`);
+  }
+
+  updateSentimentParameters(params: SentimentParameters): Observable<ApiResponse<SentimentParameters>> {
+    return this.http.put<ApiResponse<SentimentParameters>>(`${this.baseUrl}/sentiment-parameters`, params);
   }
 
   // Quick getters

@@ -1,1 +1,76 @@
-<p>process-enhancement works!</p>
+<div class="process-enhancement-container">
+  <div class="header-section">
+    <h1>Process Enhancement Plans</h1>
+    <p class="subtitle">AI-based improvement recommendations from root causes and journey pain points</p>
+    <button mat-raised-button color="primary" (click)="loadPlans()" [disabled]="loading()">
+      <mat-icon>refresh</mat-icon>
+      {{ loading() ? 'Generating...' : 'Generate / Refresh Plans' }}
+    </button>
+  </div>
+
+  @if (loading()) {
+    <div class="loading-container">
+      <mat-spinner diameter="40"></mat-spinner>
+      <p>Generating process enhancement plans...</p>
+    </div>
+  } @else if (error()) {
+    <mat-card class="error-card">
+      <mat-card-content>
+        <mat-icon color="warn">error</mat-icon>
+        <p>{{ error() }}</p>
+        <button mat-button (click)="loadPlans()">Retry</button>
+      </mat-card-content>
+    </mat-card>
+  } @else if (plans().length === 0) {
+    <mat-card class="empty-card">
+      <mat-card-content>
+        <mat-icon>info</mat-icon>
+        <p>No enhancement plans yet. Upload feedback data, run analysis, then click "Generate / Refresh Plans".</p>
+        <button mat-raised-button color="primary" (click)="loadPlans()">Generate Plans</button>
+      </mat-card-content>
+    </mat-card>
+  } @else {
+    <div class="plans-grid">
+      @for (plan of plans(); track plan.id) {
+        <mat-card class="plan-card">
+          <mat-card-header>
+            <mat-card-title>{{ plan.title }}</mat-card-title>
+            <mat-card-subtitle>
+              <mat-chip [color]="getPriorityColor(plan.priority)">{{ plan.priority }}</mat-chip>
+              {{ plan.category }} · Impact: {{ plan.impact }} · Effort: {{ plan.effort }}
+            </mat-card-subtitle>
+          </mat-card-header>
+          <mat-card-content>
+            <p class="description">{{ plan.description }}</p>
+            @if (plan.expectedOutcome) {
+              <p class="outcome"><strong>Expected outcome:</strong> {{ plan.expectedOutcome }}</p>
+            }
+            @if (plan.timeline) {
+              <p class="timeline"><strong>Timeline:</strong> {{ plan.timeline }}</p>
+            }
+            @if (plan.painPoints?.length) {
+              <div class="section">
+                <strong>Pain points</strong>
+                <ul>
+                  @for (pp of plan.painPoints; track pp) {
+                    <li>{{ pp }}</li>
+                  }
+                </ul>
+              </div>
+            }
+            @if (plan.recommendations?.length) {
+              <div class="section">
+                <strong>Recommendations</strong>
+                <ul>
+                  @for (rec of plan.recommendations; track rec.id) {
+                    <li><strong>{{ rec.title }}</strong>: {{ rec.description }}</li>
+                  }
+                </ul>
+              </div>
+            }
+          </mat-card-content>
+        </mat-card>
+      }
+    </div>
+  }
+</div>

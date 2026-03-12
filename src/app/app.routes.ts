@@ -23,8 +23,13 @@ export const routes: Routes = [
     children: [
       {
         path: '',
-        redirectTo: '/app/dashboard',
+        redirectTo: 'dashboard',
         pathMatch: 'full'
+      },
+      {
+        path: 'dashboard',
+        loadComponent: () => import('./features/admin/dashboard/admin-dashboard/admin-dashboard').then(m => m.AdminDashboard),
+        data: { title: 'Admin Dashboard', breadcrumb: 'Dashboard' }
       },
       {
         path: 'users',
@@ -45,6 +50,11 @@ export const routes: Routes = [
         path: 'journey-stages',
         loadComponent: () => import('./features/admin/journey-stage-config/journey-stage-config').then(m => m.JourneyStageConfig),
         data: { title: 'Journey Stages', breadcrumb: 'Journey Stages' }
+      },
+      {
+        path: 'datasets',
+        loadComponent: () => import('./features/admin/datasets/admin-datasets').then(m => m.AdminDatasets),
+        data: { title: 'Dataset Management', breadcrumb: 'Datasets' }
       }
     ]
   },
@@ -111,6 +121,16 @@ export const routes: Routes = [
             path: 'action-plans',
             loadComponent: () => import('./features/journey/action-plans/action-plans').then(m => m.ActionPlans),
             data: { title: 'Action Plans', breadcrumb: 'Action Plans' }
+          },
+          {
+            path: 'process-enhancement',
+            loadComponent: () => import('./features/journey/process-enhancement/process-enhancement').then(m => m.ProcessEnhancement),
+            data: { title: 'Process Enhancement', breadcrumb: 'Process Enhancement' }
+          },
+          {
+            path: 'journey-heatmap',
+            loadComponent: () => import('./features/journey/journey-heatmap/journey-heatmap').then(m => m.JourneyHeatmap),
+            data: { title: 'Journey Heatmap', breadcrumb: 'Journey Heatmap' }
           }
         ]
       },
@@ -148,6 +168,11 @@ export const routes: Routes = [
         path: 'data-sources/csv-upload',
         loadComponent: () => import('./features/data-ingestion/csv-upload/csv-upload').then(m => m.CsvUpload),
         data: { title: 'CSV Upload', breadcrumb: 'CSV Upload' }
+      },
+      {
+        path: 'data-sources/import-history',
+        loadComponent: () => import('./features/data-ingestion/import-history/import-history').then(m => m.ImportHistory),
+        data: { title: 'Import History', breadcrumb: 'Import History' }
       },
 
       // Reports (list + executive-summary for all; builder for Admin + CX Manager only)
@@ -227,6 +252,11 @@ export const routes: Routes = [
             path: 'alert-dashboard',
             loadComponent: () => import('./features/alerts/alert-dashboard/alert-dashboard').then(m => m.AlertDashboard),
             data: { title: 'Alerts', breadcrumb: 'Alerts' }
+          },
+          {
+            path: 'alert-configuration',
+            loadComponent: () => import('./features/alerts/alert-configuration/alert-configuration').then(m => m.AlertConfiguration),
+            data: { title: 'Alert Configuration', breadcrumb: 'Alert Configuration' }
           }
         ]
       },

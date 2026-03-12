@@ -2,6 +2,28 @@
 
 Angular frontend application for the Customer Experience Platform. This is a standalone frontend repository.
 
+## Project Approach & implementation status
+
+The app implements the **Offline Customer Experience Measurement & Analytics** flows (no external APIs, CSV-only data, three roles).
+
+| Document requirement | Frontend status |
+|----------------------|-----------------|
+| Secure login, role-based access | Done: auth guards, Admin / CX (Analyst) / Executive (Viewer) |
+| CSV upload, validation feedback | Done: Data Sources → CSV Upload |
+| Dashboards (main, executive) | Done: Main Dashboard, Executive Dashboard with KPIs, NPS, competitors, alerts |
+| Download summary report | Done: Executive Dashboard “Download” and Reports → Executive Summary “Export to PDF” |
+| Configure alert thresholds | Done: Admin → Settings → Alert thresholds (admin/analyst) |
+| Sentiment scoring parameters | Done: Admin → Settings → Sentiment parameters (admin) |
+| Process enhancement plan | Done: CX Journey → Process Enhancement (generate/refresh plans) |
+| Journey heatmap (satisfaction / pain) | Done: CX Journey → Journey Heatmap |
+| Journey map, touchpoints, action plans | Done: CX Journey → Journey Map, Touchpoints, Action Plans |
+| Sentiment, NPS, root cause, competitor analysis | Done: Analysis and Analytics menus |
+| Social media methodology, volume, comparison | Done: Social Media → Social Analysis, Methodology |
+| Alerts panel | Done: Alerts → Alert dashboard |
+| Reports list, dashboard reports, report builder, export PDF/Excel | Done: Reports section |
+| Admin: users, roles, journey stages, datasets, settings | Done: Admin menu (dashboard, users, roles, settings, journey stages, datasets) |
+| Responsive Angular UI | Done: Angular Material, responsive layout |
+
 ## Prerequisites
 
 Before you begin, ensure you have the following installed:

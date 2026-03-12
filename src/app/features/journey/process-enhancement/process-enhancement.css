@@ -1,0 +1,65 @@
+.process-enhancement-container {
+  padding: 1.5rem;
+}
+
+.header-section {
+  margin-bottom: 1.5rem;
+}
+
+.header-section h1 {
+  margin: 0 0 0.25rem 0;
+  font-size: 1.5rem;
+}
+
+.subtitle {
+  margin: 0 0 1rem 0;
+  color: rgba(0, 0, 0, 0.6);
+  font-size: 0.875rem;
+}
+
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  padding: 2rem;
+}
+
+.error-card, .empty-card {
+  text-align: center;
+  padding: 2rem;
+}
+
+.error-card mat-icon, .empty-card mat-icon {
+  font-size: 48px;
+  width: 48px;
+  height: 48px;
+  margin-bottom: 0.5rem;
+}
+
+.plans-grid {
+  display: grid;
+  gap: 1rem;
+}
+
+.plan-card {
+  text-align: left;
+}
+
+.plan-card .description {
+  margin: 0 0 0.75rem 0;
+}
+
+.plan-card .outcome, .plan-card .timeline {
+  margin: 0.5rem 0;
+  font-size: 0.9rem;
+}
+
+.plan-card .section {
+  margin-top: 1rem;
+}
+
+.plan-card .section ul {
+  margin: 0.25rem 0 0 1.25rem;
+  padding: 0;
+}

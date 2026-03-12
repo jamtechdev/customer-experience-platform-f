@@ -1,1 +1,59 @@
-<p>journey-heatmap works!</p>
+<div class="heatmap-container">
+  <div class="header-section">
+    <h1>Journey Satisfaction Heatmap</h1>
+    <p class="subtitle">Satisfaction and dissatisfaction by journey stage. Green = satisfaction, red = pain areas.</p>
+    <button mat-raised-button color="primary" (click)="loadHeatmap()" [disabled]="loading()">
+      {{ loading() ? 'Loading...' : 'Load Heatmap' }}
+    </button>
+  </div>
+
+  @if (loading()) {
+    <div class="loading-container">
+      <mat-spinner diameter="40"></mat-spinner>
+      <p>Analyzing journey...</p>
+    </div>
+  } @else if (error()) {
+    <mat-card class="error-card">
+      <mat-card-content>
+        <p>{{ error() }}</p>
+        <button mat-raised-button (click)="loadHeatmap()">Retry</button>
+      </mat-card-content>
+    </mat-card>
+  } @else if (stages().length === 0) {
+    <mat-card class="empty-card">
+      <mat-card-content>
+        <p>No journey stages with data. Configure journey stages in Admin, upload feedback, run analysis, then click "Load Heatmap".</p>
+        <button mat-raised-button color="primary" (click)="loadHeatmap()">Load Heatmap</button>
+      </mat-card-content>
+    </mat-card>
+  } @else {
+    <mat-card>
+      <mat-card-content>
+        <div class="heatmap-table">
+          <div class="heatmap-header">
+            <span class="col-stage">Stage</span>
+            <span class="col-metric">Satisfaction</span>
+            <span class="col-metric">Dissatisfaction</span>
+            <span class="col-count">Feedback</span>
+          </div>
+          @for (row of stages(); track row.stageName) {
+            <div class="heatmap-row">
+              <span class="col-stage">{{ row.stageName }}</span>
+              <span class="col-metric" [class]="getSatisfactionColor(row.satisfactionScore)">
+                {{ (row.satisfactionScore * 100).toFixed(0) }}%
+              </span>
+              <span class="col-metric" [class]="getDissatisfactionColor(row.dissatisfactionScore)">
+                {{ (row.dissatisfactionScore * 100).toFixed(0) }}%
+              </span>
+              <span class="col-count">{{ row.feedbackCount }}</span>
+            </div>
+          }
+        </div>
+        <div class="legend">
+          <span class="legend-item heat-high">High satisfaction</span>
+          <span class="legend-item heat-pain-high">High dissatisfaction (pain)</span>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  }
+</div>

@@ -25,6 +25,14 @@
             <mat-option value="excel">Excel</mat-option>
           </mat-select>
         </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>From date</mat-label>
+          <input matInput type="date" [value]="startDate()" (input)="startDate.set(($any($event.target).value) || null)" />
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>To date</mat-label>
+          <input matInput type="date" [value]="endDate()" (input)="endDate.set(($any($event.target).value) || null)" />
+        </mat-form-field>
         <div class="export-actions">
           <button
             mat-raised-button

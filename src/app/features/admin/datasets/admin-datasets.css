@@ -1,13 +1,9 @@
-.import-history-container {
+.datasets-container {
   padding: 1.5rem;
 }
 
 .header-section {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 1rem;
-  margin-bottom: 1rem;
+  margin-bottom: 1.5rem;
 }
 
 .header-section h1 {
@@ -17,16 +13,16 @@
 
 .subtitle {
   margin: 0;
-  flex: 1;
-  color: rgba(0, 0, 0, 0.6);
+  color: var(--mat-toolbar-container-text-color, rgba(0, 0, 0, 0.6));
   font-size: 0.875rem;
 }
 
 .loading-container {
   display: flex;
+  flex-direction: column;
   align-items: center;
   gap: 1rem;
-  padding: 1rem;
+  padding: 2rem;
 }
 
 .empty-state {
@@ -42,6 +38,10 @@
   margin-bottom: 0.5rem;
 }
 
-.imports-table {
+.datasets-table {
   width: 100%;
+}
+
+.datasets-table th {
+  font-weight: 600;
 }

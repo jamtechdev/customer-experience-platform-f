@@ -12,6 +12,22 @@ import {
   PaginationParams 
 } from '../models';
 
+export interface ProcessEnhancementPlan {
+  id: string;
+  title: string;
+  description: string;
+  priority: string;
+  category: string;
+  impact: string;
+  effort: string;
+  painPoints: string[];
+  rootCauses: Array<{ id: number; title: string; category: string }>;
+  recommendations: Array<{ id: number; title: string; description: string }>;
+  expectedOutcome: string;
+  timeline: string;
+  stakeholders: string[];
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -81,6 +97,11 @@ export class CustomerJourneyService {
     if (companyId) params = params.set('companyId', companyId.toString());
     if (period) params = params.set('period', period);
     return this.http.get<ApiResponse<any>>(`${this.journeyApiUrl}/trends`, { params });
+  }
+
+  getEnhancementPlans(companyId: number = 1): Observable<ApiResponse<ProcessEnhancementPlan[]>> {
+    const params = new HttpParams().set('companyId', companyId.toString());
+    return this.http.get<ApiResponse<ProcessEnhancementPlan[]>>(`${this.journeyApiUrl}/enhancement-plans`, { params });
   }
 
   // Stages (per-journey; for journeyId-based API)

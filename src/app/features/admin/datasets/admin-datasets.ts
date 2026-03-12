@@ -5,11 +5,10 @@ import { MatTableModule } from '@angular/material/table';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatIconModule } from '@angular/material/icon';
-import { MatButtonModule } from '@angular/material/button';
 import { CSVService, CSVImport } from '../../../core/services/csv.service';
 
 @Component({
-  selector: 'app-import-history',
+  selector: 'app-admin-datasets',
   standalone: true,
   imports: [
     CommonModule,
@@ -18,15 +17,14 @@ import { CSVService, CSVImport } from '../../../core/services/csv.service';
     MatProgressSpinnerModule,
     MatChipsModule,
     MatIconModule,
-    MatButtonModule,
   ],
-  templateUrl: './import-history.html',
-  styleUrl: './import-history.css',
+  templateUrl: './admin-datasets.html',
+  styleUrl: './admin-datasets.css',
 })
-export class ImportHistory implements OnInit {
+export class AdminDatasets implements OnInit {
   private csvService = inject(CSVService);
 
-  loading = signal(false);
+  loading = signal(true);
   imports = signal<CSVImport[]>([]);
   displayedColumns: string[] = ['filename', 'rowCount', 'status', 'createdAt'];
 
@@ -53,7 +51,7 @@ export class ImportHistory implements OnInit {
   }
 
   formatDate(d: Date | string): string {
-    if (!d) return '—';
+    if (!d) return 'N/A';
     const date = typeof d === 'string' ? new Date(d) : d;
     return date.toLocaleString();
   }

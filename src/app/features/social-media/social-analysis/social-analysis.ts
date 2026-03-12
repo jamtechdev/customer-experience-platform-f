@@ -6,7 +6,8 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatChipsModule } from '@angular/material/chips';
-import { DashboardService } from '../../../core/services/dashboard.service';
+import { SocialMediaService } from '../../../core/services/social-media.service';
+import { AuthService } from '../../../core/services/auth.service';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 
 interface PlatformData {
@@ -34,10 +35,12 @@ interface PlatformData {
   styleUrl: './social-analysis.css',
 })
 export class SocialAnalysis implements OnInit {
-  private dashboardService = inject(DashboardService);
+  private socialMediaService = inject(SocialMediaService);
+  private authService = inject(AuthService);
   private snackBar = inject(MatSnackBar);
 
   loading = signal(false);
+  error = signal<string | null>(null);
   platformData = signal<PlatformData[]>([]);
   displayedColumns: string[] = ['platform', 'volume', 'sentiment', 'positive', 'negative', 'neutral'];
 
@@ -57,16 +60,55 @@ export class SocialAnalysis implements OnInit {
   }
 
   loadSocialMediaData(): void {
+    const companyId = this.authService.currentUser()?.settings?.companyId ?? 1;
     this.loading.set(true);
-    // Mock data - in real app, this would come from API
-    setTimeout(() => {
-      this.platformData.set([
-        { platform: 'Twitter', volume: 1250, positive: 650, negative: 300, neutral: 300, sentimentScore: 0.65 },
-        { platform: 'Facebook', volume: 890, positive: 445, negative: 200, neutral: 245, sentimentScore: 0.60 },
-        { platform: 'Instagram', volume: 650, positive: 390, negative: 130, neutral: 130, sentimentScore: 0.70 },
-        { platform: 'App Store', volume: 420, positive: 252, negative: 84, neutral: 84, sentimentScore: 0.68 }
-      ]);
-      this.loading.set(false);
-    }, 1000);
+    this.error.set(null);
+
+    this.socialMediaService.getVolume(companyId).subscribe({
+      next: (volRes) => {
+        this.socialMediaService.getSentimentDistribution(companyId).subscribe({
+          next: (distRes) => {
+            const volume = volRes.success ? volRes.data : null;
+            const dist = distRes.success ? distRes.data : null;
+            const rows: PlatformData[] = [];
+            const platforms = new Set<string>();
+            if (volume?.mentionsPerPlatform) {
+              Object.keys(volume.mentionsPerPlatform).forEach(p => platforms.add(p));
+            }
+            if (dist?.channelComparison) {
+              Object.keys(dist.channelComparison).forEach(p => platforms.add(p));
+            }
+            platforms.forEach(platform => {
+              const vol = volume?.mentionsPerPlatform?.[platform] ?? 0;
+              const ch = dist?.channelComparison?.[platform] ?? { positive: 0, negative: 0, neutral: 0 };
+              const total = ch.positive + ch.negative + ch.neutral || 1;
+              const sentimentScore = total > 0 ? (ch.positive - ch.negative) / total : 0;
+              const normalized = (sentimentScore + 1) / 2;
+              rows.push({
+                platform,
+                volume: vol,
+                positive: ch.positive,
+                negative: ch.negative,
+                neutral: ch.neutral,
+                sentimentScore: normalized
+              });
+            });
+            rows.sort((a, b) => b.volume - a.volume);
+            this.platformData.set(rows);
+            this.loading.set(false);
+          },
+          error: () => {
+            this.loading.set(false);
+            this.error.set('Failed to load sentiment distribution');
+            this.snackBar.open('Failed to load sentiment distribution', 'Close', { duration: 3000 });
+          }
+        });
+      },
+      error: () => {
+        this.loading.set(false);
+        this.error.set('Failed to load volume data');
+        this.snackBar.open('Failed to load volume data', 'Close', { duration: 3000 });
+      }
+    });
   }
 }

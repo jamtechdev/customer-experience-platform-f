@@ -1,0 +1,36 @@
+.alert-config-container {
+  padding: 1.5rem;
+}
+
+.header-section {
+  margin-bottom: 1rem;
+}
+
+.header-section h1 {
+  margin: 0 0 0.25rem 0;
+  font-size: 1.5rem;
+}
+
+.subtitle {
+  margin: 0;
+  color: rgba(0, 0, 0, 0.6);
+  font-size: 0.875rem;
+}
+
+.full-width {
+  width: 100%;
+  display: block;
+  margin-bottom: 0.5rem;
+}
+
+.actions {
+  display: flex;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.loading-container {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}

@@ -4,6 +4,7 @@ import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { ReportService } from '../../../core/services/report.service';
@@ -21,6 +22,7 @@ type ReportFormat = 'pdf' | 'excel';
     MatButtonModule,
     MatIconModule,
     MatFormFieldModule,
+    MatInputModule,
     MatSelectModule,
     MatProgressSpinnerModule,
     MatSnackBarModule
@@ -36,6 +38,8 @@ export class ReportBuilder {
   reportType = signal<ReportType>('executive');
   reportFormat = signal<ReportFormat>('pdf');
   exporting = signal(false);
+  startDate = signal<string | null>(null);
+  endDate = signal<string | null>(null);
 
   get companyId(): number {
     return this.authService.currentUser()?.settings?.companyId ?? 1;
@@ -43,7 +47,11 @@ export class ReportBuilder {
 
   exportReport(): void {
     this.exporting.set(true);
-    const config = { companyId: this.companyId };
+    const config: { companyId: number; startDate?: string; endDate?: string } = { companyId: this.companyId };
+    const start = this.startDate();
+    const end = this.endDate();
+    if (start) config.startDate = start;
+    if (end) config.endDate = end;
     const format = this.reportFormat();
     const type = this.reportType();
     const dateStr = new Date().toISOString().slice(0, 10);
