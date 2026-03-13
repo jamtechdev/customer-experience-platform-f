@@ -62,8 +62,8 @@ export class Login {
   }
 
   onSSOLogin(provider: string): void {
-    // Redirect to SSO provider
+    // Redirect to SSO provider (URL from env when implemented)
     console.log('SSO Login:', provider);
-    // In real implementation: window.location.href = `/api/auth/sso/${provider}`;
+    // In real implementation: window.location.href = `${environment.apiUrl}/auth/sso/${provider}`;
   }
 }

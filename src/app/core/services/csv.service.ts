@@ -2,6 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { ApiResponse } from '../models';
+import { environment } from '../../../environments/environment';
 
 export interface CSVImport {
   id: number;
@@ -52,7 +53,7 @@ export interface CSVFormat {
 })
 export class CSVService {
   private readonly http = inject(HttpClient);
-  private readonly baseUrl = '/api/csv';
+  private readonly baseUrl = environment.apiUrl ? `${environment.apiUrl.replace(/\/$/, '')}/csv` : '/api/csv';
 
   getFormat(): Observable<ApiResponse<CSVFormat>> {
     return this.http.get<ApiResponse<CSVFormat>>(`${this.baseUrl}/format`);

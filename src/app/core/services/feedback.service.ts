@@ -9,13 +9,14 @@ import {
   PaginationParams,
   ResponseMeta
 } from '../models';
+import { environment } from '../../../environments/environment';
 
 @Injectable({
   providedIn: 'root'
 })
 export class FeedbackService {
   private readonly http = inject(HttpClient);
-  private readonly baseUrl = '/api/feedback';
+  private readonly baseUrl = environment.apiUrl ? `${environment.apiUrl.replace(/\/$/, '')}/feedback` : '/api/feedback';
 
   getFeedback(
     filter?: FeedbackFilter, 

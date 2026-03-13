@@ -14,13 +14,14 @@ import {
   ApiResponse, 
   PaginationParams 
 } from '../models';
+import { environment } from '../../../environments/environment';
 
 @Injectable({
   providedIn: 'root'
 })
 export class ReportService {
   private readonly http = inject(HttpClient);
-  private readonly baseUrl = '/api/reports';
+  private readonly baseUrl = environment.apiUrl ? `${environment.apiUrl.replace(/\/$/, '')}/reports` : '/api/reports';
 
   // Reports
   getReports(pagination?: PaginationParams): Observable<ApiResponse<Report[]>> {
@@ -116,7 +117,7 @@ export class ReportService {
 })
 export class SurveyService {
   private readonly http = inject(HttpClient);
-  private readonly baseUrl = '/api/surveys';
+  private readonly baseUrl = environment.apiUrl ? `${environment.apiUrl.replace(/\/$/, '')}/surveys` : '/api/surveys';
 
   getSurveys(pagination?: PaginationParams): Observable<ApiResponse<Survey[]>> {
     let params = new HttpParams();
@@ -176,7 +177,7 @@ export class SurveyService {
 })
 export class CompetitorService {
   private readonly http = inject(HttpClient);
-  private readonly baseUrl = '/api/competitors';
+  private readonly baseUrl = environment.apiUrl ? `${environment.apiUrl.replace(/\/$/, '')}/competitors` : '/api/competitors';
 
   getCompetitors(): Observable<ApiResponse<Competitor[]>> {
     return this.http.get<ApiResponse<Competitor[]>>(this.baseUrl);

@@ -2,6 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { ApiResponse } from '../models';
+import { environment } from '../../../environments/environment';
 
 export interface MethodologyStep {
   step: number;
@@ -40,7 +41,7 @@ export interface SentimentDistribution {
 })
 export class SocialMediaService {
   private readonly http = inject(HttpClient);
-  private readonly baseUrl = '/api/social-media';
+  private readonly baseUrl = environment.apiUrl ? `${environment.apiUrl.replace(/\/$/, '')}/social-media` : '/api/social-media';
 
   getMethodology(): Observable<ApiResponse<Methodology>> {
     return this.http.get<ApiResponse<Methodology>>(`${this.baseUrl}/methodology`);

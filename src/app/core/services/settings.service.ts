@@ -51,7 +51,7 @@ export interface AppSettings {
 })
 export class SettingsService {
   private readonly http = inject(HttpClient);
-  private readonly baseUrl = '/api/settings';
+  private readonly baseUrl = environment.apiUrl ? `${environment.apiUrl.replace(/\/$/, '')}/settings` : '/api/settings';
   
   private settingsSubject = new BehaviorSubject<AppSettings>(this.getDefaultSettings());
   public settings$ = this.settingsSubject.asObservable();

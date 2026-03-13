@@ -11,6 +11,7 @@ import {
   ApiResponse, 
   PaginationParams 
 } from '../models';
+import { environment } from '../../../environments/environment';
 
 export interface ProcessEnhancementPlan {
   id: string;
@@ -33,7 +34,7 @@ export interface ProcessEnhancementPlan {
 })
 export class CustomerJourneyService {
   private readonly http = inject(HttpClient);
-  private readonly baseUrl = '/api/customer-journey';
+  private readonly baseUrl = environment.apiUrl ? `${environment.apiUrl.replace(/\/$/, '')}/customer-journey` : '/api/customer-journey';
 
   // Journey CRUD
   getJourneys(pagination?: PaginationParams): Observable<ApiResponse<CustomerJourney[]>> {
@@ -66,7 +67,7 @@ export class CustomerJourneyService {
   }
 
   // Journey Analysis - matches backend /api/journey routes
-  private readonly journeyApiUrl = '/api/journey';
+  private readonly journeyApiUrl = environment.apiUrl ? `${environment.apiUrl.replace(/\/$/, '')}/journey` : '/api/journey';
 
   getStages(companyId?: number): Observable<ApiResponse<any[]>> {
     let params = new HttpParams();

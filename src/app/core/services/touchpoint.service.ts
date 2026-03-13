@@ -2,6 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { ApiResponse } from '../models';
+import { environment } from '../../../environments/environment';
 
 export interface Touchpoint {
   id: number;
@@ -32,7 +33,7 @@ export interface TouchpointPerformance {
 })
 export class TouchpointService {
   private readonly http = inject(HttpClient);
-  private readonly baseUrl = '/api/touchpoints';
+  private readonly baseUrl = environment.apiUrl ? `${environment.apiUrl.replace(/\/$/, '')}/touchpoints` : '/api/touchpoints';
 
   getTouchpoints(): Observable<ApiResponse<Touchpoint[]>> {
     return this.http.get<ApiResponse<Touchpoint[]>>(this.baseUrl);

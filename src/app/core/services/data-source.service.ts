@@ -9,13 +9,14 @@ import {
   ApiResponse, 
   PaginationParams 
 } from '../models';
+import { environment } from '../../../environments/environment';
 
 @Injectable({
   providedIn: 'root'
 })
 export class DataSourceService {
   private readonly http = inject(HttpClient);
-  private readonly baseUrl = '/api/data-sources';
+  private readonly baseUrl = environment.apiUrl ? `${environment.apiUrl.replace(/\/$/, '')}/data-sources` : '/api/data-sources';
 
   getDataSources(pagination?: PaginationParams): Observable<ApiResponse<DataSource[]>> {
     let params = new HttpParams();

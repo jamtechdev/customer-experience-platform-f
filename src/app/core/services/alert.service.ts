@@ -2,6 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { ApiResponse, PaginationParams } from '../models';
+import { environment } from '../../../environments/environment';
 
 export interface Alert {
   id: number;
@@ -19,7 +20,7 @@ export interface Alert {
 })
 export class AlertService {
   private readonly http = inject(HttpClient);
-  private readonly baseUrl = '/api/alerts';
+  private readonly baseUrl = environment.apiUrl ? `${environment.apiUrl.replace(/\/$/, '')}/alerts` : '/api/alerts';
 
   getAlerts(acknowledged?: boolean): Observable<ApiResponse<Alert[]>> {
     let params = new HttpParams();

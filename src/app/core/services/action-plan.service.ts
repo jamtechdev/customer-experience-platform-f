@@ -2,6 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { ApiResponse } from '../models';
+import { environment } from '../../../environments/environment';
 
 export interface ActionPlanItem {
   id: number;
@@ -21,7 +22,7 @@ export interface ActionPlanItem {
 })
 export class ActionPlanService {
   private readonly http = inject(HttpClient);
-  private readonly baseUrl = '/api/action-plans';
+  private readonly baseUrl = environment.apiUrl ? `${environment.apiUrl.replace(/\/$/, '')}/action-plans` : '/api/action-plans';
 
   getActionPlans(filters?: { companyId?: number; departmentId?: number; status?: string }): Observable<ApiResponse<ActionPlanItem[]>> {
     let params = new HttpParams();

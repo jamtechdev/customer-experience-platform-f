@@ -174,7 +174,7 @@ export const environment = {
   
   // AI Model Configuration (Internal offline processing)
   ai: {
-    modelEndpoint: getEnv('NG_APP_AI_MODEL_ENDPOINT', 'https://api.example.com/api/analysis/offline-ai'), // Update with production URL
+    modelEndpoint: getEnv('NG_APP_AI_MODEL_ENDPOINT', ''),
     confidenceThreshold: getEnvNumber('NG_APP_AI_CONFIDENCE_THRESHOLD', 0.7),
     maxTokens: getEnvNumber('NG_APP_AI_MAX_TOKENS', 2048),
   },

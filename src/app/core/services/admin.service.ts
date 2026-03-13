@@ -2,13 +2,14 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { User, UserRole, DataDictionary, ApiResponse, PaginationParams } from '../models';
+import { environment } from '../../../environments/environment';
 
 @Injectable({
   providedIn: 'root'
 })
 export class UserService {
   private readonly http = inject(HttpClient);
-  private readonly baseUrl = '/api/users';
+  private readonly baseUrl = environment.apiUrl ? `${environment.apiUrl.replace(/\/$/, '')}/users` : '/api/users';
 
   getUsers(pagination?: PaginationParams): Observable<ApiResponse<User[]>> {
     let params = new HttpParams();
@@ -69,7 +70,7 @@ export class UserService {
 })
 export class AdminSettingsService {
   private readonly http = inject(HttpClient);
-  private readonly baseUrl = '/api/settings';
+  private readonly baseUrl = environment.apiUrl ? `${environment.apiUrl.replace(/\/$/, '')}/settings` : '/api/settings';
 
   getSettings(): Observable<ApiResponse<any>> {
     return this.http.get<ApiResponse<any>>(this.baseUrl);

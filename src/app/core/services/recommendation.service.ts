@@ -2,6 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { ApiResponse, PaginationParams } from '../models';
+import { environment } from '../../../environments/environment';
 
 export interface Recommendation {
   id: number;
@@ -21,7 +22,7 @@ export interface Recommendation {
 })
 export class RecommendationService {
   private readonly http = inject(HttpClient);
-  private readonly baseUrl = '/api/recommendations';
+  private readonly baseUrl = environment.apiUrl ? `${environment.apiUrl.replace(/\/$/, '')}/recommendations` : '/api/recommendations';
 
   getRecommendations(pagination?: PaginationParams): Observable<ApiResponse<Recommendation[]>> {
     let params = new HttpParams();

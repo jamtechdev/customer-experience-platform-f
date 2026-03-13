@@ -11,13 +11,14 @@ import {
   ApiResponse, 
   PaginationParams 
 } from '../models';
+import { environment } from '../../../environments/environment';
 
 @Injectable({
   providedIn: 'root'
 })
 export class TaskService {
   private readonly http = inject(HttpClient);
-  private readonly baseUrl = '/api/tasks';
+  private readonly baseUrl = environment.apiUrl ? `${environment.apiUrl.replace(/\/$/, '')}/tasks` : '/api/tasks';
 
   // Tasks
   getTasks(
@@ -101,7 +102,7 @@ export class TaskService {
 })
 export class AlarmService {
   private readonly http = inject(HttpClient);
-  private readonly baseUrl = '/api/alarms';
+  private readonly baseUrl = environment.apiUrl ? `${environment.apiUrl.replace(/\/$/, '')}/alarms` : '/api/alarms';
 
   getAlarms(
     filters?: {
@@ -165,7 +166,7 @@ export class AlarmService {
 })
 export class MakerCheckerService {
   private readonly http = inject(HttpClient);
-  private readonly baseUrl = '/api/maker-checker';
+  private readonly baseUrl = environment.apiUrl ? `${environment.apiUrl.replace(/\/$/, '')}/maker-checker` : '/api/maker-checker';
 
   getPendingApprovals(pagination?: PaginationParams): Observable<ApiResponse<MakerCheckerRecord[]>> {
     let params = new HttpParams();

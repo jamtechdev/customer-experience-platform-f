@@ -8,13 +8,14 @@ import {
   ApiResponse,
   PaginationParams
 } from '../models';
+import { environment } from '../../../environments/environment';
 
 @Injectable({
   providedIn: 'root'
 })
 export class AnalysisService {
   private readonly http = inject(HttpClient);
-  private readonly baseUrl = '/api/analysis';
+  private readonly baseUrl = environment.apiUrl ? `${environment.apiUrl.replace(/\/$/, '')}/analysis` : '/api/analysis';
 
   // Sentiment Analysis - matches backend /api/analysis/sentiment
   analyzeSentiment(feedbackId: number): Observable<ApiResponse<SentimentAnalysisResult>> {
