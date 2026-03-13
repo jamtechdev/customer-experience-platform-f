@@ -18,8 +18,8 @@ export const environment = {
   appVersion: getEnv('NG_APP_VERSION', '1.0.0'),
   appTitle: getEnv('NG_APP_TITLE', 'Albaraka Türk Müşteri Deneyimi Platformu'),
   
-  // API Configuration - Node.js Backend
-  apiUrl: getEnv('NG_APP_API_URL', ''),
+  // API Configuration - use relative /api when same origin (nginx); or set NG_APP_API_URL to full URL
+  apiUrl: getEnv('NG_APP_API_URL', '/api'),
   apiVersion: getEnv('NG_APP_API_VERSION', 'v1'),
   apiTimeout: getEnvNumber('NG_APP_API_TIMEOUT', 30000), // 30 seconds
   
