@@ -19,7 +19,9 @@ export const environment = {
   appVersion: getEnv('NG_APP_VERSION', '1.0.0'),
   appTitle: getEnv('NG_APP_TITLE', 'Albaraka Türk Müşteri Deneyimi Platformu'),
 
-  apiUrl: getEnv('NG_APP_API_URL', ''),
+  // Backend base URL. If NG_APP_API_URL is not provided at build time,
+  // fall back to the deployed API endpoint so local dev still works.
+  apiUrl: getEnv('NG_APP_API_URL', 'https://139.162.159.201/api'),
   apiVersion: getEnv('NG_APP_API_VERSION', 'v1'),
   apiTimeout: getEnvNumber('NG_APP_API_TIMEOUT', 30000),
 

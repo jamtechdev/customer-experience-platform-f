@@ -152,7 +152,26 @@ export function errorInterceptor(req: HttpRequest<unknown>, next: HttpHandlerFn)
 }
 
 export function apiUrlInterceptor(req: HttpRequest<unknown>, next: HttpHandlerFn): Observable<HttpEvent<unknown>> {
-  // If URL already starts with http, it's an absolute URL, don't modify
+  const apiBaseUrl = environment.apiUrl;
+
+  // Special handling for local dev: if we're on localhost and the request
+  // is targeting the full API URL (https://139.162.159.201/api/...)
+  // rewrite it to /api/... so it goes through the Angular proxy and
+  // avoids browser CORS issues.
+  if (
+    typeof window !== 'undefined' &&
+    window.location.origin.startsWith('http://localhost') &&
+    apiBaseUrl &&
+    req.url.startsWith(apiBaseUrl)
+  ) {
+    const relativePath = req.url.substring(apiBaseUrl.length) || '';
+    const proxiedReq = req.clone({
+      url: `/api${relativePath}`,
+    });
+    return next(proxiedReq);
+  }
+
+  // If URL already starts with http/https and is not the API base, don't modify
   if (req.url.startsWith('http://') || req.url.startsWith('https://')) {
     return next(req);
   }
@@ -161,7 +180,6 @@ export function apiUrlInterceptor(req: HttpRequest<unknown>, next: HttpHandlerFn
   if (req.url.startsWith('/api')) {
     // Remove /api prefix from the URL if environment.apiUrl already includes it
     let urlPath = req.url;
-    const apiBaseUrl = environment.apiUrl;
 
     // If apiBaseUrl already ends with /api, remove /api from the request URL
     if (apiBaseUrl.endsWith('/api')) {
