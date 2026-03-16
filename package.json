@@ -3,10 +3,8 @@
   "version": "0.0.0",
   "scripts": {
     "ng": "ng",
-    "start": "npx dotenv -e .env -- ng serve",
-    "build": "npx dotenv -e .env -- ng build",
-    "build:prod": "npx dotenv -e .env -- ng build --configuration=production",
-    "watch": "npx dotenv -e .env -- ng build --watch --configuration=development",
+    "start": "ng serve",
+    "build": "ng build --configuration=production",
     "test": "ng test",
     "serve:ssr:sentimenter-cx": "node dist/sentimenter-cx/server/server.mjs"
   },
@@ -48,7 +46,6 @@
     "@types/express": "^5.0.1",
     "@types/node": "^20.17.19",
     "dotenv": "^16.4.5",
-    "dotenv-cli": "^7.4.2",
     "jsdom": "^27.1.0",
     "typescript": "~5.9.2",
     "vitest": "^4.0.8"
