@@ -43,54 +43,6 @@ export class Login {
     this.authService.login({ email: this.email, password: this.password }).subscribe({
       next: (response) => {
         this.loaderService.hide();
-        // #region agent log
-        try {
-          fetch('http://127.0.0.1:7282/ingest/6408ea06-d2e1-4105-95ab-8cd74cbff087', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'X-Debug-Session-Id': '2f0b58',
-            },
-            body: JSON.stringify({
-              sessionId: '2f0b58',
-              runId: 'pre-fix',
-              hypothesisId: 'H4',
-              location: 'login.ts:onLogin',
-              message: 'Login next handler (debug session 2f0b58)',
-              data: {
-                success: response?.success ?? null,
-              },
-              timestamp: Date.now(),
-            }),
-          }).catch(() => {});
-        } catch {
-          // ignore logging errors
-        }
-        // #endregion agent log
-        // #region agent log
-        try {
-          fetch('http://127.0.0.1:7282/ingest/6408ea06-d2e1-4105-95ab-8cd74cbff087', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'X-Debug-Session-Id': 'a75a41',
-            },
-            body: JSON.stringify({
-              sessionId: 'a75a41',
-              runId: 'pre-fix',
-              hypothesisId: 'H5',
-              location: 'login.ts:onLogin',
-              message: 'Login subscription next handler',
-              data: {
-                success: response?.success ?? null,
-              },
-              timestamp: Date.now(),
-            }),
-          }).catch(() => {});
-        } catch {
-          // ignore logging errors
-        }
-        // #endregion agent log
         if (response.success) {
           if (this.rememberMe) {
             localStorage.setItem('rememberMe', 'true');
