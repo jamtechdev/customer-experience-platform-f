@@ -11,6 +11,7 @@ import { Observable, throwError, BehaviorSubject } from 'rxjs';
 import { catchError, filter, take, switchMap } from 'rxjs/operators';
 import { AuthService } from '../services/auth.service';
 import { environment } from '../../../environments/environment';
+import { LoaderService } from '../services/loader.service';
 
 export function authInterceptor(req: HttpRequest<unknown>, next: HttpHandlerFn): Observable<HttpEvent<unknown>> {
   const authService = inject(AuthService);
@@ -31,6 +32,28 @@ export function authInterceptor(req: HttpRequest<unknown>, next: HttpHandlerFn):
   }
 
   return next(req);
+}
+
+export function loaderInterceptor(req: HttpRequest<unknown>, next: HttpHandlerFn): Observable<HttpEvent<unknown>> {
+  const loader = inject(LoaderService);
+
+  // Only show loader for API calls to our backend
+  const isApiRequest =
+    req.url.startsWith('/api') ||
+    req.url.startsWith(environment.apiUrl || '') ||
+    req.url.includes('/auth/');
+
+  if (!isApiRequest) {
+    return next(req);
+  }
+
+  loader.show();
+
+  return next(req).pipe(
+    finalize(() => {
+      loader.hide();
+    })
+  );
 }
 
 export function errorInterceptor(req: HttpRequest<unknown>, next: HttpHandlerFn): Observable<HttpEvent<unknown>> {

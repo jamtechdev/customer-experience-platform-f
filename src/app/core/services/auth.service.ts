@@ -134,6 +134,51 @@ export class AuthService {
     this.loaderService.show('Signing in...');
     return this.http.post<ApiResponse<AuthResponse>>(`${this.apiBase}/auth/login`, credentials).pipe(
       tap(response => {
+        // #region agent log
+        try {
+          fetch('http://127.0.0.1:7282/ingest/6408ea06-d2e1-4105-95ab-8cd74cbff087', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'X-Debug-Session-Id': '2f0b58',
+            },
+            body: JSON.stringify({
+              sessionId: '2f0b58',
+              runId: 'pre-fix',
+              hypothesisId: 'H1',
+              location: 'auth.service.ts:login',
+              message: 'Login response (debug session 2f0b58)',
+              data: {
+                success: response?.success ?? null,
+                hasData: !!response?.data,
+              },
+              timestamp: Date.now(),
+            }),
+          }).catch(() => {});
+        } catch {
+          // ignore logging errors
+        }
+        // #endregion agent log
+        // #region agent log
+        fetch('http://127.0.0.1:7282/ingest/6408ea06-d2e1-4105-95ab-8cd74cbff087', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Debug-Session-Id': 'a75a41',
+          },
+          body: JSON.stringify({
+            sessionId: 'a75a41',
+            runId: 'pre-fix',
+            hypothesisId: 'H1',
+            location: 'auth.service.ts:login',
+            message: 'Login response received',
+            data: {
+              success: response?.success ?? null,
+            },
+            timestamp: Date.now(),
+          }),
+        }).catch(() => {});
+        // #endregion agent log
         if (response.success) {
           this.setSession(response.data);
         }
@@ -171,7 +216,33 @@ export class AuthService {
   }
 
   getToken(): string | null {
-    return this.isBrowser ? localStorage.getItem(this.TOKEN_KEY) : null;
+    const token = this.isBrowser ? localStorage.getItem(this.TOKEN_KEY) : null;
+    // #region agent log
+    try {
+      fetch('http://127.0.0.1:7282/ingest/6408ea06-d2e1-4105-95ab-8cd74cbff087', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Debug-Session-Id': 'a75a41',
+        },
+        body: JSON.stringify({
+          sessionId: 'a75a41',
+          runId: 'pre-fix',
+          hypothesisId: 'H2',
+          location: 'auth.service.ts:getToken',
+          message: 'Token read from storage',
+          data: {
+            hasToken: !!token,
+            tokenLength: token ? token.length : 0,
+          },
+          timestamp: Date.now(),
+        }),
+      }).catch(() => {});
+    } catch {
+      // ignore logging errors
+    }
+    // #endregion agent log
+    return token;
   }
 
   hasPermission(permission: string): boolean {
@@ -195,6 +266,59 @@ export class AuthService {
       localStorage.setItem(this.REFRESH_TOKEN_KEY, authResult.refreshToken);
       localStorage.setItem(this.USER_KEY, JSON.stringify(authResult.user));
     }
+    // #region agent log
+    try {
+      const accessToken = this.isBrowser ? localStorage.getItem(this.TOKEN_KEY) : null;
+      fetch('http://127.0.0.1:7282/ingest/6408ea06-d2e1-4105-95ab-8cd74cbff087', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Debug-Session-Id': '2f0b58',
+        },
+        body: JSON.stringify({
+          sessionId: '2f0b58',
+          runId: 'pre-fix',
+          hypothesisId: 'H2',
+          location: 'auth.service.ts:setSession',
+          message: 'Session stored in browser (debug session 2f0b58)',
+          data: {
+            hasAccessToken: !!accessToken,
+            accessTokenLength: accessToken ? accessToken.length : 0,
+            hasUser: !!authResult?.user,
+          },
+          timestamp: Date.now(),
+        }),
+      }).catch(() => {});
+    } catch {
+      // ignore logging errors
+    }
+    // #endregion agent log
+    // #region agent log
+    try {
+      fetch('http://127.0.0.1:7282/ingest/6408ea06-d2e1-4105-95ab-8cd74cbff087', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Debug-Session-Id': 'a75a41',
+        },
+        body: JSON.stringify({
+          sessionId: 'a75a41',
+          runId: 'pre-fix',
+          hypothesisId: 'H3',
+          location: 'auth.service.ts:setSession',
+          message: 'Session set with user',
+          data: {
+            hasUser: !!authResult?.user,
+            userId: authResult?.user?.id ?? null,
+            userRole: authResult?.user?.role ?? null,
+          },
+          timestamp: Date.now(),
+        }),
+      }).catch(() => {});
+    } catch {
+      // ignore logging errors
+    }
+    // #endregion agent log
     this.currentUser.set(authResult.user);
     this.currentUserSubject.next(authResult.user);
   }

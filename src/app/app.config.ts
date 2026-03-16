@@ -4,11 +4,12 @@ import { provideHttpClient, withInterceptors, withFetch } from '@angular/common/
 
 import { routes } from './app.routes';
 import { provideClientHydration, withEventReplay } from '@angular/platform-browser';
-import { 
-  apiUrlInterceptor, 
-  authInterceptor, 
-  errorInterceptor, 
-  languageInterceptor 
+import {
+  apiUrlInterceptor,
+  authInterceptor,
+  errorInterceptor,
+  languageInterceptor,
+  loaderInterceptor
 } from './core/interceptors/http.interceptor';
 
 export const appConfig: ApplicationConfig = {
@@ -26,6 +27,7 @@ export const appConfig: ApplicationConfig = {
       withInterceptors([
         apiUrlInterceptor,
         authInterceptor,
+        loaderInterceptor,
         languageInterceptor,
         errorInterceptor
       ])

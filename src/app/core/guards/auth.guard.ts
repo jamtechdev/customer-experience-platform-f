@@ -13,6 +13,58 @@ export const authGuard: CanActivateFn = (route, state) => {
   // First, check token immediately (synchronous check)
   const hasToken = authService.getToken() !== null;
 
+  // #region agent log
+  try {
+    fetch('http://127.0.0.1:7282/ingest/6408ea06-d2e1-4105-95ab-8cd74cbff087', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Debug-Session-Id': '2f0b58',
+      },
+      body: JSON.stringify({
+        sessionId: '2f0b58',
+        runId: 'pre-fix',
+        hypothesisId: 'H3',
+        location: 'auth.guard.ts:authGuard',
+        message: 'authGuard evaluated (debug session 2f0b58)',
+        data: {
+          url: state.url,
+          hasToken,
+        },
+        timestamp: Date.now(),
+      }),
+    }).catch(() => {});
+  } catch {
+    // ignore logging errors
+  }
+  // #endregion agent log
+
+  // #region agent log
+  try {
+    fetch('http://127.0.0.1:7282/ingest/6408ea06-d2e1-4105-95ab-8cd74cbff087', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Debug-Session-Id': 'a75a41',
+      },
+      body: JSON.stringify({
+        sessionId: 'a75a41',
+        runId: 'pre-fix',
+        hypothesisId: 'H4',
+        location: 'auth.guard.ts:authGuard',
+        message: 'authGuard evaluated',
+        data: {
+          url: state.url,
+          hasToken,
+        },
+        timestamp: Date.now(),
+      }),
+    }).catch(() => {});
+  } catch {
+    // ignore logging errors
+  }
+  // #endregion agent log
+
   // If token exists, allow access immediately - don't wait for initialization
   // This prevents redirect on page refresh
   if (hasToken) {
