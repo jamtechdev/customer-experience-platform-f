@@ -19,16 +19,7 @@ export const environment = {
   appVersion: getEnv('NG_APP_VERSION', '1.0.0'),
   appTitle: getEnv('NG_APP_TITLE', 'Albaraka Türk Müşteri Deneyimi Platformu'),
 
-  apiUrl: (() => {
-    const apiUrl = getEnv('NG_APP_API_URL', '');
-    if (apiUrl) return apiUrl;
-    if (prod) return '/api';
-    const protocol = getEnv('NG_APP_API_PROTOCOL', 'http');
-    const host = getEnv('NG_APP_API_HOST', 'localhost');
-    const port = getEnv('NG_APP_API_PORT', '5000');
-    const path = getEnv('NG_APP_API_PATH', '/api');
-    return `${protocol}://${host}${port ? ':' + port : ''}${path}`;
-  })(),
+  apiUrl: getEnv('NG_APP_API_URL', ''),
   apiVersion: getEnv('NG_APP_API_VERSION', 'v1'),
   apiTimeout: getEnvNumber('NG_APP_API_TIMEOUT', 30000),
 
