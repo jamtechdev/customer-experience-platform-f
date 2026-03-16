@@ -45,17 +45,11 @@ export class AdminLogin {
       next: (response) => {
         this.loaderService.hide();
         if (response.success) {
-          const user = this.authService.currentUser();
-          // Check if user is admin
-          if (user && user.role === UserRole.ADMIN) {
-            if (this.rememberMe) {
-              localStorage.setItem('rememberMe', 'true');
-            }
-            this.router.navigate(['/app/dashboard'], { replaceUrl: true });
-          } else {
-            this.errorMessage.set('Access denied. Admin privileges required.');
-            this.authService.logout();
+          if (this.rememberMe) {
+            localStorage.setItem('rememberMe', 'true');
           }
+          // Simple full-page redirect to dashboard
+          window.location.href = '/app/dashboard';
         } else {
           this.errorMessage.set(this.t('loginError'));
         }

@@ -95,8 +95,8 @@ export class Login {
           if (this.rememberMe) {
             localStorage.setItem('rememberMe', 'true');
           }
-          // Always redirect to dashboard after login
-          this.router.navigate(['/app/dashboard'], { replaceUrl: true });
+          // Simple full-page redirect to dashboard
+          window.location.href = '/app/dashboard';
         } else {
           this.errorMessage.set(this.t('loginError'));
         }
