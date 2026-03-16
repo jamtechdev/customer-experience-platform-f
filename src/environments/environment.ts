@@ -1,27 +1,28 @@
 /**
- * Sentimenter CX - Development Environment Configuration
- * Albaraka Türk Customer Experience Platform
- * 
- * Environment variables can be set via:
- * 1. .env.development file (recommended)
- * 2. System environment variables
- * 3. Direct values below (fallback)
+ * Single environment config for dev and production. Values from .env (process.env).
  */
 
-import { getEnv, getEnvBoolean, getEnvNumber, getEnvArray } from './environment.helper';
+import {
+  getEnv,
+  getEnvBoolean,
+  getEnvNumber,
+  getEnvArray,
+  isProduction,
+} from './environment.helper';
+
+const prod = isProduction();
 
 export const environment = {
-  production: false,
-  
-  // Application Settings
+  production: prod,
+
   appName: getEnv('NG_APP_NAME', 'Sentimenter CX'),
   appVersion: getEnv('NG_APP_VERSION', '1.0.0'),
   appTitle: getEnv('NG_APP_TITLE', 'Albaraka Türk Müşteri Deneyimi Platformu'),
-  
-  // API Configuration - no proxy: frontend calls backend directly (dev default localhost:5000)
+
   apiUrl: (() => {
     const apiUrl = getEnv('NG_APP_API_URL', '');
     if (apiUrl) return apiUrl;
+    if (prod) return '/api';
     const protocol = getEnv('NG_APP_API_PROTOCOL', 'http');
     const host = getEnv('NG_APP_API_HOST', 'localhost');
     const port = getEnv('NG_APP_API_PORT', '5000');
@@ -29,23 +30,21 @@ export const environment = {
     return `${protocol}://${host}${port ? ':' + port : ''}${path}`;
   })(),
   apiVersion: getEnv('NG_APP_API_VERSION', 'v1'),
-  apiTimeout: getEnvNumber('NG_APP_API_TIMEOUT', 30000), // 30 seconds
-  
-  // Authentication
+  apiTimeout: getEnvNumber('NG_APP_API_TIMEOUT', 30000),
+
   auth: {
     tokenKey: getEnv('NG_APP_TOKEN_KEY', 'sentimenter_token'),
     refreshTokenKey: getEnv('NG_APP_REFRESH_TOKEN_KEY', 'sentimenter_refresh_token'),
-    tokenExpiry: getEnvNumber('NG_APP_TOKEN_EXPIRY', 3600), // 1 hour in seconds
-    refreshTokenExpiry: getEnvNumber('NG_APP_REFRESH_TOKEN_EXPIRY', 604800), // 7 days in seconds
+    tokenExpiry: getEnvNumber('NG_APP_TOKEN_EXPIRY', 3600),
+    refreshTokenExpiry: getEnvNumber('NG_APP_REFRESH_TOKEN_EXPIRY', 604800),
   },
-  
-  // WebSocket Configuration (for real-time updates) - DISABLED: No WebSocket support in this project
+
   websocket: {
-    enabled: false, // Disabled - project uses CSV upload only, no real-time connections
+    enabled: false,
     url: (() => {
       const wsUrl = getEnv('NG_APP_WEBSOCKET_URL', '');
       if (wsUrl) return wsUrl;
-      
+      if (prod) return '';
       const wsHost = getEnv('NG_APP_WEBSOCKET_HOST', '') || getEnv('NG_APP_API_HOST', '');
       const wsPort = getEnv('NG_APP_WEBSOCKET_PORT', '') || getEnv('NG_APP_API_PORT', '');
       const wsPath = getEnv('NG_APP_WEBSOCKET_PATH', '/ws');
@@ -56,12 +55,11 @@ export const environment = {
     reconnectInterval: getEnvNumber('NG_APP_WEBSOCKET_RECONNECT_INTERVAL', 5000),
     maxReconnectAttempts: getEnvNumber('NG_APP_WEBSOCKET_MAX_RECONNECT_ATTEMPTS', 10),
   },
-  
-  // Feature Flags
+
   features: {
-    aiAnalysis: getEnvBoolean('NG_APP_FEATURE_AI_ANALYSIS', true), // Internal rule-based AI
+    aiAnalysis: getEnvBoolean('NG_APP_FEATURE_AI_ANALYSIS', true),
     competitorAnalysis: getEnvBoolean('NG_APP_FEATURE_COMPETITOR_ANALYSIS', true),
-    socialMediaIntegration: getEnvBoolean('NG_APP_FEATURE_SOCIAL_MEDIA_INTEGRATION', false), // Data from CSV only
+    socialMediaIntegration: getEnvBoolean('NG_APP_FEATURE_SOCIAL_MEDIA_INTEGRATION', false),
     makerCheckerWorkflow: getEnvBoolean('NG_APP_FEATURE_MAKER_CHECKER_WORKFLOW', true),
     multiLanguage: getEnvBoolean('NG_APP_FEATURE_MULTI_LANGUAGE', true),
     darkMode: getEnvBoolean('NG_APP_FEATURE_DARK_MODE', true),
@@ -74,98 +72,76 @@ export const environment = {
     surveyModule: getEnvBoolean('NG_APP_FEATURE_SURVEY_MODULE', true),
     scheduledReports: getEnvBoolean('NG_APP_FEATURE_SCHEDULED_REPORTS', true),
   },
-  
-  // Supported Languages
+
   languages: [
     { code: 'tr', name: 'Türkçe', default: true },
     { code: 'en', name: 'English', default: false },
     { code: 'ar', name: 'العربية', default: false },
   ],
-  
-  // Data Sources Configuration (All data from CSV uploads)
+
   dataSources: {
-    instagram: {
-      enabled: false, // Data from CSV
-      apiUrl: '',
-    },
-    twitter: {
-      enabled: false, // Data from CSV
-      apiUrl: '',
-    },
-    youtube: {
-      enabled: false, // Data from CSV
-      apiUrl: '',
-    },
-    googleReviews: {
-      enabled: false, // Data from CSV
-      apiUrl: '',
-    },
-    appStore: {
-      enabled: false, // Data from CSV
-      apiUrl: '',
-    },
-    playStore: {
-      enabled: false, // Data from CSV
-      apiUrl: '',
-    },
-    sikayetVar: {
-      enabled: false, // Data from CSV
-      scrapeEnabled: false,
-    },
+    instagram: { enabled: false, apiUrl: '' },
+    twitter: { enabled: false, apiUrl: '' },
+    youtube: { enabled: false, apiUrl: '' },
+    googleReviews: { enabled: false, apiUrl: '' },
+    appStore: { enabled: false, apiUrl: '' },
+    playStore: { enabled: false, apiUrl: '' },
+    sikayetVar: { enabled: false, scrapeEnabled: false },
   },
-  
-  // Pagination Settings
+
   pagination: {
     defaultPageSize: getEnvNumber('NG_APP_PAGINATION_DEFAULT_PAGE_SIZE', 20),
-    pageSizeOptions: getEnvArray('NG_APP_PAGINATION_PAGE_SIZE_OPTIONS', ['10', '20', '50', '100']).map(Number),
+    pageSizeOptions: getEnvArray('NG_APP_PAGINATION_PAGE_SIZE_OPTIONS', [
+      '10',
+      '20',
+      '50',
+      '100',
+    ]).map(Number),
   },
-  
-  // Cache Settings
+
   cache: {
     enabled: getEnvBoolean('NG_APP_CACHE_ENABLED', true),
-    ttl: getEnvNumber('NG_APP_CACHE_TTL', 300), // 5 minutes
-    maxSize: getEnvNumber('NG_APP_CACHE_MAX_SIZE', 100), // max 100 cached items
+    ttl: getEnvNumber('NG_APP_CACHE_TTL', prod ? 600 : 300),
+    maxSize: getEnvNumber('NG_APP_CACHE_MAX_SIZE', prod ? 200 : 100),
   },
-  
-  // Analytics & Tracking (development disabled)
+
   analytics: {
-    enabled: getEnvBoolean('NG_APP_ANALYTICS_ENABLED', false),
-    googleAnalyticsId: getEnv('NG_APP_GOOGLE_ANALYTICS_ID', ''),
+    enabled: getEnvBoolean('NG_APP_ANALYTICS_ENABLED', prod),
+    googleAnalyticsId: getEnv('NG_APP_GOOGLE_ANALYTICS_ID', prod ? 'G-XXXXXXXXXX' : ''),
   },
-  
-  // Logging
+
   logging: {
-    level: getEnv('NG_APP_LOG_LEVEL', 'debug') as 'debug' | 'info' | 'warn' | 'error',
-    console: getEnvBoolean('NG_APP_LOG_CONSOLE', true),
-    remote: getEnvBoolean('NG_APP_LOG_REMOTE', false),
+    level: getEnv(
+      'NG_APP_LOG_LEVEL',
+      prod ? 'error' : 'debug'
+    ) as 'debug' | 'info' | 'warn' | 'error',
+    console: getEnvBoolean('NG_APP_LOG_CONSOLE', !prod),
+    remote: getEnvBoolean('NG_APP_LOG_REMOTE', prod),
   },
-  
-  // Security
+
   security: {
     kvkkCompliance: getEnvBoolean('NG_APP_KVKK_COMPLIANCE', true),
     gdprCompliance: getEnvBoolean('NG_APP_GDPR_COMPLIANCE', true),
     dataRetentionDays: getEnvNumber('NG_APP_DATA_RETENTION_DAYS', 365),
-    sessionTimeout: getEnvNumber('NG_APP_SESSION_TIMEOUT', 1800), // 30 minutes
+    sessionTimeout: getEnvNumber('NG_APP_SESSION_TIMEOUT', 1800),
     maxLoginAttempts: getEnvNumber('NG_APP_MAX_LOGIN_ATTEMPTS', 5),
-    lockoutDuration: getEnvNumber('NG_APP_LOCKOUT_DURATION', 900), // 15 minutes
+    lockoutDuration: getEnvNumber('NG_APP_LOCKOUT_DURATION', 900),
   },
-  
-  // Chart Configuration
+
   charts: {
     defaultColors: [
-      '#059669', // Primary green
-      '#3b82f6', // Blue
-      '#f59e0b', // Amber
-      '#ef4444', // Red
-      '#8b5cf6', // Purple
-      '#06b6d4', // Cyan
-      '#ec4899', // Pink
-      '#84cc16', // Lime
+      '#059669',
+      '#3b82f6',
+      '#f59e0b',
+      '#ef4444',
+      '#8b5cf6',
+      '#06b6d4',
+      '#ec4899',
+      '#84cc16',
     ],
     animationDuration: 300,
   },
-  
-  // Date/Time Format
+
   dateFormat: {
     short: 'dd.MM.yyyy',
     medium: 'dd MMM yyyy',
@@ -174,27 +150,32 @@ export const environment = {
     time: 'HH:mm',
     datetime: 'dd.MM.yyyy HH:mm',
   },
-  
-  // File Upload Settings
+
   upload: {
-    maxFileSize: getEnvNumber('NG_APP_UPLOAD_MAX_FILE_SIZE', 10485760), // 10 MB
-    allowedTypes: ['image/jpeg', 'image/png', 'image/gif', 'application/pdf', 'text/csv', 'application/json'],
+    maxFileSize: getEnvNumber('NG_APP_UPLOAD_MAX_FILE_SIZE', 10485760),
+    allowedTypes: [
+      'image/jpeg',
+      'image/png',
+      'image/gif',
+      'application/pdf',
+      'text/csv',
+      'application/json',
+    ],
     maxFiles: getEnvNumber('NG_APP_UPLOAD_MAX_FILES', 10),
   },
-  
-  // Sentiment Analysis Thresholds
+
   sentiment: {
     positiveThreshold: getEnvNumber('NG_APP_SENTIMENT_POSITIVE_THRESHOLD', 0.6),
     negativeThreshold: getEnvNumber('NG_APP_SENTIMENT_NEGATIVE_THRESHOLD', 0.4),
     veryPositiveThreshold: getEnvNumber('NG_APP_SENTIMENT_VERY_POSITIVE_THRESHOLD', 0.8),
     veryNegativeThreshold: getEnvNumber('NG_APP_SENTIMENT_VERY_NEGATIVE_THRESHOLD', 0.2),
   },
-  
-  // AI Model Configuration (Internal offline processing)
+
   ai: {
     modelEndpoint: (() => {
       const endpoint = getEnv('NG_APP_AI_MODEL_ENDPOINT', '');
       if (endpoint) return endpoint;
+      if (prod) return '';
       const apiHost = getEnv('NG_APP_API_HOST', '');
       const apiPort = getEnv('NG_APP_API_PORT', '');
       const apiProtocol = getEnv('NG_APP_API_PROTOCOL', 'http');

@@ -47,10 +47,11 @@ Before you begin, ensure you have the following installed:
 
 3. **Configure environment (optional):**
    
-   No proxy is used. The frontend calls the backend API directly. In development, the default API URL is `http://localhost:5000/api`. To override, copy `.env.example` to `.env` and set:
+   No proxy is used. The frontend calls the backend API directly. Create a `.env` file in the frontend root with:
    ```env
    NG_APP_API_URL=http://localhost:5000/api
    ```
+   For production build, set `NG_APP_API_URL=/api` (or your API URL) in `.env` before building.
    Ensure the backend is running and has CORS set for your frontend origin (e.g. `FRONTEND_URL=http://localhost:4200` in backend `.env`).
 
 ## Development
@@ -134,14 +135,11 @@ frontend/
 
 ## Environment Configuration
 
-The application uses Angular environment files located in `src/environments/`:
-
-- `environment.ts` - Development environment
-- `environment.prod.ts` - Production environment (if exists)
+The application uses a single environment file at `src/environments/environment.ts` for both development and production. It reads from `.env` (via process.env) and uses `NODE_ENV` / `NG_APP_PRODUCTION` to switch defaults.
 
 ### Key Configuration Options
 
-You can customize the following in `src/environments/environment.ts`:
+You can customize the following in `src/environments/environment.ts` (or via `.env`):
 
 - **API URL:** In development the default is `http://localhost:5000/api` (no proxy; frontend calls backend directly). Override with `NG_APP_API_URL` in `.env`. In production set `NG_APP_API_URL` at build time.
 - **API Version:** `apiVersion` - API version (default: `v1`)
@@ -152,13 +150,13 @@ You can customize the following in `src/environments/environment.ts`:
 
 ### Environment Variables
 
-Use a `.env` file in the frontend root (copy from `.env.example`). Required for API:
+Use a `.env` file in the frontend root (same file for development and production). Required:
 
 ```env
 NG_APP_API_URL=http://localhost:5000/api
 ```
 
-Other optional variables: `NG_APP_NAME`, `NG_APP_API_VERSION`, `NG_APP_API_TIMEOUT`, etc. See `.env.example` for the full list.
+Use `http://localhost:5000/api` for local dev; use `/api` or your full API URL for production builds.
 
 ## Testing
 

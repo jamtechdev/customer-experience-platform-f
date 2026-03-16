@@ -1,31 +1,16 @@
 /**
- * Environment Helper Utility
- * Provides helper functions to access environment variables
- * Works with both .env files and direct environment object
+ * Environment helper – reads from .env (loaded into process.env at build/serve).
+ * No separate env files; use the single .env and use these values in the project.
  */
 
-/**
- * Get environment variable with fallback
- */
 export function getEnv(key: string, defaultValue: string = ''): string {
-  // In browser, use window object if available
   if (typeof window !== 'undefined') {
-    // Check for window.__env (injected at runtime)
-    if ((window as any).__env && (window as any).__env[key]) {
-      return (window as any).__env[key];
-    }
-    // Check for NG_APP_ prefixed variables in window
-    if ((window as any)[key]) {
-      return (window as any)[key];
-    }
+    if ((window as any).__env?.[key]) return (window as any).__env[key];
+    if ((window as any)[key]) return (window as any)[key];
   }
-  
-  // For build time, check process.env only if available (Node.js environment)
-  if (typeof process !== 'undefined' && process.env && process.env[key]) {
+  if (typeof process !== 'undefined' && process.env?.[key]) {
     return process.env[key];
   }
-  
-  // Return default value
   return defaultValue;
 }
 
