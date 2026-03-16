@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { TranslationService } from '../core/services/translation.service';
 import { LanguageSwitcher } from '../core/components/language-switcher/language-switcher';
+import { AuthService } from '../core/services/auth.service';
 
 @Component({
   selector: 'app-landing',
@@ -13,6 +14,7 @@ import { LanguageSwitcher } from '../core/components/language-switcher/language-
 })
 export class Landing {
   private translationService = inject(TranslationService);
+  private authService = inject(AuthService);
 
   // Translation getter
   t = (key: string): string => this.translationService.translate(key);
@@ -51,4 +53,12 @@ export class Landing {
       descriptionKey: 'detailedReportsDesc'
     }
   ];
+
+  get isLoggedIn(): boolean {
+    return this.authService.isAuthenticated();
+  }
+
+  logout(): void {
+    this.authService.logout();
+  }
 }

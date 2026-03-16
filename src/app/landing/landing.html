@@ -11,8 +11,14 @@
         <span class="logo-text">{{ t('landing.loginTitle') }}</span>
       </div>
       <div class="nav-links">
-        <a routerLink="/login" class="btn-secondary">{{ t('landing.login') }}</a>
-        <a routerLink="/signup" class="btn-nav-outline">{{ t('landing.signup') }}</a>
+        <ng-container *ngIf="!isLoggedIn; else loggedInNav">
+          <a routerLink="/login" class="btn-secondary">{{ t('landing.login') }}</a>
+          <a routerLink="/signup" class="btn-nav-outline">{{ t('landing.signup') }}</a>
+        </ng-container>
+        <ng-template #loggedInNav>
+          <button class="btn-secondary" type="button" (click)="logout()">Logout</button>
+          <a routerLink="/app/dashboard" class="btn-nav-outline">Dashboard</a>
+        </ng-template>
         <app-language-switcher></app-language-switcher>
       </div>
     </div>
