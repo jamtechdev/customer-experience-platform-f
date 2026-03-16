@@ -8,7 +8,7 @@ import {
   HttpHandlerFn
 } from '@angular/common/http';
 import { Observable, throwError, BehaviorSubject } from 'rxjs';
-import { catchError, filter, take, switchMap } from 'rxjs/operators';
+import { catchError, filter, take, switchMap, finalize } from 'rxjs/operators';
 import { AuthService } from '../services/auth.service';
 import { environment } from '../../../environments/environment';
 import { LoaderService } from '../services/loader.service';
