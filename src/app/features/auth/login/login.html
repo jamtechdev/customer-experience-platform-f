@@ -111,20 +111,6 @@
       </button>
     </form>
 
-    <!-- SSO Options -->
-    <div class="sso-section">
-      <div class="divider">
-        <span>OR</span>
-      </div>
-
-      <button class="btn-sso" (click)="onSSOLogin('azure')" [disabled]="loaderService.isLoading()">
-        <svg viewBox="0 0 24 24" fill="currentColor">
-          <path d="M11.4 24H0V12.6L11.4 0v24zM24 24H12.6V12.6L24 0v24z"/>
-        </svg>
-        <span>Azure AD ile Giriş</span>
-      </button>
-    </div>
-
     <!-- Footer -->
     <div class="login-footer">
       <p class="footer-text">{{ t('Don’t have an account?') }} <a routerLink="/signup" class="link">{{ t('Sign up') }}</a></p>

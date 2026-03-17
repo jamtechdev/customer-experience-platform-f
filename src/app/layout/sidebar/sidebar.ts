@@ -1,6 +1,8 @@
-import { Component, inject, output } from '@angular/core';
+import { Component, inject, output, signal, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterLink, RouterLinkActive } from '@angular/router';
+import { Router, RouterLink, RouterLinkActive, NavigationEnd } from '@angular/router';
+import { filter } from 'rxjs/operators';
+import { Subscription } from 'rxjs';
 import { MatListModule } from '@angular/material/list';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
@@ -36,11 +38,17 @@ export interface SidebarFlatItem {
   templateUrl: './sidebar.html',
   styleUrl: './sidebar.css',
 })
-export class Sidebar {
+export class Sidebar implements OnInit, OnDestroy {
   private authService = inject(AuthService);
+  private router = inject(Router);
   navigate = output<void>();
 
-  menuItems: SidebarMenuItem[] = [
+  /** Cached menu – only recomputed on route change to avoid OOM from getter on every CD. */
+  readonly flatMenuItems = signal<SidebarFlatItem[]>([]);
+  private routerSub?: Subscription;
+
+  /** App menu (CX) – shown only when URL is under /app */
+  private appMenuItems: SidebarMenuItem[] = [
     { label: 'Dashboard', icon: 'dashboard', route: '/app/dashboard' },
     {
       label: 'Reports',
@@ -96,34 +104,19 @@ export class Sidebar {
         { label: 'Alert Dashboard', icon: 'dashboard', route: '/app/alerts/alert-dashboard' },
         { label: 'Alert Configuration', icon: 'tune', route: '/app/alerts/alert-configuration' }
       ]
-    },
-    {
-      label: 'Administration',
-      icon: 'admin_panel_settings',
-      children: [
-        { label: 'Users', icon: 'people', route: '/manage/users' },
-        { label: 'Roles', icon: 'security', route: '/manage/roles' },
-        { label: 'Settings', icon: 'settings', route: '/manage/settings' },
-        { label: 'Journey Stages', icon: 'account_tree', route: '/manage/journey-stages' },
-        { label: 'Datasets', icon: 'folder', route: '/manage/datasets' }
-      ]
     }
   ];
 
-  /** Stable options for RouterLinkActive to avoid NG0103 (endless change notifications). */
   private readonly exactTrueOptions = { exact: true };
   private readonly exactFalseOptions = { exact: false };
 
   getLinkActiveOptions(route: string): { exact: boolean } {
-    return (route === '/app/reports' || route === '/manage/dashboard') ? this.exactTrueOptions : this.exactFalseOptions;
+    return route === '/app/reports' ? this.exactTrueOptions : this.exactFalseOptions;
   }
 
-  /** Flat menu items - all under /app and /manage. No role-based filtering for now. */
-  get flatMenuItems(): SidebarFlatItem[] {
-    const user = this.authService.currentUser();
-    if (!user) return [];
+  private flatten(items: SidebarMenuItem[]): SidebarFlatItem[] {
     const out: SidebarFlatItem[] = [];
-    for (const item of this.menuItems) {
+    for (const item of items) {
       if (item.children?.length) {
         for (const child of item.children) {
           if (child.route) out.push({ label: child.label, icon: child.icon, route: child.route });
@@ -133,6 +126,26 @@ export class Sidebar {
       }
     }
     return out;
+  }
+
+  private updateMenu(): void {
+    const user = this.authService.currentUser();
+    if (!user) {
+      this.flatMenuItems.set([]);
+      return;
+    }
+    this.flatMenuItems.set(this.flatten(this.appMenuItems));
+  }
+
+  ngOnInit(): void {
+    this.updateMenu();
+    this.routerSub = this.router.events
+      .pipe(filter((e): e is NavigationEnd => e instanceof NavigationEnd))
+      .subscribe(() => this.updateMenu());
+  }
+
+  ngOnDestroy(): void {
+    this.routerSub?.unsubscribe();
   }
 
   onNavigate(): void {

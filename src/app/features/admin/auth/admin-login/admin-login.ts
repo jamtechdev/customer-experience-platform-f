@@ -5,7 +5,6 @@ import { Router, RouterModule } from '@angular/router';
 import { AuthService } from '../../../../core/services/auth.service';
 import { TranslationService } from '../../../../core/services/translation.service';
 import { LoaderService } from '../../../../core/services/loader.service';
-import { UserRole } from '../../../../core/models';
 
 @Component({
   selector: 'app-admin-login',
@@ -48,8 +47,7 @@ export class AdminLogin {
           if (this.rememberMe) {
             localStorage.setItem('rememberMe', 'true');
           }
-          // Redirect to manage dashboard first
-          this.router.navigate(['/manage/dashboard'], { replaceUrl: true });
+          this.router.navigate(['/app/dashboard'], { replaceUrl: true });
         } else {
           this.errorMessage.set(this.t('loginError'));
         }

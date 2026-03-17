@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject, signal, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterOutlet } from '@angular/router';
 import { MatSidenavModule } from '@angular/material/sidenav';
@@ -6,6 +6,7 @@ import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { BreakpointObserver, Breakpoints } from '@angular/cdk/layout';
+import { Subscription } from 'rxjs';
 import { Sidebar } from '../sidebar/sidebar';
 import { Header } from '../header/header';
 import { Footer } from '../footer/footer';
@@ -26,14 +27,15 @@ import { Footer } from '../footer/footer';
   templateUrl: './main-layout.html',
   styleUrl: './main-layout.css',
 })
-export class MainLayout {
+export class MainLayout implements OnDestroy {
   private breakpointObserver = inject(BreakpointObserver);
-  
+  private breakpointSub?: Subscription;
+
   sidenavOpened = signal(true);
   isMobile = signal(false);
 
   constructor() {
-    this.breakpointObserver.observe([
+    this.breakpointSub = this.breakpointObserver.observe([
       Breakpoints.Handset,
       Breakpoints.Tablet
     ]).subscribe(result => {
@@ -44,6 +46,10 @@ export class MainLayout {
         this.sidenavOpened.set(true);
       }
     });
+  }
+
+  ngOnDestroy(): void {
+    this.breakpointSub?.unsubscribe();
   }
 
   toggleSidenav(): void {

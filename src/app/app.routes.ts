@@ -1,7 +1,5 @@
 import { Routes } from '@angular/router';
 import { authGuard, guestGuard } from './core/guards/auth.guard';
-import { adminAuthGuard } from './core/guards/admin-auth.guard';
-import { adminGuestGuard } from './core/guards/admin-guest.guard';
 
 export const routes: Routes = [
   // Landing page (public)
@@ -9,57 +7,10 @@ export const routes: Routes = [
     path: '',
     loadComponent: () => import('./landing/landing').then(m => m.Landing)
   },
-  // Redirect old admin URLs to manage (no admin prefix)
-  { path: 'admin', redirectTo: 'manage', pathMatch: 'prefix' },
-  // Manage (ex-admin) login - no layout
-  {
-    path: 'manage/login',
-    loadComponent: () => import('./features/admin/auth/admin-login/admin-login').then(m => m.AdminLogin),
-    canActivate: [adminGuestGuard]
-  },
-  // Manage routes with main layout (sidebar, header, footer)
-  {
-    path: 'manage',
-    loadComponent: () => import('./layout/main-layout/main-layout').then(m => m.MainLayout),
-    canActivate: [adminAuthGuard],
-    children: [
-      {
-        path: '',
-        redirectTo: 'dashboard',
-        pathMatch: 'full'
-      },
-      {
-        path: 'dashboard',
-        loadComponent: () => import('./features/admin/dashboard/admin-dashboard/admin-dashboard').then(m => m.AdminDashboard),
-        data: { title: 'Dashboard', breadcrumb: 'Dashboard' }
-      },
-      {
-        path: 'users',
-        loadComponent: () => import('./features/admin/user-management/user-management').then(m => m.UserManagement),
-        data: { title: 'User Management', breadcrumb: 'Users' }
-      },
-      {
-        path: 'roles',
-        loadComponent: () => import('./features/admin/role-management/role-management').then(m => m.RoleManagement),
-        data: { title: 'Role Management', breadcrumb: 'Roles' }
-      },
-      {
-        path: 'settings',
-        loadComponent: () => import('./features/admin/system-settings/system-settings').then(m => m.SystemSettings),
-        data: { title: 'System Settings', breadcrumb: 'Settings' }
-      },
-      {
-        path: 'journey-stages',
-        loadComponent: () => import('./features/admin/journey-stage-config/journey-stage-config').then(m => m.JourneyStageConfig),
-        data: { title: 'Journey Stages', breadcrumb: 'Journey Stages' }
-      },
-      {
-        path: 'datasets',
-        loadComponent: () => import('./features/admin/datasets/admin-datasets').then(m => m.AdminDatasets),
-        data: { title: 'Dataset Management', breadcrumb: 'Datasets' }
-      }
-    ]
-  },
+  // All users use /app/dashboard; redirect old admin/manage URLs
+  { path: 'admin', redirectTo: 'app/dashboard', pathMatch: 'prefix' },
+  { path: 'manage/login', redirectTo: 'login', pathMatch: 'full' },
+  { path: 'manage', redirectTo: 'app/dashboard', pathMatch: 'prefix' },
   // Public routes
   {
     path: 'login',

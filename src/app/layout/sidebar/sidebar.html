@@ -5,7 +5,7 @@
 
   <mat-nav-list class="menu-list">
     <a
-      *ngFor="let item of flatMenuItems"
+      *ngFor="let item of flatMenuItems()"
       mat-list-item
       [routerLink]="item.route"
       routerLinkActive="active"

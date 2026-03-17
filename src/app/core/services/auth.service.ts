@@ -50,10 +50,7 @@ export class AuthService {
   readonly isViewer = computed(() => this.currentUser()?.role === UserRole.VIEWER);
 
   constructor() {
-    // Initialize from storage only in browser
-    // Use setTimeout to ensure initialization happens after Angular bootstrap
     if (isPlatformBrowser(this.platformId)) {
-      // Initialize immediately for synchronous cases
       this.initializeAuth();
     } else {
       // For SSR, mark as ready immediately

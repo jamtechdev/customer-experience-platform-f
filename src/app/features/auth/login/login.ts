@@ -47,15 +47,7 @@ export class Login {
           if (this.rememberMe) {
             localStorage.setItem('rememberMe', 'true');
           }
-          // Role-based redirect using backend user role
-          const role = response.data.user?.role;
-          if (role === 'admin') {
-            this.router.navigate(['/manage/dashboard'], { replaceUrl: true });
-          } else if (role === 'viewer') {
-            this.router.navigate(['/app/executive-dashboard'], { replaceUrl: true });
-          } else {
-            this.router.navigate(['/app/dashboard'], { replaceUrl: true });
-          }
+          this.router.navigate(['/app/dashboard'], { replaceUrl: true });
         } else {
           this.errorMessage.set(this.t('loginError'));
         }
@@ -68,9 +60,4 @@ export class Login {
     });
   }
 
-  onSSOLogin(provider: string): void {
-    // Redirect to SSO provider (URL from env when implemented)
-    console.log('SSO Login:', provider);
-    // In real implementation: window.location.href = `${environment.apiUrl}/auth/sso/${provider}`;
-  }
 }
