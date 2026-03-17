@@ -9,15 +9,17 @@ export const routes: Routes = [
     path: '',
     loadComponent: () => import('./landing/landing').then(m => m.Landing)
   },
-  // Admin login (no layout - full page)
+  // Redirect old admin URLs to manage (no admin prefix)
+  { path: 'admin', redirectTo: 'manage', pathMatch: 'prefix' },
+  // Manage (ex-admin) login - no layout
   {
-    path: 'admin/login',
+    path: 'manage/login',
     loadComponent: () => import('./features/admin/auth/admin-login/admin-login').then(m => m.AdminLogin),
     canActivate: [adminGuestGuard]
   },
-  // Admin routes with main layout (sidebar, header, footer) - prefix /admin
+  // Manage routes with main layout (sidebar, header, footer)
   {
-    path: 'admin',
+    path: 'manage',
     loadComponent: () => import('./layout/main-layout/main-layout').then(m => m.MainLayout),
     canActivate: [adminAuthGuard],
     children: [
@@ -29,7 +31,7 @@ export const routes: Routes = [
       {
         path: 'dashboard',
         loadComponent: () => import('./features/admin/dashboard/admin-dashboard/admin-dashboard').then(m => m.AdminDashboard),
-        data: { title: 'Admin Dashboard', breadcrumb: 'Dashboard' }
+        data: { title: 'Dashboard', breadcrumb: 'Dashboard' }
       },
       {
         path: 'users',

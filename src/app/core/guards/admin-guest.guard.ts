@@ -35,9 +35,9 @@ export const adminGuestGuard: CanActivateFn = (route, state) => {
 
       // User is fully authenticated
       if (isAuthenticated && currentUser) {
-        // If admin, redirect to admin dashboard
+        // If admin, redirect to manage dashboard
         if (currentUser.role === UserRole.ADMIN) {
-          router.navigate(['/app/dashboard'], { replaceUrl: true });
+          router.navigate(['/manage/dashboard'], { replaceUrl: true });
           return false;
         } else {
           // Not admin, redirect to user dashboard

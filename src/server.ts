@@ -44,7 +44,17 @@ app.use((req, res, next) => {
     .then((response) =>
       response ? writeResponseToNodeResponse(response, res) : next(),
     )
-    .catch(next);
+    .catch((err) => {
+      console.error('SSR render error:', err?.message ?? err);
+      next(err);
+    });
+});
+
+/**
+ * Final error handler: avoid unhandled errors when SSR or next() fails.
+ */
+app.use((err: unknown, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
+  res.status(500).json({ message: 'Server error', code: 500 });
 });
 
 /**

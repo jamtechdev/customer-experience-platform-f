@@ -153,7 +153,7 @@ export class MenuService {
       }
     ];
 
-    // Add admin menu only for admin users (admin routes are under /admin, not /app)
+    // Add manage menu for admin users (routes under /manage)
     if (userRole === UserRole.ADMIN) {
       menuItems.push({
         id: 'admin',
@@ -165,28 +165,28 @@ export class MenuService {
             id: 'admin-users',
             label: t('nav.userManagement'),
             icon: 'users',
-            route: '/admin/users',
+            route: '/manage/users',
             permissions: ['admin']
           },
           {
             id: 'admin-roles',
             label: t('nav.roleManagement'),
             icon: 'user-check',
-            route: '/admin/roles',
+            route: '/manage/roles',
             permissions: ['admin']
           },
           {
             id: 'admin-settings',
             label: t('nav.systemSettings'),
             icon: 'settings',
-            route: '/admin/settings',
+            route: '/manage/settings',
             permissions: ['admin']
           },
           {
             id: 'admin-journey-stages',
             label: t('nav.journeyStages') || 'Journey Stages',
             icon: 'route',
-            route: '/admin/journey-stages',
+            route: '/manage/journey-stages',
             permissions: ['admin']
           }
         ]

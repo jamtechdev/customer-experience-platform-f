@@ -79,10 +79,10 @@
   --font-size-2xl: 1.5rem;     /* 24px */
   --font-size-3xl: 1.875rem;   /* 30px */
 
-  /* Transitions */
-  --transition-fast: 150ms ease;
-  --transition-normal: 250ms ease;
-  --transition-slow: 350ms ease;
+  /* Transitions - disabled to reduce rAF / memory */
+  --transition-fast: 0ms;
+  --transition-normal: 0ms;
+  --transition-slow: 0ms;
 
   /* Z-Index Scale */
   --z-dropdown: 100;
@@ -157,7 +157,6 @@ p {
 a {
   color: var(--primary-color);
   text-decoration: none;
-  transition: color var(--transition-fast);
 }
 
 a:hover {
@@ -525,7 +524,6 @@ img {
   height: 100%;
   background: var(--primary-color);
   border-radius: var(--radius-full);
-  transition: width var(--transition-normal);
 }
 
 .progress-bar-success { background: var(--success-color); }
@@ -641,13 +639,13 @@ button:disabled,
   50% { transform: translateY(-10px); }
 }
 
-/* Animation Utility Classes */
-.animate-fadeIn { animation: fadeIn var(--transition-normal); }
-.animate-slideInUp { animation: slideInUp var(--transition-normal); }
-.animate-slideInDown { animation: slideInDown var(--transition-normal); }
-.animate-scaleIn { animation: scaleIn var(--transition-normal); }
-.animate-pulse { animation: pulse 2s infinite; }
-.animate-bounce { animation: bounce 1s infinite; }
+/* Animation Utility Classes - disabled */
+.animate-fadeIn { }
+.animate-slideInUp { }
+.animate-slideInDown { }
+.animate-scaleIn { }
+.animate-pulse { }
+.animate-bounce { }
 
 /* ============================================
    Responsive Breakpoints

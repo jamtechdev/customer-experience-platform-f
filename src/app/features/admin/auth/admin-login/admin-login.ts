@@ -48,8 +48,8 @@ export class AdminLogin {
           if (this.rememberMe) {
             localStorage.setItem('rememberMe', 'true');
           }
-          // Angular router navigation to app (routes will send to dashboard)
-          this.router.navigate(['/app']);
+          // Redirect to manage dashboard first
+          this.router.navigate(['/manage/dashboard'], { replaceUrl: true });
         } else {
           this.errorMessage.set(this.t('loginError'));
         }

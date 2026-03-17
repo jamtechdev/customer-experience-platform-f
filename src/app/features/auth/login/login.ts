@@ -50,7 +50,7 @@ export class Login {
           // Role-based redirect using backend user role
           const role = response.data.user?.role;
           if (role === 'admin') {
-            this.router.navigate(['/admin/dashboard'], { replaceUrl: true });
+            this.router.navigate(['/manage/dashboard'], { replaceUrl: true });
           } else if (role === 'viewer') {
             this.router.navigate(['/app/executive-dashboard'], { replaceUrl: true });
           } else {

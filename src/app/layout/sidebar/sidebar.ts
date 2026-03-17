@@ -101,11 +101,11 @@ export class Sidebar {
       label: 'Administration',
       icon: 'admin_panel_settings',
       children: [
-        { label: 'Users', icon: 'people', route: '/admin/users' },
-        { label: 'Roles', icon: 'security', route: '/admin/roles' },
-        { label: 'Settings', icon: 'settings', route: '/admin/settings' },
-        { label: 'Journey Stages', icon: 'account_tree', route: '/admin/journey-stages' },
-        { label: 'Datasets', icon: 'folder', route: '/admin/datasets' }
+        { label: 'Users', icon: 'people', route: '/manage/users' },
+        { label: 'Roles', icon: 'security', route: '/manage/roles' },
+        { label: 'Settings', icon: 'settings', route: '/manage/settings' },
+        { label: 'Journey Stages', icon: 'account_tree', route: '/manage/journey-stages' },
+        { label: 'Datasets', icon: 'folder', route: '/manage/datasets' }
       ]
     }
   ];
@@ -115,10 +115,10 @@ export class Sidebar {
   private readonly exactFalseOptions = { exact: false };
 
   getLinkActiveOptions(route: string): { exact: boolean } {
-    return route === '/app/reports' ? this.exactTrueOptions : this.exactFalseOptions;
+    return (route === '/app/reports' || route === '/manage/dashboard') ? this.exactTrueOptions : this.exactFalseOptions;
   }
 
-  /** Flat menu items - all under /app (and /admin for admin). No role-based filtering for now. */
+  /** Flat menu items - all under /app and /manage. No role-based filtering for now. */
   get flatMenuItems(): SidebarFlatItem[] {
     const user = this.authService.currentUser();
     if (!user) return [];

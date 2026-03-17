@@ -37,7 +37,7 @@ export const adminAuthGuard: CanActivateFn = (route, state) => {
       }
 
       // Not authenticated, redirect to admin login
-      router.navigate(['/admin/login'], { replaceUrl: true });
+      router.navigate(['/manage/login'], { replaceUrl: true });
       return false;
     })
   );

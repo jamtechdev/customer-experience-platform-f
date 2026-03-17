@@ -35,7 +35,6 @@
 
 .menu-item {
   color: #374151;
-  transition: background-color 0.2s, color 0.2s;
   margin: 0 8px 6px;
   border-radius: 10px !important;
   height: 44px !important;
