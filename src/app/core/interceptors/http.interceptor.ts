@@ -79,6 +79,12 @@ export function errorInterceptor(req: HttpRequest<unknown>, next: HttpHandlerFn)
       }
 
       if (error.status === 401) {
+        // Don't try refresh if the failed request was the refresh endpoint
+        const isRefreshRequest = req.url.includes('/auth/refresh');
+        if (isRefreshRequest) {
+          authService.logout();
+          return throwError(() => error);
+        }
         // Token expired, try to refresh
         return authService.refreshToken().pipe(
           switchMap(() => {

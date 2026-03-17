@@ -134,7 +134,7 @@ export class AuthService {
     this.loaderService.show('Signing in...');
     return this.http.post<ApiResponse<AuthResponse>>(`${this.apiBase}/auth/login`, credentials).pipe(
       tap(response => {
-        if (response.success) {
+        if (response.success && response.data?.accessToken) {
           this.setSession(response.data);
         }
         this.loaderService.hide();
@@ -191,13 +191,14 @@ export class AuthService {
   }
 
   setSession(authResult: AuthResponse): void {
+    if (!authResult?.accessToken) return;
     if (this.isBrowser) {
       localStorage.setItem(this.TOKEN_KEY, authResult.accessToken);
-      localStorage.setItem(this.REFRESH_TOKEN_KEY, authResult.refreshToken);
-      localStorage.setItem(this.USER_KEY, JSON.stringify(authResult.user));
+      localStorage.setItem(this.REFRESH_TOKEN_KEY, authResult.refreshToken ?? '');
+      localStorage.setItem(this.USER_KEY, JSON.stringify(authResult.user ?? {}));
     }
-    this.currentUser.set(authResult.user);
-    this.currentUserSubject.next(authResult.user);
+    this.currentUser.set(authResult.user ?? null);
+    this.currentUserSubject.next(authResult.user ?? null);
   }
 
   forgotPassword(email: string): Observable<ApiResponse<{ message: string }>> {

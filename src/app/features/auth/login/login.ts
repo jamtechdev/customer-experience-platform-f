@@ -43,12 +43,19 @@ export class Login {
     this.authService.login({ email: this.email, password: this.password }).subscribe({
       next: (response) => {
         this.loaderService.hide();
-        if (response.success) {
+        if (response.success && response.data) {
           if (this.rememberMe) {
             localStorage.setItem('rememberMe', 'true');
           }
-          // Angular router navigation to app (routes will send to dashboard)
-          this.router.navigate(['/app']);
+          // Role-based redirect using backend user role
+          const role = response.data.user?.role;
+          if (role === 'admin') {
+            this.router.navigate(['/admin/dashboard'], { replaceUrl: true });
+          } else if (role === 'viewer') {
+            this.router.navigate(['/app/executive-dashboard'], { replaceUrl: true });
+          } else {
+            this.router.navigate(['/app/dashboard'], { replaceUrl: true });
+          }
         } else {
           this.errorMessage.set(this.t('loginError'));
         }

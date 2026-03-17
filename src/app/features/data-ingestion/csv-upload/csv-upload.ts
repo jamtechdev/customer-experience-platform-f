@@ -137,22 +137,15 @@ export class CsvUpload implements OnInit {
         if (response.success && response.data) {
           this.uploadProgress.set(50);
           this.importId.set(response.data.importId);
-          this.processingStatus.set('processing');
-          this.processingMessage.set(this.t('dataSources.sync') || 'Processing data and running analysis...');
-          
-          // Simulate processing progress
-          let progress = 50;
-          const progressInterval = setInterval(() => {
-            progress += 5;
-            if (progress < 95) {
-              this.uploadProgress.set(progress);
-            } else {
-              clearInterval(progressInterval);
-            }
-          }, 500);
-
-          // Check import status periodically
-          this.checkImportStatus(response.data.importId, progressInterval);
+          this.processingStatus.set('completed');
+          this.processingMessage.set(this.t('app.success') || 'File uploaded. Processing will complete shortly on the server.');
+          this.snackBar.open(
+            this.t('app.success') || 'File uploaded successfully!',
+            this.t('app.close'),
+            { duration: 5000 }
+          );
+          this.uploading.set(false);
+          this.uploadProgress.set(100);
         }
       },
       error: (error) => {
@@ -161,84 +154,8 @@ export class CsvUpload implements OnInit {
         this.processingStatus.set('error');
         this.processingMessage.set(error.error?.message || this.t('errors.generic') || 'Upload failed. Please try again.');
         this.snackBar.open(this.processingMessage(), this.t('app.close'), { duration: 5000 });
-        setTimeout(() => {
-          this.processingStatus.set('idle');
-          this.processingMessage.set('');
-        }, 3000);
       }
     });
-  }
-
-  private checkImportStatus(importId: number, progressInterval: any): void {
-    const timeoutMs = 120000; // 2 min max
-    const pollMs = 2000;
-    let pollCount = 0;
-    const maxPolls = Math.floor(timeoutMs / pollMs);
-
-    const checkInterval = setInterval(() => {
-      pollCount++;
-      if (pollCount > maxPolls) {
-        clearInterval(checkInterval);
-        clearInterval(progressInterval);
-        this.uploading.set(false);
-        if (this.processingStatus() === 'processing') {
-          this.processingStatus.set('error');
-          this.processingMessage.set(this.t('errors.timeout') || 'Processing timed out. Ensure backend is running.');
-        }
-        return;
-      }
-      this.csvService.getImportStatus(importId).subscribe({
-        next: (response) => {
-          if (response.success && response.data) {
-            const status = response.data.status;
-            
-            if (status === 'completed') {
-              clearInterval(checkInterval);
-              clearInterval(progressInterval);
-              this.uploadProgress.set(100);
-              this.processingStatus.set('completed');
-              this.processingMessage.set(this.t('app.success') || 'Processing completed successfully!');
-              this.snackBar.open(
-                this.t('app.success') || 'File uploaded and processed successfully!',
-                this.t('app.close'),
-                { duration: 5000 }
-              );
-              
-              setTimeout(() => {
-                this.resetUpload();
-              }, 3000);
-            } else if (status === 'failed') {
-              clearInterval(checkInterval);
-              clearInterval(progressInterval);
-              this.uploading.set(false);
-              this.processingStatus.set('error');
-              const msg = response.data.errorMessage || this.t('errors.generic') || 'Processing failed';
-              this.processingMessage.set(msg);
-              this.snackBar.open(msg, this.t('app.close'), { duration: 5000 });
-              setTimeout(() => {
-                this.processingStatus.set('idle');
-                this.processingMessage.set('');
-              }, 3000);
-            } else if (status === 'processing') {
-              this.processingMessage.set(this.t('dataSources.sync') || 'Processing data...');
-            }
-          }
-        },
-        error: () => {
-          // Continue polling; backend may be starting
-        }
-      });
-    }, pollMs);
-
-    setTimeout(() => {
-      clearInterval(checkInterval);
-      clearInterval(progressInterval);
-      this.uploading.set(false);
-      if (this.processingStatus() === 'processing') {
-        this.processingStatus.set('error');
-        this.processingMessage.set(this.t('errors.timeout') || 'Processing timed out. Ensure backend is running.');
-      }
-    }, timeoutMs);
   }
 
   private resetUpload(): void {
