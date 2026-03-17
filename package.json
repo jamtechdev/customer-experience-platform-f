@@ -5,6 +5,7 @@
     "ng": "ng",
     "start": "ng serve",
     "build": "ng build --configuration=production",
+    "build:clean": "bash scripts/build-clean.sh",
     "test": "ng test",
     "serve:ssr:sentimenter-cx": "node dist/sentimenter-cx/server/server.mjs"
   },
