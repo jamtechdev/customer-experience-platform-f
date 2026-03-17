@@ -1,9 +1,10 @@
-// Dev-time proxy to avoid CORS issues when calling the backend from http://localhost:4200
-// All requests starting with /api will be forwarded to the remote server.
+// Dev-time proxy: all /api requests from localhost (any port) go to https://api.sentimenter.ai
+// so login/APIs work same as Postman without CORS. Browser sees same-origin /api.
 module.exports = {
   '/api': {
-    target: 'https://139.162.159.201',
-    secure: false,
+    target: 'https://api.sentimenter.ai',
+    secure: true,
     changeOrigin: true,
+    logLevel: 'debug',
   },
 };
