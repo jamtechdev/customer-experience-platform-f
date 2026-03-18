@@ -33,28 +33,25 @@ export class Login {
 
   onLogin(): void {
     if (!this.email || !this.password) {
-      this.errorMessage.set(this.t('validationError'));
+      this.errorMessage.set(this.t('auth.validationError'));
       return;
     }
 
     this.errorMessage.set('');
-    this.loaderService.show(this.t('loading'));
 
     this.authService.login({ email: this.email, password: this.password }).subscribe({
       next: (response) => {
-        this.loaderService.hide();
         if (response.success && response.data) {
           if (this.rememberMe) {
             localStorage.setItem('rememberMe', 'true');
           }
           this.router.navigate(['/app/dashboard'], { replaceUrl: true });
         } else {
-          this.errorMessage.set(this.t('loginError'));
+          this.errorMessage.set(this.t('auth.loginError'));
         }
       },
       error: (error) => {
-        this.loaderService.hide();
-        const message = error.error?.message || error.message || this.t('loginError');
+        const message = error.error?.message || error.message || this.t('auth.loginError');
         this.errorMessage.set(message);
       }
     });

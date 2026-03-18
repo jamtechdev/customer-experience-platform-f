@@ -123,6 +123,11 @@ export const routes: Routes = [
         data: { title: 'CSV Upload', breadcrumb: 'CSV Upload' }
       },
       {
+        path: 'data-sources/csv-mapping/:importId',
+        loadComponent: () => import('./features/data-ingestion/csv-mapping/csv-mapping').then(m => m.CsvMapping),
+        data: { title: 'CSV Column Mapping', breadcrumb: 'CSV Mapping' }
+      },
+      {
         path: 'data-sources/import-history',
         loadComponent: () => import('./features/data-ingestion/import-history/import-history').then(m => m.ImportHistory),
         data: { title: 'Import History', breadcrumb: 'Import History' }

@@ -37,17 +37,16 @@ export function authInterceptor(req: HttpRequest<unknown>, next: HttpHandlerFn):
 export function loaderInterceptor(req: HttpRequest<unknown>, next: HttpHandlerFn): Observable<HttpEvent<unknown>> {
   const loader = inject(LoaderService);
 
-  // Only show loader for API calls to our backend
-  const isApiRequest =
+  const base = environment.apiUrl || '';
+  const isBackendApi =
     req.url.startsWith('/api') ||
-    req.url.startsWith(environment.apiUrl || '') ||
-    req.url.includes('/auth/');
+    (base !== '' && req.url.startsWith(base));
 
-  if (!isApiRequest) {
+  if (!isBackendApi) {
     return next(req);
   }
 
-  loader.show();
+  loader.show('Loading...');
 
   return next(req).pipe(
     finalize(() => {

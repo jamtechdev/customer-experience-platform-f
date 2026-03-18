@@ -64,8 +64,8 @@
   font-size: 0.875rem;
   color: #6b7280;
   font-weight: 500;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
+  text-transform: none;
+  letter-spacing: 0.2px;
 }
 
 .info-value {

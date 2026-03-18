@@ -1,1 +1,141 @@
-<p>csv-mapping works!</p>
+<div class="csv-mapping-container">
+  <div class="header-section">
+    <h1>CSV Column Mapping</h1>
+    <p class="subtitle">Match your CSV columns to system fields, validate data types, then import.</p>
+  </div>
+
+  @if (loading()) {
+    <div class="loading">
+      <mat-spinner diameter="40"></mat-spinner>
+      <p>Loading preview…</p>
+    </div>
+  } @else {
+    <mat-card>
+      <mat-card-content>
+        <div class="top-row">
+          <div class="meta">
+            <div class="meta-item"><strong>Import ID:</strong> {{ importId() }}</div>
+            <div class="meta-item"><strong>Rows:</strong> {{ preview()?.rowCount ?? '—' }}</div>
+          </div>
+          <mat-form-field appearance="outline" class="type-field">
+            <mat-label>Data type</mat-label>
+            <mat-select [value]="dataType()" (selectionChange)="dataType.set($event.value)">
+              <mat-option value="social_media">Social media feedback</mat-option>
+              <mat-option value="app_review">App store review</mat-option>
+              <mat-option value="nps_survey">NPS survey</mat-option>
+              <mat-option value="complaint">Complaint</mat-option>
+            </mat-select>
+          </mat-form-field>
+        </div>
+
+        <div class="mapping-grid">
+          <div class="mapping-header">
+            <div class="col system">System field</div>
+            <div class="col csv">CSV column</div>
+          </div>
+
+          @for (f of systemFieldsSorted(); track f.name) {
+            <div class="mapping-row">
+              <div class="col system">
+                <span class="field-name">{{ f.name }}</span>
+                @if (f.required) {
+                  <span class="required">required</span>
+                }
+                <span class="field-type">{{ f.type }}</span>
+              </div>
+              <div class="col csv">
+                <mat-form-field appearance="outline" class="full">
+                  <mat-label>CSV column</mat-label>
+                  <mat-select
+                    [value]="fieldSelections()[f.name]"
+                    (selectionChange)="onSelectField(f.name, $event.value)">
+                    <mat-option [value]="null">— not mapped —</mat-option>
+                    @for (h of headers(); track h) {
+                      <mat-option [value]="h">{{ h }}</mat-option>
+                    }
+                  </mat-select>
+                </mat-form-field>
+              </div>
+            </div>
+          }
+        </div>
+
+        <div class="actions">
+          <button mat-stroked-button color="primary" (click)="validate()" [disabled]="validating() || importing()">
+            <mat-icon>rule</mat-icon>
+            {{ validating() ? 'Validating…' : 'Validate' }}
+          </button>
+
+          <button mat-raised-button color="primary" (click)="startImport()" [disabled]="importing() || validating()">
+            <mat-icon>play_arrow</mat-icon>
+            {{ importing() ? 'Importing…' : 'Start Import' }}
+          </button>
+
+          <a class="history-link" [routerLink]="['/app/data-sources/import-history']">Go to Import History</a>
+        </div>
+
+        @if (validation()) {
+          <div class="validation">
+            @if (validation()!.valid) {
+              <div class="ok">
+                <mat-icon>check_circle</mat-icon>
+                Validation passed.
+              </div>
+            } @else {
+              <div class="bad">
+                <mat-icon>error</mat-icon>
+                Validation found {{ validation()!.errors.length }} issue(s). Fix them and validate again.
+              </div>
+              <div class="error-list">
+                @for (e of validation()!.errors.slice(0, 50); track e.rowNumber + '-' + e.field + '-' + e.message) {
+                  <div class="error-item">
+                    <div class="where">
+                      @if (e.rowNumber > 0) {
+                        Row {{ e.rowNumber }}
+                      } @else {
+                        Mapping
+                      }
+                      — <strong>{{ e.field }}</strong>
+                    </div>
+                    <div class="msg">{{ e.message }}</div>
+                    @if (e.value !== undefined && e.value !== null && e.value !== '') {
+                      <div class="val">Value: {{ e.value }}</div>
+                    }
+                  </div>
+                }
+              </div>
+            }
+          </div>
+        }
+
+        <div class="preview">
+          <h3>Preview (first rows)</h3>
+          @if ((preview()?.rows?.length ?? 0) === 0) {
+            <p class="muted">No preview rows available.</p>
+          } @else {
+            <div class="preview-table">
+              <table>
+                <thead>
+                  <tr>
+                    @for (h of headers(); track h) {
+                      <th>{{ h }}</th>
+                    }
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (r of preview()!.rows; track $index) {
+                    <tr>
+                      @for (h of headers(); track h) {
+                        <td>{{ r[h] }}</td>
+                      }
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          }
+        </div>
+      </mat-card-content>
+    </mat-card>
+  }
+</div>

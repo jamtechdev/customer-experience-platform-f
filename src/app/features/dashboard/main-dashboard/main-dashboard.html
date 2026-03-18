@@ -1,7 +1,7 @@
 <div class="dashboard-container">
   <div *ngIf="backendUnavailable()" class="backend-unavailable-banner" role="alert">
     <mat-icon>cloud_off</mat-icon>
-    <span>API server is not reachable. Start the backend (e.g. <code>npm run dev</code> in the backend folder) to load live data.</span>
+    <span>{{ t('dashboard.backendUnavailable') }}</span>
   </div>
   <div class="dashboard-header">
     <div class="header-top">
@@ -12,7 +12,7 @@
       <div class="header-actions">
         <a mat-raised-button color="accent" routerLink="/app/data-sources/csv-upload" class="action-btn">
           <mat-icon>upload</mat-icon>
-          Upload
+          {{ t('nav.csvUpload') }}
         </a>
         <button mat-raised-button color="primary" type="button" (click)="downloadSampleCsv()">
           <mat-icon>download</mat-icon>
@@ -24,7 +24,7 @@
       <input type="date" [value]="dateRangeStartValue()" (change)="onDateStartChange($event)" />
       <span>–</span>
       <input type="date" [value]="dateRangeEndValue()" (change)="onDateEndChange($event)" />
-      <button mat-button type="button" (click)="clearDateRange()">Clear</button>
+      <button mat-button type="button" (click)="clearDateRange()">{{ t('app.clear') }}</button>
     </div>
   </div>
 
@@ -35,8 +35,8 @@
 
   <div *ngIf="!loading() && !dashboardData()" class="dashboard-error">
     <mat-icon>cloud_off</mat-icon>
-    <p>Dashboard data could not be loaded from the server.</p>
-    <button mat-raised-button color="primary" type="button" (click)="loadDashboardData()">Retry</button>
+    <p>{{ t('dashboard.loadFailed') }}</p>
+    <button mat-raised-button color="primary" type="button" (click)="loadDashboardData()">{{ t('app.retry') }}</button>
   </div>
 
   <div *ngIf="!loading() && dashboardData()" class="dashboard-content">

@@ -15,7 +15,7 @@
         <div class="empty-state-content">
           <mat-icon>info</mat-icon>
           <h3>No Comparison Data Available</h3>
-          <p>Upload CSV files with competitor data to see comparison results.</p>
+          <p>Upload CSV files with competitor data, or add competitors below once comparison data is loaded.</p>
         </div>
       </mat-card-content>
     </mat-card>
@@ -63,6 +63,19 @@
           <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
           <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
         </table>
+        <div class="add-competitor-section">
+          <h3>Add competitor</h3>
+          <p class="hint">Add a competitor by name. Metrics will appear once you upload feedback data tagged with this competitor.</p>
+          <div class="add-competitor-form">
+            <mat-form-field appearance="outline" class="competitor-name-field">
+              <mat-label>Competitor name</mat-label>
+              <input matInput [(ngModel)]="newCompetitorName" placeholder="e.g. Competitor A" (keyup.enter)="addCompetitor()" />
+            </mat-form-field>
+            <button mat-raised-button color="primary" (click)="addCompetitor()" [disabled]="addingCompetitor() || !newCompetitorName.trim()">
+              {{ addingCompetitor() ? 'Adding...' : 'Add competitor' }}
+            </button>
+          </div>
+        </div>
       </mat-card-content>
     </mat-card>
   </div>

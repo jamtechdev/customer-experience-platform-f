@@ -1,26 +1,11 @@
-content,date,source,author,rating,company,competitor,category
-"Excellent branch experience. Staff was knowledgeable and resolved my query in minutes.",2025-03-01T09:00:00Z,branch,Ali K.,9,Albaraka Turk,,service
-"App crashes on login every time. Lost my session twice. Urgent fix needed.",2025-03-01T10:30:00Z,app_store,Fatma Y.,2,Albaraka Turk,,technical
-"Quick response from support. Issue fixed same day. Thank you.",2025-03-01T14:15:00Z,email,Mehmet D.,8,Albaraka Turk,,support
-"Waiting 50 minutes on hold. Unacceptable for a premium bank.",2025-03-02T08:45:00Z,call_center,Elif S.,3,,Competitor A,support
-"Online banking is smooth. Love the new dashboard design.",2025-03-02T11:20:00Z,web,Can O.,9,Albaraka Turk,,product
-"Mortgage process was transparent. No hidden fees. Recommended.",2025-03-02T16:00:00Z,branch,Zeynep A.,10,Albaraka Turk,,product
-"Interest rates not competitive. Moved my savings to another bank.",2025-03-03T09:30:00Z,survey,Burak T.,4,Albaraka Turk,Competitor B,product
-"Card blocked without SMS alert. Had to visit branch. Poor experience.",2025-03-03T12:00:00Z,app,Deniz M.,2,Albaraka Turk,,technical
-"Sharia-compliant products well explained. Advisor was helpful.",2025-03-03T15:45:00Z,branch,Selin R.,9,Albaraka Turk,,service
-"Website slow during peak hours. Could not complete payment.",2025-03-04T10:00:00Z,web,Kerem L.,3,Albaraka Turk,,technical
-"Best SME banking in the region. Fast approvals.",2025-03-04T13:20:00Z,survey,Nil H.,10,Albaraka Turk,,product
-"Support agent was rude. Escalated to manager. Not satisfied.",2025-03-04T17:00:00Z,call_center,Onur G.,1,,Competitor A,support
-"International transfer fees too high. Competitors offer better rates.",2025-03-05T08:15:00Z,email,Cem V.,5,Albaraka Turk,Competitor B,product
-"Mobile app dark mode is great. Easy on eyes. Keep it up.",2025-03-05T11:30:00Z,app_store,Leyla F.,9,Albaraka Turk,,product
-"Statement download failed three times. PDF generation issue.",2025-03-05T14:00:00Z,app,Omer P.,4,Albaraka Turk,,technical
-"Branch remembered my name. Personal touch matters. Thank you.",2025-03-06T09:45:00Z,branch,Ayse C.,10,Albaraka Turk,,service
-"Loan approval in 2 hours. Same-day disbursement. Impressed.",2025-03-06T15:30:00Z,web,Emre N.,9,Albaraka Turk,,product
-"Complaint about hidden charges. Not disclosed at signup.",2025-03-07T10:00:00Z,survey,Ahmet B.,2,,Competitor A,product
-"Investment advisory team is professional. Clear recommendations.",2025-03-07T13:15:00Z,branch,Mustafa K.,8,Albaraka Turk,,service
-"App needs biometric login. Typing password every time is tedious.",2025-03-07T16:45:00Z,app_store,Elif D.,6,Albaraka Turk,,technical
-"Customer service resolved my dispute in 24 hours. Fair outcome.",2025-03-08T09:00:00Z,email,Mehmet T.,8,Albaraka Turk,,support
-"Queue at branch too long. Need more counters or appointment system.",2025-03-08T12:30:00Z,branch,Fatma O.,5,Albaraka Turk,,service
-"Great NPS. Will recommend to friends and family.",2025-03-08T15:00:00Z,survey,Can S.,10,Albaraka Turk,,service
-"Website accessibility could improve for screen readers.",2025-03-09T08:20:00Z,web,Zeynep L.,6,Albaraka Turk,,technical
-"Transparent fees. No surprises. Trust this bank.",2025-03-09T11:00:00Z,branch,Burak Y.,9,Albaraka Turk,,product
+id,date,channel,platform,user_id,language,country,product,feedback_text,company,competitor
+1,2026-03-01,Social Media,Twitter,u123,en,UK,Mobile Banking,App keeps crashing when I try to login very frustrating!,Main Bank,
+2,2026-03-01,App Store,Google Play,u124,tr,TR,Mobile Banking,Uygulama çok hızlı ve kullanımı kolay teşekkürler,Main Bank,
+3,2026-03-02,Social Media,Instagram,u125,en,US,Credit Card,Hidden fees are unacceptable very disappointed,Main Bank,
+4,2026-03-02,Web,Google Review,u126,en,UK,Customer Service,Customer support was helpful but took too long to respond,Main Bank,
+5,2026-03-03,Social Media,Twitter,u127,ar,AE,Mobile Banking,Excellent and very fast service,Main Bank,
+6,2026-03-03,Complaint Site,Şikayetvar,u128,tr,TR,Credit Card,Ekstrede yanlış ücretlendirme var çözüm bekliyorum,,Competitor A
+7,2026-03-04,App Store,App Store,u129,en,US,Mobile Banking,Clean interface and easy navigation,Main Bank,
+8,2026-03-04,Call Center,Voice,u130,tr,TR,Customer Service,Müşteri hizmetine ulaşmak çok zor sürekli bekletiliyorum,,Competitor A
+9,2026-03-05,Social Media,Facebook,u131,en,UK,Loan,Loan process is okay but documentation is confusing,Main Bank,
+10,2026-03-05,App Store,Google Play,u132,tr,TR,Mobile Banking,Şifremi sıfırlayamıyorum sistem hata veriyor,,Competitor B

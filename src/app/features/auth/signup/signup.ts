@@ -38,22 +38,21 @@ export class Signup {
 
   onSignup(): void {
     if (!this.firstName || !this.lastName || !this.email || !this.password || !this.confirmPassword) {
-      this.errorMessage.set(this.t('validationError'));
+      this.errorMessage.set(this.t('auth.validationError'));
       return;
     }
 
     if (this.password !== this.confirmPassword) {
-      this.errorMessage.set(this.t('passwordMismatch'));
+      this.errorMessage.set(this.t('auth.passwordMismatch'));
       return;
     }
 
     if (this.password.length < 6) {
-      this.errorMessage.set(this.t('passwordMinLength'));
+      this.errorMessage.set(this.t('auth.passwordMinLength'));
       return;
     }
 
     this.errorMessage.set('');
-    this.loaderService.show(this.t('loading'));
 
     this.authService.register({
       firstName: this.firstName,
@@ -63,16 +62,14 @@ export class Signup {
       role: this.role
     }).subscribe({
       next: (response) => {
-        this.loaderService.hide();
         if (response.success) {
           this.router.navigate(['/app/dashboard'], { replaceUrl: true });
         } else {
-          this.errorMessage.set(this.t('signupError'));
+          this.errorMessage.set(this.t('auth.signupError'));
         }
       },
       error: (error) => {
-        this.loaderService.hide();
-        const message = error.error?.message || error.message || this.t('signupError');
+        const message = error.error?.message || error.message || this.t('auth.signupError');
         this.errorMessage.set(message);
       }
     });

@@ -1,7 +1,7 @@
 <div class="login-container">
   <div class="auth-bg-wrapper">
     <div class="auth-bg-content">
-      <p>Analyze insights from social media, app reviews, and NPS surveys to improve customer experience, increase satisfaction, and scale your business with confidence.</p>
+      <p>{{ t('auth.marketingBlurb') }}</p>
       <img src="https://media.whatagraph.com/Create_a_social_media_dashboard_in_minutes_747fdbe763_92a8998190.webp" />
     </div>
   </div>
@@ -12,10 +12,10 @@
         <a routerLink=""> <svg width="40" height="40"
       viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
     <path d="M19 12H5M12 19l-7-7 7-7"/>
-  </svg> Back to home</a>
+  </svg> {{ t('auth.backToHome') }}</a>
       </div>
-      <h1>{{ t('Let’s Get You In') }}</h1>
-      <p>{{ t('Log in to explore your personalized experience.') }}</p>
+      <h1>{{ t('auth.loginTitle') }}</h1>
+      <p>{{ t('auth.loginSubtitle') }}</p>
     </div>
 
     <!-- Login Form -->
@@ -32,7 +32,7 @@
       }
 
       <div class="form-group">
-        <label for="email">{{ t('Email') }}</label>
+        <label for="email">{{ t('auth.email') }}</label>
         <div class="input-wrapper">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
@@ -43,7 +43,7 @@
             id="email"
             [(ngModel)]="email"
             name="email"
-            placeholder="ornek@albarakaturk.com.tr"
+            [placeholder]="t('auth.emailPlaceholder')"
             required
             autocomplete="email"
             [disabled]="loaderService.isLoading()"
@@ -52,7 +52,7 @@
       </div>
 
       <div class="form-group">
-        <label for="password">{{ t('Password') }}</label>
+        <label for="password">{{ t('auth.password') }}</label>
         <div class="input-wrapper">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
@@ -93,17 +93,17 @@
         <label class="checkbox-label">
           <input type="checkbox" [(ngModel)]="rememberMe" name="rememberMe" [disabled]="loaderService.isLoading()" />
           <span class="checkbox-custom"></span>
-          <span>{{ t('Remember me') }}</span>
+          <span>{{ t('auth.rememberMe') }}</span>
         </label>
-        <a routerLink="/forgot-password" class="forgot-link">{{ t('Forgot password') }}</a>
+        <a routerLink="/forgot-password" class="forgot-link">{{ t('auth.forgotPassword') }}</a>
       </div>
 
       <button type="submit" class="btn-login" [disabled]="loaderService.isLoading()">
         @if (loaderService.isLoading()) {
           <span class="spinner"></span>
-          <span>{{ t('loading') }}...</span>
+          <span>{{ t('app.loading') }}</span>
         } @else {
-          <span>{{ t('Login') }}</span>
+          <span>{{ t('auth.login') }}</span>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M5 12h14M12 5l7 7-7 7"/>
           </svg>
@@ -113,7 +113,7 @@
 
     <!-- Footer -->
     <div class="login-footer">
-      <p class="footer-text">{{ t('Don’t have an account?') }} <a routerLink="/signup" class="link">{{ t('Sign up') }}</a></p>
+      <p class="footer-text">{{ t('auth.dontHaveAccount') }} <a routerLink="/signup" class="link">{{ t('auth.signup') }}</a></p>
     </div>
   </div>
 </div>

@@ -23,6 +23,32 @@
   margin-bottom: 0.5rem;
 }
 
+.email-section {
+  margin-top: 1.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid rgba(0, 0, 0, 0.12);
+}
+
+.email-section h3 {
+  margin: 0 0 0.5rem 0;
+  font-size: 1rem;
+}
+
+.email-section .hint {
+  margin: 0 0 1rem 0;
+  color: rgba(0, 0, 0, 0.6);
+  font-size: 0.875rem;
+}
+
+.email-section mat-checkbox {
+  display: block;
+  margin-bottom: 1rem;
+}
+
+.email-section button {
+  margin-top: 0.5rem;
+}
+
 .actions {
   display: flex;
   gap: 1rem;

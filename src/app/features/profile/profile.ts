@@ -39,6 +39,21 @@ export class Profile {
   // Translation getter
   t = (key: string): string => this.translationService.translate(key);
 
+  fullName(): string {
+    const u = this.currentUser();
+    const first = (u?.firstName ?? '').trim();
+    const last = (u?.lastName ?? '').trim();
+    const name = [first, last].filter(Boolean).join(' ');
+    return name || '—';
+  }
+
+  roleLabel(): string {
+    const role = (this.currentUser()?.role ?? '').trim();
+    if (!role) return '—';
+    const translated = this.t(`roles.${role}`);
+    return translated === `roles.${role}` ? role : translated;
+  }
+
   onLanguageChange(lang: Language): void {
     this.selectedLanguage.set(lang);
     this.translationService.setLanguage(lang);

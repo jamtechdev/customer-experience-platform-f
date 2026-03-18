@@ -1,7 +1,7 @@
 <div class="profile-container">
   <div class="profile-header">
     <h1>{{ t('nav.profile') }}</h1>
-    <p class="subtitle">{{ t('app.details') }}</p>
+    <p class="subtitle">{{ t('profile.subtitle') }}</p>
   </div>
 
   <div class="profile-content">
@@ -10,7 +10,7 @@
       <mat-card-header>
         <mat-card-title>
           <mat-icon>person</mat-icon>
-          {{ t('app.details') }}
+          {{ t('profile.detailsTitle') }}
         </mat-card-title>
       </mat-card-header>
       <mat-card-content>
@@ -20,12 +20,12 @@
             <span class="info-value">{{ currentUser()?.email }}</span>
           </div>
           <div class="info-item">
-            <span class="info-label">{{ t('app.name') }}</span>
-            <span class="info-value">{{ currentUser()?.firstName }} {{ currentUser()?.lastName }}</span>
+            <span class="info-label">{{ t('profile.fullName') }}</span>
+            <span class="info-value">{{ fullName() }}</span>
           </div>
           <div class="info-item">
-            <span class="info-label">{{ t('app.status') }}</span>
-            <span class="info-value">{{ currentUser()?.role }}</span>
+            <span class="info-label">{{ t('auth.role') }}</span>
+            <span class="info-value">{{ roleLabel() }}</span>
           </div>
         </div>
       </mat-card-content>
@@ -36,7 +36,7 @@
       <mat-card-header>
         <mat-card-title>
           <mat-icon>language</mat-icon>
-          {{ t('app.settings') }}
+          {{ t('profile.settingsTitle') }}
         </mat-card-title>
       </mat-card-header>
       <mat-card-content>
@@ -44,14 +44,14 @@
           <div class="setting-item">
             <div class="setting-label">
               <mat-icon>translate</mat-icon>
-              <span>{{ t('app.language') || 'Language' }}</span>
+              <span>{{ t('profile.language') }}</span>
             </div>
             <div class="setting-control">
               <app-language-switcher></app-language-switcher>
             </div>
           </div>
           <p class="setting-description">
-            {{ t('app.languageDescription') || 'Select your preferred language for the interface' }}
+            {{ t('profile.languageDescription') }}
           </p>
         </div>
       </mat-card-content>

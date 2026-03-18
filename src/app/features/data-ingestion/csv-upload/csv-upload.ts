@@ -9,6 +9,7 @@ import { MatChipsModule } from '@angular/material/chips';
 import { CSVService, CSVFormat } from '../../../core/services/csv.service';
 import { TranslationService } from '../../../core/services/translation.service';
 import { environment } from '../../../../environments/environment';
+import { Router } from '@angular/router';
 
 type ProcessingStatus = 'idle' | 'uploading' | 'processing' | 'completed' | 'error';
 
@@ -37,6 +38,7 @@ export class CsvUpload implements OnInit {
   private csvService = inject(CSVService);
   private snackBar = inject(MatSnackBar);
   private translationService = inject(TranslationService);
+  private router = inject(Router);
   document = document; // Expose document for template
 
   selectedFile: File | null = null;
@@ -49,7 +51,10 @@ export class CsvUpload implements OnInit {
 
   format = signal<CSVFormat>(DEFAULT_FORMAT);
 
-  readonly t = (key: string): string => this.translationService.translate(key);
+  /** URL for the sample CSV asset (download example). */
+  readonly sampleCsvUrl = '/assets/sample-customer-feedback.csv';
+
+  readonly t = (key: string, params?: Record<string, string>): string => this.translationService.translate(key, params);
 
   ngOnInit(): void {
     this.csvService.getFormat().subscribe({
@@ -134,26 +139,33 @@ export class CsvUpload implements OnInit {
 
     this.csvService.uploadCSV(this.selectedFile).subscribe({
       next: (response) => {
-        if (response.success && response.data) {
-          this.uploadProgress.set(50);
+        if (response.success && response.data?.importId) {
+          this.uploadProgress.set(100);
           this.importId.set(response.data.importId);
           this.processingStatus.set('completed');
-          this.processingMessage.set(this.t('app.success') || 'File uploaded. Processing will complete shortly on the server.');
-          this.snackBar.open(
-            this.t('app.success') || 'File uploaded successfully!',
-            this.t('app.close'),
-            { duration: 5000 }
-          );
+          const rows = response.data.rowCount;
+          const msg =
+            (this.t('dataSources.importDone') as string) ||
+            `Upload completed: ${rows} row(s) from ${response.data.filename}. Please map columns to continue.`;
+          this.processingMessage.set(msg);
+          this.snackBar.open(msg, this.t('app.close'), { duration: 6000 });
           this.uploading.set(false);
-          this.uploadProgress.set(100);
+          this.router.navigate(['/app/data-sources/csv-mapping', response.data.importId]);
         }
       },
       error: (error) => {
         this.uploading.set(false);
         this.uploadProgress.set(0);
         this.processingStatus.set('error');
-        this.processingMessage.set(error.error?.message || this.t('errors.generic') || 'Upload failed. Please try again.');
-        this.snackBar.open(this.processingMessage(), this.t('app.close'), { duration: 5000 });
+        const body = error.error;
+        const msg =
+          (typeof body?.message === 'string' && body.message) ||
+          (typeof body === 'string' ? body : null) ||
+          error.message ||
+          this.t('errors.generic') ||
+          'Upload or import failed.';
+        this.processingMessage.set(msg);
+        this.snackBar.open(msg, this.t('app.close'), { duration: 10000 });
       }
     });
   }

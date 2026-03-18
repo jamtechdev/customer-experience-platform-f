@@ -1,0 +1,185 @@
+.csv-mapping-container {
+  padding: 24px;
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+.header-section {
+  margin-bottom: 16px;
+}
+
+.subtitle {
+  color: rgba(0, 0, 0, 0.6);
+  margin-top: 4px;
+}
+
+.loading {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 0;
+}
+
+.top-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+
+.meta {
+  display: flex;
+  gap: 18px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.meta-item {
+  font-size: 14px;
+}
+
+.type-field {
+  min-width: 260px;
+}
+
+.mapping-grid {
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.mapping-header {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  padding: 12px 16px;
+  background: rgba(0, 0, 0, 0.03);
+  font-weight: 600;
+}
+
+.mapping-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  padding: 12px 16px;
+  border-top: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.col.system {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.field-name {
+  font-weight: 600;
+}
+
+.required {
+  font-size: 12px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(25, 118, 210, 0.12);
+  color: rgb(25, 118, 210);
+}
+
+.field-type {
+  font-size: 12px;
+  color: rgba(0, 0, 0, 0.55);
+}
+
+.full {
+  width: 100%;
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 16px;
+  flex-wrap: wrap;
+}
+
+.history-link {
+  margin-left: auto;
+  text-decoration: none;
+}
+
+.validation {
+  margin-top: 18px;
+}
+
+.ok, .bad {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  font-weight: 600;
+}
+
+.bad {
+  color: rgb(211, 47, 47);
+}
+
+.error-list {
+  margin-top: 10px;
+  display: grid;
+  gap: 10px;
+}
+
+.error-item {
+  border: 1px solid rgba(211, 47, 47, 0.25);
+  background: rgba(211, 47, 47, 0.04);
+  border-radius: 10px;
+  padding: 10px 12px;
+}
+
+.where {
+  font-size: 13px;
+}
+
+.msg {
+  margin-top: 4px;
+}
+
+.val {
+  margin-top: 4px;
+  font-size: 12px;
+  color: rgba(0, 0, 0, 0.65);
+}
+
+.preview {
+  margin-top: 24px;
+}
+
+.muted {
+  color: rgba(0, 0, 0, 0.55);
+}
+
+.preview-table {
+  overflow: auto;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 12px;
+}
+
+.preview-table table {
+  border-collapse: collapse;
+  width: 100%;
+  min-width: 900px;
+}
+
+.preview-table th, .preview-table td {
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+  padding: 8px 10px;
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.preview-table th {
+  position: sticky;
+  top: 0;
+  background: #fff;
+  z-index: 1;
+}
+

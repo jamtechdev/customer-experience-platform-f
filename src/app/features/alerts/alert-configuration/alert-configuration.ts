@@ -1,6 +1,6 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormBuilder, FormGroup, ReactiveFormsModule, Validators, FormsModule } from '@angular/forms';
 import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
@@ -8,9 +8,10 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
-import { SettingsService } from '../../../core/services/settings.service';
+import { SettingsService, AlertEmailSettings } from '../../../core/services/settings.service';
 import { AlertService } from '../../../core/services/alert.service';
 import { AuthService } from '../../../core/services/auth.service';
+import { MatCheckboxModule } from '@angular/material/checkbox';
 
 @Component({
   selector: 'app-alert-configuration',
@@ -18,6 +19,7 @@ import { AuthService } from '../../../core/services/auth.service';
   imports: [
     CommonModule,
     ReactiveFormsModule,
+    FormsModule,
     MatCardModule,
     MatFormFieldModule,
     MatInputModule,
@@ -25,6 +27,7 @@ import { AuthService } from '../../../core/services/auth.service';
     MatIconModule,
     MatProgressSpinnerModule,
     MatSnackBarModule,
+    MatCheckboxModule,
   ],
   templateUrl: './alert-configuration.html',
   styleUrl: './alert-configuration.css',
@@ -38,8 +41,11 @@ export class AlertConfiguration implements OnInit {
 
   loading = signal(false);
   saving = signal(false);
+  savingEmail = signal(false);
   runningCheck = signal(false);
   form: FormGroup;
+  emailEnabled = false;
+  emailRecipients = '';
 
   constructor() {
     this.form = this.fb.group({
@@ -52,6 +58,39 @@ export class AlertConfiguration implements OnInit {
 
   ngOnInit(): void {
     this.loadThresholds();
+    this.loadAlertEmailSettings();
+  }
+
+  loadAlertEmailSettings(): void {
+    this.settingsService.getAlertEmailSettings().subscribe({
+      next: (res) => {
+        if (res.success && res.data) {
+          this.emailEnabled = res.data.enabled;
+          this.emailRecipients = (res.data.recipients || []).join(', ');
+        }
+      },
+      error: () => {}
+    });
+  }
+
+  saveAlertEmailSettings(): void {
+    const recipients = this.emailRecipients
+      .split(/[,\s]+/)
+      .map((s) => s.trim())
+      .filter((s) => s.length > 0);
+    this.savingEmail.set(true);
+    this.settingsService.updateAlertEmailSettings({ enabled: this.emailEnabled, recipients }).subscribe({
+      next: (res) => {
+        this.savingEmail.set(false);
+        if (res.success) {
+          this.snackBar.open('Alert email settings saved', 'Close', { duration: 2000 });
+        }
+      },
+      error: () => {
+        this.savingEmail.set(false);
+        this.snackBar.open('Failed to save alert email settings', 'Close', { duration: 3000 });
+      },
+    });
   }
 
   loadThresholds(): void {

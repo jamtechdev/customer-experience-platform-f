@@ -36,6 +36,27 @@
               <mat-chip [color]="getStatusColor(row.status)">{{ row.status }}</mat-chip>
             </td>
           </ng-container>
+          <ng-container matColumnDef="errorMessage">
+            <th mat-header-cell *matHeaderCellDef>Reason / details</th>
+            <td mat-cell *matCellDef="let row" class="error-cell">
+              @if (row.status === 'pending' || row.status === 'processing') {
+                <span class="muted">Awaiting mapping / import or in progress.</span>
+              } @else if (row.status === 'failed') {
+                @if (row.errorMessage && row.errorMessage.length > 120) {
+                  <details class="error-details">
+                    <summary class="error-summary">Failed — tap to expand</summary>
+                    <pre class="error-full">{{ row.errorMessage }}</pre>
+                  </details>
+                } @else if (row.errorMessage) {
+                  <span class="error-text">{{ row.errorMessage }}</span>
+                } @else {
+                  <span class="muted">Failed (no message stored). Re-validate in CSV mapping before import.</span>
+                }
+              } @else {
+                —
+              }
+            </td>
+          </ng-container>
           <ng-container matColumnDef="createdAt">
             <th mat-header-cell *matHeaderCellDef>Uploaded</th>
             <td mat-cell *matCellDef="let row">{{ formatDate(row.createdAt) }}</td>

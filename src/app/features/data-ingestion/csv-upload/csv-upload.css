@@ -211,6 +211,18 @@
   margin-right: 8px;
 }
 
+.sample-download {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid #e5e7eb;
+}
+
+.sample-download a {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
 @media (max-width: 600px) {
   .csv-upload-container {
     padding: 16px;

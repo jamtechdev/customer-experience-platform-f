@@ -31,6 +31,37 @@
   width: 100%;
 }
 
+.add-competitor-section {
+  margin-top: 24px;
+  padding-top: 24px;
+  border-top: 1px solid #e5e7eb;
+}
+
+.add-competitor-section h3 {
+  margin: 0 0 8px 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #111827;
+}
+
+.add-competitor-section .hint {
+  margin: 0 0 16px 0;
+  font-size: 0.875rem;
+  color: #6b7280;
+}
+
+.add-competitor-form {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.add-competitor-form .competitor-name-field {
+  flex: 1;
+  min-width: 200px;
+}
+
 .positive {
   color: #22c55e;
   font-weight: 600;

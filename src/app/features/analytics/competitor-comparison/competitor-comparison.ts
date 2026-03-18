@@ -5,6 +5,9 @@ import { MatTableModule } from '@angular/material/table';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
+import { FormsModule } from '@angular/forms';
 import { AnalysisService } from '../../../core/services/analysis.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
@@ -20,12 +23,15 @@ interface CompetitorData {
   selector: 'app-competitor-comparison',
   imports: [
     CommonModule,
+    FormsModule,
     MatCardModule,
     MatTableModule,
     MatButtonModule,
     MatIconModule,
     MatProgressSpinnerModule,
-    MatSnackBarModule
+    MatSnackBarModule,
+    MatFormFieldModule,
+    MatInputModule,
   ],
   templateUrl: './competitor-comparison.html',
   styleUrl: './competitor-comparison.css',
@@ -36,12 +42,39 @@ export class CompetitorComparison implements OnInit {
   private authService = inject(AuthService);
 
   loading = signal(false);
+  addingCompetitor = signal(false);
   companyData = signal<CompetitorData | null>(null);
   competitors = signal<CompetitorData[]>([]);
   displayedColumns: string[] = ['name', 'sentimentScore', 'npsScore', 'feedbackCount', 'gap'];
+  newCompetitorName = '';
 
   ngOnInit(): void {
     this.loadComparisonData();
+  }
+
+  addCompetitor(): void {
+    const name = this.newCompetitorName.trim();
+    if (!name) {
+      this.snackBar.open('Enter a competitor name', 'Close', { duration: 3000 });
+      return;
+    }
+    this.addingCompetitor.set(true);
+    this.analysisService.createCompetitor(name).subscribe({
+      next: (res) => {
+        this.addingCompetitor.set(false);
+        if (res.success) {
+          this.newCompetitorName = '';
+          this.snackBar.open('Competitor added', 'Close', { duration: 2000 });
+          this.loadComparisonData();
+        } else {
+          this.snackBar.open(res.message || 'Failed to add competitor', 'Close', { duration: 3000 });
+        }
+      },
+      error: (err) => {
+        this.addingCompetitor.set(false);
+        this.snackBar.open(err.error?.message || 'Failed to add competitor', 'Close', { duration: 3000 });
+      },
+    });
   }
 
   loadComparisonData(): void {

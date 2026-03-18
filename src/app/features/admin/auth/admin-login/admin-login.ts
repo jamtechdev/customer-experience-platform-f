@@ -38,11 +38,9 @@ export class AdminLogin {
     }
 
     this.errorMessage.set('');
-    this.loaderService.show(this.t('loading'));
 
     this.authService.login({ email: this.email, password: this.password }).subscribe({
       next: (response) => {
-        this.loaderService.hide();
         if (response.success) {
           if (this.rememberMe) {
             localStorage.setItem('rememberMe', 'true');
@@ -53,7 +51,6 @@ export class AdminLogin {
         }
       },
       error: (error) => {
-        this.loaderService.hide();
         const message = error.error?.message || error.message || this.t('loginError');
         this.errorMessage.set(message);
       }

@@ -45,3 +45,40 @@
 .imports-table {
   width: 100%;
 }
+
+.error-cell {
+  max-width: 480px;
+  white-space: normal;
+  word-break: break-word;
+}
+
+.muted {
+  color: rgba(0, 0, 0, 0.55);
+  font-size: 0.875rem;
+}
+
+.error-text {
+  color: #b71c1c;
+}
+
+.error-details {
+  margin: 0;
+}
+
+.error-summary {
+  cursor: pointer;
+  color: #c62828;
+  font-weight: 500;
+}
+
+.error-full {
+  margin: 0.5rem 0 0;
+  padding: 0.5rem 0.75rem;
+  background: rgba(0, 0, 0, 0.04);
+  border-radius: 4px;
+  font-size: 0.8rem;
+  white-space: pre-wrap;
+  word-break: break-word;
+  max-height: 240px;
+  overflow: auto;
+}

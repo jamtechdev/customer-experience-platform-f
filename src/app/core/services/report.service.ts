@@ -110,6 +110,19 @@ export class ReportService {
   exportDashboardToExcel(config: any): Observable<Blob> {
     return this.http.post(`${this.baseUrl}/dashboard/export/excel`, config, { responseType: 'blob' });
   }
+
+  getDatePresets(): Observable<ApiResponse<{ presets: ReportDatePresetDto[] }>> {
+    return this.http.get<ApiResponse<{ presets: ReportDatePresetDto[] }>>(
+      `${this.baseUrl}/date-presets`
+    );
+  }
+}
+
+export interface ReportDatePresetDto {
+  id: string;
+  label: string;
+  startDate: string;
+  endDate: string;
 }
 
 @Injectable({
