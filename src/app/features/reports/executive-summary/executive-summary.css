@@ -57,6 +57,10 @@
   color: var(--mat-sys-on-surface-variant, #666);
 }
 
+.mat-mdc-card-header{
+  padding: 16px;
+}
+
 @media (max-width: 600px) {
   .summary-grid {
     grid-template-columns: 1fr 1fr;

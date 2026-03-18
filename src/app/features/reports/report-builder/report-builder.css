@@ -31,13 +31,17 @@
 }
 
 .export-actions {
-  margin-top: 0.5rem;
+  margin-top: 0rem;
 }
 
 .hint {
   font-size: 0.875rem;
   color: #6b7280;
   margin-top: 1rem;
+}
+
+.mat-mdc-card-header{
+  padding:16px;
 }
 
 @media (max-width: 768px) {
