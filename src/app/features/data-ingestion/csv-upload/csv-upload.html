@@ -1,7 +1,7 @@
 <div class="csv-upload-container">
   <div class="upload-header">
-    <h1>{{ t('dataSources.title') }}</h1>
-    <p class="subtitle">{{ t('dataSources.list') || 'Upload CSV files containing customer feedback data' }}</p>
+    <h1>{{ t('csv.uploadTitle') }}</h1>
+    <p class="subtitle">{{ t('csv.uploadSubtitle') }}</p>
   </div>
 
   <mat-card class="upload-card">
@@ -21,11 +21,11 @@
         
         <div *ngIf="!selectedFile" class="upload-placeholder">
           <mat-icon class="upload-icon">cloud_upload</mat-icon>
-          <p class="upload-text">{{ t('dataSources.add') || 'Drag and drop your CSV file here' }}</p>
-          <p class="upload-hint">{{ t('app.all') || 'or' }}</p>
+          <p class="upload-text">{{ t('csv.dragDrop') }}</p>
+          <p class="upload-hint">{{ t('csv.or') }}</p>
           <button mat-raised-button color="primary" (click)="document.getElementById('file-input')?.click()">
             <mat-icon>folder_open</mat-icon>
-            {{ t('dataSources.add') || 'Browse Files' }}
+            {{ t('csv.browseFiles') }}
           </button>
         </div>
 
@@ -57,10 +57,10 @@
           [color]="processingStatus() === 'error' ? 'warn' : 'primary'">
         </mat-progress-bar>
         <div *ngIf="processingStatus() === 'processing'" class="processing-steps">
-          <mat-chip>{{ t('dataSources.sync') || 'Uploading' }}</mat-chip>
-          <mat-chip>{{ t('analysis.sentimentAnalysis') || 'Analyzing sentiment' }}</mat-chip>
-          <mat-chip>{{ t('analysis.rootCauseAnalysis') || 'Root cause analysis' }}</mat-chip>
-          <mat-chip>{{ t('nav.cxJourney') || 'Journey mapping' }}</mat-chip>
+          <mat-chip>{{ t('csv.stepUploading') }}</mat-chip>
+          <mat-chip>{{ t('csv.stepSentiment') }}</mat-chip>
+          <mat-chip>{{ t('csv.stepRootCause') }}</mat-chip>
+          <mat-chip>{{ t('csv.stepJourney') }}</mat-chip>
         </div>
       </div>
 
@@ -72,7 +72,7 @@
           [disabled]="!selectedFile || uploading() || processingStatus() === 'processing'"
           class="upload-button">
           <mat-icon>upload</mat-icon>
-          {{ t('dataSources.sync') || 'Upload File' }}
+          {{ t('csv.uploadButton') }}
         </button>
       </div>
     </mat-card-content>
@@ -80,16 +80,22 @@
 
   <mat-card class="info-card">
     <mat-card-header>
-      <mat-card-title>{{ t('dataSources.title') || 'CSV Format Requirements' }}</mat-card-title>
+      <mat-card-title>{{ t('csv.requirementsTitle') }}</mat-card-title>
     </mat-card-header>
     <mat-card-content>
       <ul class="requirements-list">
-        <li>{{ t('dataSources.format') || 'File must be in CSV format (.csv extension)' }}</li>
-        <li *ngIf="format().firstRowHeaders !== false">{{ t('dataSources.headers') || 'First row should contain column headers' }}</li>
-        <li>Required columns: {{ requiredColumnsText() }}</li>
-        <li>Optional columns: {{ optionalColumnsText() }}</li>
-        <li>Maximum file size: {{ maxFileSizeMB() }} MB</li>
+        <li>{{ t('csv.reqFormat') }}</li>
+        <li *ngIf="format().firstRowHeaders !== false">{{ t('csv.reqHeaders') }}</li>
+        <li>{{ t('csv.reqRequiredColumns', { cols: requiredColumnsText() }) }}</li>
+        <li>{{ t('csv.reqOptionalColumns', { cols: optionalColumnsText() }) }}</li>
+        <li>{{ t('csv.reqMaxSize', { mb: maxFileSizeMB().toString() }) }}</li>
       </ul>
+      <p class="sample-download">
+        <a mat-button color="primary" [href]="sampleCsvUrl" download="sample-customer-feedback.csv">
+          <mat-icon>download</mat-icon>
+          {{ t('csv.downloadSample') }}
+        </a>
+      </p>
     </mat-card-content>
   </mat-card>
 </div>

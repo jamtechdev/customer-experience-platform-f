@@ -30,6 +30,32 @@ export interface CSVPreview {
   headers: string[];
   rows: Record<string, any>[];
   rowCount: number;
+  detectedType?: 'social_media' | 'app_review' | 'nps_survey' | 'complaint' | 'unknown';
+  suggestedMappings?: Record<string, string>;
+  systemFields?: SystemField[];
+  /** Same as systemFields (backend alias). */
+  schemaFields?: SystemField[];
+}
+
+export interface SystemField {
+  name: string;
+  type: 'string' | 'number' | 'date' | 'boolean';
+  required: boolean;
+}
+
+export interface RowValidationError {
+  rowNumber: number;
+  field: string;
+  message: string;
+  value?: any;
+}
+
+export interface ValidateMappingsResult {
+  valid: boolean;
+  detectedType: 'social_media' | 'app_review' | 'nps_survey' | 'complaint' | 'unknown';
+  requiredFields: string[];
+  mappedFields: string[];
+  errors: RowValidationError[];
 }
 
 export interface CSVImportResult {
@@ -48,6 +74,14 @@ export interface CSVFormat {
   firstRowHeaders?: boolean;
 }
 
+export interface CSVUploadResponse {
+  importId: number;
+  filename: string;
+  rowCount: number;
+  status: 'pending' | 'completed' | 'failed';
+  errorMessage?: string;
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -59,10 +93,10 @@ export class CSVService {
     return this.http.get<ApiResponse<CSVFormat>>(`${this.baseUrl}/format`);
   }
 
-  uploadCSV(file: File): Observable<ApiResponse<{ importId: number; filename: string; rowCount: number }>> {
+  uploadCSV(file: File): Observable<ApiResponse<CSVUploadResponse>> {
     const formData = new FormData();
     formData.append('file', file);
-    return this.http.post<ApiResponse<any>>(`${this.baseUrl}/upload`, formData);
+    return this.http.post<ApiResponse<CSVUploadResponse>>(`${this.baseUrl}/upload`, formData);
   }
 
   getImports(): Observable<ApiResponse<CSVImport[]>> {
@@ -73,6 +107,17 @@ export class CSVService {
     return this.http.get<ApiResponse<CSVPreview>>(`${this.baseUrl}/${importId}/preview`, {
       params: { limit: limit.toString() }
     });
+  }
+
+  validateImport(
+    importId: number,
+    payload: {
+      mappings: Record<string, string>;
+      dataType?: 'social_media' | 'app_review' | 'nps_survey' | 'complaint' | 'unknown';
+      sampleLimit?: number;
+    }
+  ): Observable<ApiResponse<ValidateMappingsResult>> {
+    return this.http.post<ApiResponse<ValidateMappingsResult>>(`${this.baseUrl}/${importId}/validate`, payload);
   }
 
   processImport(

@@ -5,7 +5,6 @@ import { Router, NavigationEnd } from '@angular/router';
 import { Observable, tap, catchError, throwError, BehaviorSubject, of, filter, take } from 'rxjs';
 import { User, AuthResponse, LoginRequest, ApiResponse, UserRole } from '../models';
 import { environment } from '../../../environments/environment';
-import { LoaderService } from './loader.service';
 
 @Injectable({
   providedIn: 'root'
@@ -14,7 +13,6 @@ export class AuthService {
   private readonly http = inject(HttpClient);
   private readonly router = inject(Router);
   private readonly platformId = inject(PLATFORM_ID);
-  private readonly loaderService = inject(LoaderService);
   
   private readonly TOKEN_KEY = 'access_token';
   private readonly REFRESH_TOKEN_KEY = 'refresh_token';
@@ -110,35 +108,28 @@ export class AuthService {
   }
 
   register(data: { email: string; password: string; firstName: string; lastName: string; role?: string }): Observable<ApiResponse<AuthResponse>> {
-    this.loaderService.show('Creating account...');
     return this.http.post<ApiResponse<AuthResponse>>(`${this.apiBase}/auth/register`, data).pipe(
       tap(response => {
         if (response.success && response.data) {
-          // Auto-login after successful registration
           this.setSession(response.data);
         }
-        this.loaderService.hide();
       }),
       catchError(error => {
         console.error('Registration error:', error);
-        this.loaderService.hide();
         return throwError(() => error);
       })
     );
   }
 
   login(credentials: LoginRequest): Observable<ApiResponse<AuthResponse>> {
-    this.loaderService.show('Signing in...');
     return this.http.post<ApiResponse<AuthResponse>>(`${this.apiBase}/auth/login`, credentials).pipe(
       tap(response => {
         if (response.success && response.data?.accessToken) {
           this.setSession(response.data);
         }
-        this.loaderService.hide();
       }),
       catchError(error => {
         console.error('Login error:', error);
-        this.loaderService.hide();
         return throwError(() => error);
       })
     );

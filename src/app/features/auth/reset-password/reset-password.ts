@@ -43,27 +43,26 @@ export class ResetPassword {
 
   onSubmit(): void {
     if (!this.email || !this.otp || !this.newPassword || !this.confirmPassword) {
-      this.errorMessage.set(this.t('validationError') || 'All fields are required');
+      this.errorMessage.set(this.t('auth.validationError'));
       return;
     }
 
     if (this.otp.length !== 6 || !/^\d{6}$/.test(this.otp)) {
-      this.errorMessage.set(this.t('invalidOtp') || 'OTP must be 6 digits');
+      this.errorMessage.set(this.t('auth.invalidOtp'));
       return;
     }
 
     if (this.newPassword.length < 6) {
-      this.errorMessage.set(this.t('passwordMinLength') || 'Password must be at least 6 characters');
+      this.errorMessage.set(this.t('auth.passwordMinLength'));
       return;
     }
 
     if (this.newPassword !== this.confirmPassword) {
-      this.errorMessage.set(this.t('passwordMismatch') || 'Passwords do not match');
+      this.errorMessage.set(this.t('auth.passwordMismatch'));
       return;
     }
 
     this.errorMessage.set('');
-    this.loaderService.show(this.t('loading') || 'Loading...');
 
     this.authService.resetPassword({
       email: this.email,
@@ -71,16 +70,14 @@ export class ResetPassword {
       newPassword: this.newPassword
     }).subscribe({
       next: (response) => {
-        this.loaderService.hide();
         if (response.success) {
           this.router.navigate(['/login'], { replaceUrl: true });
         } else {
-          this.errorMessage.set(response.message || this.t('resetPasswordError') || 'Password reset failed');
+          this.errorMessage.set(response.message || this.t('auth.resetPasswordError'));
         }
       },
       error: (error) => {
-        this.loaderService.hide();
-        const message = error.error?.message || error.message || this.t('resetPasswordError') || 'Password reset failed. Please try again.';
+        const message = error.error?.message || error.message || this.t('auth.resetPasswordError');
         this.errorMessage.set(message);
       }
     });

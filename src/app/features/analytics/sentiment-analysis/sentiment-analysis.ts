@@ -52,16 +52,35 @@ export class SentimentAnalysis implements OnInit {
   stats = signal<SentimentStats | null>(null);
   feedbackList = signal<Array<{ id: number; content: string; source: string; date: string; author?: string; sentiment: string; score: number }>>([]);
   feedbackTotal = signal(0);
-  selectedPeriod = signal<'day' | 'week' | 'month'>('month');
-  startDate = signal<Date | null>(null);
-  endDate = signal<Date | null>(null);
+
+  /** Plain properties so ngModel two-way binding works (signals are not writable by ngModel). */
+  selectedPeriod: 'day' | 'week' | 'month' = 'month';
+  startDate: Date | null = null;
+  endDate: Date | null = null;
 
   displayedColumns: string[] = ['sentiment', 'count', 'percentage', 'bar'];
   listColumns: string[] = ['content', 'source', 'date', 'sentiment', 'score'];
 
   ngOnInit(): void {
+    this.applyDefaultDateRange();
     this.loadSentimentStats();
     this.loadFeedbackList();
+  }
+
+  private applyDefaultDateRange(): void {
+    if (this.startDate == null || this.endDate == null) {
+      const end = new Date();
+      const start = new Date();
+      if (this.selectedPeriod === 'day') {
+        start.setDate(start.getDate() - 1);
+      } else if (this.selectedPeriod === 'week') {
+        start.setDate(start.getDate() - 7);
+      } else {
+        start.setMonth(start.getMonth() - 1);
+      }
+      this.startDate = start;
+      this.endDate = end;
+    }
   }
 
   getCompanyId(): number | undefined {
@@ -73,8 +92,8 @@ export class SentimentAnalysis implements OnInit {
     const defaultStart = new Date();
     defaultStart.setFullYear(defaultStart.getFullYear() - 1);
     return {
-      start: this.startDate() || defaultStart,
-      end: this.endDate() || new Date()
+      start: this.startDate ?? defaultStart,
+      end: this.endDate ?? new Date()
     };
   }
 
@@ -148,12 +167,23 @@ export class SentimentAnalysis implements OnInit {
   }
 
   onPeriodChange(): void {
+    const end = new Date();
+    const start = new Date();
+    if (this.selectedPeriod === 'day') {
+      start.setDate(start.getDate() - 1);
+    } else if (this.selectedPeriod === 'week') {
+      start.setDate(start.getDate() - 7);
+    } else {
+      start.setMonth(start.getMonth() - 1);
+    }
+    this.startDate = start;
+    this.endDate = end;
     this.loadSentimentStats();
     this.loadFeedbackList();
   }
 
   onDateChange(): void {
-    if (this.startDate() && this.endDate()) {
+    if (this.startDate != null && this.endDate != null) {
       this.loadSentimentStats();
       this.loadFeedbackList();
     }

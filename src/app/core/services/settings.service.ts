@@ -17,6 +17,11 @@ export interface SentimentParameters {
   negativeThreshold: number;
 }
 
+export interface AlertEmailSettings {
+  enabled: boolean;
+  recipients: string[];
+}
+
 export interface AppSettings {
   theme: 'light' | 'dark' | 'auto';
   language: string;
@@ -185,6 +190,14 @@ export class SettingsService {
 
   updateAlertThresholds(thresholds: AlertThresholds): Observable<ApiResponse<AlertThresholds>> {
     return this.http.put<ApiResponse<AlertThresholds>>(`${this.baseUrl}/alert-thresholds`, thresholds);
+  }
+
+  getAlertEmailSettings(): Observable<ApiResponse<AlertEmailSettings>> {
+    return this.http.get<ApiResponse<AlertEmailSettings>>(`${this.baseUrl}/alert-email`);
+  }
+
+  updateAlertEmailSettings(settings: AlertEmailSettings): Observable<ApiResponse<AlertEmailSettings>> {
+    return this.http.put<ApiResponse<AlertEmailSettings>>(`${this.baseUrl}/alert-email`, settings);
   }
 
   getSentimentParameters(): Observable<ApiResponse<SentimentParameters>> {

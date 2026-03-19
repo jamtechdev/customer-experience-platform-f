@@ -1,14 +1,47 @@
 <div class="executive-summary">
   <mat-card>
     <mat-card-header>
-      <mat-card-title>Executive Summary</mat-card-title>
-      <mat-card-subtitle>High-level CX performance overview. Export to PDF for reporting.</mat-card-subtitle>
-      <button mat-raised-button color="primary" (click)="exportPdf()" [disabled]="exporting() || loading()">
-        <mat-icon>download</mat-icon>
-        {{ exporting() ? 'Exporting...' : 'Export to PDF' }}
-      </button>
+      <mat-card-title>{{ t('nav.executiveSummary') }}</mat-card-title>
+      <mat-card-subtitle>{{ t('reports.executiveSummarySubtitle') }}</mat-card-subtitle>
     </mat-card-header>
     <mat-card-content>
+      <div class="report-period-row">
+        <mat-form-field appearance="outline">
+          <mat-label>{{ t('reports.fixedPeriod') }}</mat-label>
+          <mat-select [value]="selectedPresetId()" (selectionChange)="onPresetChange($event.value)">
+            @for (p of presets(); track p.id) {
+              <mat-option [value]="p.id">{{ p.label }}</mat-option>
+            }
+            <mat-option value="custom">{{ t('reports.customRange') }}</mat-option>
+          </mat-select>
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>{{ t('reports.fromDate') }}</mat-label>
+          <input
+            matInput
+            type="date"
+            [value]="startDate()"
+            (input)="startDate.set(($any($event.target).value) || null); onManualDate()"
+          />
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>{{ t('reports.toDate') }}</mat-label>
+          <input
+            matInput
+            type="date"
+            [value]="endDate()"
+            (input)="endDate.set(($any($event.target).value) || null); onManualDate()"
+          />
+        </mat-form-field>
+        <button
+          mat-raised-button
+          color="primary"
+          (click)="exportPdf()"
+          [disabled]="exporting() || loading() || !datesValid()">
+          <mat-icon>download</mat-icon>
+          {{ exporting() ? t('reports.exporting') : t('reports.exportToPdf') }}
+        </button>
+      </div>
       @if (loading()) {
         <div class="loading">
           <mat-spinner diameter="40"></mat-spinner>
@@ -17,44 +50,44 @@
         <div class="summary-grid">
           <mat-card class="summary-card">
             <mat-card-content>
-              <div class="summary-label">Total Feedback</div>
+              <div class="summary-label">{{ t('dashboard.totalFeedback') }}</div>
               <div class="summary-value">{{ data()!.kpis.totalFeedback.toLocaleString() }}</div>
             </mat-card-content>
           </mat-card>
           <mat-card class="summary-card">
             <mat-card-content>
-              <div class="summary-label">Sentiment Index</div>
+              <div class="summary-label">{{ t('reports.sentimentIndex') }}</div>
               <div class="summary-value">{{ data()!.kpis.sentimentIndex.toFixed(2) }}</div>
             </mat-card-content>
           </mat-card>
           <mat-card class="summary-card">
             <mat-card-content>
-              <div class="summary-label">NPS Score</div>
+              <div class="summary-label">{{ t('dashboard.npsScore') }}</div>
               <div class="summary-value">{{ Math.round(data()!.kpis.npsScore) }}</div>
             </mat-card-content>
           </mat-card>
           <mat-card class="summary-card">
             <mat-card-content>
-              <div class="summary-label">Critical Alerts</div>
+              <div class="summary-label">{{ t('dashboard.criticalAlarms') }}</div>
               <div class="summary-value">{{ data()!.kpis.criticalAlertsCount }}</div>
             </mat-card-content>
           </mat-card>
         </div>
         <mat-card class="nps-breakdown">
           <mat-card-header>
-            <mat-card-title>NPS Breakdown</mat-card-title>
+            <mat-card-title>{{ t('reports.npsBreakdown') }}</mat-card-title>
           </mat-card-header>
           <mat-card-content>
             <div class="nps-row">
-              <span>Promoters</span>
+              <span>{{ t('reports.promoters') }}</span>
               <span>{{ data()!.nps.promoters }}</span>
             </div>
             <div class="nps-row">
-              <span>Passives</span>
+              <span>{{ t('reports.passives') }}</span>
               <span>{{ data()!.nps.passives }}</span>
             </div>
             <div class="nps-row">
-              <span>Detractors</span>
+              <span>{{ t('reports.detractors') }}</span>
               <span>{{ data()!.nps.detractors }}</span>
             </div>
           </mat-card-content>
@@ -62,12 +95,12 @@
         @if (data()!.competitors.length > 0) {
           <mat-card class="competitors">
             <mat-card-header>
-              <mat-card-title>Competitor Comparison</mat-card-title>
+              <mat-card-title>{{ t('analysis.competitorAnalysis') }}</mat-card-title>
             </mat-card-header>
             <mat-card-content>
               <div class="competitor-row" *ngFor="let c of data()!.competitors">
                 <span>{{ c.name }}</span>
-                <span>Sentiment: {{ c.sentimentScore.toFixed(2) }} | NPS: {{ Math.round(c.npsScore) }} | Gap: {{ c.gap > 0 ? '+' : '' }}{{ c.gap.toFixed(2) }}</span>
+                <span>{{ t('reports.competitorLine', { sentiment: c.sentimentScore.toFixed(2), nps: (Math.round(c.npsScore)).toString(), gap: (c.gap > 0 ? '+' : '') + c.gap.toFixed(2) }) }}</span>
               </div>
             </mat-card-content>
           </mat-card>
@@ -75,7 +108,7 @@
         @if (data()!.criticalAlerts.length > 0) {
           <mat-card class="alerts">
             <mat-card-header>
-              <mat-card-title>Critical Alerts</mat-card-title>
+              <mat-card-title>{{ t('dashboard.criticalAlarms') }}</mat-card-title>
             </mat-card-header>
             <mat-card-content>
               <div class="alert-row" *ngFor="let a of data()!.criticalAlerts">

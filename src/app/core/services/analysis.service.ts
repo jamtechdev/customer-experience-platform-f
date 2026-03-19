@@ -75,4 +75,8 @@ export class AnalysisService {
     const params = new HttpParams().set('companyId', companyId.toString());
     return this.http.get<ApiResponse<any>>(`${this.baseUrl}/competitor`, { params });
   }
+
+  createCompetitor(name: string): Observable<ApiResponse<{ id: number; name: string; companyId: number }>> {
+    return this.http.post<ApiResponse<{ id: number; name: string; companyId: number }>>(`${this.baseUrl}/competitor`, { name });
+  }
 }

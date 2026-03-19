@@ -28,7 +28,7 @@ export class ImportHistory implements OnInit {
 
   loading = signal(false);
   imports = signal<CSVImport[]>([]);
-  displayedColumns: string[] = ['filename', 'rowCount', 'status', 'createdAt'];
+  displayedColumns: string[] = ['filename', 'rowCount', 'status', 'errorMessage', 'createdAt'];
 
   ngOnInit(): void {
     this.loadImports();

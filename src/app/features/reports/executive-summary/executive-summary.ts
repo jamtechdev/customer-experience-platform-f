@@ -4,10 +4,19 @@ import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
+import { MatSelectModule } from '@angular/material/select';
 import { DashboardService, ExecutiveDashboardData } from '../../../core/services/dashboard.service';
 import { ReportService } from '../../../core/services/report.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { TranslationService } from '../../../core/services/translation.service';
+import {
+  buildClientReportDatePresets,
+  toIsoRangeFromYmd,
+  type ReportDatePreset,
+} from '../../../core/utils/report-date-presets';
 
 @Component({
   selector: 'app-executive-summary',
@@ -17,7 +26,10 @@ import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
     MatButtonModule,
     MatIconModule,
     MatProgressSpinnerModule,
-    MatSnackBarModule
+    MatSnackBarModule,
+    MatFormFieldModule,
+    MatInputModule,
+    MatSelectModule,
   ],
   templateUrl: './executive-summary.html',
   styleUrl: './executive-summary.css',
@@ -27,14 +39,66 @@ export class ExecutiveSummary implements OnInit {
   private reportService = inject(ReportService);
   private authService = inject(AuthService);
   private snackBar = inject(MatSnackBar);
+  private translationService = inject(TranslationService);
+
+  readonly t = (key: string, params?: Record<string, string>): string => this.translationService.translate(key, params);
 
   loading = signal(true);
   exporting = signal(false);
   data = signal<ExecutiveDashboardData | null>(null);
   Math = Math;
 
+  presets = signal<ReportDatePreset[]>([]);
+  selectedPresetId = signal<string>('last_30_days');
+  startDate = signal<string | null>(null);
+  endDate = signal<string | null>(null);
+
   ngOnInit(): void {
+    this.loadPresets();
     this.loadSummary();
+  }
+
+  private loadPresets(): void {
+    this.reportService.getDatePresets().subscribe({
+      next: (res) => {
+        const list =
+          res.success && res.data?.presets?.length ? (res.data.presets as ReportDatePreset[]) : buildClientReportDatePresets();
+        this.presets.set(list);
+        const def = list.find((p) => p.id === 'last_30_days') ?? list[0];
+        if (def) this.applyPreset(def);
+      },
+      error: () => {
+        const list = buildClientReportDatePresets();
+        this.presets.set(list);
+        const def = list.find((p) => p.id === 'last_30_days') ?? list[0];
+        if (def) this.applyPreset(def);
+      },
+    });
+  }
+
+  applyPreset(p: ReportDatePreset): void {
+    this.selectedPresetId.set(p.id);
+    this.startDate.set(p.startDate.slice(0, 10));
+    this.endDate.set(p.endDate.slice(0, 10));
+  }
+
+  onPresetChange(id: string): void {
+    if (id === 'custom') {
+      this.selectedPresetId.set('custom');
+      return;
+    }
+    const p = this.presets().find((x) => x.id === id);
+    if (p) this.applyPreset(p);
+  }
+
+  onManualDate(): void {
+    this.selectedPresetId.set('custom');
+  }
+
+  datesValid(): boolean {
+    const s = this.startDate();
+    const e = this.endDate();
+    return !!(s && e && s <= e);
   }
 
   loadSummary(): void {
@@ -47,15 +111,20 @@ export class ExecutiveSummary implements OnInit {
       },
       error: () => {
         this.loading.set(false);
-        this.snackBar.open('Failed to load executive summary', 'Close', { duration: 3000 });
-      }
+        this.snackBar.open(this.t('reports.executiveSummaryLoadFailed'), this.t('app.close'), { duration: 3000 });
+      },
     });
   }
 
   exportPdf(): void {
+    if (!this.datesValid()) {
+      this.snackBar.open(this.t('reports.selectValidRange'), this.t('app.close'), { duration: 5000 });
+      return;
+    }
     this.exporting.set(true);
     const companyId = this.authService.currentUser()?.settings?.companyId ?? 1;
-    this.reportService.exportDashboardToPdf({ companyId }).subscribe({
+    const { startDate: sd, endDate: ed } = toIsoRangeFromYmd(this.startDate()!, this.endDate()!);
+    this.reportService.exportDashboardToPdf({ companyId, startDate: sd, endDate: ed }).subscribe({
       next: (blob) => {
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
@@ -64,12 +133,12 @@ export class ExecutiveSummary implements OnInit {
         a.click();
         URL.revokeObjectURL(url);
         this.exporting.set(false);
-        this.snackBar.open('Report downloaded', 'Close', { duration: 2000 });
+        this.snackBar.open(this.t('reports.downloaded'), this.t('app.close'), { duration: 2000 });
       },
       error: () => {
         this.exporting.set(false);
-        this.snackBar.open('Export failed', 'Close', { duration: 3000 });
-      }
+        this.snackBar.open(this.t('reports.exportFailed'), this.t('app.close'), { duration: 4000 });
+      },
     });
   }
 }

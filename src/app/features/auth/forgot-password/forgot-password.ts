@@ -30,32 +30,29 @@ export class ForgotPassword {
 
   onSubmit(): void {
     if (!this.email) {
-      this.errorMessage.set(this.t('validationError') || 'Email is required');
+      this.errorMessage.set(this.t('auth.validationError'));
       return;
     }
 
     // Basic email validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(this.email)) {
-      this.errorMessage.set(this.t('invalidEmail') || 'Please enter a valid email address');
+      this.errorMessage.set(this.t('auth.invalidEmail'));
       return;
     }
 
     this.errorMessage.set('');
-    this.loaderService.show(this.t('loading') || 'Loading...');
 
     this.authService.forgotPassword(this.email).subscribe({
       next: (response) => {
-        this.loaderService.hide();
         if (response.success) {
           this.submitted.set(true);
         } else {
-          this.errorMessage.set(response.message || this.t('forgotPasswordError') || 'Failed to send reset code');
+          this.errorMessage.set(response.message || this.t('auth.forgotPasswordError'));
         }
       },
       error: (error) => {
-        this.loaderService.hide();
-        const message = error.error?.message || error.message || this.t('forgotPasswordError') || 'Failed to send reset code. Please try again.';
+        const message = error.error?.message || error.message || this.t('auth.forgotPasswordError');
         this.errorMessage.set(message);
       }
     });

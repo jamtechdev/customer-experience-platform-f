@@ -66,8 +66,8 @@
   font-weight: 600;
   color: var(--text-secondary, #6b7280);
   margin-bottom: 12px;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
+  text-transform: none;
+  letter-spacing: 0.02em;
 }
 
 .quick-actions-buttons {

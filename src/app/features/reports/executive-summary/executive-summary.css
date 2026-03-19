@@ -9,8 +9,16 @@
   gap: 1rem;
 }
 
-.executive-summary mat-card-header button {
-  margin-left: auto;
+.report-period-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.report-period-row mat-form-field {
+  min-width: 160px;
 }
 
 .loading {

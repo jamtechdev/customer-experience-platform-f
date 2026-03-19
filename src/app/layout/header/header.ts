@@ -7,7 +7,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatMenuModule } from '@angular/material/menu';
 import { AuthService } from '../../core/services/auth.service';
 import { LanguageSwitcher } from '../../core/components/language-switcher/language-switcher';
-import { getRoleLabel } from '../../core/models/user.model';
+import { TranslationService } from '../../core/services/translation.service';
 
 @Component({
   selector: 'app-header',
@@ -25,8 +25,11 @@ import { getRoleLabel } from '../../core/models/user.model';
 export class Header {
   private authService = inject(AuthService);
   private router = inject(Router);
+  private translationService = inject(TranslationService);
   
   toggleSidenav = output<void>();
+
+  readonly t = (key: string): string => this.translationService.translate(key);
 
   get currentUser() {
     return this.authService.currentUser();
@@ -37,7 +40,7 @@ export class Header {
     if (user) {
       return `${user.firstName} ${user.lastName}`;
     }
-    return 'User';
+    return this.t('header.userFallbackName');
   }
 
   get userInitials(): string {
@@ -50,7 +53,10 @@ export class Header {
 
   get roleLabel(): string {
     const user = this.currentUser;
-    return user ? getRoleLabel(user.role) : '';
+    if (!user?.role) return '';
+    const key = `roles.${user.role}`;
+    const translated = this.t(key);
+    return translated === key ? String(user.role) : translated;
   }
 
   onToggleSidenav(): void {
