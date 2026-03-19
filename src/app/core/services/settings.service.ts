@@ -68,7 +68,7 @@ export class SettingsService {
   private getDefaultSettings(): AppSettings {
     return {
       theme: 'light',
-      language: 'tr',
+      language: 'en',
       dateFormat: environment.dateFormat.short,
       timeFormat: '24h',
       notifications: {

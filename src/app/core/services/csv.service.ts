@@ -4,6 +4,13 @@ import { Observable } from 'rxjs';
 import { ApiResponse } from '../models';
 import { environment } from '../../../environments/environment';
 
+export interface RowValidationError {
+  rowNumber: number;
+  field: string;
+  message: string;
+  value?: any;
+}
+
 export interface CSVImport {
   id: number;
   filename: string;
@@ -13,6 +20,13 @@ export interface CSVImport {
   status: 'pending' | 'processing' | 'completed' | 'failed';
   userId: number;
   errorMessage?: string;
+  errorDetails?: {
+    totalIssues: number;
+    byField: Record<string, number>;
+    examples: RowValidationError[];
+    requiredMappings?: string[];
+    guidance?: string[];
+  };
   createdAt: Date;
   updatedAt: Date;
 }
@@ -43,13 +57,6 @@ export interface SystemField {
   required: boolean;
 }
 
-export interface RowValidationError {
-  rowNumber: number;
-  field: string;
-  message: string;
-  value?: any;
-}
-
 export interface ValidateMappingsResult {
   valid: boolean;
   detectedType: 'social_media' | 'app_review' | 'nps_survey' | 'complaint' | 'unknown';
@@ -67,7 +74,10 @@ export interface CSVImportResult {
 }
 
 export interface CSVFormat {
-  requiredColumns: string[];
+  /** Legacy / combined label from API (optional). */
+  requiredColumns?: string[];
+  requiredSystemFieldsFeedback?: string[];
+  requiredSystemFieldsNps?: string[];
   optionalColumns: string[];
   maxFileSizeBytes: number;
   acceptedExtensions?: string[];

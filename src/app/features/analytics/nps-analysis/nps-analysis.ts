@@ -7,12 +7,17 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatSelectModule } from '@angular/material/select';
 import { MatInputModule } from '@angular/material/input';
-import { MatDatepickerModule } from '@angular/material/datepicker';
-import { MatNativeDateModule } from '@angular/material/core';
 import { FormsModule } from '@angular/forms';
 import { DashboardService } from '../../../core/services/dashboard.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { ReportService } from '../../../core/services/report.service';
+import { TranslationService } from '../../../core/services/translation.service';
+import {
+  buildClientReportDatePresets,
+  toIsoRangeFromYmd,
+  type ReportDatePreset,
+} from '../../../core/utils/report-date-presets';
 
 interface NPSData {
   score: number;
@@ -36,8 +41,6 @@ interface NPSData {
     MatFormFieldModule,
     MatSelectModule,
     MatInputModule,
-    MatDatepickerModule,
-    MatNativeDateModule,
     MatSnackBarModule
   ],
   templateUrl: './nps-analysis.html',
@@ -47,12 +50,75 @@ export class NpsAnalysis implements OnInit {
   private dashboardService = inject(DashboardService);
   private snackBar = inject(MatSnackBar);
   private authService = inject(AuthService);
+  private reportService = inject(ReportService);
+  private translationService = inject(TranslationService);
+
+  readonly t = (key: string): string => this.translationService.translate(key);
 
   loading = signal(false);
   npsData = signal<NPSData | null>(null);
-  selectedPeriod: 'day' | 'week' | 'month' = 'month';
+  presets = signal<ReportDatePreset[]>([]);
+  selectedPresetId = signal<string>('last_30_days');
+  startDate = signal<string | null>(null);
+  endDate = signal<string | null>(null);
 
   ngOnInit(): void {
+    this.loadPresets();
+  }
+
+  private loadPresets(): void {
+    this.reportService.getDatePresets().subscribe({
+      next: (res) => {
+        const list =
+          res.success && res.data?.presets?.length ? (res.data.presets as ReportDatePreset[]) : buildClientReportDatePresets();
+        this.presets.set(list);
+        const def = list.find((p) => p.id === 'last_30_days') ?? list[0];
+        if (def) this.applyPreset(def);
+        this.loadNPSData();
+      },
+      error: () => {
+        const list = buildClientReportDatePresets();
+        this.presets.set(list);
+        const def = list.find((p) => p.id === 'last_30_days') ?? list[0];
+        if (def) this.applyPreset(def);
+        this.loadNPSData();
+      },
+    });
+  }
+
+  applyPreset(p: ReportDatePreset): void {
+    this.selectedPresetId.set(p.id);
+    this.startDate.set(p.startDate.slice(0, 10));
+    this.endDate.set(p.endDate.slice(0, 10));
+  }
+
+  onPresetChange(id: string): void {
+    if (id === 'custom') {
+      this.selectedPresetId.set('custom');
+      return;
+    }
+    const p = this.presets().find((x) => x.id === id);
+    if (p) {
+      this.applyPreset(p);
+      this.loadNPSData();
+    }
+  }
+
+  onManualDate(): void {
+    this.selectedPresetId.set('custom');
+  }
+
+  datesValid(): boolean {
+    const s = this.startDate();
+    const e = this.endDate();
+    return !!(s && e && s <= e);
+  }
+
+  applyRangeAndReload(): void {
+    if (!this.datesValid()) {
+      this.snackBar.open('Select a valid date range', 'Close', { duration: 4000 });
+      return;
+    }
     this.loadNPSData();
   }
 
@@ -60,8 +126,13 @@ export class NpsAnalysis implements OnInit {
     this.loading.set(true);
     const user = this.authService.currentUser();
     const companyId = user?.settings?.companyId || 1;
-    
-    this.dashboardService.getStats(companyId).subscribe({
+    if (!this.datesValid()) {
+      this.loading.set(false);
+      return;
+    }
+    const { startDate: sd, endDate: ed } = toIsoRangeFromYmd(this.startDate()!, this.endDate()!);
+
+    this.dashboardService.getStats(companyId, new Date(sd), new Date(ed)).subscribe({
       next: (response) => {
         if (response.success && response.data?.nps) {
           const nps = response.data.nps;

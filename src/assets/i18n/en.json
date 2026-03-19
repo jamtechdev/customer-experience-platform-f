@@ -101,7 +101,7 @@
   },
   "csv": {
     "uploadTitle": "CSV upload",
-    "uploadSubtitle": "Upload CSV files containing customer feedback data.",
+    "uploadSubtitle": "Upload any CSV export. Next, map your columns to system fields (content/date/source for feedback, score/date for NPS), validate types, then import.",
     "dragDrop": "Drag and drop your CSV file here",
     "or": "or",
     "browseFiles": "Browse files",
@@ -109,7 +109,9 @@
     "requirementsTitle": "CSV format requirements",
     "reqFormat": "File must be in CSV format (.csv extension)",
     "reqHeaders": "First row should contain column headers",
-    "reqRequiredColumns": "Required columns: {{cols}}",
+    "reqRequiredColumns": "Required system mappings: {{cols}}",
+    "forFeedback": "feedback CSVs",
+    "forNps": "NPS CSVs",
     "reqOptionalColumns": "Optional columns: {{cols}}",
     "reqMaxSize": "Maximum file size: {{mb}} MB",
     "downloadSample": "Download sample CSV",
@@ -365,6 +367,7 @@
     "downloaded": "Report downloaded",
     "exportFailed": "Export failed. Check date range.",
     "selectValidRange": "Select a fixed period or valid start and end dates.",
+    "applyRange": "Apply range",
     "executiveSummarySubtitle": "High-level CX performance overview. Choose a reporting period, then export to PDF.",
     "executiveSummaryLoadFailed": "Failed to load executive summary",
     "sentimentIndex": "Sentiment index",
@@ -373,6 +376,14 @@
     "passives": "Passives",
     "detractors": "Detractors",
     "competitorLine": "Sentiment: {{sentiment}} | NPS: {{nps}} | Gap: {{gap}}"
+  },
+  "metrics": {
+    "nps": {
+      "methodTitle": "How NPS is calculated",
+      "methodBody": "We classify each 0-10 score as Promoter (9-10), Passive (7-8), or Detractor (0-6). NPS = (% Promoters - % Detractors) among responses with a valid score in the selected period.",
+      "notesTitle": "Notes",
+      "notesBody": "NPS is not an average of scores. It is sensitive to sample size; interpret together with response counts. If ratings are imported on a different scale, they may be normalized or excluded—check import validation messages."
+    }
   },
   "tasks": {
     "title": "Tasks & Alarms",

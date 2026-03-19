@@ -7,14 +7,31 @@
   <div class="filters-section">
     <mat-card class="filter-card">
       <mat-card-content>
-        <mat-form-field appearance="outline">
-          <mat-label>Period</mat-label>
-          <mat-select [(ngModel)]="selectedPeriod" (selectionChange)="loadNPSData()" name="period">
-            <mat-option value="day">Daily</mat-option>
-            <mat-option value="week">Weekly</mat-option>
-            <mat-option value="month">Monthly</mat-option>
-          </mat-select>
-        </mat-form-field>
+        <div class="filters-row">
+          <mat-form-field appearance="outline">
+            <mat-label>Period</mat-label>
+            <mat-select [value]="selectedPresetId()" (selectionChange)="onPresetChange($event.value)">
+              @for (p of presets(); track p.id) {
+                <mat-option [value]="p.id">{{ p.label }}</mat-option>
+              }
+              <mat-option value="custom">Custom range</mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>From</mat-label>
+            <input matInput type="date" [ngModel]="startDate()" (ngModelChange)="startDate.set($event); onManualDate()" name="npsStart" />
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>To</mat-label>
+            <input matInput type="date" [ngModel]="endDate()" (ngModelChange)="endDate.set($event); onManualDate()" name="npsEnd" />
+          </mat-form-field>
+
+          <button mat-stroked-button color="primary" type="button" (click)="applyRangeAndReload()" [disabled]="loading()">
+            Apply
+          </button>
+        </div>
       </mat-card-content>
     </mat-card>
   </div>
@@ -99,6 +116,24 @@
           <p><strong>NPS = % Promoters - % Detractors</strong></p>
           <p>NPS = {{ npsData()!.promoterPercentage.toFixed(1) }}% - {{ npsData()!.detractorPercentage.toFixed(1) }}% = {{ npsData()!.score }}</p>
         </div>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card class="method-card">
+      <mat-card-header>
+        <mat-card-title>{{ t('metrics.nps.methodTitle') }}</mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <p>{{ t('metrics.nps.methodBody') }}</p>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card class="notes-card">
+      <mat-card-header>
+        <mat-card-title>{{ t('metrics.nps.notesTitle') }}</mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <p>{{ t('metrics.nps.notesBody') }}</p>
       </mat-card-content>
     </mat-card>
   </div>

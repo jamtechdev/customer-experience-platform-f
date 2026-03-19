@@ -7,26 +7,30 @@
   <div class="filters-section">
     <mat-card class="filter-card">
       <mat-card-content>
-        <div class="filters">
+        <div class="filters filters-row">
           <mat-form-field appearance="outline">
             <mat-label>Period</mat-label>
-            <mat-select [(ngModel)]="selectedPeriod" (selectionChange)="onPeriodChange()">
-              <mat-option value="day">Daily</mat-option>
-              <mat-option value="week">Weekly</mat-option>
-              <mat-option value="month">Monthly</mat-option>
+            <mat-select [value]="selectedPresetId()" (selectionChange)="onPresetChange($event.value)">
+              @for (p of presets(); track p.id) {
+                <mat-option [value]="p.id">{{ p.label }}</mat-option>
+              }
+              <mat-option value="custom">Custom range</mat-option>
             </mat-select>
           </mat-form-field>
 
-          <div class="date-field">
-             <input matInput type="date">
-          </div>
+          <mat-form-field appearance="outline">
+            <mat-label>From</mat-label>
+            <input matInput type="date" [ngModel]="startDate()" (ngModelChange)="startDate.set($event); onManualDate()" name="sentStart" />
+          </mat-form-field>
 
-           <div class="date-field">
-             <input matInput type="date">
-          </div>
+          <mat-form-field appearance="outline">
+            <mat-label>To</mat-label>
+            <input matInput type="date" [ngModel]="endDate()" (ngModelChange)="endDate.set($event); onManualDate()" name="sentEnd" />
+          </mat-form-field>
 
-             
-
+          <button mat-stroked-button color="primary" type="button" (click)="applyRangeAndReload()" [disabled]="loading()">
+            Apply
+          </button>
         </div>
       </mat-card-content>
     </mat-card>
@@ -164,13 +168,13 @@
               <th mat-header-cell *matHeaderCellDef>Sentiment</th>
               <td mat-cell *matCellDef="let row">
                 <mat-chip-set>
-                  <mat-chip [class]="'sentiment-chip ' + row.sentiment?.toLowerCase()">{{ row.sentiment || '—' }}</mat-chip>
+                  <mat-chip [class]="'sentiment-chip ' + row.sentiment.toLowerCase()">{{ row.sentiment || '—' }}</mat-chip>
                 </mat-chip-set>
               </td>
             </ng-container>
             <ng-container matColumnDef="score">
               <th mat-header-cell *matHeaderCellDef>Score</th>
-              <td mat-cell *matCellDef="let row">{{ (row.score ?? 0).toFixed(2) }}</td>
+              <td mat-cell *matCellDef="let row">{{ row.score.toFixed(2) }}</td>
             </ng-container>
             <tr mat-header-row *matHeaderRowDef="listColumns"></tr>
             <tr mat-row *matRowDef="let row; columns: listColumns;"></tr>
@@ -182,9 +186,9 @@
           <div *ngFor="let row of feedbackList()" class="feedback-card">
             <div class="feedback-card-row">
               <mat-chip-set>
-                <mat-chip [class]="'sentiment-chip ' + row.sentiment?.toLowerCase()">{{ row.sentiment || '—' }}</mat-chip>
+                <mat-chip [class]="'sentiment-chip ' + row.sentiment.toLowerCase()">{{ row.sentiment || '—' }}</mat-chip>
               </mat-chip-set>
-              <span class="feedback-score">Score: {{ (row.score ?? 0).toFixed(2) }}</span>
+              <span class="feedback-score">Score: {{ row.score.toFixed(2) }}</span>
             </div>
             <p class="feedback-content">{{ row.content }}</p>
             <div class="feedback-meta">

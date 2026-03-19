@@ -55,7 +55,6 @@ export class ExecutiveSummary implements OnInit {
 
   ngOnInit(): void {
     this.loadPresets();
-    this.loadSummary();
   }
 
   private loadPresets(): void {
@@ -66,12 +65,14 @@ export class ExecutiveSummary implements OnInit {
         this.presets.set(list);
         const def = list.find((p) => p.id === 'last_30_days') ?? list[0];
         if (def) this.applyPreset(def);
+        this.loadSummary();
       },
       error: () => {
         const list = buildClientReportDatePresets();
         this.presets.set(list);
         const def = list.find((p) => p.id === 'last_30_days') ?? list[0];
         if (def) this.applyPreset(def);
+        this.loadSummary();
       },
     });
   }
@@ -88,7 +89,10 @@ export class ExecutiveSummary implements OnInit {
       return;
     }
     const p = this.presets().find((x) => x.id === id);
-    if (p) this.applyPreset(p);
+    if (p) {
+      this.applyPreset(p);
+      this.loadSummary();
+    }
   }
 
   onManualDate(): void {
@@ -101,10 +105,23 @@ export class ExecutiveSummary implements OnInit {
     return !!(s && e && s <= e);
   }
 
+  applyRangeAndReload(): void {
+    if (!this.datesValid()) {
+      this.snackBar.open(this.t('reports.selectValidRange'), this.t('app.close'), { duration: 5000 });
+      return;
+    }
+    this.loadSummary();
+  }
+
   loadSummary(): void {
     this.loading.set(true);
     const companyId = this.authService.currentUser()?.settings?.companyId ?? 1;
-    this.dashboardService.getExecutiveDashboard(companyId).subscribe({
+    if (!this.datesValid()) {
+      this.loading.set(false);
+      return;
+    }
+    const { startDate: sd, endDate: ed } = toIsoRangeFromYmd(this.startDate()!, this.endDate()!);
+    this.dashboardService.getExecutiveDashboard(companyId, new Date(sd), new Date(ed)).subscribe({
       next: (res) => {
         if (res.success && res.data) this.data.set(res.data);
         this.loading.set(false);

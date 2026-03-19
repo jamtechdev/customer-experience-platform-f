@@ -4,6 +4,36 @@
     <p class="subtitle">Benchmark your performance against competitors</p>
   </div>
 
+  <mat-card class="filter-card">
+    <mat-card-content>
+      <div class="filters-row">
+        <mat-form-field appearance="outline">
+          <mat-label>Period</mat-label>
+          <mat-select [value]="selectedPresetId()" (selectionChange)="onPresetChange($event.value)">
+            @for (p of presets(); track p.id) {
+              <mat-option [value]="p.id">{{ p.label }}</mat-option>
+            }
+            <mat-option value="custom">Custom range</mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>From</mat-label>
+          <input matInput type="date" [ngModel]="startDate()" (ngModelChange)="startDate.set($event); onManualDate()" name="compStart" />
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>To</mat-label>
+          <input matInput type="date" [ngModel]="endDate()" (ngModelChange)="endDate.set($event); onManualDate()" name="compEnd" />
+        </mat-form-field>
+
+        <button mat-stroked-button color="primary" type="button" (click)="applyRangeAndReload()" [disabled]="loading()">
+          Apply
+        </button>
+      </div>
+    </mat-card-content>
+  </mat-card>
+
   <div *ngIf="loading()" class="loading-container">
     <mat-spinner></mat-spinner>
     <p>Loading comparison data...</p>

@@ -101,7 +101,7 @@
   },
   "csv": {
     "uploadTitle": "CSV yükleme",
-    "uploadSubtitle": "Müşteri geri bildirimi verilerini içeren CSV dosyalarını yükleyin.",
+    "uploadSubtitle": "Herhangi bir CSV çıktısı yükleyin. Ardından sütunları sistem alanlarına eşleyin (geri bildirim için içerik/tarih/kaynak; NPS için skor/tarih), tipleri doğrulayın ve içe aktarın.",
     "dragDrop": "CSV dosyanızı buraya sürükleyip bırakın",
     "or": "veya",
     "browseFiles": "Dosya seç",
@@ -109,7 +109,9 @@
     "requirementsTitle": "CSV format gereksinimleri",
     "reqFormat": "Dosya CSV formatında olmalıdır (.csv uzantısı)",
     "reqHeaders": "İlk satır sütun başlıklarını içermelidir",
-    "reqRequiredColumns": "Zorunlu sütunlar: {{cols}}",
+    "reqRequiredColumns": "Zorunlu sistem eşlemeleri: {{cols}}",
+    "forFeedback": "geri bildirim CSV'leri",
+    "forNps": "NPS CSV'leri",
     "reqOptionalColumns": "İsteğe bağlı sütunlar: {{cols}}",
     "reqMaxSize": "Azami dosya boyutu: {{mb}} MB",
     "downloadSample": "Örnek CSV indir",
@@ -365,6 +367,7 @@
     "downloaded": "Rapor indirildi",
     "exportFailed": "Dışa aktarma başarısız. Tarih aralığını kontrol edin.",
     "selectValidRange": "Sabit bir dönem seçin veya geçerli bir başlangıç ve bitiş tarihi belirleyin.",
+    "applyRange": "Aralığı uygula",
     "executiveSummarySubtitle": "Üst düzey CX performans özeti. Bir raporlama dönemi seçin ve PDF olarak dışa aktarın.",
     "executiveSummaryLoadFailed": "Yönetici özeti yüklenemedi",
     "sentimentIndex": "Duygu endeksi",
@@ -373,6 +376,14 @@
     "passives": "Kararsızlar",
     "detractors": "Eleştirenler",
     "competitorLine": "Duygu: {{sentiment}} | NPS: {{nps}} | Fark: {{gap}}"
+  },
+  "metrics": {
+    "nps": {
+      "methodTitle": "NPS nasıl hesaplanır",
+      "methodBody": "Her 0-10 skoru; Destekleyen (9-10), Kararsız (7-8) veya Eleştiren (0-6) olarak sınıflandırılır. NPS = (Destekleyen % − Eleştiren %), seçilen dönemde geçerli skoru olan yanıtlar üzerinden.",
+      "notesTitle": "Notlar",
+      "notesBody": "NPS, skorların ortalaması değildir. Örneklem büyüklüğüne duyarlıdır; yorumlarken yanıt sayısıyla birlikte değerlendirin. Farklı ölçekten aktarılan puanlar normalize edilebilir veya dışlanabilir — içe aktarma doğrulama mesajlarını kontrol edin."
+    }
   },
   "tasks": {
     "title": "Görevler & Alarmlar",

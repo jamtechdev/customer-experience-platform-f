@@ -45,6 +45,45 @@
               @if (row.status === 'pending' || row.status === 'processing') {
                 <span class="muted">Awaiting mapping / import or in progress.</span>
               } @else if (row.status === 'failed') {
+                @if (row.errorDetails) {
+                  <div class="error-structured">
+                    <div class="error-line">
+                      <strong>{{ row.errorDetails.totalIssues }}</strong> validation issue(s) detected.
+                    </div>
+                    @if (row.errorDetails.requiredMappings?.length) {
+                      <div class="error-line">
+                        <strong>Required mappings:</strong> {{ row.errorDetails.requiredMappings.join(', ') }}
+                      </div>
+                    }
+                    @if (row.errorDetails.guidance?.length) {
+                      <ul class="guidance">
+                        @for (g of row.errorDetails.guidance; track g) {
+                          <li>{{ g }}</li>
+                        }
+                      </ul>
+                    }
+                    @if (row.errorDetails.examples?.length) {
+                      <details class="error-details">
+                        <summary class="error-summary">Example issues ({{ row.errorDetails.examples.length }})</summary>
+                        <ul class="examples">
+                          @for (e of row.errorDetails.examples; track e.rowNumber + '-' + e.field + '-' + e.message) {
+                            <li>
+                              @if (e.rowNumber > 0) {
+                                <span class="muted">Row {{ e.rowNumber }}</span>
+                              } @else {
+                                <span class="muted">Mapping</span>
+                              }
+                              — <strong>{{ e.field }}</strong>: {{ e.message }}
+                              @if (e.value !== undefined && e.value !== null && e.value !== '') {
+                                <div class="val">Value: {{ e.value }}</div>
+                              }
+                            </li>
+                          }
+                        </ul>
+                      </details>
+                    }
+                  </div>
+                }
                 @if (row.errorMessage && row.errorMessage.length > 120) {
                   <details class="error-details">
                     <summary class="error-summary">Failed — tap to expand</summary>
@@ -52,7 +91,7 @@
                   </details>
                 } @else if (row.errorMessage) {
                   <span class="error-text">{{ row.errorMessage }}</span>
-                } @else {
+                } @else if (!row.errorDetails) {
                   <span class="muted">Failed (no message stored). Re-validate in CSV mapping before import.</span>
                 }
               } @else {

@@ -38,3 +38,12 @@ export function toIsoRangeFromYmd(startYmd: string, endYmd: string): { startDate
     endDate: new Date(`${endYmd}T23:59:59.999`).toISOString(),
   };
 }
+
+/** Inclusive day count between yyyy-mm-dd strings (UTC date parts). */
+export function inclusiveDaysBetweenYmd(startYmd: string, endYmd: string): number {
+  const s = new Date(`${startYmd}T00:00:00.000Z`).getTime();
+  const e = new Date(`${endYmd}T00:00:00.000Z`).getTime();
+  if (Number.isNaN(s) || Number.isNaN(e) || e < s) return 30;
+  const msPerDay = 24 * 60 * 60 * 1000;
+  return Math.floor((e - s) / msPerDay) + 1;
+}

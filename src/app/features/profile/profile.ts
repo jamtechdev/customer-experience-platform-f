@@ -9,6 +9,7 @@ import { MatInputModule } from '@angular/material/input';
 import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../core/services/auth.service';
 import { TranslationService, Language } from '../../core/services/translation.service';
+import { SettingsService } from '../../core/services/settings.service';
 import { LanguageSwitcher } from '../../core/components/language-switcher/language-switcher';
 
 @Component({
@@ -31,6 +32,7 @@ import { LanguageSwitcher } from '../../core/components/language-switcher/langua
 export class Profile {
   private authService = inject(AuthService);
   private translationService = inject(TranslationService);
+  private settingsService = inject(SettingsService);
 
   currentUser = signal(this.authService.currentUser());
   selectedLanguage = signal<Language>(this.translationService.getLanguage());
@@ -57,6 +59,7 @@ export class Profile {
   onLanguageChange(lang: Language): void {
     this.selectedLanguage.set(lang);
     this.translationService.setLanguage(lang);
+    this.settingsService.updateSettings({ language: lang }).subscribe({ error: () => {} });
   }
 
   getLanguageName(lang: Language): string {

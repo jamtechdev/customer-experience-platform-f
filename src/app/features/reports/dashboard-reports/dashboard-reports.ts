@@ -6,10 +6,18 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSelectModule } from '@angular/material/select';
 import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
 import { FormsModule } from '@angular/forms';
 import { DashboardService, DashboardStats, DashboardTrends } from '../../../core/services/dashboard.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { TranslationService } from '../../../core/services/translation.service';
+import { ReportService } from '../../../core/services/report.service';
+import {
+  buildClientReportDatePresets,
+  inclusiveDaysBetweenYmd,
+  toIsoRangeFromYmd,
+  type ReportDatePreset,
+} from '../../../core/utils/report-date-presets';
 
 @Component({
   selector: 'app-dashboard-reports',
@@ -21,6 +29,7 @@ import { TranslationService } from '../../../core/services/translation.service';
     MatProgressSpinnerModule,
     MatSelectModule,
     MatFormFieldModule,
+    MatInputModule,
     FormsModule,
   ],
   templateUrl: './dashboard-reports.html',
@@ -30,6 +39,7 @@ export class DashboardReports implements OnInit {
   private dashboardService = inject(DashboardService);
   private authService = inject(AuthService);
   private translationService = inject(TranslationService);
+  private reportService = inject(ReportService);
 
   loading = signal(true);
   loadingTrends = signal(true);
@@ -38,6 +48,11 @@ export class DashboardReports implements OnInit {
   period = signal<'day' | 'week' | 'month'>('week');
   days = signal(90);
   Math = Math;
+
+  presets = signal<ReportDatePreset[]>([]);
+  selectedPresetId = signal<string>('last_30_days');
+  startDate = signal<string | null>(null);
+  endDate = signal<string | null>(null);
 
   t = (key: string): string => this.translationService.translate(key);
 
@@ -65,6 +80,67 @@ export class DashboardReports implements OnInit {
   });
 
   ngOnInit(): void {
+    this.loadPresets();
+  }
+
+  private loadPresets(): void {
+    this.reportService.getDatePresets().subscribe({
+      next: (res) => {
+        const list =
+          res.success && res.data?.presets?.length ? (res.data.presets as ReportDatePreset[]) : buildClientReportDatePresets();
+        this.presets.set(list);
+        const def = list.find((p) => p.id === 'last_30_days') ?? list[0];
+        if (def) this.applyPreset(def);
+        this.reloadAll();
+      },
+      error: () => {
+        const list = buildClientReportDatePresets();
+        this.presets.set(list);
+        const def = list.find((p) => p.id === 'last_30_days') ?? list[0];
+        if (def) this.applyPreset(def);
+        this.reloadAll();
+      },
+    });
+  }
+
+  applyPreset(p: ReportDatePreset): void {
+    this.selectedPresetId.set(p.id);
+    this.startDate.set(p.startDate.slice(0, 10));
+    this.endDate.set(p.endDate.slice(0, 10));
+    const days = inclusiveDaysBetweenYmd(this.startDate()!, this.endDate()!);
+    this.days.set(Math.max(7, days));
+  }
+
+  onPresetChange(id: string): void {
+    if (id === 'custom') {
+      this.selectedPresetId.set('custom');
+      return;
+    }
+    const p = this.presets().find((x) => x.id === id);
+    if (p) {
+      this.applyPreset(p);
+      this.reloadAll();
+    }
+  }
+
+  onManualDate(): void {
+    this.selectedPresetId.set('custom');
+  }
+
+  datesValid(): boolean {
+    const s = this.startDate();
+    const e = this.endDate();
+    return !!(s && e && s <= e);
+  }
+
+  applyRangeAndReload(): void {
+    if (!this.datesValid()) return;
+    const days = inclusiveDaysBetweenYmd(this.startDate()!, this.endDate()!);
+    this.days.set(Math.max(7, days));
+    this.reloadAll();
+  }
+
+  private reloadAll(): void {
     this.loadCurrentStatus();
     this.loadTrends();
   }
@@ -77,8 +153,13 @@ export class DashboardReports implements OnInit {
     this.loading.set(true);
     const user = this.authService.currentUser();
     const companyId = user?.settings?.companyId ?? 1;
+    if (!this.datesValid()) {
+      this.loading.set(false);
+      return;
+    }
+    const { startDate: sd, endDate: ed } = toIsoRangeFromYmd(this.startDate()!, this.endDate()!);
 
-    this.dashboardService.getStats(companyId).subscribe({
+    this.dashboardService.getStats(companyId, new Date(sd), new Date(ed)).subscribe({
       next: (res) => {
         if (res.success && res.data) this.currentStats.set(res.data);
         this.loading.set(false);
@@ -94,8 +175,13 @@ export class DashboardReports implements OnInit {
     this.loadingTrends.set(true);
     const user = this.authService.currentUser();
     const companyId = user?.settings?.companyId ?? 1;
+    if (!this.datesValid()) {
+      this.loadingTrends.set(false);
+      return;
+    }
+    const days = inclusiveDaysBetweenYmd(this.startDate()!, this.endDate()!);
 
-    this.dashboardService.getDashboardTrends(companyId, this.period(), this.days()).subscribe({
+    this.dashboardService.getDashboardTrends(companyId, this.period(), Math.max(7, days)).subscribe({
       next: (res) => {
         if (res.success && res.data) this.trends.set(res.data);
         else this.trends.set(null);

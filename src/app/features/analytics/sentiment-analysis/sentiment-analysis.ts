@@ -14,6 +14,12 @@ import { FormsModule } from '@angular/forms';
 import { AnalysisService } from '../../../core/services/analysis.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { ReportService } from '../../../core/services/report.service';
+import {
+  buildClientReportDatePresets,
+  toIsoRangeFromYmd,
+  type ReportDatePreset,
+} from '../../../core/utils/report-date-presets';
 
 interface SentimentStats {
   positive: number;
@@ -47,40 +53,84 @@ export class SentimentAnalysis implements OnInit {
   private analysisService = inject(AnalysisService);
   private authService = inject(AuthService);
   private snackBar = inject(MatSnackBar);
+  private reportService = inject(ReportService);
 
   loading = signal(false);
   stats = signal<SentimentStats | null>(null);
   feedbackList = signal<Array<{ id: number; content: string; source: string; date: string; author?: string; sentiment: string; score: number }>>([]);
   feedbackTotal = signal(0);
 
-  /** Plain properties so ngModel two-way binding works (signals are not writable by ngModel). */
-  selectedPeriod: 'day' | 'week' | 'month' = 'month';
-  startDate: Date | null = null;
-  endDate: Date | null = null;
+  presets = signal<ReportDatePreset[]>([]);
+  selectedPresetId = signal<string>('last_30_days');
+  startDate = signal<string | null>(null);
+  endDate = signal<string | null>(null);
 
   displayedColumns: string[] = ['sentiment', 'count', 'percentage', 'bar'];
   listColumns: string[] = ['content', 'source', 'date', 'sentiment', 'score'];
 
   ngOnInit(): void {
-    this.applyDefaultDateRange();
-    this.loadSentimentStats();
-    this.loadFeedbackList();
+    this.loadPresets();
   }
 
-  private applyDefaultDateRange(): void {
-    if (this.startDate == null || this.endDate == null) {
-      const end = new Date();
-      const start = new Date();
-      if (this.selectedPeriod === 'day') {
-        start.setDate(start.getDate() - 1);
-      } else if (this.selectedPeriod === 'week') {
-        start.setDate(start.getDate() - 7);
-      } else {
-        start.setMonth(start.getMonth() - 1);
-      }
-      this.startDate = start;
-      this.endDate = end;
+  private loadPresets(): void {
+    this.reportService.getDatePresets().subscribe({
+      next: (res) => {
+        const list =
+          res.success && res.data?.presets?.length ? (res.data.presets as ReportDatePreset[]) : buildClientReportDatePresets();
+        this.presets.set(list);
+        const def = list.find((p) => p.id === 'last_30_days') ?? list[0];
+        if (def) this.applyPreset(def);
+        this.reloadAll();
+      },
+      error: () => {
+        const list = buildClientReportDatePresets();
+        this.presets.set(list);
+        const def = list.find((p) => p.id === 'last_30_days') ?? list[0];
+        if (def) this.applyPreset(def);
+        this.reloadAll();
+      },
+    });
+  }
+
+  applyPreset(p: ReportDatePreset): void {
+    this.selectedPresetId.set(p.id);
+    this.startDate.set(p.startDate.slice(0, 10));
+    this.endDate.set(p.endDate.slice(0, 10));
+  }
+
+  onPresetChange(id: string): void {
+    if (id === 'custom') {
+      this.selectedPresetId.set('custom');
+      return;
     }
+    const p = this.presets().find((x) => x.id === id);
+    if (p) {
+      this.applyPreset(p);
+      this.reloadAll();
+    }
+  }
+
+  onManualDate(): void {
+    this.selectedPresetId.set('custom');
+  }
+
+  datesValid(): boolean {
+    const s = this.startDate();
+    const e = this.endDate();
+    return !!(s && e && s <= e);
+  }
+
+  applyRangeAndReload(): void {
+    if (!this.datesValid()) {
+      this.snackBar.open('Select a valid date range', 'Close', { duration: 4000 });
+      return;
+    }
+    this.reloadAll();
+  }
+
+  private reloadAll(): void {
+    this.loadSentimentStats();
+    this.loadFeedbackList();
   }
 
   getCompanyId(): number | undefined {
@@ -89,12 +139,14 @@ export class SentimentAnalysis implements OnInit {
   }
 
   getDateRange(): { start: Date; end: Date } {
-    const defaultStart = new Date();
-    defaultStart.setFullYear(defaultStart.getFullYear() - 1);
-    return {
-      start: this.startDate ?? defaultStart,
-      end: this.endDate ?? new Date()
-    };
+    if (!this.datesValid()) {
+      const end = new Date();
+      const start = new Date();
+      start.setMonth(start.getMonth() - 1);
+      return { start, end };
+    }
+    const { startDate: sd, endDate: ed } = toIsoRangeFromYmd(this.startDate()!, this.endDate()!);
+    return { start: new Date(sd), end: new Date(ed) };
   }
 
   loadSentimentStats(): void {
@@ -164,29 +216,6 @@ export class SentimentAnalysis implements OnInit {
     const n = parseFloat(percentage);
     if (Number.isNaN(n) || n < 0) return '0%';
     return `${Math.min(100, n)}%`;
-  }
-
-  onPeriodChange(): void {
-    const end = new Date();
-    const start = new Date();
-    if (this.selectedPeriod === 'day') {
-      start.setDate(start.getDate() - 1);
-    } else if (this.selectedPeriod === 'week') {
-      start.setDate(start.getDate() - 7);
-    } else {
-      start.setMonth(start.getMonth() - 1);
-    }
-    this.startDate = start;
-    this.endDate = end;
-    this.loadSentimentStats();
-    this.loadFeedbackList();
-  }
-
-  onDateChange(): void {
-    if (this.startDate != null && this.endDate != null) {
-      this.loadSentimentStats();
-      this.loadFeedbackList();
-    }
   }
 
   formatDate(d: string): string {

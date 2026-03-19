@@ -202,13 +202,16 @@ export function apiUrlInterceptor(req: HttpRequest<unknown>, next: HttpHandlerFn
 
 export function languageInterceptor(req: HttpRequest<unknown>, next: HttpHandlerFn): Observable<HttpEvent<unknown>> {
   // Safely get language from localStorage (only in browser)
-  let language = 'tr';
+  let language = 'en';
   if (typeof window !== 'undefined' && window.localStorage) {
     try {
-      language = localStorage.getItem('language') || 'tr';
+      language =
+        localStorage.getItem('preferredLanguage') ||
+        localStorage.getItem('language') ||
+        'en';
     } catch (e) {
       // localStorage not available, use default
-      language = 'tr';
+      language = 'en';
     }
   }
   

@@ -13,7 +13,7 @@ export interface Translations {
 })
 export class TranslationService {
   private http = inject(HttpClient);
-  private currentLanguage = signal<Language>('tr');
+  private currentLanguage = signal<Language>('en');
   private translations: Record<Language, Translations> = {} as Record<Language, Translations>;
   private translationsLoaded = signal<boolean>(false);
   private loadingPromise: Promise<void> | null = null;
@@ -32,7 +32,9 @@ export class TranslationService {
 
     // Load saved language preference
     if (typeof window !== 'undefined') {
-      const savedLang = localStorage.getItem('preferredLanguage') as Language;
+      const savedPreferred = localStorage.getItem('preferredLanguage') as Language;
+      const savedLegacy = localStorage.getItem('language') as Language;
+      const savedLang = (savedPreferred || savedLegacy) as Language;
       if (savedLang && (savedLang === 'en' || savedLang === 'tr' || savedLang === 'ar')) {
         this.currentLanguage.set(savedLang);
       }
@@ -93,6 +95,7 @@ export class TranslationService {
     this.currentLanguage.set(lang);
     if (typeof window !== 'undefined') {
       localStorage.setItem('preferredLanguage', lang);
+      localStorage.setItem('language', lang);
     }
   }
 
@@ -117,7 +120,7 @@ export class TranslationService {
   /**
    * Translate a key with optional parameters
    * Supports nested keys (e.g., 'app.name', 'nav.dashboard')
-   * Fallback order: current language → Turkish → English → key itself
+   * Fallback order: current language → English → Turkish → key itself
    */
   translate(key: string, params?: Record<string, string>): string {
     const lang = this.currentLanguage();
@@ -126,14 +129,14 @@ export class TranslationService {
     // Try current language first
     let value = this.getNestedValue(this.translations[lang], keys);
     
-    // Fallback to Turkish if not found
-    if (value === undefined && lang !== 'tr') {
-      value = this.getNestedValue(this.translations['tr'], keys);
-    }
-    
-    // Fallback to English if still not found
+    // Fallback to English if not found
     if (value === undefined && lang !== 'en') {
       value = this.getNestedValue(this.translations['en'], keys);
+    }
+
+    // Fallback to Turkish if still not found
+    if (value === undefined && lang !== 'tr') {
+      value = this.getNestedValue(this.translations['tr'], keys);
     }
     
     // If still not found, return the key

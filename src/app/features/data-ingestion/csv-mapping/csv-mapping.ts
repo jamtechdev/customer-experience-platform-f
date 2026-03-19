@@ -47,7 +47,7 @@ export class CsvMapping implements OnInit {
   validating = signal(false);
   importing = signal(false);
 
-  dataType = signal<'social_media' | 'app_review' | 'nps_survey' | 'complaint' | 'unknown'>('unknown');
+  dataType = signal<'social_media' | 'app_review' | 'nps_survey' | 'complaint'>('social_media');
   validation = signal<ValidateMappingsResult | null>(null);
 
   // systemField -> csvHeader (or null)
@@ -57,12 +57,25 @@ export class CsvMapping implements OnInit {
 
   systemFieldsSorted = computed<SystemField[]>(() => {
     const fields = this.preview()?.systemFields ?? [];
-    const req = fields.filter((f) => f.required).sort((a, b) => a.name.localeCompare(b.name));
-    const opt = fields.filter((f) => !f.required).sort((a, b) => a.name.localeCompare(b.name));
+    const must = new Set(this.requiredSystemFields());
+    const req = fields
+      .filter((f) => f.required || must.has(f.name))
+      .sort((a, b) => a.name.localeCompare(b.name));
+    const opt = fields
+      .filter((f) => !f.required && !must.has(f.name))
+      .sort((a, b) => a.name.localeCompare(b.name));
     return [...req, ...opt];
   });
 
   headers = computed(() => this.preview()?.headers ?? []);
+
+  requiredSystemFields = computed(() =>
+    this.dataType() === 'nps_survey' ? ['score', 'date'] : ['content', 'date', 'source']
+  );
+
+  isRequiredField(name: string): boolean {
+    return this.requiredSystemFields().includes(name);
+  }
 
   ngOnInit(): void {
     const idRaw = this.route.snapshot.paramMap.get('importId');
@@ -177,8 +190,7 @@ export class CsvMapping implements OnInit {
 
     this.importing.set(true);
     const dt = this.dataType();
-    const dtArg = dt === 'unknown' ? undefined : dt;
-    this.csvService.processImport(importId, mappings, this.companyId(), dtArg).subscribe({
+    this.csvService.processImport(importId, mappings, this.companyId(), dt).subscribe({
       next: (res) => {
         this.importing.set(false);
         if (res.success && res.data?.success) {

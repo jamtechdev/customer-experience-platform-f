@@ -14,7 +14,8 @@ import { Router } from '@angular/router';
 type ProcessingStatus = 'idle' | 'uploading' | 'processing' | 'completed' | 'error';
 
 const DEFAULT_FORMAT: CSVFormat = {
-  requiredColumns: ['content', 'date', 'source'],
+  requiredSystemFieldsFeedback: ['content', 'date', 'source'],
+  requiredSystemFieldsNps: ['score', 'date'],
   optionalColumns: ['author', 'rating', 'company', 'competitor'],
   maxFileSizeBytes: environment.upload?.maxFileSize ?? 10485760,
   firstRowHeaders: true,
@@ -68,7 +69,10 @@ export class CsvUpload implements OnInit {
   }
 
   requiredColumnsText(): string {
-    return this.format().requiredColumns.join(', ');
+    const f = this.format();
+    const fb = f.requiredSystemFieldsFeedback ?? f.requiredColumns ?? ['content', 'date', 'source'];
+    const nps = f.requiredSystemFieldsNps ?? ['score', 'date'];
+    return `${fb.join(', ')} (${this.t('csv.forFeedback')}) / ${nps.join(', ')} (${this.t('csv.forNps')})`;
   }
 
   optionalColumnsText(): string {

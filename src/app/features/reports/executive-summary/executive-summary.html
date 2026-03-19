@@ -34,6 +34,14 @@
           />
         </mat-form-field>
         <button
+          mat-stroked-button
+          color="primary"
+          type="button"
+          (click)="applyRangeAndReload()"
+          [disabled]="loading() || !datesValid()">
+          {{ t('reports.applyRange') }}
+        </button>
+        <button
           mat-raised-button
           color="primary"
           (click)="exportPdf()"
@@ -90,6 +98,16 @@
               <span>{{ t('reports.detractors') }}</span>
               <span>{{ data()!.nps.detractors }}</span>
             </div>
+          </mat-card-content>
+        </mat-card>
+
+        <mat-card class="nps-method">
+          <mat-card-header>
+            <mat-card-title>{{ t('metrics.nps.methodTitle') }}</mat-card-title>
+          </mat-card-header>
+          <mat-card-content>
+            <p>{{ t('metrics.nps.methodBody') }}</p>
+            <p class="muted">{{ t('metrics.nps.notesBody') }}</p>
           </mat-card-content>
         </mat-card>
         @if (data()!.competitors.length > 0) {

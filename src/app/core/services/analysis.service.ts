@@ -71,8 +71,10 @@ export class AnalysisService {
   }
 
   // Competitor Analysis - matches backend /api/analysis/competitor
-  getCompetitorAnalysis(companyId: number): Observable<ApiResponse<any>> {
-    const params = new HttpParams().set('companyId', companyId.toString());
+  getCompetitorAnalysis(companyId: number, startDate?: Date, endDate?: Date): Observable<ApiResponse<any>> {
+    let params = new HttpParams().set('companyId', companyId.toString());
+    if (startDate) params = params.set('startDate', startDate.toISOString());
+    if (endDate) params = params.set('endDate', endDate.toISOString());
     return this.http.get<ApiResponse<any>>(`${this.baseUrl}/competitor`, { params });
   }
 
