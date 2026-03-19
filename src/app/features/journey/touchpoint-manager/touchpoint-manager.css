@@ -64,3 +64,11 @@
     padding: 16px;
   }
 }
+.table-container {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.imports-table {
+  min-width: 700px; 
+}

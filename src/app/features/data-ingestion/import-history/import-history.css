@@ -82,3 +82,12 @@
   max-height: 240px;
   overflow: auto;
 }
+
+.table-container {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.imports-table {
+  min-width: 700px; 
+}

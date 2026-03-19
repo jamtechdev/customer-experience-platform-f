@@ -56,6 +56,7 @@
     <div class="content-section">
       <mat-card>
         <mat-card-content>
+           <div class="table-container">
           <table mat-table [dataSource]="touchpoints()" class="touchpoint-table">
             <ng-container matColumnDef="order">
               <th mat-header-cell *matHeaderCellDef>Order</th>
@@ -86,7 +87,7 @@
             <tr class="mat-row" *matNoDataRow>
               <td class="mat-cell" [attr.colspan]="displayedColumns.length">No touchpoints. Add one to get started.</td>
             </tr>
-          </table>
+          </table></div>
         </mat-card-content>
       </mat-card>
     </div>

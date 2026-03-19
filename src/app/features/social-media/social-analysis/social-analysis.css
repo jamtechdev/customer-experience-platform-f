@@ -82,3 +82,11 @@
     grid-template-columns: 1fr;
   }
 }
+.table-container {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.platform-table {
+  min-width: 700px; 
+}

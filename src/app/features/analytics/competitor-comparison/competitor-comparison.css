@@ -105,6 +105,15 @@
   margin: 0;
 }
 
+.table-container {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.imports-table {
+  min-width: 700px; 
+}
+
 @media (max-width: 768px) {
   .competitor-container {
     padding: 16px;

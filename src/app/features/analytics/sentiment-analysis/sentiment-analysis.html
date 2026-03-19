@@ -98,6 +98,7 @@
         <mat-card-title>Sentiment Distribution</mat-card-title>
       </mat-card-header>
       <mat-card-content>
+        <div class="table-responsive">
         <table mat-table [dataSource]="getSentimentData()" class="sentiment-table">
           <ng-container matColumnDef="sentiment">
             <th mat-header-cell *matHeaderCellDef>Sentiment</th>
@@ -132,6 +133,7 @@
           <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
           <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
         </table>
+        </div>
       </mat-card-content>
     </mat-card>
 
@@ -142,34 +144,55 @@
       </mat-card-header>
       <mat-card-content>
         <p *ngIf="feedbackList().length === 0" class="empty-hint">No feedback in this period. Upload a CSV to see data here.</p>
-        <table *ngIf="feedbackList().length > 0" mat-table [dataSource]="feedbackList()" class="feedback-table">
-          <ng-container matColumnDef="content">
-            <th mat-header-cell *matHeaderCellDef>Content</th>
-            <td mat-cell *matCellDef="let row" class="content-cell">{{ row.content }}</td>
-          </ng-container>
-          <ng-container matColumnDef="source">
-            <th mat-header-cell *matHeaderCellDef>Source</th>
-            <td mat-cell *matCellDef="let row">{{ row.source }}</td>
-          </ng-container>
-          <ng-container matColumnDef="date">
-            <th mat-header-cell *matHeaderCellDef>Date</th>
-            <td mat-cell *matCellDef="let row">{{ formatDate(row.date) }}</td>
-          </ng-container>
-          <ng-container matColumnDef="sentiment">
-            <th mat-header-cell *matHeaderCellDef>Sentiment</th>
-            <td mat-cell *matCellDef="let row">
+
+        <!-- Desktop table -->
+        <div *ngIf="feedbackList().length > 0" class="table-responsive hide-on-mobile">
+          <table mat-table [dataSource]="feedbackList()" class="feedback-table">
+            <ng-container matColumnDef="content">
+              <th mat-header-cell *matHeaderCellDef>Content</th>
+              <td mat-cell *matCellDef="let row" class="content-cell">{{ row.content }}</td>
+            </ng-container>
+            <ng-container matColumnDef="source">
+              <th mat-header-cell *matHeaderCellDef>Source</th>
+              <td mat-cell *matCellDef="let row">{{ row.source }}</td>
+            </ng-container>
+            <ng-container matColumnDef="date">
+              <th mat-header-cell *matHeaderCellDef>Date</th>
+              <td mat-cell *matCellDef="let row">{{ formatDate(row.date) }}</td>
+            </ng-container>
+            <ng-container matColumnDef="sentiment">
+              <th mat-header-cell *matHeaderCellDef>Sentiment</th>
+              <td mat-cell *matCellDef="let row">
+                <mat-chip-set>
+                  <mat-chip [class]="'sentiment-chip ' + row.sentiment?.toLowerCase()">{{ row.sentiment || '—' }}</mat-chip>
+                </mat-chip-set>
+              </td>
+            </ng-container>
+            <ng-container matColumnDef="score">
+              <th mat-header-cell *matHeaderCellDef>Score</th>
+              <td mat-cell *matCellDef="let row">{{ (row.score ?? 0).toFixed(2) }}</td>
+            </ng-container>
+            <tr mat-header-row *matHeaderRowDef="listColumns"></tr>
+            <tr mat-row *matRowDef="let row; columns: listColumns;"></tr>
+          </table>
+        </div>
+
+        <!-- Mobile cards -->
+        <div *ngIf="feedbackList().length > 0" class="feedback-cards show-on-mobile">
+          <div *ngFor="let row of feedbackList()" class="feedback-card">
+            <div class="feedback-card-row">
               <mat-chip-set>
                 <mat-chip [class]="'sentiment-chip ' + row.sentiment?.toLowerCase()">{{ row.sentiment || '—' }}</mat-chip>
               </mat-chip-set>
-            </td>
-          </ng-container>
-          <ng-container matColumnDef="score">
-            <th mat-header-cell *matHeaderCellDef>Score</th>
-            <td mat-cell *matCellDef="let row">{{ (row.score ?? 0).toFixed(2) }}</td>
-          </ng-container>
-          <tr mat-header-row *matHeaderRowDef="listColumns"></tr>
-          <tr mat-row *matRowDef="let row; columns: listColumns;"></tr>
-        </table>
+              <span class="feedback-score">Score: {{ (row.score ?? 0).toFixed(2) }}</span>
+            </div>
+            <p class="feedback-content">{{ row.content }}</p>
+            <div class="feedback-meta">
+              <span>{{ row.source }}</span>
+              <span>{{ formatDate(row.date) }}</span>
+            </div>
+          </div>
+        </div>
       </mat-card-content>
     </mat-card>
   </div>

@@ -27,6 +27,7 @@
         <mat-card-title>Sentiment & NPS Comparison</mat-card-title>
       </mat-card-header>
       <mat-card-content>
+        <div class="table-container">
         <table mat-table [dataSource]="getAllData()" class="comparison-table">
           <ng-container matColumnDef="name">
             <th mat-header-cell *matHeaderCellDef>Company</th>
@@ -63,6 +64,7 @@
           <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
           <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
         </table>
+        </div>
         <div class="add-competitor-section">
           <h3>Add competitor</h3>
           <p class="hint">Add a competitor by name. Metrics will appear once you upload feedback data tagged with this competitor.</p>

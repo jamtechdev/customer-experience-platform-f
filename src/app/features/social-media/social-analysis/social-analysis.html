@@ -48,6 +48,7 @@
         <mat-card-title>Platform Breakdown</mat-card-title>
       </mat-card-header>
       <mat-card-content>
+         <div class="table-container">
         <table mat-table [dataSource]="platformData()" class="platform-table">
           <ng-container matColumnDef="platform">
             <th mat-header-cell *matHeaderCellDef>Platform</th>
@@ -86,7 +87,7 @@
           <tr class="mat-row" *matNoDataRow>
             <td class="mat-cell" [attr.colspan]="displayedColumns.length">No platform data. Upload CSV feedback with source/platform column to see volume and sentiment by channel.</td>
           </tr>
-        </table>
+        </table></div>
       </mat-card-content>
     </mat-card>
   </div>

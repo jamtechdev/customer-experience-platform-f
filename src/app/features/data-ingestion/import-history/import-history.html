@@ -1,7 +1,9 @@
 <div class="import-history-container">
   <div class="header-section">
-    <h1>Import History</h1>
-    <p class="subtitle">View past CSV uploads and their status</p>
+    <div>
+      <h1>Import History</h1>
+      <p class="subtitle">View past CSV uploads and their status</p>
+    </div>
     <button mat-raised-button color="primary" (click)="loadImports()" [disabled]="loading()">
       <mat-icon>refresh</mat-icon>
       Refresh
@@ -21,6 +23,7 @@
           <p>No CSV imports yet. Upload a file from CSV Upload.</p>
         </div>
       } @else {
+        <div class="table-container">
         <table mat-table [dataSource]="imports()" class="imports-table">
           <ng-container matColumnDef="filename">
             <th mat-header-cell *matHeaderCellDef>Filename</th>
@@ -64,6 +67,7 @@
           <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
           <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
         </table>
+        </div>
       }
     </mat-card-content>
   </mat-card>

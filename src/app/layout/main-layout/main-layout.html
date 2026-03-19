@@ -5,7 +5,7 @@
     [opened]="sidenavOpened()"
     class="sidenav"
     [fixedInViewport]="isMobile()"
-    [fixedTopGap]="64">
+    [fixedTopGap]="isMobile() ? 0 : 64">
     <app-sidebar (navigate)="closeSidenav()"></app-sidebar>
   </mat-sidenav>
 

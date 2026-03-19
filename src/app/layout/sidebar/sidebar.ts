@@ -1,4 +1,4 @@
-import { Component, inject, output, signal, OnInit, OnDestroy, effect } from '@angular/core';
+import { Component, inject, output, signal, OnInit, OnDestroy, effect, DestroyRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterLink, RouterLinkActive, NavigationEnd } from '@angular/router';
 import { filter } from 'rxjs/operators';
@@ -49,6 +49,7 @@ export class Sidebar implements OnInit, OnDestroy {
   /** Cached menu – only recomputed on route change to avoid OOM from getter on every CD. */
   readonly flatMenuItems = signal<SidebarFlatItem[]>([]);
   private routerSub?: Subscription;
+  private destroyRef = inject(DestroyRef);
 
   /** App menu (CX) – shown only when URL is under /app */
   private appMenuItems: SidebarMenuItem[] = [
@@ -140,13 +141,16 @@ export class Sidebar implements OnInit, OnDestroy {
     this.flatMenuItems.set(this.flatten(this.appMenuItems));
   }
 
-  ngOnInit(): void {
-    this.updateMenu();
+  constructor() {
     effect(() => {
       // Recompute labels when language changes.
       this.translationService.currentLang();
       this.updateMenu();
     });
+  }
+
+  ngOnInit(): void {
+    this.updateMenu();
     this.routerSub = this.router.events
       .pipe(filter((e): e is NavigationEnd => e instanceof NavigationEnd))
       .subscribe(() => this.updateMenu());
