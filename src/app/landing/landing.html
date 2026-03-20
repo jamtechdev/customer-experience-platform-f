@@ -30,10 +30,6 @@
       <h1 class="hero-title">{{ t('landing.landingTitle') }}</h1>
       <p class="hero-subtitle">{{ t('landing.landingSubtitle') }}</p>
       <p class="hero-description">{{ t('landing.landingDescription') }}</p>
-      <div class="hero-actions" *ngIf="!isLoggedIn">
-        <a routerLink="/signup" class="btn-primary">{{ t('landing.getStarted') }}</a>
-        <a routerLink="/login" class="btn-secondary">{{ t('landing.login') }}</a>
-      </div>
       <img src="https://media.whatagraph.com/Create_a_social_media_dashboard_in_minutes_747fdbe763_92a8998190.webp" />
     </div>
   </section>
@@ -63,10 +59,6 @@
     <div class="container">
       <h2 class="cta-title">{{ t('landing.getStarted') }}</h2>
       <p class="cta-subtitle">{{ t('landing.landingDescription') }}</p>
-      <div class="cta-actions" *ngIf="!isLoggedIn">
-        <a routerLink="/signup" class="btn-nav-outline">{{ t('landing.signupButton') }}</a>
-        <a routerLink="/login" class="btn-secondary">{{ t('landing.loginButton') }}</a>
-      </div>
     </div>
   </section>
   
