@@ -10,6 +10,7 @@ import { Subscription } from 'rxjs';
 import { Sidebar } from '../sidebar/sidebar';
 import { Header } from '../header/header';
 import { Footer } from '../footer/footer';
+import { CXWebSocketService } from '../../core/services/cx-websocket.service';
 
 @Component({
   selector: 'app-main-layout',
@@ -30,11 +31,14 @@ import { Footer } from '../footer/footer';
 export class MainLayout implements OnDestroy {
   private breakpointObserver = inject(BreakpointObserver);
   private breakpointSub?: Subscription;
+  private websocket = inject(CXWebSocketService);
 
   sidenavOpened = signal(true);
   isMobile = signal(false);
 
   constructor() {
+    // Always-on websocket connection for live status updates across the app.
+    this.websocket.start();
     this.breakpointSub = this.breakpointObserver.observe([
       Breakpoints.Handset,
       Breakpoints.Tablet
