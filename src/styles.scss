@@ -811,3 +811,9 @@ button:disabled,
     border: 1px solid #ccc;
   }
 }
+
+/* Global HTTP error toasts (opened from HttpInterceptor; lives in CDK overlay) */
+.http-error-snackbar.mat-mdc-snack-bar-container {
+  --mat-snackbar-container-color: #3d1f1f;
+  --mat-snackbar-supporting-text-color: #fff;
+}

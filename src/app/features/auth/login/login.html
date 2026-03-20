@@ -19,7 +19,12 @@
     </div>
 
     <!-- Login Form -->
-    <form (ngSubmit)="onLogin()" class="login-form">
+    <form
+      (ngSubmit)="onLogin()"
+      (submit)="$event.preventDefault()"
+      method="post"
+      class="login-form"
+    >
       @if (errorMessage()) {
         <div class="alert alert-error">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">

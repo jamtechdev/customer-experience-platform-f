@@ -40,6 +40,7 @@
             matInput
             type="date"
             [value]="startDate()"
+            [disabled]="selectedPresetId() !== 'custom'"
             (input)="startDate.set(($any($event.target).value) || null); onManualDate()"
           />
         </mat-form-field>
@@ -49,6 +50,7 @@
             matInput
             type="date"
             [value]="endDate()"
+            [disabled]="selectedPresetId() !== 'custom'"
             (input)="endDate.set(($any($event.target).value) || null); onManualDate()"
           />
         </mat-form-field>

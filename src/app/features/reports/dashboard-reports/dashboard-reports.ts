@@ -53,6 +53,7 @@ export class DashboardReports implements OnInit {
   selectedPresetId = signal<string>('last_30_days');
   startDate = signal<string | null>(null);
   endDate = signal<string | null>(null);
+  private manualReloadTimer: ReturnType<typeof setTimeout> | null = null;
 
   t = (key: string): string => this.translationService.translate(key);
 
@@ -104,6 +105,10 @@ export class DashboardReports implements OnInit {
   }
 
   applyPreset(p: ReportDatePreset): void {
+    if (this.manualReloadTimer) {
+      clearTimeout(this.manualReloadTimer);
+      this.manualReloadTimer = null;
+    }
     this.selectedPresetId.set(p.id);
     this.startDate.set(p.startDate.slice(0, 10));
     this.endDate.set(p.endDate.slice(0, 10));
@@ -125,6 +130,11 @@ export class DashboardReports implements OnInit {
 
   onManualDate(): void {
     this.selectedPresetId.set('custom');
+    if (!this.datesValid()) return;
+
+    if (this.manualReloadTimer) clearTimeout(this.manualReloadTimer);
+    // Debounce for smoother UX while editing.
+    this.manualReloadTimer = setTimeout(() => this.reloadAll(), 400);
   }
 
   datesValid(): boolean {

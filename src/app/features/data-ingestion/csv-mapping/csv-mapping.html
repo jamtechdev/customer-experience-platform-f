@@ -26,12 +26,29 @@
               <mat-option value="complaint">Complaint</mat-option>
             </mat-select>
           </mat-form-field>
+
+          <mat-form-field appearance="outline" class="type-field">
+            <mat-label>Date format</mat-label>
+            <mat-select [value]="dateFormat()" (selectionChange)="dateFormat.set($event.value)">
+              <mat-option value="auto">Auto (recommended)</mat-option>
+              <mat-option value="excel_serial">Excel serial number</mat-option>
+              <mat-option value="iso">ISO 8601</mat-option>
+              <mat-option value="dmy_dot">DD.MM.YYYY</mat-option>
+              <mat-option value="dmy_slash">DD/MM/YYYY</mat-option>
+              <mat-option value="dmy_dash">DD-MM-YYYY</mat-option>
+            </mat-select>
+          </mat-form-field>
         </div>
 
         <p class="hint">
           <strong>Required mappings for this type:</strong>
           {{ requiredSystemFields().join(', ') }}.
           Your CSV headers can be named anything — map each required system field to the matching column.
+        </p>
+
+        <p class="hint date-format-hint">
+          <strong>Date parsing:</strong> Selected format is used to validate and import your `date` column.
+          If you get “Invalid date” errors, change this and validate again.
         </p>
 
         <div class="mapping-grid">
@@ -57,7 +74,7 @@
                     (selectionChange)="onSelectField(f.name, $event.value)">
                     <mat-option [value]="null">— not mapped —</mat-option>
                     @for (h of headers(); track h) {
-                      <mat-option [value]="h">{{ h }}</mat-option>
+                      <mat-option [value]="h" [disabled]="isCsvHeaderTakenByOtherField(h, f.name)">{{ h }}</mat-option>
                     }
                   </mat-select>
                 </mat-form-field>
@@ -104,6 +121,9 @@
                       — <strong>{{ e.field }}</strong>
                     </div>
                     <div class="msg">{{ e.message }}</div>
+                    @if (e.rowNumber > 0 && e.field && fieldSelections()[e.field]) {
+                      <div class="val">Mapped from: {{ fieldSelections()[e.field] }}</div>
+                    }
                     @if (e.value !== undefined && e.value !== null && e.value !== '') {
                       <div class="val">Value: {{ e.value }}</div>
                     }
@@ -111,6 +131,42 @@
                 }
               </div>
             }
+          </div>
+        }
+
+        @if (importError()) {
+          <div class="validation">
+            <div class="bad">
+              <mat-icon>error</mat-icon>
+              Import failed{{ importError()!.totalIssues != null ? ' (' + importError()!.totalIssues + ' issue(s))' : '' }}.
+            </div>
+            @if (importError()!.guidance?.length) {
+              <div class="error-list" style="margin-top: 12px;">
+                @for (g of importError()!.guidance!.slice(0, 5); track g) {
+                  <div class="error-item" style="background: rgba(211, 47, 47, 0.025);">
+                    <div class="msg">{{ g }}</div>
+                  </div>
+                }
+              </div>
+            }
+            <div class="error-list">
+              @for (e of importError()!.errors.slice(0, 50); track e.rowNumber + '-' + e.field + '-' + e.message) {
+                <div class="error-item">
+                  <div class="where">
+                    @if (e.rowNumber > 0) {
+                      Row {{ e.rowNumber }}
+                    } @else {
+                      Mapping
+                    }
+                    — <strong>{{ e.field }}</strong>
+                  </div>
+                  <div class="msg">{{ e.message }}</div>
+                  @if (e.value !== undefined && e.value !== null && e.value !== '') {
+                    <div class="val">Value: {{ e.value }}</div>
+                  }
+                </div>
+              }
+            </div>
           </div>
         }
 

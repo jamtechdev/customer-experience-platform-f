@@ -57,3 +57,7 @@ Thumbs.db
 .env.production.local
 .env.test.local
 *.env
+
+# Frontend runtime environment config (local-only).
+# `environment.ts` may be generated/modified locally; keep it out of commits.
+src/environments/environment.ts

@@ -123,6 +123,8 @@ export class TranslationService {
    * Fallback order: current language → English → Turkish → key itself
    */
   translate(key: string, params?: Record<string, string>): string {
+    // Read so templates re-run after async JSON load (SSR/hydration + first paint).
+    this.translationsLoaded();
     const lang = this.currentLanguage();
     const keys = key.split('.');
     

@@ -19,7 +19,12 @@
     </div>
 
     <!-- Signup Form -->
-    <form (ngSubmit)="onSignup()" class="signup-form">
+    <form
+      (ngSubmit)="onSignup()"
+      (submit)="$event.preventDefault()"
+      method="post"
+      class="signup-form"
+    >
       @if (errorMessage()) {
         <div class="alert alert-error">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">

@@ -65,6 +65,8 @@ export interface ValidateMappingsResult {
   errors: RowValidationError[];
 }
 
+export type DateFormatHint = 'auto' | 'excel_serial' | 'iso' | 'dmy_dot' | 'dmy_slash' | 'dmy_dash';
+
 export interface CSVImportResult {
   success: boolean;
   importedCount: number;
@@ -125,6 +127,7 @@ export class CSVService {
       mappings: Record<string, string>;
       dataType?: 'social_media' | 'app_review' | 'nps_survey' | 'complaint' | 'unknown';
       sampleLimit?: number;
+      dateFormat?: DateFormatHint;
     }
   ): Observable<ApiResponse<ValidateMappingsResult>> {
     return this.http.post<ApiResponse<ValidateMappingsResult>>(`${this.baseUrl}/${importId}/validate`, payload);
@@ -134,11 +137,12 @@ export class CSVService {
     importId: number,
     mappings: Record<string, string>,
     companyId: number,
-    dataType?: 'social_media' | 'app_review' | 'nps_survey' | 'complaint'
+    dataType?: 'social_media' | 'app_review' | 'nps_survey' | 'complaint',
+    dateFormat?: DateFormatHint
   ): Observable<ApiResponse<CSVImportResult>> {
     return this.http.post<ApiResponse<CSVImportResult>>(
       `${this.baseUrl}/${importId}/process`,
-      { mappings, companyId, dataType }
+      { mappings, companyId, dataType, dateFormat }
     );
   }
 

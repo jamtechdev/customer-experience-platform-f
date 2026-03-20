@@ -19,12 +19,24 @@
 
         <mat-form-field appearance="outline">
           <mat-label>{{ t('reports.fromDate') }}</mat-label>
-          <input matInput type="date" [ngModel]="startDate()" (ngModelChange)="startDate.set($event); onManualDate()" />
+          <input
+            matInput
+            type="date"
+            [ngModel]="startDate()"
+            [disabled]="selectedPresetId() !== 'custom'"
+            (ngModelChange)="startDate.set($event); onManualDate()"
+          />
         </mat-form-field>
 
         <mat-form-field appearance="outline">
           <mat-label>{{ t('reports.toDate') }}</mat-label>
-          <input matInput type="date" [ngModel]="endDate()" (ngModelChange)="endDate.set($event); onManualDate()" />
+          <input
+            matInput
+            type="date"
+            [ngModel]="endDate()"
+            [disabled]="selectedPresetId() !== 'custom'"
+            (ngModelChange)="endDate.set($event); onManualDate()"
+          />
         </mat-form-field>
 
         <button mat-stroked-button color="primary" type="button" (click)="applyRangeAndReload()" [disabled]="loading() && loadingTrends()">

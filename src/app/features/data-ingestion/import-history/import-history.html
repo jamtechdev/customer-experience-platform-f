@@ -84,7 +84,7 @@
                     }
                   </div>
                 }
-                @if (row.errorMessage && row.errorMessage.length > 120) {
+                @if (!row.errorDetails?.examples?.length && row.errorMessage && row.errorMessage.length > 120) {
                   <details class="error-details">
                     <summary class="error-summary">Failed — tap to expand</summary>
                     <pre class="error-full">{{ row.errorMessage }}</pre>
