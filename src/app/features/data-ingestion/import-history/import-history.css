@@ -92,6 +92,17 @@
   min-width: 700px; 
 }
 
+.actions-col {
+  width: 56px;
+  text-align: center;
+  padding-left: 0 !important;
+  padding-right: 8px !important;
+}
+
+.actions-col .mat-mdc-icon-button {
+  margin: 0 auto;
+}
+
 .import-omissions .ok-line {
   color: #1b5e20;
   display: flex;

@@ -180,4 +180,8 @@ export class CSVService {
   getImportStatus(importId: number): Observable<ApiResponse<CSVImport>> {
     return this.http.get<ApiResponse<CSVImport>>(`${this.baseUrl}/imports/${importId}`);
   }
+
+  deleteImport(importId: number): Observable<ApiResponse<{ deletedId: number }>> {
+    return this.http.delete<ApiResponse<{ deletedId: number }>>(`${this.baseUrl}/imports/${importId}`);
+  }
 }

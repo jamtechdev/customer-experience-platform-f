@@ -6,6 +6,8 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
+import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { CSVService, CSVImport } from '../../../core/services/csv.service';
 import { Subscription } from 'rxjs';
 import { CXWebSocketService, type CSVImportStatusEvent } from '../../../core/services/cx-websocket.service';
@@ -21,6 +23,8 @@ import { CXWebSocketService, type CSVImportStatusEvent } from '../../../core/ser
     MatChipsModule,
     MatIconModule,
     MatButtonModule,
+    MatSnackBarModule,
+    MatTooltipModule,
   ],
   templateUrl: './import-history.html',
   styleUrl: './import-history.css',
@@ -28,12 +32,14 @@ import { CXWebSocketService, type CSVImportStatusEvent } from '../../../core/ser
 export class ImportHistory implements OnInit {
   private csvService = inject(CSVService);
   private websocket = inject(CXWebSocketService);
+  private snackBar = inject(MatSnackBar);
   private importStatusSub?: Subscription;
   private refreshTimer: any = null;
 
   loading = signal(false);
   imports = signal<CSVImport[]>([]);
-  displayedColumns: string[] = ['filename', 'rowCount', 'status', 'errorMessage', 'createdAt'];
+  displayedColumns: string[] = ['filename', 'rowCount', 'status', 'errorMessage', 'createdAt', 'actions'];
+  deletingId = signal<number | null>(null);
 
   ngOnInit(): void {
     this.loadImports();
@@ -115,5 +121,35 @@ export class ImportHistory implements OnInit {
     if (status === 'completed') return 'primary';
     if (status === 'failed') return 'warn';
     return undefined;
+  }
+
+  confirmDelete(row: CSVImport): void {
+    const name = row.originalFilename || row.filename || `Import #${row.id}`;
+    const msg =
+      `Remove "${name}" from import history?\n\n` +
+      `The uploaded file will be deleted from the server. ` +
+      `Customer feedback rows already saved from this import will not be removed.`;
+    if (!confirm(msg)) return;
+
+    this.deletingId.set(row.id);
+    this.csvService.deleteImport(row.id).subscribe({
+      next: (res) => {
+        this.deletingId.set(null);
+        if (res.success) {
+          this.imports.update((list) => list.filter((r) => r.id !== row.id));
+          this.snackBar.open('Import removed from history.', 'Close', { duration: 5000 });
+          this.syncRefreshTimer();
+        } else {
+          this.snackBar.open(res.message || 'Could not delete import.', 'Close', { duration: 6000 });
+        }
+      },
+      error: (err) => {
+        this.deletingId.set(null);
+        const api = err && typeof err === 'object' && 'error' in err ? (err as any).error : null;
+        const m =
+          (api && typeof api.message === 'string' && api.message) || 'Could not delete import.';
+        this.snackBar.open(m, 'Close', { duration: 7000 });
+      },
+    });
   }
 }
