@@ -64,13 +64,17 @@ export class ReportBuilder implements OnInit {
         const list =
           res.success && res.data?.presets?.length ? (res.data.presets as ReportDatePreset[]) : buildClientReportDatePresets();
         this.presets.set(list);
-        const def = list.find((p) => p.id === 'last_30_days') ?? list[0];
+        const role = this.authService.currentUser()?.role;
+        const defId = role === 'admin' ? 'all_time' : 'last_30_days';
+        const def = list.find((p) => p.id === defId) ?? list[0];
         if (def) this.applyPreset(def);
       },
       error: () => {
         const list = buildClientReportDatePresets();
         this.presets.set(list);
-        const def = list.find((p) => p.id === 'last_30_days') ?? list[0];
+        const role = this.authService.currentUser()?.role;
+        const defId = role === 'admin' ? 'all_time' : 'last_30_days';
+        const def = list.find((p) => p.id === defId) ?? list[0];
         if (def) this.applyPreset(def);
       },
     });

@@ -90,14 +90,18 @@ export class DashboardReports implements OnInit {
         const list =
           res.success && res.data?.presets?.length ? (res.data.presets as ReportDatePreset[]) : buildClientReportDatePresets();
         this.presets.set(list);
-        const def = list.find((p) => p.id === 'last_30_days') ?? list[0];
+        const role = this.authService.currentUser()?.role;
+        const defId = role === 'admin' ? 'all_time' : 'last_30_days';
+        const def = list.find((p) => p.id === defId) ?? list[0];
         if (def) this.applyPreset(def);
         this.reloadAll();
       },
       error: () => {
         const list = buildClientReportDatePresets();
         this.presets.set(list);
-        const def = list.find((p) => p.id === 'last_30_days') ?? list[0];
+        const role = this.authService.currentUser()?.role;
+        const defId = role === 'admin' ? 'all_time' : 'last_30_days';
+        const def = list.find((p) => p.id === defId) ?? list[0];
         if (def) this.applyPreset(def);
         this.reloadAll();
       },
@@ -162,7 +166,7 @@ export class DashboardReports implements OnInit {
   loadCurrentStatus(): void {
     this.loading.set(true);
     const user = this.authService.currentUser();
-    const companyId = user?.settings?.companyId ?? 1;
+    const companyId = user?.role === 'admin' ? undefined : (user?.settings?.companyId ?? 1);
     if (!this.datesValid()) {
       this.loading.set(false);
       return;
@@ -184,7 +188,7 @@ export class DashboardReports implements OnInit {
   loadTrends(): void {
     this.loadingTrends.set(true);
     const user = this.authService.currentUser();
-    const companyId = user?.settings?.companyId ?? 1;
+    const companyId = user?.role === 'admin' ? undefined : (user?.settings?.companyId ?? 1);
     if (!this.datesValid()) {
       this.loadingTrends.set(false);
       return;

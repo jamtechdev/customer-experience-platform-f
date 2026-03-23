@@ -24,6 +24,26 @@
 
 .icon-button {
   margin-right: 8px;
+  position: relative;
+}
+
+.alert-dot {
+  position: absolute;
+  top: 0px;
+  right: 0px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #22c55e; /* green */
+  border: 2px solid rgba(0, 0, 0, 0.15);
+}
+
+.alert-dot.red {
+  background: #ef4444; /* red */
+}
+
+.alert-dot.green {
+  background: #22c55e; /* green */
 }
 
 .user-and-role {

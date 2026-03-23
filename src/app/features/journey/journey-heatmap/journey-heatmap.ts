@@ -35,7 +35,8 @@ export class JourneyHeatmap implements OnInit {
   }
 
   loadHeatmap(): void {
-    const companyId = this.authService.currentUser()?.settings?.companyId || 1;
+    const user = this.authService.currentUser();
+    const companyId = user?.role === 'admin' ? undefined : (user?.settings?.companyId ?? 1);
     this.loading.set(true);
     this.error.set(null);
     this.journeyService.analyzeJourney(companyId).subscribe({

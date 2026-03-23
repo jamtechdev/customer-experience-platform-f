@@ -126,7 +126,10 @@ export class MainDashboard implements OnInit {
     this.loading.set(true);
     
     const user = this.authService.currentUser();
-    const companyId = user?.settings?.companyId || 1;
+    // Admin should see aggregated dashboard across all companies.
+    const companyId = user?.role === 'admin'
+      ? undefined
+      : (user?.settings?.companyId || 1);
     const start = this.dateRangeStart();
     const end = this.dateRangeEnd();
 
@@ -137,9 +140,10 @@ export class MainDashboard implements OnInit {
           const data = response.data;
           this.dashboardData.set(data);
           
-          // Calculate sentiment percentage
+          // Convert average sentiment score (-1..1) to a 0..100 percentage index.
+          // Neutral sentiment (avg=0) becomes 50%.
           const sentimentPercentage = data.sentiment.total > 0
-            ? Math.round((data.sentiment.positive / data.sentiment.total) * 100)
+            ? Math.round(((data.sentiment.averageScore + 1) / 2) * 100)
             : 0;
 
           // Build KPI cards

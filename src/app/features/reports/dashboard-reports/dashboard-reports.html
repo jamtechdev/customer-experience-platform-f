@@ -68,6 +68,9 @@
           <div class="status-label">NPS Score</div>
           <div class="status-value">{{ Math.round(currentStats()!.nps.score) }}</div>
           <p class="muted small">{{ t('metrics.nps.methodBody') }}</p>
+          <p class="muted small">
+            Promoters: {{ currentStats()!.nps.promoters }} · Passives: {{ currentStats()!.nps.passives }} · Detractors: {{ currentStats()!.nps.detractors }}
+          </p>
         </mat-card-content>
       </mat-card>
       <mat-card class="status-card">
@@ -75,6 +78,22 @@
           <div class="status-label">Positive Sentiment</div>
           <div class="status-value">
             {{ currentStats()!.sentiment.total > 0 ? (currentStats()!.sentiment.positive / currentStats()!.sentiment.total * 100 | number:'1.1-1') : 0 }}%
+          </div>
+        </mat-card-content>
+      </mat-card>
+      <mat-card class="status-card">
+        <mat-card-content>
+          <div class="status-label">Neutral Sentiment</div>
+          <div class="status-value">
+            {{ currentStats()!.sentiment.total > 0 ? (currentStats()!.sentiment.neutral / currentStats()!.sentiment.total * 100 | number:'1.1-1') : 0 }}%
+          </div>
+        </mat-card-content>
+      </mat-card>
+      <mat-card class="status-card">
+        <mat-card-content>
+          <div class="status-label">Negative Sentiment</div>
+          <div class="status-value">
+            {{ currentStats()!.sentiment.total > 0 ? (currentStats()!.sentiment.negative / currentStats()!.sentiment.total * 100 | number:'1.1-1') : 0 }}%
           </div>
         </mat-card-content>
       </mat-card>

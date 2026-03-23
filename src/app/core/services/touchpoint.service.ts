@@ -39,6 +39,14 @@ export class TouchpointService {
     return this.http.get<ApiResponse<Touchpoint[]>>(this.baseUrl);
   }
 
+  updateTouchpoint(id: number, touchpoint: Partial<Touchpoint>): Observable<ApiResponse<Touchpoint>> {
+    return this.http.put<ApiResponse<Touchpoint>>(`${this.baseUrl}/${id}`, touchpoint);
+  }
+
+  deleteTouchpoint(id: number): Observable<ApiResponse<void>> {
+    return this.http.delete<ApiResponse<void>>(`${this.baseUrl}/${id}`);
+  }
+
   getTouchpointPerformance(id: number): Observable<ApiResponse<TouchpointPerformance>> {
     return this.http.get<ApiResponse<TouchpointPerformance>>(`${this.baseUrl}/${id}/performance`);
   }

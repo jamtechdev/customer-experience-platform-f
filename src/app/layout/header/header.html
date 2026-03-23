@@ -13,6 +13,7 @@
     class="icon-button"
     [attr.aria-label]="t('header.notificationsAria')">
     <mat-icon>notifications</mat-icon>
+    <span class="alert-dot" [class.red]="alertIndicator() === 'red'" [class.green]="alertIndicator() === 'green'"></span>
   </button>
 
   <mat-menu #notificationsMenu="matMenu">

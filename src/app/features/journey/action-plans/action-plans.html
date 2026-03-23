@@ -92,9 +92,16 @@
             <ng-container matColumnDef="actions">
               <th mat-header-cell *matHeaderCellDef>Actions</th>
               <td mat-cell *matCellDef="let plan">
-                <button mat-icon-button color="warn" (click)="deletePlan(plan)" aria-label="Delete">
-                  <mat-icon>delete</mat-icon>
-                </button>
+                <div class="actions-inline">
+                  @if (isAdmin()) {
+                    <button mat-icon-button color="primary" (click)="openEdit(plan)" aria-label="Edit">
+                      <mat-icon>edit</mat-icon>
+                    </button>
+                  }
+                  <button mat-icon-button color="warn" (click)="deletePlan(plan)" aria-label="Delete">
+                    <mat-icon>delete</mat-icon>
+                  </button>
+                </div>
               </td>
             </ng-container>
             <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>

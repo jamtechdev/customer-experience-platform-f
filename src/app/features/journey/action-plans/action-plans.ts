@@ -43,6 +43,7 @@ export class ActionPlans implements OnInit {
   actionPlans = signal<ActionPlanItem[]>([]);
   displayedColumns: string[] = ['title', 'priority', 'status', 'dueDate', 'actions'];
   showForm = signal(false);
+  editingId = signal<number | null>(null);
   form: FormGroup;
 
   constructor() {
@@ -93,11 +94,33 @@ export class ActionPlans implements OnInit {
 
   openCreate(): void {
     this.form.reset({ title: '', description: '', priority: 'medium', status: 'draft', dueDate: null });
+    this.editingId.set(null);
+    this.showForm.set(true);
+  }
+
+  private formatDateForInput(dueDate?: string | Date): string | null {
+    if (!dueDate) return null;
+    const date = typeof dueDate === 'string' ? new Date(dueDate) : dueDate;
+    if (Number.isNaN(date.getTime())) return null;
+    // HTML date input wants yyyy-MM-dd
+    return date.toISOString().slice(0, 10);
+  }
+
+  openEdit(plan: ActionPlanItem): void {
+    this.editingId.set(plan.id);
+    this.form.patchValue({
+      title: plan.title,
+      description: plan.description,
+      priority: plan.priority,
+      status: plan.status,
+      dueDate: this.formatDateForInput(plan.dueDate),
+    });
     this.showForm.set(true);
   }
 
   cancelForm(): void {
     this.showForm.set(false);
+    this.editingId.set(null);
   }
 
   saveActionPlan(): void {
@@ -110,20 +133,24 @@ export class ActionPlans implements OnInit {
       companyId,
       priority: value.priority,
       status: value.status,
-      dueDate: value.dueDate || undefined
+      dueDate: value.dueDate ? new Date(value.dueDate) : undefined
     };
     this.loading.set(true);
-    this.actionPlanService.createActionPlan(body).subscribe({
+    const editingId = this.editingId();
+    const request$ =
+      editingId != null ? this.actionPlanService.updateActionPlan(editingId, body) : this.actionPlanService.createActionPlan(body);
+
+    request$.subscribe({
       next: (res) => {
         if (res.success) this.loadActionPlans();
         this.cancelForm();
-        this.snackBar.open('Action plan created', 'Close', { duration: 2000 });
+        this.snackBar.open(editingId != null ? 'Action plan updated' : 'Action plan created', 'Close', { duration: 2000 });
         this.loading.set(false);
       },
       error: () => {
-        this.snackBar.open('Failed to create action plan', 'Close', { duration: 3000 });
+        this.snackBar.open(editingId != null ? 'Failed to update action plan' : 'Failed to create action plan', 'Close', { duration: 3000 });
         this.loading.set(false);
-      }
+      },
     });
   }
 
@@ -141,6 +168,10 @@ export class ActionPlans implements OnInit {
         this.loading.set(false);
       }
     });
+  }
+
+  isAdmin(): boolean {
+    return this.authService.currentUser()?.role === 'admin';
   }
 
   getPriorityColor(priority: string): string {

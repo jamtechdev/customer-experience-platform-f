@@ -39,6 +39,7 @@ export class TouchpointManager implements OnInit {
   touchpoints = signal<Touchpoint[]>([]);
   displayedColumns: string[] = ['order', 'name', 'description', 'category', 'actions'];
   showForm = signal(false);
+  editingId = signal<number | null>(null);
   form: FormGroup;
 
   constructor() {
@@ -85,34 +86,72 @@ export class TouchpointManager implements OnInit {
   }
 
   openCreate(): void {
+    this.editingId.set(null);
     this.form.reset({ name: '', description: '', category: '', order: this.touchpoints().length });
+    this.showForm.set(true);
+  }
+
+  openEdit(t: Touchpoint): void {
+    this.editingId.set(t.id ?? null);
+    this.form.patchValue({
+      name: t.name ?? '',
+      description: t.description ?? '',
+      category: t.category ?? '',
+      order: t.order ?? 0,
+    });
     this.showForm.set(true);
   }
 
   cancelForm(): void {
     this.showForm.set(false);
+    this.editingId.set(null);
   }
 
   saveTouchpoint(): void {
     if (this.form.invalid) return;
     const value = this.form.getRawValue();
     this.loading.set(true);
-    this.touchpointService.createTouchpoint({
+    const payload = {
       name: value.name,
       description: value.description,
       category: value.category,
-      order: value.order
-    }).subscribe({
+      order: value.order,
+    };
+
+    const editingId = this.editingId();
+    const request$ =
+      editingId != null
+        ? this.touchpointService.updateTouchpoint(editingId, payload)
+        : this.touchpointService.createTouchpoint(payload);
+
+    request$.subscribe({
       next: (res) => {
         if (res.success) this.loadTouchpoints();
         this.cancelForm();
-        this.snackBar.open('Touchpoint created', 'Close', { duration: 2000 });
+        this.snackBar.open(editingId != null ? 'Touchpoint updated' : 'Touchpoint created', 'Close', { duration: 2000 });
         this.loading.set(false);
       },
       error: () => {
-        this.snackBar.open('Failed to create touchpoint', 'Close', { duration: 3000 });
+        this.snackBar.open(editingId != null ? 'Failed to update touchpoint' : 'Failed to create touchpoint', 'Close', { duration: 3000 });
         this.loading.set(false);
-      }
+      },
+    });
+  }
+
+  deleteTouchpoint(id: number | undefined): void {
+    if (id == null) return;
+    if (!confirm('Delete this touchpoint?')) return;
+    this.loading.set(true);
+    this.touchpointService.deleteTouchpoint(id).subscribe({
+      next: (res) => {
+        if (res.success) this.loadTouchpoints();
+        this.snackBar.open('Touchpoint deleted', 'Close', { duration: 2000 });
+        this.loading.set(false);
+      },
+      error: () => {
+        this.snackBar.open('Failed to delete touchpoint', 'Close', { duration: 3000 });
+        this.loading.set(false);
+      },
     });
   }
 }

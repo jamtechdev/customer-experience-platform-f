@@ -47,19 +47,32 @@ export class JourneyMap implements OnInit {
 
   loadJourneyData(): void {
     this.loading.set(true);
-    const companyId = this.authService.currentUser()?.settings?.companyId ?? 1;
+    const user = this.authService.currentUser();
+    const companyId = user?.role === 'admin' ? undefined : (user?.settings?.companyId ?? 1);
     this.journeyService.analyzeJourney(companyId).subscribe({
       next: (response) => {
         if (response.success && response.data) {
           const data = response.data;
-          // Handle both array and object response formats
-          if (Array.isArray(data)) {
-            this.journeyStages.set(data);
-          } else if (data.stages) {
-            this.journeyStages.set(data.stages);
-          } else {
+          // Backend returns JourneyStageAnalysis[] like:
+          // { stage: {id,name,...}, satisfactionScore, dissatisfactionScore, feedbackCount, painPoints, satisfactionPoints }
+          const list = Array.isArray(data) ? data : data?.stages;
+          if (!Array.isArray(list)) {
             this.journeyStages.set([]);
+            this.loading.set(false);
+            return;
           }
+
+          this.journeyStages.set(
+            list.map((s: any) => ({
+              id: s?.stage?.id ?? s?.stageId ?? s?.id ?? 0,
+              name: s?.stage?.name ?? s?.name ?? '',
+              satisfactionScore: Number(s?.satisfactionScore ?? 0),
+              dissatisfactionScore: Number(s?.dissatisfactionScore ?? 0),
+              feedbackCount: Number(s?.feedbackCount ?? 0),
+              painPoints: Array.isArray(s?.painPoints) ? s.painPoints : [],
+              satisfactionPoints: Array.isArray(s?.satisfactionPoints) ? s.satisfactionPoints : [],
+            }))
+          );
         }
         this.loading.set(false);
       },
@@ -71,8 +84,10 @@ export class JourneyMap implements OnInit {
   }
 
   getSatisfactionColor(score: number): string {
-    if (score >= 70) return 'satisfaction-high';
-    if (score >= 50) return 'satisfaction-medium';
+    // Backend returns satisfactionScore in 0..1 range; UI shows it as percentage.
+    const pct = score * 100;
+    if (pct >= 70) return 'satisfaction-high';
+    if (pct >= 50) return 'satisfaction-medium';
     return 'satisfaction-low';
   }
 }

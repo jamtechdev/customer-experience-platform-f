@@ -72,14 +72,24 @@ export class NpsAnalysis implements OnInit {
         const list =
           res.success && res.data?.presets?.length ? (res.data.presets as ReportDatePreset[]) : buildClientReportDatePresets();
         this.presets.set(list);
-        const def = list.find((p) => p.id === 'last_30_days') ?? list[0];
+        const user = this.authService.currentUser();
+        const defaultId = user?.role === 'admin' ? 'all_time' : 'last_30_days';
+        const def =
+          list.find((p) => p.id === defaultId) ??
+          list.find((p) => p.id === 'last_30_days') ??
+          list[0];
         if (def) this.applyPreset(def);
         this.loadNPSData();
       },
       error: () => {
         const list = buildClientReportDatePresets();
         this.presets.set(list);
-        const def = list.find((p) => p.id === 'last_30_days') ?? list[0];
+        const user = this.authService.currentUser();
+        const defaultId = user?.role === 'admin' ? 'all_time' : 'last_30_days';
+        const def =
+          list.find((p) => p.id === defaultId) ??
+          list.find((p) => p.id === 'last_30_days') ??
+          list[0];
         if (def) this.applyPreset(def);
         this.loadNPSData();
       },
@@ -125,7 +135,8 @@ export class NpsAnalysis implements OnInit {
   loadNPSData(): void {
     this.loading.set(true);
     const user = this.authService.currentUser();
-    const companyId = user?.settings?.companyId || 1;
+    // Admin should aggregate across all companies
+    const companyId = user?.role === 'admin' ? undefined : (user?.settings?.companyId || 1);
     if (!this.datesValid()) {
       this.loading.set(false);
       return;

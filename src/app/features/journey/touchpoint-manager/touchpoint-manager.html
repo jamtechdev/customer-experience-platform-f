@@ -79,7 +79,14 @@
             <ng-container matColumnDef="actions">
               <th mat-header-cell *matHeaderCellDef>Actions</th>
               <td mat-cell *matCellDef="let t">
-                <span class="muted">—</span>
+                <div class="actions-inline">
+                  <button mat-icon-button color="primary" type="button" (click)="openEdit(t)" aria-label="Edit">
+                    <mat-icon>edit</mat-icon>
+                  </button>
+                  <button mat-icon-button color="warn" type="button" (click)="deleteTouchpoint(t.id)" aria-label="Delete">
+                    <mat-icon>delete</mat-icon>
+                  </button>
+                </div>
               </td>
             </ng-container>
             <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>

@@ -203,11 +203,12 @@ export class DashboardService {
   }
 
   getExecutiveDashboard(
-    companyId: number,
+    companyId?: number,
     startDate?: Date,
     endDate?: Date
   ): Observable<ApiResponse<ExecutiveDashboardData>> {
-    let params = new HttpParams().set('companyId', companyId.toString());
+    let params = new HttpParams();
+    if (companyId) params = params.set('companyId', companyId.toString());
     if (startDate) params = params.set('startDate', startDate.toISOString());
     if (endDate) params = params.set('endDate', endDate.toISOString());
     
@@ -221,14 +222,16 @@ export class DashboardService {
 
   /** Periodic trends for dashboard reports: sentiment and NPS over time. */
   getDashboardTrends(
-    companyId: number,
+    companyId?: number,
     period: 'day' | 'week' | 'month' = 'week',
     days: number = 90
   ): Observable<ApiResponse<DashboardTrends>> {
-    const params = new HttpParams()
-      .set('companyId', companyId.toString())
+    let params = new HttpParams()
       .set('period', period)
       .set('days', days.toString());
+    if (companyId) {
+      params = params.set('companyId', companyId.toString());
+    }
     return this.http.get<ApiResponse<DashboardTrends>>(`${this.baseUrl}/trends`, { params });
   }
 }

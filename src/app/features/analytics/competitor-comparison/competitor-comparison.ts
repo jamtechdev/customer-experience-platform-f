@@ -72,14 +72,24 @@ export class CompetitorComparison implements OnInit {
         const list =
           res.success && res.data?.presets?.length ? (res.data.presets as ReportDatePreset[]) : buildClientReportDatePresets();
         this.presets.set(list);
-        const def = list.find((p) => p.id === 'last_30_days') ?? list[0];
+        const user = this.authService.currentUser();
+        const defaultId = user?.role === 'admin' ? 'all_time' : 'last_30_days';
+        const def =
+          list.find((p) => p.id === defaultId) ??
+          list.find((p) => p.id === 'last_30_days') ??
+          list[0];
         if (def) this.applyPreset(def);
         this.loadComparisonData();
       },
       error: () => {
         const list = buildClientReportDatePresets();
         this.presets.set(list);
-        const def = list.find((p) => p.id === 'last_30_days') ?? list[0];
+        const user = this.authService.currentUser();
+        const defaultId = user?.role === 'admin' ? 'all_time' : 'last_30_days';
+        const def =
+          list.find((p) => p.id === defaultId) ??
+          list.find((p) => p.id === 'last_30_days') ??
+          list[0];
         if (def) this.applyPreset(def);
         this.loadComparisonData();
       },

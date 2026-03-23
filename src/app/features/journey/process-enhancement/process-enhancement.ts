@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject, signal, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
@@ -22,13 +22,18 @@ import { AuthService } from '../../../core/services/auth.service';
   templateUrl: './process-enhancement.html',
   styleUrl: './process-enhancement.css',
 })
-export class ProcessEnhancement {
+export class ProcessEnhancement implements OnInit {
   private journeyService = inject(CustomerJourneyService);
   private authService = inject(AuthService);
 
   loading = signal(false);
   plans = signal<ProcessEnhancementPlan[]>([]);
   error = signal<string | null>(null);
+
+  ngOnInit(): void {
+    // Auto-generate on page open so admin sees full plans immediately.
+    this.loadPlans();
+  }
 
   loadPlans(): void {
     const companyId = this.authService.currentUser()?.settings?.companyId || 1;

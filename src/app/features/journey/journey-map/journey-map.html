@@ -9,7 +9,11 @@
     <p>Loading journey data...</p>
   </div>
 
-  <div *ngIf="!loading()" class="journey-stages">
+  <div *ngIf="!loading() && journeyStages().length === 0" class="empty-hint">
+    No journey map data. Configure journey stages in Admin, ensure CSV mapping creates touchpoints, then run analysis.
+  </div>
+
+  <div *ngIf="!loading() && journeyStages().length > 0" class="journey-stages">
     <div *ngFor="let stage of journeyStages(); let i = index" class="stage-card-wrapper">
       <mat-card class="stage-card" [class]="getSatisfactionColor(stage.satisfactionScore)">
         <mat-card-header>
@@ -22,12 +26,12 @@
           <div class="stage-metrics">
             <div class="metric">
               <mat-icon>sentiment_satisfied</mat-icon>
-              <span class="metric-value">{{ stage.satisfactionScore }}%</span>
+              <span class="metric-value">{{ (stage.satisfactionScore * 100).toFixed(0) }}%</span>
               <span class="metric-label">Satisfaction</span>
             </div>
             <div class="metric">
               <mat-icon>sentiment_dissatisfied</mat-icon>
-              <span class="metric-value">{{ stage.dissatisfactionScore }}%</span>
+              <span class="metric-value">{{ (stage.dissatisfactionScore * 100).toFixed(0) }}%</span>
               <span class="metric-label">Dissatisfaction</span>
             </div>
             <div class="metric">

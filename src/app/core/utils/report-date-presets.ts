@@ -20,6 +20,7 @@ export function buildClientReportDatePresets(now: Date = new Date()): ReportDate
   const ytdStart = new Date(now.getFullYear(), 0, 1);
   ytdStart.setHours(0, 0, 0, 0);
   return [
+    { id: 'all_time', label: 'All time', startDate: new Date('1970-01-01T00:00:00.000Z').toISOString(), endDate: endToday.toISOString() },
     { id: 'last_7_days', label: 'Last 7 days', startDate: last7Start.toISOString(), endDate: endToday.toISOString() },
     { id: 'last_30_days', label: 'Last 30 days', startDate: last30Start.toISOString(), endDate: endToday.toISOString() },
     {
