@@ -51,8 +51,8 @@ export class ImportHistory implements OnInit {
             errorDetails: payload?.errorDetails ?? row.errorDetails,
           };
           if (status === 'completed') {
-            next.errorMessage = undefined;
-            next.errorDetails = undefined;
+            next.errorMessage = payload?.errorMessage;
+            next.errorDetails = payload?.errorDetails;
           }
           if (status === 'processing' || status === 'pending') {
             next.errorMessage = undefined;

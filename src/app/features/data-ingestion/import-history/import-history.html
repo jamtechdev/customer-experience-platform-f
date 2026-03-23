@@ -94,6 +94,30 @@
                 } @else if (!row.errorDetails) {
                   <span class="muted">Failed (no message stored). Re-validate in CSV mapping before import.</span>
                 }
+              } @else if (row.status === 'completed' && row.errorDetails?.importOmissions) {
+                <div class="error-structured import-omissions">
+                  <div class="error-line ok-line">
+                    <mat-icon class="inline-icon">check_circle</mat-icon>
+                    Import finished. <strong>{{ row.errorDetails.omittedCount }}</strong> row(s) were omitted (not saved).
+                  </div>
+                  @if (row.errorMessage) {
+                    <div class="error-line muted-line">{{ row.errorMessage }}</div>
+                  }
+                  @if (row.errorDetails.examples?.length) {
+                    <details class="error-details">
+                      <summary class="error-summary">
+                        Omitted rows (sample{{ row.errorDetails.omittedExamplesTruncated ? ', truncated' : '' }})
+                      </summary>
+                      <ul class="examples">
+                        @for (e of row.errorDetails.examples; track e.rowNumber + '-' + e.message) {
+                          <li>
+                            <span class="muted">Row {{ e.rowNumber }}</span> — {{ e.message }}
+                          </li>
+                        }
+                      </ul>
+                    </details>
+                  }
+                </div>
               } @else {
                 —
               }

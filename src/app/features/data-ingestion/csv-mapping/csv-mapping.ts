@@ -306,7 +306,25 @@ export class CsvMapping implements OnInit {
         this.importing.set(false);
         this.importError.set(null);
         if (res.success && res.data?.success) {
-          this.snackBar.open(`Import started: ${res.data.importedCount} row(s) imported.`, 'Close', { duration: 6000 });
+          const d = res.data;
+          const om = d.omissionSummary;
+          let msg = `${d.importedCount} row(s) imported.`;
+          let duration = 6000;
+          if (om?.omittedCount) {
+            duration = 14000;
+            msg = `${d.importedCount} row(s) imported. ${om.omittedCount} row(s) omitted (not saved).`;
+            const samples = om.omittedExamples
+              ?.slice(0, 3)
+              .map((e) => `Row ${e.rowNumber}: ${e.message}`)
+              .join(' · ');
+            if (samples) {
+              msg += ` Sample: ${samples}`;
+            }
+            if (om.omittedExamplesTruncated) {
+              msg += ' (more listed in Import history)';
+            }
+          }
+          this.snackBar.open(msg, 'Close', { duration });
           this.router.navigate(['/app/data-sources/import-history']);
           return;
         }

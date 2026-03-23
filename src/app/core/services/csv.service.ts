@@ -21,11 +21,15 @@ export interface CSVImport {
   userId: number;
   errorMessage?: string;
   errorDetails?: {
-    totalIssues: number;
-    byField: Record<string, number>;
-    examples: RowValidationError[];
+    totalIssues?: number;
+    byField?: Record<string, number>;
+    examples?: RowValidationError[];
     requiredMappings?: string[];
     guidance?: string[];
+    /** Present when import completed but some rows were skipped */
+    importOmissions?: boolean;
+    omittedCount?: number;
+    omittedExamplesTruncated?: boolean;
   };
   createdAt: Date;
   updatedAt: Date;
@@ -67,12 +71,19 @@ export interface ValidateMappingsResult {
 
 export type DateFormatHint = 'auto' | 'excel_serial' | 'iso' | 'dmy_dot' | 'dmy_slash' | 'dmy_dash';
 
+export interface ImportOmissionSummary {
+  omittedCount: number;
+  omittedExamples: RowValidationError[];
+  omittedExamplesTruncated: boolean;
+}
+
 export interface CSVImportResult {
   success: boolean;
   importedCount: number;
   failedCount: number;
   errors: string[];
   dataType: 'social_media' | 'app_review' | 'nps_survey' | 'complaint' | 'unknown';
+  omissionSummary?: ImportOmissionSummary;
 }
 
 export interface CSVFormat {
