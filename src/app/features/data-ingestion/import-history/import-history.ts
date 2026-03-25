@@ -11,6 +11,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { CSVService, CSVImport } from '../../../core/services/csv.service';
 import { Subscription } from 'rxjs';
 import { CXWebSocketService, type CSVImportStatusEvent } from '../../../core/services/cx-websocket.service';
+import { formatApiDate } from '../../../core/utils/api-date';
 
 @Component({
   selector: 'app-import-history',
@@ -111,10 +112,8 @@ export class ImportHistory implements OnInit {
     });
   }
 
-  formatDate(d: Date | string): string {
-    if (!d) return '—';
-    const date = typeof d === 'string' ? new Date(d) : d;
-    return date.toLocaleString();
+  formatDate(d: Date | string | number | null | undefined): string {
+    return formatApiDate(d, { mode: 'datetime' });
   }
 
   getStatusColor(status: string): 'primary' | 'accent' | 'warn' | undefined {

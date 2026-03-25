@@ -13,6 +13,7 @@ import { MatSelectModule } from '@angular/material/select';
 import { ActionPlanService, ActionPlanItem } from '../../../core/services/action-plan.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { formatApiDate, toInputDateValue } from '../../../core/utils/api-date';
 
 @Component({
   selector: 'app-action-plans',
@@ -72,7 +73,7 @@ export class ActionPlans implements OnInit {
             description: p.description ?? '',
             priority: (p.priority ?? 'medium').toString(),
             status: (p.status ?? 'draft').toString(),
-            dueDate: p.dueDate ? new Date(p.dueDate) : undefined,
+            dueDate: p.dueDate ?? undefined,
             startDate: p.startDate,
             completedDate: p.completedDate,
             companyId: p.companyId,
@@ -99,11 +100,7 @@ export class ActionPlans implements OnInit {
   }
 
   private formatDateForInput(dueDate?: string | Date): string | null {
-    if (!dueDate) return null;
-    const date = typeof dueDate === 'string' ? new Date(dueDate) : dueDate;
-    if (Number.isNaN(date.getTime())) return null;
-    // HTML date input wants yyyy-MM-dd
-    return date.toISOString().slice(0, 10);
+    return toInputDateValue(dueDate ?? null);
   }
 
   openEdit(plan: ActionPlanItem): void {
@@ -184,8 +181,6 @@ export class ActionPlans implements OnInit {
   }
 
   formatDate(d: Date | string | null | undefined): string {
-    if (!d) return '—';
-    const date = typeof d === 'string' ? new Date(d) : d;
-    return date.toLocaleDateString();
+    return formatApiDate(d, { mode: 'date' });
   }
 }

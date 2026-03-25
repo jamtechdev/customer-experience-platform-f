@@ -6,6 +6,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatIconModule } from '@angular/material/icon';
 import { CSVService, CSVImport } from '../../../core/services/csv.service';
+import { formatApiDate } from '../../../core/utils/api-date';
 
 @Component({
   selector: 'app-admin-datasets',
@@ -50,10 +51,8 @@ export class AdminDatasets implements OnInit {
     });
   }
 
-  formatDate(d: Date | string): string {
-    if (!d) return 'N/A';
-    const date = typeof d === 'string' ? new Date(d) : d;
-    return date.toLocaleString();
+  formatDate(d: Date | string | number | null | undefined): string {
+    return formatApiDate(d, { mode: 'datetime', empty: 'N/A' });
   }
 
   getStatusColor(status: string): 'primary' | 'accent' | 'warn' | undefined {

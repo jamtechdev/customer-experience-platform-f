@@ -9,12 +9,13 @@ import { MatMenuModule } from '@angular/material/menu';
 import { RouterLink } from '@angular/router';
 import { ReportService } from '../../../core/services/report.service';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { formatApiDate, parseApiDate } from '../../../core/utils/api-date';
 
 interface Report {
   id: number;
   name: string;
   type: string;
-  createdAt: Date;
+  createdAt: Date | null;
   status: string;
 }
 
@@ -56,7 +57,7 @@ export class ReportList implements OnInit {
             id: typeof item.id === 'string' ? parseInt(item.id, 10) : item.id,
             name: item.name || 'Untitled Report',
             type: item.type || 'standard',
-            createdAt: item.createdAt ? new Date(item.createdAt) : new Date(),
+            createdAt: parseApiDate(item.createdAt),
             status: item.status || 'completed'
           }));
           this.reports.set(mapped);
@@ -83,5 +84,9 @@ export class ReportList implements OnInit {
 
   deleteReport(report: Report): void {
     this.snackBar.open('Report deleted', 'Close', { duration: 2000 });
+  }
+
+  formatCreatedAt(value: Date | null): string {
+    return formatApiDate(value, { mode: 'datetime' });
   }
 }

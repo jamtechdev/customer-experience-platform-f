@@ -21,6 +21,7 @@ import {
   toIsoRangeFromYmd,
   type ReportDatePreset,
 } from '../../../core/utils/report-date-presets';
+import { formatApiDate, normalizeApiDateToIso } from '../../../core/utils/api-date';
 
 interface SentimentStats {
   positive: number;
@@ -192,7 +193,7 @@ export class SentimentAnalysis implements OnInit {
         if (response?.success && response?.data) {
           const list = (response.data.list || []).map((row: any) => ({
             ...row,
-            date: typeof row.date === 'string' ? row.date : row.date?.toISOString?.() ?? ''
+            date: normalizeApiDateToIso(row.date),
           }));
           this.feedbackList.set(list);
           this.feedbackTotal.set(response.data.total ?? list.length);
@@ -227,11 +228,6 @@ export class SentimentAnalysis implements OnInit {
   }
 
   formatDate(d: string): string {
-    if (!d) return '';
-    try {
-      return new Date(d).toLocaleDateString(undefined, { dateStyle: 'short' });
-    } catch {
-      return d;
-    }
+    return formatApiDate(d, { mode: 'date', empty: '' });
   }
 }

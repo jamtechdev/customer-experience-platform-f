@@ -8,6 +8,7 @@ import { MatChipsModule } from '@angular/material/chips';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { AlertService } from '../../../core/services/alert.service';
+import { formatApiDate, parseApiDate } from '../../../core/utils/api-date';
 
 interface Alert {
   id: number;
@@ -16,7 +17,7 @@ interface Alert {
   type: string;
   priority: string;
   acknowledged: boolean;
-  createdAt: Date;
+  createdAt: Date | null;
 }
 
 @Component({
@@ -54,7 +55,13 @@ export class AlertDashboard implements OnInit {
     this.alertService.getAlerts().subscribe({
       next: (response) => {
         if (response.success) {
-          this.alerts.set(response.data || []);
+          const raw = response.data || [];
+          this.alerts.set(
+            raw.map((a: any) => ({
+              ...a,
+              createdAt: parseApiDate(a.createdAt),
+            }))
+          );
         } else {
           this.alerts.set([]);
         }
@@ -84,6 +91,10 @@ export class AlertDashboard implements OnInit {
         this.snackBar.open('Failed to acknowledge alert', 'Close', { duration: 3000 });
       }
     });
+  }
+
+  formatCreatedAt(value: Date | null): string {
+    return formatApiDate(value, { mode: 'datetime' });
   }
 
   getPriorityColor(priority: string): string {

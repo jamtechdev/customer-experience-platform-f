@@ -18,6 +18,7 @@ import {
   toIsoRangeFromYmd,
   type ReportDatePreset,
 } from '../../../core/utils/report-date-presets';
+import { parseIsoDateOnlyLocal } from '../../../core/utils/api-date';
 
 @Component({
   selector: 'app-dashboard-reports',
@@ -212,7 +213,8 @@ export class DashboardReports implements OnInit {
     if (!period) return period;
     try {
       if (period.length === 10 && period.match(/^\d{4}-\d{2}-\d{2}$/)) {
-        const d = new Date(period);
+        const d = parseIsoDateOnlyLocal(period);
+        if (!d) return period;
         return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
       }
       if (period.match(/^\d{4}-\d{2}$/)) {
