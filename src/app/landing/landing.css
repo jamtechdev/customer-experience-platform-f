@@ -482,7 +482,7 @@
 /* Responsive Design */
 @media (max-width: 768px) {
   .hero-title {
-    font-size: 2.5rem;
+    font-size: 2rem;
   }
 
   .hero-subtitle {
@@ -515,9 +515,39 @@
 
   .nav-links {
     gap: 16px;
+    width: 100%;
   }
 
   .nav-link {
     font-size: 0.8125rem;
+  }
+   .nav-content{
+    flex-direction: column;
+    gap: 10px
+  }
+  .btn-large{
+    text-align: center;
+  }
+  .hero-section {
+      padding: 50px 20px;
+  }
+  .features-section{
+    padding: 50px 20px;
+  }
+  .cta-section{
+    padding: 50px 20px;
+  }
+  .faq-section{
+    padding: 50px 20px;
+  }
+  .faq-title{
+    padding: 50px 20px;
+    font-size: 25px;
+    margin-bottom:0;
+  }
+  .btn-large{
+    padding: 8px 15px;
+    border-radius: 4px;
+    font-size: 12px;
   }
 }

@@ -4,7 +4,7 @@ module.exports = {
   '/api': {
     // Local development: send /api requests to the local backend.
     // (Angular interceptor may rewrite full API URLs into /api/* to avoid CORS.)
-    target: 'http://localhost:5000',
+    target: 'https://api.sentimenter.ai',
     secure: false,
     changeOrigin: true,
     logLevel: 'debug',
