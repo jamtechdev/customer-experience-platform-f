@@ -8,6 +8,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { Router, RouterModule } from '@angular/router';
 import { CSVService, CSVImport } from '../../../core/services/csv.service';
 import { Subscription } from 'rxjs';
 import { CXWebSocketService, type CSVImportStatusEvent } from '../../../core/services/cx-websocket.service';
@@ -26,6 +27,7 @@ import { formatApiDate } from '../../../core/utils/api-date';
     MatButtonModule,
     MatSnackBarModule,
     MatTooltipModule,
+    RouterModule,
   ],
   templateUrl: './import-history.html',
   styleUrl: './import-history.css',
@@ -34,10 +36,12 @@ export class ImportHistory implements OnInit {
   private csvService = inject(CSVService);
   private websocket = inject(CXWebSocketService);
   private snackBar = inject(MatSnackBar);
+  private router = inject(Router);
   private importStatusSub?: Subscription;
   private refreshTimer: any = null;
 
   loading = signal(false);
+  refreshing = signal(false);
   imports = signal<CSVImport[]>([]);
   displayedColumns: string[] = ['filename', 'rowCount', 'status', 'errorMessage', 'createdAt', 'actions'];
   deletingId = signal<number | null>(null);
@@ -60,10 +64,6 @@ export class ImportHistory implements OnInit {
           if (status === 'completed') {
             next.errorMessage = payload?.errorMessage;
             next.errorDetails = payload?.errorDetails;
-          }
-          if (status === 'processing' || status === 'pending') {
-            next.errorMessage = undefined;
-            next.errorDetails = undefined;
           }
           return next;
         })
@@ -93,7 +93,13 @@ export class ImportHistory implements OnInit {
   }
 
   loadImports(): void {
-    this.loading.set(true);
+    const hasRows = this.imports().length > 0;
+    // Show full-page loader only on first load; for polling use lightweight refresh state.
+    if (hasRows) {
+      this.refreshing.set(true);
+    } else {
+      this.loading.set(true);
+    }
     this.csvService.getImports().subscribe({
       next: (res) => {
         if (res.success && res.data) {
@@ -102,11 +108,15 @@ export class ImportHistory implements OnInit {
           this.imports.set([]);
         }
         this.loading.set(false);
+        this.refreshing.set(false);
         this.syncRefreshTimer();
       },
       error: () => {
-        this.imports.set([]);
+        if (!hasRows) {
+          this.imports.set([]);
+        }
         this.loading.set(false);
+        this.refreshing.set(false);
         this.syncRefreshTimer();
       },
     });
@@ -120,6 +130,10 @@ export class ImportHistory implements OnInit {
     if (status === 'completed') return 'primary';
     if (status === 'failed') return 'warn';
     return undefined;
+  }
+
+  goToUpload(): void {
+    this.router.navigate(['/app/data-sources/csv-upload']);
   }
 
   confirmDelete(row: CSVImport): void {

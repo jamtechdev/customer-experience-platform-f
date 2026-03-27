@@ -41,9 +41,8 @@
         </div>
 
         <p class="hint">
-          <strong>Required mappings for this type:</strong>
-          {{ requiredSystemFields().join(', ') }}.
-          Your CSV headers can be named anything — map each required system field to the matching column.
+          <strong>Flexible mapping:</strong>
+          No required field is enforced. Map only the CSV columns you want to import.
         </p>
 
         <p class="hint date-format-hint">
@@ -84,14 +83,14 @@
         </div>
 
         <div class="actions">
-          <button mat-stroked-button color="primary" (click)="validate()" [disabled]="validating() || importing()">
+          <button mat-stroked-button color="primary" (click)="validate()" [disabled]="validating()">
             <mat-icon>rule</mat-icon>
             {{ validating() ? 'Validating…' : 'Validate' }}
           </button>
 
-          <button mat-raised-button color="primary" (click)="startImport()" [disabled]="importing() || validating()">
+          <button mat-raised-button color="primary" (click)="startImport()" [disabled]="validating()">
             <mat-icon>play_arrow</mat-icon>
-            {{ importing() ? 'Importing…' : 'Start Import' }}
+            Start Import
           </button>
 
           <a class="history-link" [routerLink]="['/app/data-sources/import-history']">Go to Import History</a>

@@ -4,10 +4,16 @@
       <h1>Import History</h1>
       <p class="subtitle">View past CSV uploads and their status</p>
     </div>
-    <button mat-raised-button color="primary" (click)="loadImports()" [disabled]="loading()">
-      <mat-icon>refresh</mat-icon>
-      Refresh
-    </button>
+    <div class="header-actions">
+      <button mat-raised-button color="primary" (click)="goToUpload()">
+        <mat-icon>upload_file</mat-icon>
+        Upload CSV
+      </button>
+      <button mat-raised-button color="primary" (click)="loadImports()" [disabled]="loading()">
+        <mat-icon>refresh</mat-icon>
+        {{ refreshing() ? 'Refreshing…' : 'Refresh' }}
+      </button>
+    </div>
   </div>
 
   <mat-card>
@@ -43,7 +49,18 @@
             <th mat-header-cell *matHeaderCellDef>Reason / details</th>
             <td mat-cell *matCellDef="let row" class="error-cell">
               @if (row.status === 'pending' || row.status === 'processing') {
-                <span class="muted">Awaiting mapping / import or in progress.</span>
+                @if (row.errorDetails?.progress) {
+                  <div class="error-structured">
+                    <div class="error-line">
+                      <strong>Running in background</strong> —
+                      processed {{ row.errorDetails.processedCount ?? 0 }} / {{ row.errorDetails.totalRows ?? row.rowCount ?? '—' }},
+                      imported {{ row.errorDetails.importedCount ?? 0 }},
+                      omitted {{ row.errorDetails.omittedCount ?? 0 }}.
+                    </div>
+                  </div>
+                } @else {
+                  <span class="muted">Awaiting mapping / import or in progress.</span>
+                }
               } @else if (row.status === 'failed') {
                 @if (row.errorDetails) {
                   <div class="error-structured">
