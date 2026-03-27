@@ -9,7 +9,7 @@
         <mat-icon>upload_file</mat-icon>
         Upload CSV
       </button>
-      <button mat-raised-button color="primary" (click)="loadImports()" [disabled]="loading()">
+      <button mat-raised-button color="primary" (click)="loadImports()">
         <mat-icon>refresh</mat-icon>
         {{ refreshing() ? 'Refreshing…' : 'Refresh' }}
       </button>
@@ -18,12 +18,7 @@
 
   <mat-card>
     <mat-card-content>
-      @if (loading()) {
-        <div class="loading-container">
-          <mat-spinner diameter="40"></mat-spinner>
-          <p>Loading import history...</p>
-        </div>
-      } @else if (imports().length === 0) {
+      @if (imports().length === 0) {
         <div class="empty-state">
           <mat-icon>folder_open</mat-icon>
           <p>No CSV imports yet. Upload a file from CSV Upload.</p>

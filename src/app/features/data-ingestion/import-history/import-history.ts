@@ -94,12 +94,8 @@ export class ImportHistory implements OnInit {
 
   loadImports(): void {
     const hasRows = this.imports().length > 0;
-    // Show full-page loader only on first load; for polling use lightweight refresh state.
-    if (hasRows) {
-      this.refreshing.set(true);
-    } else {
-      this.loading.set(true);
-    }
+    // Never blank the page; always refresh silently in background.
+    this.refreshing.set(true);
     this.csvService.getImports().subscribe({
       next: (res) => {
         if (res.success && res.data) {
