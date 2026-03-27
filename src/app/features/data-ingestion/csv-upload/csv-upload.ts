@@ -109,12 +109,13 @@ export class CsvUpload implements OnInit {
 
     if (event.dataTransfer?.files && event.dataTransfer.files.length > 0) {
       const file = event.dataTransfer.files[0];
+      const isTsv = file.type === 'text/tab-separated-values' || file.name.toLowerCase().endsWith('.tsv');
       const isXlsx =
         file.type === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' || file.name.toLowerCase().endsWith('.xlsx');
-      if (file.type === 'text/csv' || file.name.toLowerCase().endsWith('.csv') || isXlsx) {
+      if (file.type === 'text/csv' || file.name.toLowerCase().endsWith('.csv') || isTsv || isXlsx) {
         this.setFileIfValid(file);
       } else {
-        this.snackBar.open(this.t('errors.csvOnly') || 'Please select a CSV file', this.t('app.close'), { duration: 3000 });
+        this.snackBar.open(this.t('errors.csvOnly') || 'Please select a CSV/TSV file', this.t('app.close'), { duration: 3000 });
       }
     }
   }
