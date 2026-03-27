@@ -302,6 +302,19 @@ export function languageInterceptor(
     }
   }
 
+  // Normalize and whitelist language to avoid invalid headers
+  // from legacy/localized values (e.g. "Türkçe", "tr-TR", etc.).
+  const normalized = String(language).trim().toLowerCase().replace('_', '-');
+  if (normalized.startsWith('tr')) {
+    language = 'tr';
+  } else if (normalized.startsWith('ar')) {
+    language = 'ar';
+  } else if (normalized.startsWith('en')) {
+    language = 'en';
+  } else {
+    language = 'en';
+  }
+
   const modifiedReq = req.clone({
     setHeaders: {
       'Accept-Language': language,

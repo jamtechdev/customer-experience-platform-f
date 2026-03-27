@@ -47,7 +47,6 @@ export class CsvMapping implements OnInit {
   loading = signal(true);
   preview = signal<CSVPreview | null>(null);
   validating = signal(false);
-  importing = signal(false);
 
   dataType = signal<'social_media' | 'app_review' | 'nps_survey' | 'complaint'>('social_media');
   validation = signal<ValidateMappingsResult | null>(null);
@@ -94,9 +93,7 @@ export class CsvMapping implements OnInit {
 
   headers = computed(() => this.preview()?.headers ?? []);
 
-  requiredSystemFields = computed(() =>
-    this.dataType() === 'nps_survey' ? ['score', 'date'] : ['content', 'date', 'source']
-  );
+  requiredSystemFields = computed<string[]>(() => []);
 
   // Ensure required system fields always exist in `fieldSelections`.
   // Keep this outside lifecycle hooks so `effect()` is created within Angular's injection context.
@@ -150,12 +147,6 @@ export class CsvMapping implements OnInit {
         const selections: Record<string, string | null> = {};
         for (const f of res.data.systemFields ?? []) {
           selections[f.name] = null;
-        }
-
-        // Ensure required fields exist even if preview/systemFields is incomplete.
-        const required = detected === 'nps_survey' ? ['score', 'date'] : ['content', 'date', 'source'];
-        for (const r of required) {
-          if (selections[r] === undefined) selections[r] = null;
         }
 
         // apply suggested mappings (csvHeader -> systemField)
@@ -292,47 +283,19 @@ export class CsvMapping implements OnInit {
     const mappings = this.buildMappingsPayload();
     if (!mappings) return;
 
-    // If we have a validation result and it failed, don’t start.
-    if (this.validation() && !this.validation()!.valid) {
-      this.snackBar.open('Fix validation issues before importing.', 'Close', { duration: 6000 });
-      return;
-    }
+    // Validation is advisory only; import can proceed with partial mappings.
 
-    this.importing.set(true);
     const dt = this.dataType();
     this.importError.set(null);
     this.csvService.processImport(importId, mappings, this.companyId(), dt, this.dateFormat()).subscribe({
       next: (res) => {
-        this.importing.set(false);
         this.importError.set(null);
-        if (res.success && res.data?.success) {
-          const d = res.data;
-          const om = d.omissionSummary;
-          let msg = `${d.importedCount} row(s) imported.`;
-          let duration = 6000;
-          if (om?.omittedCount) {
-            duration = 14000;
-            msg = `${d.importedCount} row(s) imported. ${om.omittedCount} row(s) omitted (not saved).`;
-            const samples = om.omittedExamples
-              ?.slice(0, 3)
-              .map((e) => `Row ${e.rowNumber}: ${e.message}`)
-              .join(' · ');
-            if (samples) {
-              msg += ` Sample: ${samples}`;
-            }
-            if (om.omittedExamplesTruncated) {
-              msg += ' (more listed in Import history)';
-            }
-          }
-          this.snackBar.open(msg, 'Close', { duration });
-          this.router.navigate(['/app/data-sources/import-history']);
-          return;
+        if (!res.success) {
+          const msg = res.message || 'Import failed';
+          this.snackBar.open(msg, 'Close', { duration: 8000 });
         }
-        const msg = res.message || 'Import failed';
-        this.snackBar.open(msg, 'Close', { duration: 8000 });
       },
       error: (err) => {
-        this.importing.set(false);
         const api = err && typeof err === 'object' && 'error' in err ? (err as any).error : null;
         const msg = (api && typeof api.message === 'string' && api.message) ? api.message : 'Import failed';
         const errors: RowValidationError[] = Array.isArray(api?.data?.errors) ? api.data.errors : [];
@@ -367,6 +330,12 @@ export class CsvMapping implements OnInit {
         }
       },
     });
+
+    // Background mode: do not block page with importing loader.
+    this.snackBar.open('Import started in background. Check Import History for status/issues.', 'Close', {
+      duration: 7000,
+    });
+    this.router.navigate(['/app/data-sources/import-history']);
   }
 
 }

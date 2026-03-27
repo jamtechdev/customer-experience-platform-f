@@ -10,8 +10,7 @@ import {
   apiUrlInterceptor,
   authInterceptor,
   errorInterceptor,
-  languageInterceptor,
-  loaderInterceptor
+  languageInterceptor
 } from './core/interceptors/http.interceptor';
 
 export const appConfig: ApplicationConfig = {
@@ -31,7 +30,6 @@ export const appConfig: ApplicationConfig = {
       withInterceptors([
         apiUrlInterceptor,
         authInterceptor,
-        loaderInterceptor,
         languageInterceptor,
         errorInterceptor
       ])
