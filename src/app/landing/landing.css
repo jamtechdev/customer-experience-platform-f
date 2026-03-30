@@ -479,6 +479,34 @@
   font-size: 15px;
 }
 
+.lagout-btn{
+  padding: 8px 10px;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.2s ease;
+    cursor: pointer;
+    display: inline-block;
+    background: white;
+    color:#059669;
+    border: 2px solid white;
+}
+
+.login-btn{
+  padding: 8px 10px;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.2s ease;
+    cursor: pointer;
+    display: inline-block;
+    background: white;
+    color:#059669;
+    border: 2px solid white;
+}
+
 /* Responsive Design */
 @media (max-width: 768px) {
   .hero-title {

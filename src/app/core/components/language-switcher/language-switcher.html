@@ -1,8 +1,9 @@
 <button
-  mat-icon-button
+  mat-button
   [matMenuTriggerFor]="languageMenu"
   type="button"
   [attr.aria-label]="translationService.translate('app.settings')"
+<<<<<<< HEAD
   [attr.title]="getCurrentLanguageInfo().nativeName"
   class="language-switcher-button">
   <span class="current-lang-code" aria-hidden="true">{{ getLangCode(currentLang()) }}</span>
@@ -25,6 +26,28 @@
       </span>
       @if (currentLang() === lang.code) {
         <mat-icon class="lang-check">check</mat-icon>
+=======
+  class="lang-trigger">
+  <img [src]="getFlagSrc(currentLang())" [alt]="currentLang()" class="lang-flag" />
+  <span class="lang-code">{{ currentLang().toUpperCase() }}</span>
+  <mat-icon class="lang-chevron">expand_more</mat-icon>
+</button>
+
+<mat-menu #languageMenu="matMenu" class="lang-menu">
+  <div class="lang-menu-header">Language / Dil / لغة</div>
+  @for (lang of availableLanguages; track lang.code) {
+    <button
+      mat-menu-item
+      [class.lang-active]="currentLang() === lang.code"
+      (click)="switchLanguage(lang.code)">
+      <img [src]="getFlagSrc(lang.code)" [alt]="lang.code" class="item-flag" />
+      <span class="item-labels">
+        <span class="item-native">{{ lang.nativeName }}</span>
+        <span class="item-english">{{ lang.name }}</span>
+      </span>
+      @if (currentLang() === lang.code) {
+        <mat-icon class="item-check">check_circle</mat-icon>
+>>>>>>> a0dfb2c7bc6ef992e6dfed543d3fbbfdb53cff9a
       }
     </button>
   }

@@ -29,14 +29,9 @@ export class LanguageSwitcher {
     return this.availableLanguages.find(l => l.code === lang) || this.availableLanguages[0];
   }
 
-  /** ISO-style codes avoid Windows “GB + English” flag rendering glitches. */
-  getLangCode(lang: Language): string {
-    const codes: Record<Language, string> = { en: 'EN', tr: 'TR', ar: 'AR' };
-    return codes[lang] ?? lang.toUpperCase();
-  }
-
-  showSecondaryLabel(lang: { code: Language; name: string; nativeName: string }): boolean {
-    return lang.name.trim().toLowerCase() !== lang.nativeName.trim().toLowerCase();
+  getFlagSrc(lang: Language): string {
+    const codes: Record<Language, string> = { en: 'gb', tr: 'tr', ar: 'sa' };
+    return `assets/flags/4x3/${codes[lang] ?? 'un'}.svg`;
   }
 
   switchLanguage(lang: Language): void {

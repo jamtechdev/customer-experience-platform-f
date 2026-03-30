@@ -33,6 +33,7 @@
             <p>Upload CSV files with customer complaints, then use <strong>Re-run analysis</strong> to refresh themes from the latest negative feedback.</p>
           </div>
         </div>
+        <div class="table-wrapper">
         <table *ngIf="rootCauses().length > 0" mat-table [dataSource]="getPaginatedData()" class="root-cause-table">
           <ng-container matColumnDef="title">
             <th mat-header-cell *matHeaderCellDef>Root Cause</th>
@@ -81,6 +82,7 @@
           <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
           <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
         </table>
+        </div>
 
         <mat-paginator
           *ngIf="rootCauses().length > 0"
