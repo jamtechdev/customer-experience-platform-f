@@ -3,30 +3,6 @@
   [matMenuTriggerFor]="languageMenu"
   type="button"
   [attr.aria-label]="translationService.translate('app.settings')"
-<<<<<<< HEAD
-  [attr.title]="getCurrentLanguageInfo().nativeName"
-  class="language-switcher-button">
-  <span class="current-lang-code" aria-hidden="true">{{ getLangCode(currentLang()) }}</span>
-</button>
-
-<mat-menu #languageMenu="matMenu" class="language-menu-panel">
-  @for (lang of availableLanguages; track lang.code) {
-    <button
-      mat-menu-item
-      type="button"
-      [class.lang-item-active]="currentLang() === lang.code"
-      (click)="switchLanguage(lang.code)"
-      class="lang-menu-item">
-      <span class="lang-code-badge" aria-hidden="true">{{ getLangCode(lang.code) }}</span>
-      <span class="lang-text-block">
-        <span class="lang-primary-label">{{ lang.nativeName }}</span>
-        @if (showSecondaryLabel(lang)) {
-          <span class="lang-secondary-label">{{ lang.name }}</span>
-        }
-      </span>
-      @if (currentLang() === lang.code) {
-        <mat-icon class="lang-check">check</mat-icon>
-=======
   class="lang-trigger">
   <img [src]="getFlagSrc(currentLang())" [alt]="currentLang()" class="lang-flag" />
   <span class="lang-code">{{ currentLang().toUpperCase() }}</span>
@@ -47,7 +23,6 @@
       </span>
       @if (currentLang() === lang.code) {
         <mat-icon class="item-check">check_circle</mat-icon>
->>>>>>> a0dfb2c7bc6ef992e6dfed543d3fbbfdb53cff9a
       }
     </button>
   }
