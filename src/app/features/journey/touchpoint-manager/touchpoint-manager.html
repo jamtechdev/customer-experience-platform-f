@@ -4,6 +4,14 @@
     <p class="subtitle">Manage customer touchpoints across the journey</p>
   </div>
 
+  <div class="flow-milestone-hint" [class.flow-milestone-hint-complete]="touchpointFlowConfigured()">
+    <mat-icon>{{ touchpointFlowConfigured() ? 'verified' : 'flag' }}</mat-icon>
+    <p>
+      The journey flow is intended to be <strong>complete through the third touchpoint</strong>: add at least three
+      touchpoints with clear order (e.g. 0, 1, 2) so awareness → consideration → retention stages can all be measured.
+    </p>
+  </div>
+
   <div class="actions-section">
     @if (!showForm()) {
       <button mat-raised-button color="primary" (click)="openCreate()">

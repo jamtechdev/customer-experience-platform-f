@@ -35,6 +35,9 @@ export class TouchpointManager implements OnInit {
   private fb = inject(FormBuilder);
   private snackBar = inject(MatSnackBar);
 
+  /** Product expectation: journey is “complete” through the third touchpoint in order. */
+  readonly flowStepTarget = 3;
+
   loading = signal(false);
   touchpoints = signal<Touchpoint[]>([]);
   displayedColumns: string[] = ['order', 'name', 'description', 'category', 'actions'];
@@ -136,6 +139,10 @@ export class TouchpointManager implements OnInit {
         this.loading.set(false);
       },
     });
+  }
+
+  touchpointFlowConfigured(): boolean {
+    return this.touchpoints().length >= this.flowStepTarget;
   }
 
   deleteTouchpoint(id: number | undefined): void {

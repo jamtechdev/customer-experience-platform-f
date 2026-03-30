@@ -29,18 +29,14 @@ export class LanguageSwitcher {
     return this.availableLanguages.find(l => l.code === lang) || this.availableLanguages[0];
   }
 
-  getLanguageFlag(lang: Language): string {
-    const flags: Record<Language, string> = {
-      en: '🇬🇧',
-      tr: '🇹🇷',
-      ar: '🇸🇦'
-    };
-    return flags[lang] || '🌐';
+  /** ISO-style codes avoid Windows “GB + English” flag rendering glitches. */
+  getLangCode(lang: Language): string {
+    const codes: Record<Language, string> = { en: 'EN', tr: 'TR', ar: 'AR' };
+    return codes[lang] ?? lang.toUpperCase();
   }
 
-  getLanguageName(lang: Language): string {
-    const langInfo = this.availableLanguages.find(l => l.code === lang);
-    return langInfo?.nativeName || lang.toUpperCase();
+  showSecondaryLabel(lang: { code: Language; name: string; nativeName: string }): boolean {
+    return lang.name.trim().toLowerCase() !== lang.nativeName.trim().toLowerCase();
   }
 
   switchLanguage(lang: Language): void {

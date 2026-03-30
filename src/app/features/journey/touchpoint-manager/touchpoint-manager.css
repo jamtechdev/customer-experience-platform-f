@@ -18,6 +18,40 @@
   font-size: 1rem;
 }
 
+.flow-milestone-hint {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px 16px;
+  margin-bottom: 20px;
+  border-radius: 8px;
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  color: #1e3a5f;
+}
+
+.flow-milestone-hint mat-icon {
+  flex-shrink: 0;
+  margin-top: 2px;
+  color: #2563eb;
+}
+
+.flow-milestone-hint p {
+  margin: 0;
+  font-size: 0.9375rem;
+  line-height: 1.5;
+}
+
+.flow-milestone-hint-complete {
+  background: #ecfdf5;
+  border-color: #a7f3d0;
+  color: #064e3b;
+}
+
+.flow-milestone-hint-complete mat-icon {
+  color: #059669;
+}
+
 .actions-section {
   margin-bottom: 24px;
 }

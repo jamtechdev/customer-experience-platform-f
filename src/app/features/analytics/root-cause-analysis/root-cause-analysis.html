@@ -1,7 +1,18 @@
 <div class="root-cause-container">
-  <div class="header-section">
-    <h1>Root Cause Analysis</h1>
-    <p class="subtitle">Identify and analyze root causes of customer complaints</p>
+  <div class="header-section header-with-action">
+    <div>
+      <h1>Root Cause Analysis</h1>
+      <p class="subtitle">Identify and analyze root causes of customer complaints</p>
+    </div>
+    <button
+      mat-stroked-button
+      color="primary"
+      type="button"
+      (click)="runRootCauseAnalysis()"
+      [disabled]="loading() || reanalyzing()">
+      <mat-icon>refresh</mat-icon>
+      {{ reanalyzing() ? 'Analyzing…' : 'Re-run analysis' }}
+    </button>
   </div>
 
   <div *ngIf="loading()" class="loading-container">
@@ -19,7 +30,7 @@
           <div class="empty-state-content">
             <mat-icon>info</mat-icon>
             <h3>No Root Causes Found</h3>
-            <p>Upload CSV files with customer complaints to analyze root causes.</p>
+            <p>Upload CSV files with customer complaints, then use <strong>Re-run analysis</strong> to refresh themes from the latest negative feedback.</p>
           </div>
         </div>
         <table *ngIf="rootCauses().length > 0" mat-table [dataSource]="getPaginatedData()" class="root-cause-table">
