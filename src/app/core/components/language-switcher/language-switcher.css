@@ -1,66 +1,132 @@
-.language-switcher-button {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0 8px;
-  min-width: auto;
+/* ── Trigger ────────────────────────────────────────────────── */
+.lang-trigger {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 5px !important;
+  height: 38px !important;
+  padding: 0 10px 0 8px !important;
+  border-radius: 10px !important;
+  background: rgba(255,255,255,0.12) !important;
+  border: 1px solid rgba(255,255,255,0.22) !important;
+  color: #fff !important;
+  min-width: unset !important;
+  font-size: 0.78rem !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.05em !important;
 }
 
-.language-switcher-button mat-icon {
-  font-size: 24px;
-  width: 24px;
-  height: 24px;
+.lang-trigger:hover {
+  background: rgba(255,255,255,0.22) !important;
+  border-color: rgba(255,255,255,0.35) !important;
 }
 
-.language-menu {
-  min-width: 200px;
+.lang-flag {
+  width: 20px;
+  height: 15px;
+  border-radius: 2px;
+  /* flex-shrink: 0; */
+  object-fit: cover;
+  box-shadow: 0 0 0 1px rgba(0,0,0,0.12);
+  margin-right: 3px;
+  margin-left: 3px;
+}
+.lang-code { font-size: 0.72rem; font-weight: 700; letter-spacing: 0.07em; }
+
+.lang-chevron {
+  font-size: 15px !important;
+  width: 15px !important;
+  height: 15px !important;
+  opacity: 0.8;
 }
 
-.language-menu button[mat-menu-item] {
+/* ── Panel ──────────────────────────────────────────────────── */
+::ng-deep .lang-menu.mat-mdc-menu-panel {
+  min-width: 210px;
+  border-radius: 14px !important;
+  overflow: hidden;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.14), 0 2px 8px rgba(0,0,0,0.08) !important;
+  border: 1px solid var(--border-color);
+}
+
+.lang-menu-header {
+  padding: 11px 16px 9px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--text-tertiary);
+  border-bottom: 1px solid var(--border-color);
+  pointer-events: none;
+  user-select: none;
+}
+
+/* ── Items ──────────────────────────────────────────────────── */
+::ng-deep .lang-menu .mat-mdc-menu-item { height: 52px; padding: 0 14px; flex-direction: row-reverse; }
+
+::ng-deep .lang-menu .mat-mdc-menu-item .mat-mdc-menu-item-text {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 8px 16px;
+  width: 100%;
 }
 
-.menu-flag {
-  font-size: 24px;
-  line-height: 1;
-  width: 32px;
-  text-align: center;
+.item-flag {
+  width: 20px;
+  height: 15px;
+  border-radius: 2px;
+  flex-shrink: 0;
+  object-fit: cover;
+  box-shadow: 0 0 0 1px rgba(0,0,0,0.08);
+  /* display: block; */
 }
 
-.menu-name {
+.item-labels {
+  display: flex;
+  flex-direction: column;
   flex: 1;
-  font-weight: 500;
+  gap: 1px;
 }
 
-.menu-english {
-  font-size: 12px;
-  color: rgba(0, 0, 0, 0.6);
-  font-weight: normal;
+.item-native {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  line-height: 1.2;
 }
 
-[dir="rtl"] .menu-english {
-  color: rgba(255, 255, 255, 0.7);
+.item-english {
+  font-size: 0.7rem;
+  color: var(--text-tertiary);
+  line-height: 1.2;
 }
 
-.check-icon {
-  margin-left: auto;
-  color: var(--mat-primary-color, #1976d2);
+.item-check {
+  font-size: 18px !important;
+  width: 18px !important;
+  height: 18px !important;
+  color: var(--primary-color) !important;
+  flex-shrink: 0;
 }
 
-.language-menu button[mat-menu-item].active {
-  background-color: rgba(0, 0, 0, 0.04);
+/* ── Active ─────────────────────────────────────────────────── */
+::ng-deep .lang-menu .mat-mdc-menu-item.lang-active {
+  background-color: var(--primary-lighter, #ecfdf5);
 }
 
-[dir="rtl"] .language-menu button[mat-menu-item].active {
-  background-color: rgba(255, 255, 255, 0.1);
+::ng-deep .lang-menu .mat-mdc-menu-item.lang-active .item-native {
+  color: var(--primary-dark, #047857);
 }
 
-/* Responsive design */
-@media (max-width: 600px) {
-  .language-switcher-button {
-    padding: 0 4px;
-  }
+/* ── Dark ───────────────────────────────────────────────────── */
+[data-theme="dark"] ::ng-deep .lang-menu.mat-mdc-menu-panel {
+  background: var(--bg-secondary);
 }
+
+[data-theme="dark"] ::ng-deep .lang-menu .mat-mdc-menu-item.lang-active {
+  background-color: var(--primary-light, #064e3b);
+}
+
+[data-theme="dark"] ::ng-deep .lang-menu .mat-mdc-menu-item.lang-active .item-native {
+  color: var(--primary-color, #10b981);
+}
+

@@ -29,18 +29,9 @@ export class LanguageSwitcher {
     return this.availableLanguages.find(l => l.code === lang) || this.availableLanguages[0];
   }
 
-  getLanguageFlag(lang: Language): string {
-    const flags: Record<Language, string> = {
-      en: '🇬🇧',
-      tr: '🇹🇷',
-      ar: '🇸🇦'
-    };
-    return flags[lang] || '🌐';
-  }
-
-  getLanguageName(lang: Language): string {
-    const langInfo = this.availableLanguages.find(l => l.code === lang);
-    return langInfo?.nativeName || lang.toUpperCase();
+  getFlagSrc(lang: Language): string {
+    const codes: Record<Language, string> = { en: 'gb', tr: 'tr', ar: 'sa' };
+    return `assets/flags/4x3/${codes[lang] ?? 'un'}.svg`;
   }
 
   switchLanguage(lang: Language): void {
