@@ -143,6 +143,7 @@
     "marketingBlurb": "Sosyal medya, uygulama mağazası yorumları ve NPS anketlerinden elde edilen içgörülerle müşteri deneyimini geliştirin; memnuniyeti artırın ve işinizi güvenle ölçeklendirin.",
     "loginTitle": "Giriş yap",
     "loginSubtitle": "Hesabınıza erişmek için giriş yapın.",
+    "adminOnlyAccess": "Yalnızca yönetici erişimi",
     "signupTitle": "Hesap oluştur",
     "signupSubtitle": "Platformu kullanmaya başlamak için hesabınızı oluşturun.",
     "emailPlaceholder": "ad.soyad@kurum.com",

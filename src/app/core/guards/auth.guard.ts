@@ -48,24 +48,31 @@ export const checkerGuard: CanActivateFn = (route, state) => {
 };
 
 export const adminGuard: CanActivateFn = (route, state) => {
-  // Admin-only checks handled on backend.
-  return true;
+  const authService = inject(AuthService);
+  const router = inject(Router);
+  const currentUser = authService.currentUser();
+  const hasToken = authService.getToken() !== null;
+  const isAdmin = currentUser?.role === 'admin';
+
+  if (hasToken && isAdmin) {
+    return true;
+  }
+
+  router.navigate(['/login'], { replaceUrl: true });
+  return false;
 };
 
 /** Allows Admin and CX Manager (analyst). Redirects Executive (viewer) to dashboard. Client §13. */
 export const analystOrAdminGuard: CanActivateFn = (route, state) => {
-  // No role restriction on frontend.
-  return true;
+  return adminGuard(route, state);
 };
 
 /** Executive Dashboard: only Executive (viewer) role. Others redirect to main dashboard. */
 export const executiveOnlyGuard: CanActivateFn = (route, state) => {
-  // No special executive restriction on frontend.
-  return true;
+  return adminGuard(route, state);
 };
 
 /** Redirect Executive (viewer) to executive-dashboard when they try to open main dashboard. */
 export const dashboardRedirectGuard: CanActivateFn = (route, state) => {
-  // No dashboard redirection based on role.
-  return true;
+  return adminGuard(route, state);
 };

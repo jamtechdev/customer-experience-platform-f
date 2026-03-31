@@ -12,8 +12,7 @@
       </div>
       <div class="nav-links">
         <ng-container *ngIf="!isLoggedIn; else loggedInNav">
-          <a routerLink="/signup" class="btn-primary btn-large">{{ t('landing.getStarted') }}</a>
-          <a routerLink="/login" class="btn-secondary btn-large">{{ t('landing.login') }}</a>
+          <a routerLink="/login" class="btn-primary btn-large">{{ t('landing.adminLogin') }}</a>
         </ng-container>
         <ng-template #loggedInNav>
           <button class="lagout-btn" type="button" (click)="logout()">Logout</button>
