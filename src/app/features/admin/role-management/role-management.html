@@ -22,7 +22,7 @@
             <th mat-header-cell *matHeaderCellDef>Permissions</th>
             <td mat-cell *matCellDef="let role">
               <div class="permissions-list">
-                @if (role.permissions?.length) {
+                @if (role.permissions.length) {
                   <mat-chip *ngFor="let perm of role.permissions">{{ perm || 'N/A' }}</mat-chip>
                 } @else {
                   <span>N/A</span>
@@ -65,7 +65,7 @@
         <p><strong>Permissions:</strong></p>
         <div class="permissions-list">
           <mat-chip *ngFor="let perm of role.permissions">{{ perm || 'N/A' }}</mat-chip>
-          <span *ngIf="!role.permissions?.length">N/A</span>
+          <span *ngIf="!role.permissions.length">N/A</span>
         </div>
       </div>
       <div class="role-modal-actions">
