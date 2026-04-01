@@ -45,6 +45,7 @@ export class RootCauseAnalysis implements OnInit {
   loading = signal(false);
   reanalyzing = signal(false);
   rootCauses = signal<RootCause[]>([]);
+  selectedCause = signal<RootCause | null>(null);
   displayedColumns: string[] = ['title', 'category', 'priority', 'frequency', 'severity', 'actions'];
   pageSize = 10;
   pageIndex = 0;
@@ -125,6 +126,14 @@ export class RootCauseAnalysis implements OnInit {
       case 'medium': return 'primary';
       default: return '';
     }
+  }
+
+  viewRootCause(cause: RootCause): void {
+    this.selectedCause.set(cause);
+  }
+
+  closeRootCauseModal(): void {
+    this.selectedCause.set(null);
   }
 
   onPageChange(event: PageEvent): void {

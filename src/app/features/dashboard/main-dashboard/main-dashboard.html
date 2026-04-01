@@ -1,12 +1,4 @@
 <div class="dashboard-container">
-  <div class="backend-unavailable-banner" role="status">
-    <mat-icon>wifi_off</mat-icon>
-    <span>Offline intranet mode enabled</span>
-  </div>
-  <div *ngIf="backendUnavailable()" class="backend-unavailable-banner" role="alert">
-    <mat-icon>cloud_off</mat-icon>
-    <span>{{ t('dashboard.backendUnavailable') }}</span>
-  </div>
   <div class="dashboard-header">
     <div class="header-top">
       <div>

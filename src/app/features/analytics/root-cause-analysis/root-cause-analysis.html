@@ -73,7 +73,11 @@
           <ng-container matColumnDef="actions">
             <th mat-header-cell *matHeaderCellDef>Actions</th>
             <td mat-cell *matCellDef="let cause">
-              <button mat-icon-button>
+              <button
+                mat-icon-button
+                type="button"
+                (click)="viewRootCause(cause)"
+                [attr.aria-label]="'View details for ' + cause.title">
                 <mat-icon>visibility</mat-icon>
               </button>
             </td>
@@ -94,5 +98,37 @@
         </mat-paginator>
       </mat-card-content>
     </mat-card>
+  </div>
+
+  <div
+    *ngIf="selectedCause() as cause"
+    class="root-cause-modal-overlay"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="root-cause-modal-title"
+    (click)="closeRootCauseModal()">
+    <div class="root-cause-modal" (click)="$event.stopPropagation()">
+      <div class="root-cause-modal-header">
+        <h2 id="root-cause-modal-title">{{ cause.title }}</h2>
+        <button mat-icon-button type="button" aria-label="Close details" (click)="closeRootCauseModal()">
+          <mat-icon>close</mat-icon>
+        </button>
+      </div>
+
+      <div class="root-cause-modal-content">
+        <div class="detail-row"><strong>Category:</strong> {{ cause.category }}</div>
+        <div class="detail-row"><strong>Priority:</strong> {{ cause.priority }}</div>
+        <div class="detail-row"><strong>Frequency:</strong> {{ cause.frequency }}</div>
+        <div class="detail-row"><strong>Severity:</strong> {{ cause.severity }}%</div>
+        <div class="detail-row">
+          <strong>Description:</strong>
+          <p>{{ cause.description || 'No additional description available.' }}</p>
+        </div>
+      </div>
+
+      <div class="root-cause-modal-actions">
+        <button mat-raised-button color="primary" type="button" (click)="closeRootCauseModal()">Close</button>
+      </div>
+    </div>
   </div>
 </div>
