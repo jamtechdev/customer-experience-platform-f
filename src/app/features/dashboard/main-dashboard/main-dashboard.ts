@@ -76,10 +76,16 @@ export class MainDashboard implements OnInit {
     if (!nps || !nps.total) return 0;
     return (nps.detractors / nps.total) * 100;
   });
-  sentimentTrendPath = computed(() => this.buildTrendPath((this.dashboardTrends()?.sentimentTrends || []).map((x) => x.averageScore)));
-  npsTrendPath = computed(() => this.buildTrendPath((this.dashboardTrends()?.npsTrends || []).map((x) => x.npsScore)));
+  sentimentTrendValues = computed(() =>
+    this.toDailySeries(this.dashboardTrends()?.sentimentTrends || [], (x) => x.averageScore).values
+  );
+  npsTrendValues = computed(() =>
+    this.toDailySeries(this.dashboardTrends()?.npsTrends || [], (x) => x.npsScore).values
+  );
+  sentimentTrendPath = computed(() => this.buildTrendPath(this.sentimentTrendValues()));
+  npsTrendPath = computed(() => this.buildTrendPath(this.npsTrendValues()));
   trendXLabels = computed(() => {
-    const labels = this.dashboardTrends()?.sentimentTrends?.map((x) => x.period) || [];
+    const labels = this.toDailySeries(this.dashboardTrends()?.sentimentTrends || [], (x) => x.averageScore).labels;
     if (labels.length <= 2) return labels;
     return [labels[0], labels[Math.floor(labels.length / 2)], labels[labels.length - 1]];
   });
@@ -223,7 +229,7 @@ export class MainDashboard implements OnInit {
   }
 
   private loadTrendData(companyId?: number): void {
-    this.dashboardService.getDashboardTrends(companyId, 'week', 90).subscribe({
+    this.dashboardService.getDashboardTrends(companyId, 'day', 90).subscribe({
       next: (res) => {
         if (res.success && res.data) {
           this.dashboardTrends.set(res.data);
@@ -243,6 +249,10 @@ export class MainDashboard implements OnInit {
     const min = Math.min(...values);
     const max = Math.max(...values);
     const range = max - min || 1;
+    if (values.length === 1) {
+      const y = height - pad - ((values[0] - min) / range) * (height - pad * 2);
+      return `${pad},${y} ${width - pad},${y}`;
+    }
     return values
       .map((v, i) => {
         const x = pad + (i * (width - pad * 2)) / Math.max(1, values.length - 1);
@@ -250,5 +260,35 @@ export class MainDashboard implements OnInit {
         return `${x},${y}`;
       })
       .join(' ');
+  }
+
+  private toDailySeries<T extends { period: string }>(
+    items: T[],
+    valueSelector: (item: T) => number,
+    days: number = 90
+  ): { labels: string[]; values: number[] } {
+    const byDay = new Map<string, number>();
+    for (const item of items) {
+      const key = (item.period || '').slice(0, 10);
+      if (!key) continue;
+      byDay.set(key, valueSelector(item));
+    }
+
+    const labels: string[] = [];
+    const values: number[] = [];
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const start = new Date(today);
+    start.setDate(start.getDate() - (days - 1));
+
+    for (let i = 0; i < days; i++) {
+      const d = new Date(start);
+      d.setDate(start.getDate() + i);
+      const key = d.toISOString().slice(0, 10);
+      labels.push(key);
+      values.push(byDay.get(key) ?? 0);
+    }
+
+    return { labels, values };
   }
 }
