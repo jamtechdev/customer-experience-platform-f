@@ -11,6 +11,7 @@ import { Sidebar } from '../sidebar/sidebar';
 import { Header } from '../header/header';
 import { Footer } from '../footer/footer';
 import { CXWebSocketService } from '../../core/services/cx-websocket.service';
+import { TranslationService } from '../../core/services/translation.service';
 
 @Component({
   selector: 'app-main-layout',
@@ -32,9 +33,11 @@ export class MainLayout implements OnDestroy {
   private breakpointObserver = inject(BreakpointObserver);
   private breakpointSub?: Subscription;
   private websocket = inject(CXWebSocketService);
+  private translationService = inject(TranslationService);
 
   sidenavOpened = signal(true);
   isMobile = signal(false);
+  isRTL = this.translationService.isRTL;
 
   constructor() {
     // Always-on websocket connection for live status updates across the app.

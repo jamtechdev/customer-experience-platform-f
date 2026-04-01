@@ -1,8 +1,9 @@
-<mat-sidenav-container class="sidenav-container">
+<mat-sidenav-container class="sidenav-container" [dir]="isRTL() ? 'rtl' : 'ltr'">
   <mat-sidenav
     #sidenav
     [mode]="isMobile() ? 'over' : 'side'"
     [opened]="sidenavOpened()"
+    [position]="'start'"
     class="sidenav"
     [fixedInViewport]="isMobile()"
     [fixedTopGap]="isMobile() ? 0 : 64">

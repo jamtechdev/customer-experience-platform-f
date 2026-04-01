@@ -207,6 +207,8 @@
   line-height: 1.1;
   margin-bottom: 6px;
   animation: fadeIn 520ms ease both;
+  direction: ltr;
+  unicode-bidi: isolate;
 }
 
 .kpi-change {
@@ -493,6 +495,8 @@
   font-size: 4rem;
   font-weight: 700;
   color: #059669;
+  direction: ltr;
+  unicode-bidi: isolate;
 }
 
 .nps-breakdown {
@@ -652,6 +656,11 @@
   border-radius: 6px;
 }
 
+.trend-data-row strong {
+  direction: ltr;
+  unicode-bidi: isolate;
+}
+
 .trend-data-row:nth-child(odd) {
   background: #f8fafc;
 }
@@ -691,6 +700,8 @@
   color: #111827;
   line-height: 1;
   animation: pulseSoft 1800ms ease-in-out infinite;
+  direction: ltr;
+  unicode-bidi: isolate;
 }
 
 .trend-single-date {
