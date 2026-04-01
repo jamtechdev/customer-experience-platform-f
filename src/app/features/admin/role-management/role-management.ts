@@ -39,6 +39,7 @@ export class RoleManagement implements OnInit {
 
   loading = signal(false);
   roles = signal<Role[]>([]);
+  selectedRole = signal<Role | null>(null);
   displayedColumns: string[] = ['name', 'permissions', 'actions'];
 
   ngOnInit(): void {
@@ -65,5 +66,13 @@ export class RoleManagement implements OnInit {
         this.snackBar.open('Failed to load roles', 'Close', { duration: 3000 });
       }
     });
+  }
+
+  openRoleDetails(role: Role): void {
+    this.selectedRole.set(role);
+  }
+
+  closeRoleDetails(): void {
+    this.selectedRole.set(null);
   }
 }

@@ -187,6 +187,11 @@ export const routes: Routes = [
             data: { title: 'Social Media Analysis', breadcrumb: 'Social Media' }
           },
           {
+            path: 'source-extraction',
+            loadComponent: () => import('./features/social-media/source-extraction/source-extraction').then(m => m.SourceExtraction),
+            data: { title: 'Source Extraction', breadcrumb: 'Source Extraction' }
+          },
+          {
             path: 'methodology',
             loadComponent: () => import('./features/social-media/methodology/methodology').then(m => m.Methodology),
             data: { title: 'Analysis Methodology', breadcrumb: 'Methodology' }

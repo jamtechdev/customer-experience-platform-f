@@ -34,7 +34,7 @@
           <ng-container matColumnDef="actions">
             <th mat-header-cell *matHeaderCellDef>Actions</th>
             <td mat-cell *matCellDef="let role">
-              <button mat-icon-button>
+              <button mat-icon-button type="button" (click)="openRoleDetails(role)" aria-label="View role details">
                 <mat-icon>edit</mat-icon>
               </button>
             </td>
@@ -45,5 +45,32 @@
         </table>
       </mat-card-content>
     </mat-card>
+  </div>
+
+  <div
+    *ngIf="selectedRole() as role"
+    class="role-modal-overlay"
+    role="dialog"
+    aria-modal="true"
+    (click)="closeRoleDetails()">
+    <div class="role-modal" (click)="$event.stopPropagation()">
+      <div class="role-modal-header">
+        <h2>{{ getRoleLabel(role.role || role.name) || role.name }}</h2>
+        <button mat-icon-button type="button" aria-label="Close role modal" (click)="closeRoleDetails()">
+          <mat-icon>close</mat-icon>
+        </button>
+      </div>
+      <div class="role-modal-content">
+        <p><strong>Role key:</strong> {{ role.role || role.name }}</p>
+        <p><strong>Permissions:</strong></p>
+        <div class="permissions-list">
+          <mat-chip *ngFor="let perm of role.permissions">{{ perm || 'N/A' }}</mat-chip>
+          <span *ngIf="!role.permissions?.length">N/A</span>
+        </div>
+      </div>
+      <div class="role-modal-actions">
+        <button mat-raised-button color="primary" type="button" (click)="closeRoleDetails()">Close</button>
+      </div>
+    </div>
   </div>
 </div>
