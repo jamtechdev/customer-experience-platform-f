@@ -96,7 +96,12 @@
         </mat-card-header>
         <mat-card-content>
           <div *ngIf="dashboardData()" class="nps-summary">
-            <div class="nps-score">{{ Math.round(dashboardData()!.nps.score) }}</div>
+            <div class="nps-score">{{ dashboardData()!.nps.score.toFixed(2) }}</div>
+            <div class="nps-segmented-bar">
+              <div class="segment positive" [style.width.%]="npsSegmentPromoterWidth()"></div>
+              <div class="segment neutral" [style.width.%]="npsSegmentPassiveWidth()"></div>
+              <div class="segment negative" [style.width.%]="npsSegmentDetractorWidth()"></div>
+            </div>
             <div class="nps-breakdown">
               <div class="nps-item">
                 <span>{{ t('dashboard.positive') }}: {{ dashboardData()!.nps.promoters }}</span>
@@ -115,25 +120,46 @@
           </div>
         </mat-card-content>
       </mat-card>
-    </div>
 
-    <div *ngIf="dashboardData()?.alerts?.recent && dashboardData()!.alerts!.recent.length > 0" class="alerts-section">
-      <mat-card class="alerts-card">
+      <mat-card class="chart-card trend-card">
         <mat-card-header>
-          <mat-card-title>{{ t('dashboard.activeAlarms') }}</mat-card-title>
+          <mat-card-title>Sentiment Trend (90 days)</mat-card-title>
         </mat-card-header>
         <mat-card-content>
-          <div class="alerts-list">
-            <div *ngFor="let alert of dashboardData()!.alerts!.recent" class="alert-item">
-              <mat-icon [class]="'alert-icon ' + alert.priority">{{ alert.priority === 'critical' ? 'error' : 'warning' }}</mat-icon>
-              <div class="alert-content">
-                <div class="alert-title">{{ alert.title }}</div>
-                <div class="alert-message">{{ alert.message }}</div>
-              </div>
+          <div class="trend-chart-wrap" *ngIf="sentimentTrendPath(); else noTrend">
+            <svg viewBox="0 0 420 160" class="trend-svg" aria-label="Sentiment trend graph">
+              <polyline [attr.points]="sentimentTrendPath()" class="trend-line sentiment-line"></polyline>
+            </svg>
+            <div class="trend-labels">
+              <span *ngFor="let l of trendXLabels()">{{ l }}</span>
+            </div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <mat-card class="chart-card trend-card">
+        <mat-card-header>
+          <mat-card-title>NPS Trend (90 days)</mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="trend-chart-wrap" *ngIf="npsTrendPath(); else noTrend">
+            <svg viewBox="0 0 420 160" class="trend-svg" aria-label="NPS trend graph">
+              <polyline [attr.points]="npsTrendPath()" class="trend-line nps-line"></polyline>
+            </svg>
+            <div class="trend-labels">
+              <span *ngFor="let l of trendXLabels()">{{ l }}</span>
             </div>
           </div>
         </mat-card-content>
       </mat-card>
     </div>
+
   </div>
 </div>
+
+<ng-template #noTrend>
+  <div class="chart-placeholder">
+    <mat-icon>show_chart</mat-icon>
+    <p>No trend data yet</p>
+  </div>
+</ng-template>

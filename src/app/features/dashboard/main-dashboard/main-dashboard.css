@@ -128,6 +128,7 @@
 .kpi-card {
   height: 100%;
   border-left: 5px solid #059669;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
 }
 
 .kpi-header {
@@ -198,6 +199,7 @@
 
 .chart-card {
   min-height: 300px;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
 }
 
 .chart-placeholder {
@@ -337,6 +339,31 @@
   width: 100%;
 }
 
+.nps-segmented-bar {
+  display: flex;
+  width: min(540px, 100%);
+  height: 14px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: #e5e7eb;
+}
+
+.nps-segmented-bar .segment {
+  height: 100%;
+}
+
+.nps-segmented-bar .segment.positive {
+  background: #16a34a;
+}
+
+.nps-segmented-bar .segment.neutral {
+  background: #f59e0b;
+}
+
+.nps-segmented-bar .segment.negative {
+  background: #dc2626;
+}
+
 .nps-item {
   padding: 12px;
   background: #f9fafb;
@@ -390,6 +417,45 @@
 .alert-message {
   font-size: 0.875rem;
   color: #6b7280;
+}
+
+.trend-card .mat-mdc-card-content {
+  padding-top: 8px;
+}
+
+.trend-chart-wrap {
+  width: 100%;
+}
+
+.trend-svg {
+  width: 100%;
+  height: 180px;
+  background: linear-gradient(to bottom, #f8fafc, #eef2ff);
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+}
+
+.trend-line {
+  fill: none;
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.trend-line.sentiment-line {
+  stroke: #2563eb;
+}
+
+.trend-line.nps-line {
+  stroke: #059669;
+}
+
+.trend-labels {
+  margin-top: 8px;
+  display: flex;
+  justify-content: space-between;
+  color: #6b7280;
+  font-size: 0.75rem;
 }
 
 @media (max-width: 768px) {

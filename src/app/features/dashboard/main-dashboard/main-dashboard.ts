@@ -6,7 +6,7 @@ import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { DashboardService, DashboardStats } from '../../../core/services/dashboard.service';
+import { DashboardService, DashboardStats, DashboardTrends } from '../../../core/services/dashboard.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { TranslationService } from '../../../core/services/translation.service';
 
@@ -40,6 +40,7 @@ export class MainDashboard implements OnInit {
   loading = signal(true);
   kpiCards = signal<KPICard[]>([]);
   dashboardData = signal<DashboardStats | null>(null);
+  dashboardTrends = signal<DashboardTrends | null>(null);
   backendUnavailable = signal(false);
   Math = Math; // Expose Math for template
 
@@ -59,6 +60,28 @@ export class MainDashboard implements OnInit {
     const d = this.dashboardData();
     const total = d?.sentiment?.total ?? 0;
     return total > 0 ? Math.min(100, (d!.sentiment.negative / total) * 100) : 0;
+  });
+  npsSegmentPromoterWidth = computed(() => {
+    const nps = this.dashboardData()?.nps;
+    if (!nps || !nps.total) return 0;
+    return (nps.promoters / nps.total) * 100;
+  });
+  npsSegmentPassiveWidth = computed(() => {
+    const nps = this.dashboardData()?.nps;
+    if (!nps || !nps.total) return 0;
+    return (nps.passives / nps.total) * 100;
+  });
+  npsSegmentDetractorWidth = computed(() => {
+    const nps = this.dashboardData()?.nps;
+    if (!nps || !nps.total) return 0;
+    return (nps.detractors / nps.total) * 100;
+  });
+  sentimentTrendPath = computed(() => this.buildTrendPath((this.dashboardTrends()?.sentimentTrends || []).map((x) => x.averageScore)));
+  npsTrendPath = computed(() => this.buildTrendPath((this.dashboardTrends()?.npsTrends || []).map((x) => x.npsScore)));
+  trendXLabels = computed(() => {
+    const labels = this.dashboardTrends()?.sentimentTrends?.map((x) => x.period) || [];
+    if (labels.length <= 2) return labels;
+    return [labels[0], labels[Math.floor(labels.length / 2)], labels[labels.length - 1]];
   });
 
   downloadSampleCsv(): void {
@@ -146,6 +169,15 @@ export class MainDashboard implements OnInit {
             ? Math.round(((data.sentiment.averageScore + 1) / 2) * 100)
             : 0;
 
+          const sentimentTrend = this.dashboardTrends()?.sentimentTrends || [];
+          const npsTrend = this.dashboardTrends()?.npsTrends || [];
+          const sentimentChange = sentimentTrend.length >= 2
+            ? Math.round((sentimentTrend[sentimentTrend.length - 1].averageScore - sentimentTrend[sentimentTrend.length - 2].averageScore) * 100)
+            : 0;
+          const npsChange = npsTrend.length >= 2
+            ? Math.round(npsTrend[npsTrend.length - 1].npsScore - npsTrend[npsTrend.length - 2].npsScore)
+            : 0;
+
           // Build KPI cards
           this.kpiCards.set([
             {
@@ -157,27 +189,28 @@ export class MainDashboard implements OnInit {
             },
             {
               title: this.t('dashboard.npsScore'),
-              value: Math.round(data.nps.score),
-              change: 0, // TODO: Calculate trend from historical data
+              value: Number(data.nps.score || 0).toFixed(2),
+              change: npsChange,
               icon: 'trending_up',
               color: 'accent'
             },
             {
               title: this.t('dashboard.averageSentimentScore'),
               value: `${sentimentPercentage}%`,
-              change: 0, // TODO: Calculate trend from historical data
+              change: sentimentChange,
               icon: 'sentiment_satisfied',
               color: 'primary'
             },
             {
-              title: this.t('dashboard.activeAlarms'),
-              value: data.alerts.total,
+              title: this.t('dashboard.negative'),
+              value: data.sentiment.negative.toLocaleString(),
               change: 0,
-              icon: 'notifications',
+              icon: 'warning',
               color: 'warn'
             }
           ]);
         }
+        this.loadTrendData(companyId);
         this.loading.set(false);
       },
       error: (err) => {
@@ -187,5 +220,35 @@ export class MainDashboard implements OnInit {
         this.kpiCards.set([]);
       }
     });
+  }
+
+  private loadTrendData(companyId?: number): void {
+    this.dashboardService.getDashboardTrends(companyId, 'week', 90).subscribe({
+      next: (res) => {
+        if (res.success && res.data) {
+          this.dashboardTrends.set(res.data);
+        } else {
+          this.dashboardTrends.set(null);
+        }
+      },
+      error: () => this.dashboardTrends.set(null),
+    });
+  }
+
+  private buildTrendPath(values: number[]): string {
+    if (!values.length) return '';
+    const width = 420;
+    const height = 160;
+    const pad = 12;
+    const min = Math.min(...values);
+    const max = Math.max(...values);
+    const range = max - min || 1;
+    return values
+      .map((v, i) => {
+        const x = pad + (i * (width - pad * 2)) / Math.max(1, values.length - 1);
+        const y = height - pad - ((v - min) / range) * (height - pad * 2);
+        return `${x},${y}`;
+      })
+      .join(' ');
   }
 }
