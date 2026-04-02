@@ -115,6 +115,12 @@
   color: #6b7280;
 }
 
+.list-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 12px;
+}
+
 .feedback-table {
   width: 100%;
 }
@@ -239,6 +245,12 @@
   justify-content: space-between;
   font-size: 0.75rem;
   color: #9ca3af;
+}
+
+.feedback-card-actions {
+  margin-top: 10px;
+  display: flex;
+  justify-content: flex-end;
 }
 
 @media (max-width: 768px) {

@@ -135,18 +135,17 @@ export class ImportHistory implements OnInit {
   confirmDelete(row: CSVImport): void {
     const name = row.originalFilename || row.filename || `Import #${row.id}`;
     const msg =
-      `Remove "${name}" from import history?\n\n` +
-      `The uploaded file will be deleted from the server. ` +
-      `Customer feedback rows already saved from this import will not be removed.`;
+      `Delete "${name}"?\n\n` +
+      `This will remove the import history entry, uploaded file, and related imported feedback rows.`;
     if (!confirm(msg)) return;
 
     this.deletingId.set(row.id);
-    this.csvService.deleteImport(row.id).subscribe({
+    this.csvService.deleteImport(row.id, true).subscribe({
       next: (res) => {
         this.deletingId.set(null);
         if (res.success) {
           this.imports.update((list) => list.filter((r) => r.id !== row.id));
-          this.snackBar.open('Import removed from history.', 'Close', { duration: 5000 });
+          this.snackBar.open('Import and related feedback deleted.', 'Close', { duration: 5000 });
           this.syncRefreshTimer();
         } else {
           this.snackBar.open(res.message || 'Could not delete import.', 'Close', { duration: 6000 });

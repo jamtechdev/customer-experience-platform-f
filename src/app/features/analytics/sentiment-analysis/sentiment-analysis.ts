@@ -69,7 +69,7 @@ export class SentimentAnalysis implements OnInit {
   endDate = signal<string | null>(null);
 
   displayedColumns: string[] = ['sentiment', 'count', 'percentage', 'bar'];
-  listColumns: string[] = ['content', 'source', 'date', 'sentiment', 'score'];
+  listColumns: string[] = ['content', 'source', 'date', 'sentiment', 'score', 'actions'];
 
   ngOnInit(): void {
     this.loadPresets();
@@ -229,5 +229,39 @@ export class SentimentAnalysis implements OnInit {
 
   formatDate(d: string): string {
     return formatApiDate(d, { mode: 'date', empty: '' });
+  }
+
+  deleteRecord(row: { id: number; content: string }): void {
+    const ok = window.confirm('Delete this feedback record? This action cannot be undone.');
+    if (!ok) return;
+    const companyId = this.getCompanyId();
+    this.analysisService.deleteFeedbackRecord(row.id, companyId).subscribe({
+      next: () => {
+        this.snackBar.open('Feedback record deleted', 'Close', { duration: 3000 });
+        this.reloadAll();
+      },
+      error: () => {
+        this.snackBar.open('Failed to delete feedback record', 'Close', { duration: 3000 });
+      }
+    });
+  }
+
+  deleteAllRecords(): void {
+    const total = this.feedbackTotal();
+    const ok = window.confirm(
+      `Delete all feedback records in current scope? (${total} items). This action cannot be undone.`
+    );
+    if (!ok) return;
+    const companyId = this.getCompanyId();
+    this.analysisService.deleteAllFeedbackRecords(companyId).subscribe({
+      next: (res) => {
+        const n = res?.data?.deletedFeedback ?? 0;
+        this.snackBar.open(`Deleted ${n} feedback records`, 'Close', { duration: 3500 });
+        this.reloadAll();
+      },
+      error: () => {
+        this.snackBar.open('Failed to delete all feedback records', 'Close', { duration: 3000 });
+      }
+    });
   }
 }

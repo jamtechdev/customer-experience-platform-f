@@ -181,7 +181,9 @@ export class CSVService {
     return this.http.get<ApiResponse<CSVImport>>(`${this.baseUrl}/imports/${importId}`);
   }
 
-  deleteImport(importId: number): Observable<ApiResponse<{ deletedId: number }>> {
-    return this.http.delete<ApiResponse<{ deletedId: number }>>(`${this.baseUrl}/imports/${importId}`);
+  deleteImport(importId: number, deleteImportedFeedback: boolean = true): Observable<ApiResponse<{ deletedId: number }>> {
+    let params = new HttpParams();
+    params = params.set('deleteImportedFeedback', String(deleteImportedFeedback));
+    return this.http.delete<ApiResponse<{ deletedId: number }>>(`${this.baseUrl}/imports/${importId}`, { params });
   }
 }
