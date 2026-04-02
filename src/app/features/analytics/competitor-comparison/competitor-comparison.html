@@ -97,7 +97,13 @@
         </div>
         <div class="add-competitor-section">
           <h3>Add competitor</h3>
-          <p class="hint">Add a competitor by name. Metrics will appear once you upload feedback data tagged with this competitor.</p>
+          <p class="hint">
+            Add each competitor here first (or they are created automatically when you import CSV rows that name them).
+            During CSV import, map a column to <strong>competitor</strong> / <strong>competitor_name</strong> (or set
+            <strong>competitorId</strong>). Each row with that competitor name is stored with
+            <code>competitor_id</code>, and this page aggregates sentiment and feedback counts for those rows only.
+            “Main company” rows leave the competitor field empty.
+          </p>
           <div class="add-competitor-form">
             <mat-form-field appearance="outline" class="competitor-name-field">
               <mat-label>Competitor name</mat-label>

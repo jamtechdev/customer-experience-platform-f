@@ -98,6 +98,7 @@ export class Sidebar implements OnInit, OnDestroy {
       icon: 'share',
       children: [
         { labelKey: 'nav.socialAnalysis', icon: 'analytics', route: '/app/social-media/social-analysis' },
+        { labelKey: 'nav.sourceExtraction', icon: 'cloud_download', route: '/app/social-media/source-extraction' },
         { labelKey: 'nav.methodology', icon: 'menu_book', route: '/app/social-media/methodology' }
       ]
     },

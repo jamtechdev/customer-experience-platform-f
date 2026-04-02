@@ -33,17 +33,17 @@ function ensureDir(dirPath) {
   if (!fs.existsSync(dirPath)) fs.mkdirSync(dirPath, { recursive: true });
 }
 
-// Repo structure:
-//   frontend/scripts/generate-env.js
-//   sentimenter/.env
 const frontendRoot = path.resolve(__dirname, '..');
+const frontendEnvPath = path.resolve(frontendRoot, '.env');
 const backendEnvPath = path.resolve(frontendRoot, '..', 'sentimenter', '.env');
 const outFile = path.resolve(frontendRoot, 'src', 'assets', 'env.js');
 
+const frontendEnv = parseDotEnv(frontendEnvPath);
 const backendEnv = parseDotEnv(backendEnvPath);
 
-// Backend has API_URL like: http://localhost:5000 (without /api)
-const apiUrl = backendEnv.API_URL || '';
+// Priority: frontend .env NG_APP_API_URL -> backend .env API_URL -> default.
+const frontendApiUrl = frontendEnv.NG_APP_API_URL || '';
+const apiUrl = frontendApiUrl || backendEnv.API_URL || '';
 const apiBase =
   apiUrl && apiUrl.endsWith('/api') ? apiUrl.replace(/\/api$/, '/api') : apiUrl ? `${apiUrl.replace(/\/$/, '')}/api` : '';
 

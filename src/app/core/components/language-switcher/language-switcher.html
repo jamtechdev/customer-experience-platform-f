@@ -1,6 +1,7 @@
 <button
   mat-button
   [matMenuTriggerFor]="languageMenu"
+  type="button"
   [attr.aria-label]="translationService.translate('app.settings')"
   class="lang-trigger">
   <img [src]="getFlagSrc(currentLang())" [alt]="currentLang()" class="lang-flag" />

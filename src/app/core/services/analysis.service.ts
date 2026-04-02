@@ -44,6 +44,18 @@ export class AnalysisService {
     return this.http.get<ApiResponse<{ list: any[]; total: number }>>(`${this.baseUrl}/sentiment/list`, { params });
   }
 
+  deleteFeedbackRecord(id: number, companyId?: number): Observable<ApiResponse<{ id: number }>> {
+    let params = new HttpParams();
+    if (companyId) params = params.set('companyId', companyId.toString());
+    return this.http.delete<ApiResponse<{ id: number }>>(`${this.baseUrl}/sentiment/list/${id}`, { params });
+  }
+
+  deleteAllFeedbackRecords(companyId?: number): Observable<ApiResponse<{ deletedFeedback: number; deletedSentimentRows: number }>> {
+    let params = new HttpParams();
+    if (companyId) params = params.set('companyId', companyId.toString());
+    return this.http.delete<ApiResponse<{ deletedFeedback: number; deletedSentimentRows: number }>>(`${this.baseUrl}/sentiment/list`, { params });
+  }
+
   // Root Cause Analysis - matches backend /api/analysis/root-cause
   analyzeRootCauses(companyId: number, limit: number = 50): Observable<ApiResponse<RootCauseAnalysis[]>> {
     return this.http.post<ApiResponse<RootCauseAnalysis[]>>(`${this.baseUrl}/root-cause`, { companyId, limit });

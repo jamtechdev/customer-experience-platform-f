@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, throwError } from 'rxjs';
 import { 
   Report,
   ReportType,
@@ -41,20 +41,20 @@ export class ReportService {
     return this.http.post<ApiResponse<Report>>(this.baseUrl, report);
   }
 
-  updateReport(id: string, report: Partial<Report>): Observable<ApiResponse<Report>> {
-    return this.http.put<ApiResponse<Report>>(`${this.baseUrl}/${id}`, report);
+  updateReport(_id: string, _report: Partial<Report>): Observable<ApiResponse<Report>> {
+    return throwError(() => new Error('Report update is not available in offline mode'));
   }
 
-  deleteReport(id: string): Observable<ApiResponse<void>> {
-    return this.http.delete<ApiResponse<void>>(`${this.baseUrl}/${id}`);
+  deleteReport(_id: string): Observable<ApiResponse<void>> {
+    return throwError(() => new Error('Report delete is not available in offline mode'));
   }
 
-  generateReport(id: string): Observable<Blob> {
-    return this.http.get(`${this.baseUrl}/${id}/generate`, { responseType: 'blob' });
+  generateReport(_id: string): Observable<Blob> {
+    return this.http.post(`${this.baseUrl}/dashboard/export/pdf`, {}, { responseType: 'blob' });
   }
 
-  scheduleReport(id: string, schedule: any): Observable<ApiResponse<Report>> {
-    return this.http.post<ApiResponse<Report>>(`${this.baseUrl}/${id}/schedule`, schedule);
+  scheduleReport(_id: string, _schedule: any): Observable<ApiResponse<Report>> {
+    return throwError(() => new Error('Report scheduling is not available in offline mode'));
   }
 
   // Dashboard Data
@@ -64,12 +64,12 @@ export class ReportService {
       params = params.set('startDate', dateRange.startDate.toISOString());
       params = params.set('endDate', dateRange.endDate.toISOString());
     }
-    return this.http.get<ApiResponse<any>>(`${this.baseUrl}/dashboard`, { params });
+    return this.http.get<ApiResponse<any>>(`/api/dashboard`, { params });
   }
 
   // KPIs
   getKPIs(): Observable<ApiResponse<KPI[]>> {
-    return this.http.get<ApiResponse<KPI[]>>(`${this.baseUrl}/kpis`);
+    return this.http.get<ApiResponse<KPI[]>>(`/api/kpi`);
   }
 
   getKPITrends(kpiId: string, dateRange: DateRange): Observable<ApiResponse<any>> {
@@ -77,7 +77,7 @@ export class ReportService {
       .set('startDate', dateRange.startDate.toISOString())
       .set('endDate', dateRange.endDate.toISOString());
     
-    return this.http.get<ApiResponse<any>>(`${this.baseUrl}/kpis/${kpiId}/trends`, { params });
+    return this.http.get<ApiResponse<any>>(`/api/kpi/${kpiId}/trends`, { params });
   }
 
   compareKPIs(dateRange: DateRange, comparePrevious: boolean = true): Observable<ApiResponse<any>> {
@@ -86,21 +86,21 @@ export class ReportService {
       .set('endDate', dateRange.endDate.toISOString())
       .set('comparePrevious', comparePrevious.toString());
     
-    return this.http.get<ApiResponse<any>>(`${this.baseUrl}/kpis/compare`, { params });
+    return this.http.get<ApiResponse<any>>(`/api/kpi/compare`, { params });
   }
 
   // Real-time metrics
   getRealTimeMetrics(): Observable<ApiResponse<any>> {
-    return this.http.get<ApiResponse<any>>(`${this.baseUrl}/real-time`);
+    return this.http.get<ApiResponse<any>>(`/api/dashboard/executive`);
   }
 
   // Export
-  exportToPdf(reportId: string): Observable<Blob> {
-    return this.http.get(`${this.baseUrl}/${reportId}/export/pdf`, { responseType: 'blob' });
+  exportToPdf(_reportId: string): Observable<Blob> {
+    return this.http.post(`${this.baseUrl}/dashboard/export/pdf`, {}, { responseType: 'blob' });
   }
 
-  exportToExcel(reportId: string): Observable<Blob> {
-    return this.http.get(`${this.baseUrl}/${reportId}/export/excel`, { responseType: 'blob' });
+  exportToExcel(_reportId: string): Observable<Blob> {
+    return this.http.post(`${this.baseUrl}/dashboard/export/excel`, {}, { responseType: 'blob' });
   }
 
   exportDashboardToPdf(config: any): Observable<Blob> {

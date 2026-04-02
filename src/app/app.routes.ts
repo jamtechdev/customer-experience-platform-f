@@ -1,5 +1,5 @@
 import { Routes } from '@angular/router';
-import { authGuard, guestGuard } from './core/guards/auth.guard';
+import { adminGuard, authGuard, guestGuard } from './core/guards/auth.guard';
 
 export const routes: Routes = [
   // Landing page (public)
@@ -18,11 +18,6 @@ export const routes: Routes = [
     canActivate: [guestGuard]
   },
   {
-    path: 'signup',
-    loadComponent: () => import('./features/auth/signup/signup').then(m => m.Signup),
-    canActivate: [guestGuard]
-  },
-  {
     path: 'forgot-password',
     loadComponent: () => import('./features/auth/forgot-password/forgot-password').then(m => m.ForgotPassword),
     canActivate: [guestGuard]
@@ -37,7 +32,7 @@ export const routes: Routes = [
   {
     path: 'app',
     loadComponent: () => import('./layout/main-layout/main-layout').then(m => m.MainLayout),
-    canActivate: [authGuard],
+    canActivate: [authGuard, adminGuard],
     children: [
       // Dashboard
       {
@@ -190,6 +185,11 @@ export const routes: Routes = [
             path: 'social-analysis',
             loadComponent: () => import('./features/social-media/social-analysis/social-analysis').then(m => m.SocialAnalysis),
             data: { title: 'Social Media Analysis', breadcrumb: 'Social Media' }
+          },
+          {
+            path: 'source-extraction',
+            loadComponent: () => import('./features/social-media/source-extraction/source-extraction').then(m => m.SourceExtraction),
+            data: { title: 'Source Extraction', breadcrumb: 'Source Extraction' }
           },
           {
             path: 'methodology',

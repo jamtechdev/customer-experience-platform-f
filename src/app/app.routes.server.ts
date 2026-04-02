@@ -5,7 +5,6 @@ export const serverRoutes: ServerRoute[] = [
   { path: '', renderMode: RenderMode.Prerender },
   // Auth routes - use server rendering to handle auth state properly
   { path: 'login', renderMode: RenderMode.Server },
-  { path: 'signup', renderMode: RenderMode.Server },
   { path: 'forgot-password', renderMode: RenderMode.Server },
   { path: 'reset-password', renderMode: RenderMode.Server },
   // All protected routes use Server rendering

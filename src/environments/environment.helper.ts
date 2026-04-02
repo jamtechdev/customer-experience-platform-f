@@ -5,6 +5,7 @@
 
 export function getEnv(key: string, defaultValue: string = ''): string {
   if (typeof window !== 'undefined') {
+    if ((window as any).__env__?.[key]) return (window as any).__env__[key];
     if ((window as any).__env?.[key]) return (window as any).__env[key];
     if ((window as any)[key]) return (window as any)[key];
   }

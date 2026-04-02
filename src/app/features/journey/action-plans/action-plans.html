@@ -10,6 +10,18 @@
         <mat-icon>add</mat-icon>
         Create Action Plan
       </button>
+      @if (canGenerateSuggestions()) {
+        <button
+          mat-stroked-button
+          color="primary"
+          type="button"
+          (click)="generateSuggestions()"
+          [disabled]="generating() || loading()"
+        >
+          <mat-icon>auto_awesome</mat-icon>
+          {{ generating() ? 'Generating…' : 'Generate from root causes & recommendations' }}
+        </button>
+      }
     }
   </div>
 
@@ -107,7 +119,9 @@
             <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
             <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
             <tr class="mat-row" *matNoDataRow>
-              <td class="mat-cell" [attr.colspan]="displayedColumns.length">No action plans. Create one to get started.</td>
+              <td class="mat-cell" [attr.colspan]="displayedColumns.length">
+                No action plans yet. Use “Generate from root causes and recommendations” for draft suggestions, or create one manually.
+              </td>
             </tr>
           </table>
         </mat-card-content>

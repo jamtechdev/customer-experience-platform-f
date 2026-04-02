@@ -147,6 +147,12 @@
         <mat-card-subtitle>Total: {{ feedbackTotal() }} items with sentiment analysis</mat-card-subtitle>
       </mat-card-header>
       <mat-card-content>
+        <div class="list-actions" *ngIf="feedbackList().length > 0">
+          <button mat-flat-button color="warn" type="button" (click)="deleteAllRecords()">
+            <mat-icon>delete_sweep</mat-icon>
+            Delete all
+          </button>
+        </div>
         <p *ngIf="feedbackList().length === 0" class="empty-hint">No feedback in this period. Upload a CSV to see data here.</p>
 
         <!-- Desktop table -->
@@ -176,6 +182,14 @@
               <th mat-header-cell *matHeaderCellDef>Score</th>
               <td mat-cell *matCellDef="let row">{{ row.score.toFixed(2) }}</td>
             </ng-container>
+            <ng-container matColumnDef="actions">
+              <th mat-header-cell *matHeaderCellDef>Actions</th>
+              <td mat-cell *matCellDef="let row">
+                <button mat-icon-button color="warn" type="button" (click)="deleteRecord(row)" aria-label="Delete feedback">
+                  <mat-icon>delete</mat-icon>
+                </button>
+              </td>
+            </ng-container>
             <tr mat-header-row *matHeaderRowDef="listColumns"></tr>
             <tr mat-row *matRowDef="let row; columns: listColumns;"></tr>
           </table>
@@ -194,6 +208,12 @@
             <div class="feedback-meta">
               <span>{{ row.source }}</span>
               <span>{{ formatDate(row.date) }}</span>
+            </div>
+            <div class="feedback-card-actions">
+              <button mat-stroked-button color="warn" type="button" (click)="deleteRecord(row)">
+                <mat-icon>delete</mat-icon>
+                Delete
+              </button>
             </div>
           </div>
         </div>

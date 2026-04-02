@@ -12,6 +12,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { ActionPlanService, ActionPlanItem } from '../../../core/services/action-plan.service';
 import { AuthService } from '../../../core/services/auth.service';
+import { UserRole } from '../../../core/models';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { formatApiDate, toInputDateValue } from '../../../core/utils/api-date';
 
@@ -41,6 +42,7 @@ export class ActionPlans implements OnInit {
   private snackBar = inject(MatSnackBar);
 
   loading = signal(false);
+  generating = signal(false);
   actionPlans = signal<ActionPlanItem[]>([]);
   displayedColumns: string[] = ['title', 'priority', 'status', 'dueDate', 'actions'];
   showForm = signal(false);
@@ -151,6 +153,32 @@ export class ActionPlans implements OnInit {
     });
   }
 
+  generateSuggestions(): void {
+    if (!this.canGenerateSuggestions()) return;
+    const companyId = this.authService.currentUser()?.settings?.companyId ?? 1;
+    this.generating.set(true);
+    this.actionPlanService.generateFromRecommendations(companyId).subscribe({
+      next: (res) => {
+        this.generating.set(false);
+        const n = Array.isArray(res.data) ? res.data.length : 0;
+        if (res.success) {
+          this.loadActionPlans();
+          this.snackBar.open(
+            n > 0 ? `Added ${n} draft action plan(s) from recommendations and root causes.` : 'No new plans — existing drafts may already cover these items, or add more feedback/root causes.',
+            'Close',
+            { duration: 5000 }
+          );
+        } else {
+          this.snackBar.open('Could not generate suggestions.', 'Close', { duration: 3000 });
+        }
+      },
+      error: () => {
+        this.generating.set(false);
+        this.snackBar.open('Failed to generate suggestions. Check permissions or try again.', 'Close', { duration: 4000 });
+      },
+    });
+  }
+
   deletePlan(plan: ActionPlanItem): void {
     if (!confirm(`Delete action plan "${plan.title}"?`)) return;
     this.loading.set(true);
@@ -169,6 +197,11 @@ export class ActionPlans implements OnInit {
 
   isAdmin(): boolean {
     return this.authService.currentUser()?.role === 'admin';
+  }
+
+  canGenerateSuggestions(): boolean {
+    const r = this.authService.currentUser()?.role;
+    return r === UserRole.ADMIN || r === UserRole.ANALYST;
   }
 
   getPriorityColor(priority: string): string {

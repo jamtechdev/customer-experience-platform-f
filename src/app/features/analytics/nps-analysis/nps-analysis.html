@@ -58,7 +58,7 @@
       <mat-card class="nps-score-card" [class]="getNPSColor(npsData()!.score)">
         <mat-card-content>
           <div class="score-label">Net Promoter Score</div>
-          <div class="score-value">{{ npsData()!.score }}</div>
+          <div class="score-value">{{ npsData()!.score.toFixed(2) }}</div>
           <div class="score-category">{{ getNPSCategory(npsData()!.score) }}</div>
           <div class="score-description">
             Based on {{ npsData()!.total }} responses
@@ -114,7 +114,7 @@
       <mat-card-content>
         <div class="calculation-formula">
           <p><strong>NPS = % Promoters - % Detractors</strong></p>
-          <p>NPS = {{ npsData()!.promoterPercentage.toFixed(1) }}% - {{ npsData()!.detractorPercentage.toFixed(1) }}% = {{ npsData()!.score }}</p>
+          <p>NPS = {{ npsData()!.promoterPercentage.toFixed(1) }}% - {{ npsData()!.detractorPercentage.toFixed(1) }}% = {{ npsData()!.score.toFixed(2) }}</p>
         </div>
       </mat-card-content>
     </mat-card>

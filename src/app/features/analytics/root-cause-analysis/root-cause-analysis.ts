@@ -43,7 +43,9 @@ export class RootCauseAnalysis implements OnInit {
   private authService = inject(AuthService);
 
   loading = signal(false);
+  reanalyzing = signal(false);
   rootCauses = signal<RootCause[]>([]);
+  selectedCause = signal<RootCause | null>(null);
   displayedColumns: string[] = ['title', 'category', 'priority', 'frequency', 'severity', 'actions'];
   pageSize = 10;
   pageIndex = 0;
@@ -51,6 +53,28 @@ export class RootCauseAnalysis implements OnInit {
 
   ngOnInit(): void {
     this.loadRootCauses();
+  }
+
+  /** Re-runs server-side extraction on negative feedback (creates additional rows; refreshes list). */
+  runRootCauseAnalysis(): void {
+    const user = this.authService.currentUser();
+    const companyId = user?.settings?.companyId || 1;
+    this.reanalyzing.set(true);
+    this.analysisService.analyzeRootCauses(companyId, 50).subscribe({
+      next: (res) => {
+        this.reanalyzing.set(false);
+        if (res.success) {
+          this.snackBar.open('Root cause analysis updated', 'Close', { duration: 3000 });
+          this.loadRootCauses();
+        } else {
+          this.snackBar.open(res.message || 'Analysis failed', 'Close', { duration: 4000 });
+        }
+      },
+      error: () => {
+        this.reanalyzing.set(false);
+        this.snackBar.open('Could not run root cause analysis', 'Close', { duration: 4000 });
+      },
+    });
   }
 
   loadRootCauses(): void {
@@ -62,15 +86,18 @@ export class RootCauseAnalysis implements OnInit {
       next: (response) => {
         if (response.success) {
           // Map API response to component interface
-          const mapped = (response.data || []).map((item: any) => ({
-            id: item.id,
-            title: item.title,
-            category: item.category || 'Other',
-            priority: item.priority || 'medium',
-            severity: item.severity || 0,
-            frequency: item.frequency || 0,
-            description: item.description || ''
-          }));
+          const mapped = (response.data || []).map((item: any) => {
+            const fb = Array.isArray(item.feedbackIds) ? item.feedbackIds.length : 0;
+            return {
+              id: item.id,
+              title: item.title,
+              category: item.category || 'Other',
+              priority: item.priority || 'medium',
+              severity: typeof item.severity === 'number' ? item.severity : 0,
+              frequency: typeof item.frequency === 'number' ? item.frequency : fb,
+              description: item.description || '',
+            };
+          });
           this.rootCauses.set(mapped);
           this.totalItems = this.rootCauses().length;
         } else {
@@ -99,6 +126,14 @@ export class RootCauseAnalysis implements OnInit {
       case 'medium': return 'primary';
       default: return '';
     }
+  }
+
+  viewRootCause(cause: RootCause): void {
+    this.selectedCause.set(cause);
+  }
+
+  closeRootCauseModal(): void {
+    this.selectedCause.set(null);
   }
 
   onPageChange(event: PageEvent): void {

@@ -4,6 +4,14 @@
     <p class="subtitle">Map customer touchpoints and identify satisfaction points</p>
   </div>
 
+  <div
+    *ngIf="!loading() && journeyStages().length > 0"
+    class="flow-milestone-banner"
+    [class.flow-milestone-banner-complete]="thirdFlowMilestoneMet()">
+    <mat-icon>{{ thirdFlowMilestoneMet() ? 'check_circle' : 'timeline' }}</mat-icon>
+    <span>{{ flowMilestoneMessage() }}</span>
+  </div>
+
   <div *ngIf="loading()" class="loading-container">
     <mat-spinner></mat-spinner>
     <p>Loading journey data...</p>

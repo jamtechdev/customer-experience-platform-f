@@ -1,8 +1,4 @@
 <div class="dashboard-container">
-  <div *ngIf="backendUnavailable()" class="backend-unavailable-banner" role="alert">
-    <mat-icon>cloud_off</mat-icon>
-    <span>{{ t('dashboard.backendUnavailable') }}</span>
-  </div>
   <div class="dashboard-header">
     <div class="header-top">
       <div>
@@ -60,30 +56,19 @@
       <mat-card class="chart-card">
         <mat-card-header>
           <mat-card-title>{{ t('dashboard.sentimentDistribution') }}</mat-card-title>
+          <div class="card-subtitle">Category wise customer mood split</div>
         </mat-card-header>
         <mat-card-content>
           <div *ngIf="dashboardData()" class="sentiment-chart">
-            <div class="chart-bars">
-              <div class="chart-bar-row">
-                <span class="sentiment-label positive">{{ t('dashboard.positive') }}</span>
-                <div class="bar-track">
-                  <div class="bar-fill positive" [style.width.%]="sentimentPositiveWidth()"></div>
+            <div class="sentiment-friendly-list">
+              <div class="sentiment-friendly-row" *ngFor="let b of sentimentCategoryBars()">
+                <div class="sentiment-row-head">
+                  <span class="sentiment-pill" [class]="b.cssClass">{{ b.label }}</span>
+                  <strong>{{ b.value }}</strong>
                 </div>
-                <span class="sentiment-value">{{ dashboardData()!.sentiment.positive }}</span>
-              </div>
-              <div class="chart-bar-row">
-                <span class="sentiment-label neutral">{{ t('dashboard.neutral') }}</span>
-                <div class="bar-track">
-                  <div class="bar-fill neutral" [style.width.%]="sentimentNeutralWidth()"></div>
+                <div class="sentiment-progress">
+                  <div class="sentiment-progress-fill" [class]="b.cssClass" [style.width.%]="b.height"></div>
                 </div>
-                <span class="sentiment-value">{{ dashboardData()!.sentiment.neutral }}</span>
-              </div>
-              <div class="chart-bar-row">
-                <span class="sentiment-label negative">{{ t('dashboard.negative') }}</span>
-                <div class="bar-track">
-                  <div class="bar-fill negative" [style.width.%]="sentimentNegativeWidth()"></div>
-                </div>
-                <span class="sentiment-value">{{ dashboardData()!.sentiment.negative }}</span>
               </div>
             </div>
           </div>
@@ -97,19 +82,25 @@
       <mat-card class="chart-card">
         <mat-card-header>
           <mat-card-title>{{ t('dashboard.npsScore') }}</mat-card-title>
+          <div class="card-subtitle">Promoters, passives and detractors</div>
         </mat-card-header>
         <mat-card-content>
           <div *ngIf="dashboardData()" class="nps-summary">
-            <div class="nps-score">{{ Math.round(dashboardData()!.nps.score) }}</div>
+            <div class="nps-score">{{ dashboardData()!.nps.score.toFixed(2) }}</div>
+            <div class="nps-segmented-bar">
+              <div class="segment positive" [style.width.%]="npsDisplayWidths().positive"></div>
+              <div class="segment neutral" [style.width.%]="npsDisplayWidths().neutral"></div>
+              <div class="segment negative" [style.width.%]="npsDisplayWidths().negative"></div>
+            </div>
             <div class="nps-breakdown">
               <div class="nps-item">
-                <span>{{ t('dashboard.positive') }}: {{ dashboardData()!.nps.promoters }}</span>
+                <span>{{ t('dashboard.positive') }}: {{ dashboardData()!.nps.promoters }} ({{ npsPercentages().positive.toFixed(1) }}%)</span>
               </div>
               <div class="nps-item">
-                <span>{{ t('dashboard.neutral') }}: {{ dashboardData()!.nps.passives }}</span>
+                <span>{{ t('dashboard.neutral') }}: {{ dashboardData()!.nps.passives }} ({{ npsPercentages().neutral.toFixed(1) }}%)</span>
               </div>
               <div class="nps-item">
-                <span>{{ t('dashboard.negative') }}: {{ dashboardData()!.nps.detractors }}</span>
+                <span>{{ t('dashboard.negative') }}: {{ dashboardData()!.nps.detractors }} ({{ npsPercentages().negative.toFixed(1) }}%)</span>
               </div>
             </div>
           </div>
@@ -119,25 +110,76 @@
           </div>
         </mat-card-content>
       </mat-card>
-    </div>
 
-    <div *ngIf="dashboardData()?.alerts?.recent && dashboardData()!.alerts!.recent.length > 0" class="alerts-section">
-      <mat-card class="alerts-card">
+      <mat-card class="chart-card trend-card">
         <mat-card-header>
-          <mat-card-title>{{ t('dashboard.activeAlarms') }}</mat-card-title>
+          <mat-card-title>Sentiment Trend (90 days)</mat-card-title>
+          <div class="card-subtitle">Recent movement snapshot</div>
         </mat-card-header>
         <mat-card-content>
-          <div class="alerts-list">
-            <div *ngFor="let alert of dashboardData()!.alerts!.recent" class="alert-item">
-              <mat-icon [class]="'alert-icon ' + alert.priority">{{ alert.priority === 'critical' ? 'error' : 'warning' }}</mat-icon>
-              <div class="alert-content">
-                <div class="alert-title">{{ alert.title }}</div>
-                <div class="alert-message">{{ alert.message }}</div>
+          <div class="trend-chart-wrap" *ngIf="sentimentTrendBars().length; else noTrend">
+            <div *ngIf="sentimentSinglePoint(); else sentimentMulti" class="trend-single-state">
+              <div class="trend-single-value">{{ formatExactValue(sentimentTrendBars()[0].value) }}</div>
+              <div class="trend-single-date">{{ effectiveSentimentTrendPoints()[0].period | date:'yyyy-MM-dd' }}</div>
+            </div>
+            <ng-template #sentimentMulti>
+            <div class="trend-bar-chart">
+              <div class="trend-bar-col" *ngFor="let b of sentimentTrendBars()">
+                <span class="trend-bar-value">{{ formatExactValue(b.value) }}</span>
+                <div class="trend-bar sentiment-bar" [style.height.%]="b.height" [class.negative-bar]="b.negative"></div>
+                <span class="trend-bar-label">{{ b.label }}</span>
+              </div>
+            </div>
+            </ng-template>
+            <div class="trend-data-list">
+              <div class="trend-data-title">Latest data points</div>
+              <div class="trend-data-row" *ngFor="let p of (effectiveSentimentTrendPoints() | slice:-5)">
+                <span>{{ p.period | date:'yyyy-MM-dd' }}</span>
+                <strong>{{ formatExactValue(p.value) }}</strong>
+              </div>
+            </div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <mat-card class="chart-card trend-card">
+        <mat-card-header>
+          <mat-card-title>NPS Trend (90 days)</mat-card-title>
+          <div class="card-subtitle">Net promoter score over time</div>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="trend-chart-wrap" *ngIf="npsTrendBars().length; else noTrend">
+            <div *ngIf="npsSinglePoint(); else npsMulti" class="trend-single-state">
+              <div class="trend-single-value">{{ npsTrendBars()[0].value.toFixed(2) }}</div>
+              <div class="trend-single-date">{{ effectiveNpsTrendPoints()[0].period | date:'yyyy-MM-dd' }}</div>
+            </div>
+            <ng-template #npsMulti>
+            <div class="trend-bar-chart">
+              <div class="trend-bar-col" *ngFor="let b of npsTrendBars()">
+                <span class="trend-bar-value">{{ b.value.toFixed(2) }}</span>
+                <div class="trend-bar nps-bar" [style.height.%]="b.height" [class.negative-bar]="b.negative"></div>
+                <span class="trend-bar-label">{{ b.label }}</span>
+              </div>
+            </div>
+            </ng-template>
+            <div class="trend-data-list">
+              <div class="trend-data-title">Latest data points</div>
+              <div class="trend-data-row" *ngFor="let p of (effectiveNpsTrendPoints() | slice:-5)">
+                <span>{{ p.period | date:'yyyy-MM-dd' }}</span>
+                <strong>{{ p.value.toFixed(2) }}</strong>
               </div>
             </div>
           </div>
         </mat-card-content>
       </mat-card>
     </div>
+
   </div>
 </div>
+
+<ng-template #noTrend>
+  <div class="chart-placeholder">
+    <mat-icon>show_chart</mat-icon>
+    <p>No trend data yet</p>
+  </div>
+</ng-template>

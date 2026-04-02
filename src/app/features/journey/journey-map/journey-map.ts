@@ -41,6 +41,8 @@ export class JourneyMap implements OnInit {
   loading = signal(false);
   journeyStages = signal<JourneyStage[]>([]);
 
+  readonly flowStepTarget = 3;
+
   ngOnInit(): void {
     this.loadJourneyData();
   }
@@ -89,5 +91,30 @@ export class JourneyMap implements OnInit {
     if (pct >= 70) return 'satisfaction-high';
     if (pct >= 50) return 'satisfaction-medium';
     return 'satisfaction-low';
+  }
+
+  thirdFlowMilestoneMet(): boolean {
+    const stages = this.journeyStages();
+    if (stages.length < this.flowStepTarget) return false;
+    return stages.slice(0, this.flowStepTarget).every((s) => s.feedbackCount > 0);
+  }
+
+  flowStagesWithDataInFirstThree(): number {
+    return this.journeyStages()
+      .slice(0, this.flowStepTarget)
+      .filter((s) => s.feedbackCount > 0).length;
+  }
+
+  flowMilestoneMessage(): string {
+    const stages = this.journeyStages();
+    if (stages.length === 0) return '';
+    if (stages.length < this.flowStepTarget) {
+      return `Add at least ${this.flowStepTarget} journey stages (touchpoints) so the flow can run through the third step.`;
+    }
+    if (this.thirdFlowMilestoneMet()) {
+      return 'Third-flow milestone met: the first three stages all have feedback linked.';
+    }
+    const n = this.flowStagesWithDataInFirstThree();
+    return `Flow progress: ${n}/3 of the first three stages have feedback. Map CSV touchpoints or categories to each stage so the journey completes through step three.`;
   }
 }

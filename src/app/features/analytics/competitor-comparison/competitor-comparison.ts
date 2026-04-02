@@ -58,7 +58,7 @@ export class CompetitorComparison implements OnInit {
   newCompetitorName = '';
 
   presets = signal<ReportDatePreset[]>([]);
-  selectedPresetId = signal<string>('last_30_days');
+  selectedPresetId = signal<string>('ytd');
   startDate = signal<string | null>(null);
   endDate = signal<string | null>(null);
 
@@ -72,10 +72,8 @@ export class CompetitorComparison implements OnInit {
         const list =
           res.success && res.data?.presets?.length ? (res.data.presets as ReportDatePreset[]) : buildClientReportDatePresets();
         this.presets.set(list);
-        const user = this.authService.currentUser();
-        const defaultId = user?.role === 'admin' ? 'all_time' : 'last_30_days';
         const def =
-          list.find((p) => p.id === defaultId) ??
+          list.find((p) => p.id === 'ytd') ??
           list.find((p) => p.id === 'last_30_days') ??
           list[0];
         if (def) this.applyPreset(def);
@@ -84,10 +82,8 @@ export class CompetitorComparison implements OnInit {
       error: () => {
         const list = buildClientReportDatePresets();
         this.presets.set(list);
-        const user = this.authService.currentUser();
-        const defaultId = user?.role === 'admin' ? 'all_time' : 'last_30_days';
         const def =
-          list.find((p) => p.id === defaultId) ??
+          list.find((p) => p.id === 'ytd') ??
           list.find((p) => p.id === 'last_30_days') ??
           list[0];
         if (def) this.applyPreset(def);
