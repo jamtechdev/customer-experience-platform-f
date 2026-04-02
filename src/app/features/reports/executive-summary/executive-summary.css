@@ -71,6 +71,10 @@
 
 @media (max-width: 600px) {
   .summary-grid {
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: 1fr;
   }
+  .report-period-row mat-form-field {
+  min-width: 160px;
+  width: 100%;
+}
 }

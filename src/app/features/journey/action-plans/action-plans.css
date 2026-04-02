@@ -50,18 +50,131 @@
   gap: 16px;
 }
 
+/* Enhanced table styles */
+.content-section {
+  overflow-x: auto;
+}
+
 .action-plans-table {
   width: 100%;
+  min-width: 800px; /* Prevent over-compression */
+  border-collapse: collapse;
+}
+
+.action-plans-table th {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: white;
+  font-weight: 600;
+  border-bottom: 2px solid #e5e7eb;
+  padding: 16px 12px;
+  white-space: nowrap;
+}
+
+.action-plans-table td {
+  padding: 16px 12px;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.action-plans-table tr {
+  transition: background-color 0.2s;
+}
+
+.action-plans-table tr:hover {
+  background-color: #f9fafb;
+}
+
+.action-plans-table .mat-mdc-header-cell {
+  min-width: 200px;
+}
+
+.action-plans-table .mat-mdc-cell {
+  min-width: 120px;
+}
+
+.action-plans-table [matColumnDef="title"] th,
+.action-plans-table [matColumnDef="title"] td {
+  min-width: 250px;
+  max-width: 300px;
+  flex: 1;
+}
+
+.action-plans-table [matColumnDef="priority"] th,
+.action-plans-table [matColumnDef="priority"] td {
+  min-width: 100px;
+  text-align: center;
+}
+
+.action-plans-table [matColumnDef="status"] th,
+.action-plans-table [matColumnDef="status"] td {
+  min-width: 120px;
+  text-align: center;
+}
+
+.action-plans-table [matColumnDef="dueDate"] th,
+.action-plans-table [matColumnDef="dueDate"] td {
+  min-width: 130px;
+  text-align: center;
+}
+
+.action-plans-table [matColumnDef="actions"] th,
+.action-plans-table [matColumnDef="actions"] td {
+  min-width: 100px;
+  text-align: right;
 }
 
 .actions-inline {
   display: flex;
   align-items: center;
   gap: 8px;
+  justify-content: flex-end;
+}
+
+.actions-inline mat-icon-button {
+  width: 32px;
+  height: 32px;
+}
+
+/* No data row */
+.action-plans-table .mat-mdc-no-data-row {
+  height: 56px;
+}
+
+.action-plans-table .mat-mdc-no-data-cell {
+  text-align: center;
+  color: #6b7280;
+  font-style: italic;
 }
 
 @media (max-width: 768px) {
   .action-plans-container {
     padding: 16px;
+  }
+
+  .action-plans-table {
+    min-width: 700px;
+  }
+
+  .action-plans-table th,
+  .action-plans-table td {
+    padding: 12px 8px;
+    font-size: 0.875rem;
+  }
+
+  /* Hide less critical columns on small screens */
+  .action-plans-table [matColumnDef="description"],
+  .action-plans-table [matColumnDef="dueDate"] {
+    display: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .plan-form {
+    padding: 0.75rem;
+  }
+
+  .plan-form mat-form-field {
+    max-width: 100%;
   }
 }
