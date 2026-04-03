@@ -69,10 +69,21 @@ export class SentimentAnalysis implements OnInit {
   endDate = signal<string | null>(null);
 
   displayedColumns: string[] = ['sentiment', 'count', 'percentage', 'bar'];
-  listColumns: string[] = ['content', 'source', 'date', 'sentiment', 'score', 'actions'];
+  listColumns: string[] = ['content', 'source', 'date', 'sentiment', 'score'];
 
   ngOnInit(): void {
+    this.setListColumns();
     this.loadPresets();
+  }
+
+  isAdminUser(): boolean {
+    return this.authService.currentUser()?.role === 'admin';
+  }
+
+  private setListColumns(): void {
+    this.listColumns = this.isAdminUser()
+      ? ['content', 'source', 'date', 'sentiment', 'score', 'actions']
+      : ['content', 'source', 'date', 'sentiment', 'score'];
   }
 
   private loadPresets(): void {

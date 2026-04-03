@@ -91,4 +91,8 @@ export class AnalysisService {
   createCompetitor(name: string): Observable<ApiResponse<{ id: number; name: string; companyId: number }>> {
     return this.http.post<ApiResponse<{ id: number; name: string; companyId: number }>>(`${this.baseUrl}/competitor`, { name });
   }
+
+  deleteCompetitor(competitorId: number): Observable<ApiResponse<{ deletedId: number }>> {
+    return this.http.delete<ApiResponse<{ deletedId: number }>>(`${this.baseUrl}/competitor/${competitorId}`);
+  }
 }

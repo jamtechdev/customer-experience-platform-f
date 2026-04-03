@@ -39,13 +39,17 @@
     <p>Loading comparison data...</p>
   </div>
 
-  <div *ngIf="!loading() && !companyData()" class="empty-state">
+  <div *ngIf="!loading() && (!companyData() || noDataInSelectedRange())" class="empty-state">
     <mat-card>
       <mat-card-content>
         <div class="empty-state-content">
           <mat-icon>info</mat-icon>
-          <h3>No Comparison Data Available</h3>
-          <p>Upload CSV files with competitor data, or add competitors below once comparison data is loaded.</p>
+          <h3 *ngIf="!companyData()">No Comparison Data Available</h3>
+          <h3 *ngIf="companyData() && noDataInSelectedRange()">No data in selected date range</h3>
+          <p *ngIf="!companyData()">Upload CSV files with competitor data, or add competitors below once comparison data is loaded.</p>
+          <p *ngIf="companyData() && noDataInSelectedRange()">
+            Your CSV feedback dates are outside the currently selected period. Switch Period to <strong>All time</strong> or choose a custom range that includes your data dates.
+          </p>
         </div>
       </mat-card-content>
     </mat-card>
@@ -88,6 +92,23 @@
               <span [class.positive]="calculateGap(row) > 0" [class.negative]="calculateGap(row) < 0">
                 {{ calculateGap(row) > 0 ? '+' : '' }}{{ (calculateGap(row) * 100).toFixed(1) }}%
               </span>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="actions">
+            <th mat-header-cell *matHeaderCellDef>Actions</th>
+            <td mat-cell *matCellDef="let row">
+              <button
+                *ngIf="isAdminUser() && row.id !== companyData()?.id"
+                mat-icon-button
+                color="warn"
+                type="button"
+                (click)="removeCompetitor(row.id)"
+                aria-label="Remove competitor"
+                matTooltip="Remove competitor"
+              >
+                <mat-icon>delete</mat-icon>
+              </button>
             </td>
           </ng-container>
 

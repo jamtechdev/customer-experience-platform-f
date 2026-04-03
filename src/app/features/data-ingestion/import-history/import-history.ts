@@ -6,11 +6,13 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
+import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { Router, RouterModule } from '@angular/router';
 import { CSVService, CSVImport } from '../../../core/services/csv.service';
-import { Subscription } from 'rxjs';
+import { AuthService } from '../../../core/services/auth.service';
+import { Subscription, firstValueFrom } from 'rxjs';
 import { CXWebSocketService, type CSVImportStatusEvent } from '../../../core/services/cx-websocket.service';
 import { formatApiDate } from '../../../core/utils/api-date';
 
@@ -25,6 +27,7 @@ import { formatApiDate } from '../../../core/utils/api-date';
     MatChipsModule,
     MatIconModule,
     MatButtonModule,
+    MatCheckboxModule,
     MatSnackBarModule,
     MatTooltipModule,
     RouterModule,
@@ -34,6 +37,7 @@ import { formatApiDate } from '../../../core/utils/api-date';
 })
 export class ImportHistory implements OnInit {
   private csvService = inject(CSVService);
+  private authService = inject(AuthService);
   private websocket = inject(CXWebSocketService);
   private snackBar = inject(MatSnackBar);
   private router = inject(Router);
@@ -43,10 +47,13 @@ export class ImportHistory implements OnInit {
   loading = signal(false);
   refreshing = signal(false);
   imports = signal<CSVImport[]>([]);
-  displayedColumns: string[] = ['filename', 'rowCount', 'status', 'errorMessage', 'createdAt', 'actions'];
+  selectedImportIds = signal<Set<number>>(new Set());
+  bulkDeleting = signal(false);
+  displayedColumns: string[] = [];
   deletingId = signal<number | null>(null);
 
   ngOnInit(): void {
+    this.configureDisplayedColumns();
     this.loadImports();
     this.importStatusSub = this.websocket.onCSVImportStatus().subscribe((payload: CSVImportStatusEvent) => {
       const { importId, status } = payload;
@@ -118,6 +125,65 @@ export class ImportHistory implements OnInit {
     });
   }
 
+  isAdminUser(): boolean {
+    return this.authService.currentUser()?.role === 'admin';
+  }
+
+  private configureDisplayedColumns(): void {
+    const base = ['filename', 'rowCount', 'status', 'errorMessage', 'createdAt'];
+    this.displayedColumns = this.isAdminUser()
+      ? ['select', ...base, 'actions']
+      : base;
+  }
+
+  toggleSelectImport(importId: number, checked: boolean): void {
+    const next = new Set(this.selectedImportIds());
+    if (checked) next.add(importId);
+    else next.delete(importId);
+    this.selectedImportIds.set(next);
+  }
+
+  isAllSelected(): boolean {
+    const ids = this.imports().map((r) => r.id);
+    if (ids.length === 0) return false;
+    const selected = this.selectedImportIds();
+    return ids.every((id) => selected.has(id));
+  }
+
+  toggleSelectAll(checked: boolean): void {
+    if (!checked) {
+      this.selectedImportIds.set(new Set());
+      return;
+    }
+    const ids = this.imports().map((r) => r.id);
+    this.selectedImportIds.set(new Set(ids));
+  }
+
+  async bulkDeleteSelectedImports(): Promise<void> {
+    if (!this.isAdminUser()) return;
+    const ids = [...this.selectedImportIds()];
+    if (ids.length === 0) return;
+
+    const ok = confirm(
+      `Delete ${ids.length} import(s) and all related feedback rows?\n\nThis action cannot be undone.`
+    );
+    if (!ok) return;
+
+    this.bulkDeleting.set(true);
+    try {
+      for (const id of ids) {
+        await firstValueFrom(this.csvService.deleteImport(id, true));
+      }
+      this.selectedImportIds.set(new Set());
+      this.snackBar.open(`Deleted ${ids.length} imports`, 'Close', { duration: 5000 });
+      this.loadImports();
+    } catch (e: any) {
+      this.snackBar.open(e?.message || 'Failed to delete selected imports', 'Close', { duration: 6500 });
+    } finally {
+      this.bulkDeleting.set(false);
+    }
+  }
+
   formatDate(d: Date | string | number | null | undefined): string {
     return formatApiDate(d, { mode: 'datetime' });
   }
@@ -133,6 +199,7 @@ export class ImportHistory implements OnInit {
   }
 
   confirmDelete(row: CSVImport): void {
+    if (!this.isAdminUser()) return;
     const name = row.originalFilename || row.filename || `Import #${row.id}`;
     const msg =
       `Delete "${name}"?\n\n` +

@@ -147,7 +147,7 @@
         <mat-card-subtitle>Total: {{ feedbackTotal() }} items with sentiment analysis</mat-card-subtitle>
       </mat-card-header>
       <mat-card-content>
-        <div class="list-actions" *ngIf="feedbackList().length > 0">
+        <div class="list-actions" *ngIf="isAdminUser() && feedbackList().length > 0">
           <button mat-flat-button color="warn" type="button" (click)="deleteAllRecords()">
             <mat-icon>delete_sweep</mat-icon>
             Delete all
@@ -210,7 +210,13 @@
               <span>{{ formatDate(row.date) }}</span>
             </div>
             <div class="feedback-card-actions">
-              <button mat-stroked-button color="warn" type="button" (click)="deleteRecord(row)">
+              <button
+                *ngIf="isAdminUser()"
+                mat-stroked-button
+                color="warn"
+                type="button"
+                (click)="deleteRecord(row)"
+              >
                 <mat-icon>delete</mat-icon>
                 Delete
               </button>

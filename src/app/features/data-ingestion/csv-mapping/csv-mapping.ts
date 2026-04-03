@@ -338,4 +338,58 @@ export class CsvMapping implements OnInit {
     this.router.navigate(['/app/data-sources/import-history']);
   }
 
+  autoImport(): void {
+    const importId = this.importId();
+    if (!importId) return;
+
+    // Backend will auto-generate mappings from CSV headers when mappings is empty.
+    this.importError.set(null);
+    this.csvService.processImport(importId, {}, this.companyId(), undefined, this.dateFormat()).subscribe({
+      next: (res) => {
+        this.importError.set(null);
+        if (!res.success) {
+          const msg = res.message || 'Import failed';
+          this.snackBar.open(msg, 'Close', { duration: 8000 });
+        }
+      },
+      error: (err) => {
+        const api = err && typeof err === 'object' && 'error' in err ? (err as any).error : null;
+        const msg = (api && typeof api.message === 'string' && api.message) ? api.message : 'Import failed';
+        const errors: RowValidationError[] = Array.isArray(api?.data?.errors) ? api.data.errors : [];
+        const errorDetails = api?.data?.errorDetails;
+
+        const guidance: string[] | undefined = errorDetails?.guidance;
+        const totalIssues: number | undefined = errorDetails?.totalIssues;
+
+        this.snackBar.open(
+          errors.length > 0
+            ? `${msg} (${errors.length} issue(s))`
+            : msg,
+          'Close',
+          { duration: 10000 }
+        );
+
+        if (errors.length > 0) {
+          this.importError.set({
+            message: msg,
+            totalIssues,
+            guidance,
+            errors,
+          });
+        } else {
+          this.importError.set({
+            message: msg,
+            guidance,
+            errors: [],
+          });
+        }
+      },
+    });
+
+    this.snackBar.open('Auto import started. Check Import History for status/issues.', 'Close', {
+      duration: 7000,
+    });
+    this.router.navigate(['/app/data-sources/import-history']);
+  }
+
 }

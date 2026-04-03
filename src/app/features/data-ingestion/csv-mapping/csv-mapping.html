@@ -88,6 +88,11 @@
             {{ validating() ? 'Validating…' : 'Validate' }}
           </button>
 
+          <button mat-stroked-button color="primary" type="button" (click)="autoImport()" [disabled]="validating()">
+            <mat-icon>auto_fix_high</mat-icon>
+            Auto import
+          </button>
+
           <button mat-raised-button color="primary" (click)="startImport()" [disabled]="validating()">
             <mat-icon>play_arrow</mat-icon>
             Start Import

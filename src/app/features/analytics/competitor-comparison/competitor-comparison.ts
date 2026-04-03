@@ -8,6 +8,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { FormsModule } from '@angular/forms';
 import { AnalysisService } from '../../../core/services/analysis.service';
 import { AuthService } from '../../../core/services/auth.service';
@@ -20,6 +21,7 @@ import {
 } from '../../../core/utils/report-date-presets';
 
 interface CompetitorData {
+  id: number;
   name: string;
   sentimentScore: number;
   npsScore: number;
@@ -40,6 +42,7 @@ interface CompetitorData {
     MatFormFieldModule,
     MatInputModule,
     MatSelectModule,
+    MatTooltipModule,
   ],
   templateUrl: './competitor-comparison.html',
   styleUrl: './competitor-comparison.css',
@@ -54,7 +57,8 @@ export class CompetitorComparison implements OnInit {
   addingCompetitor = signal(false);
   companyData = signal<CompetitorData | null>(null);
   competitors = signal<CompetitorData[]>([]);
-  displayedColumns: string[] = ['name', 'sentimentScore', 'npsScore', 'feedbackCount', 'gap'];
+  noDataInSelectedRange = signal(false);
+  displayedColumns: string[] = ['name', 'sentimentScore', 'npsScore', 'feedbackCount', 'gap', 'actions'];
   newCompetitorName = '';
 
   presets = signal<ReportDatePreset[]>([]);
@@ -64,6 +68,10 @@ export class CompetitorComparison implements OnInit {
 
   ngOnInit(): void {
     this.loadPresets();
+  }
+
+  isAdminUser(): boolean {
+    return this.authService.currentUser()?.role === 'admin';
   }
 
   private loadPresets(): void {
@@ -167,18 +175,28 @@ export class CompetitorComparison implements OnInit {
       next: (response: any) => {
         if (response.success && response.data) {
           const data = response.data;
+
+          const companyFeedbackCount = data.company?.feedbackCount ?? 0;
+          const competitorFeedbackCounts: number[] = Array.isArray(data.competitors)
+            ? data.competitors.map((c: any) => c?.feedbackCount ?? 0)
+            : [];
+          const competitorsAllZero = competitorFeedbackCounts.length > 0 && competitorFeedbackCounts.every((x) => x === 0);
+          this.noDataInSelectedRange.set(companyFeedbackCount === 0 && competitorsAllZero);
+
           if (data.company) {
             this.companyData.set({
+              id: data.company.id,
               name: data.company.name,
               sentimentScore: data.company.sentimentScore || 0,
               npsScore: data.company.npsScore || 0,
-              feedbackCount: data.company.feedbackCount || 0
+              feedbackCount: companyFeedbackCount
             });
           } else {
             this.companyData.set(null);
           }
           if (data.competitors && Array.isArray(data.competitors)) {
             this.competitors.set(data.competitors.map((c: any) => ({
+              id: c.id,
               name: c.name || 'Unknown',
               sentimentScore: c.sentimentScore || 0,
               npsScore: c.npsScore || 0,
@@ -190,6 +208,7 @@ export class CompetitorComparison implements OnInit {
         } else {
           this.companyData.set(null);
           this.competitors.set([]);
+          this.noDataInSelectedRange.set(false);
         }
         this.loading.set(false);
       },
@@ -198,6 +217,7 @@ export class CompetitorComparison implements OnInit {
         this.loading.set(false);
         this.companyData.set(null);
         this.competitors.set([]);
+        this.noDataInSelectedRange.set(false);
         // Only show error if it's not a 500 (server might not have data yet)
         if (error.status !== 500) {
           this.snackBar.open('Failed to load comparison data', 'Close', { duration: 3000 });
@@ -216,5 +236,19 @@ export class CompetitorComparison implements OnInit {
     const company = this.companyData();
     if (!company) return 0;
     return row.sentimentScore - company.sentimentScore;
+  }
+
+  removeCompetitor(competitorId: number): void {
+    if (!this.isAdminUser()) return;
+    const ok = window.confirm('Remove this competitor? Related feedback will remain but will no longer count for that competitor.');
+    if (!ok) return;
+    this.analysisService.deleteCompetitor(competitorId).subscribe({
+      next: (res) => {
+        if (res.success) this.loadComparisonData();
+      },
+      error: () => {
+        this.snackBar.open('Failed to remove competitor', 'Close', { duration: 3500 });
+      },
+    });
   }
 }
