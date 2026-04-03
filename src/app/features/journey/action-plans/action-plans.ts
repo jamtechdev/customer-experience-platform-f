@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatCardModule } from '@angular/material/card';
@@ -44,6 +44,21 @@ export class ActionPlans implements OnInit {
   loading = signal(false);
   generating = signal(false);
   actionPlans = signal<ActionPlanItem[]>([]);
+  readonly pageSize = 20;
+  page = signal(1);
+  pagedActionPlans = computed(() => {
+    const all = this.actionPlans();
+    const total = all.length;
+    if (total === 0) return [];
+    const maxPage = Math.max(1, Math.ceil(total / this.pageSize));
+    const p = Math.min(Math.max(1, this.page()), maxPage);
+    const start = (p - 1) * this.pageSize;
+    return all.slice(start, start + this.pageSize);
+  });
+  totalPages = computed(() => {
+    const total = this.actionPlans().length;
+    return total === 0 ? 0 : Math.ceil(total / this.pageSize);
+  });
   displayedColumns: string[] = ['title', 'priority', 'status', 'dueDate', 'actions'];
   showForm = signal(false);
   editingId = signal<number | null>(null);
@@ -82,17 +97,31 @@ export class ActionPlans implements OnInit {
             departmentId: p.departmentId
           }));
           this.actionPlans.set(mapped);
+          this.page.set(1);
         } else {
           this.actionPlans.set([]);
+          this.page.set(1);
         }
         this.loading.set(false);
       },
       error: () => {
         this.loading.set(false);
         this.actionPlans.set([]);
+        this.page.set(1);
         this.snackBar.open('Failed to load action plans', 'Close', { duration: 3000 });
       }
     });
+  }
+
+  goPrevPage(): void {
+    this.page.update((p) => Math.max(1, p - 1));
+  }
+
+  goNextPage(): void {
+    const total = this.actionPlans().length;
+    if (total === 0) return;
+    const maxPage = Math.ceil(total / this.pageSize);
+    this.page.update((p) => Math.min(maxPage, p + 1));
   }
 
   openCreate(): void {

@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
@@ -30,6 +30,22 @@ export class JourneyHeatmap implements OnInit {
   stages = signal<StageRow[]>([]);
   error = signal<string | null>(null);
 
+  readonly pageSize = 20;
+  page = signal(1);
+  pagedStages = computed(() => {
+    const all = this.stages();
+    const total = all.length;
+    if (total === 0) return [];
+    const maxPage = Math.max(1, Math.ceil(total / this.pageSize));
+    const p = Math.min(Math.max(1, this.page()), maxPage);
+    const start = (p - 1) * this.pageSize;
+    return all.slice(start, start + this.pageSize);
+  });
+  totalPages = computed(() => {
+    const total = this.stages().length;
+    return total === 0 ? 0 : Math.ceil(total / this.pageSize);
+  });
+
   ngOnInit(): void {
     this.loadHeatmap();
   }
@@ -52,14 +68,17 @@ export class JourneyHeatmap implements OnInit {
               satisfactionPoints: Array.isArray(s.satisfactionPoints) ? s.satisfactionPoints : [],
             }))
           );
+          this.page.set(1);
         } else {
           this.stages.set([]);
+          this.page.set(1);
         }
         this.loading.set(false);
       },
       error: (err) => {
         this.error.set(err?.message || 'Failed to load journey analysis');
         this.stages.set([]);
+        this.page.set(1);
         this.loading.set(false);
       },
     });
@@ -77,5 +96,16 @@ export class JourneyHeatmap implements OnInit {
     if (score >= 0.3) return 'heat-pain-mid';
     if (score > 0) return 'heat-pain-low';
     return 'heat-none';
+  }
+
+  goPrevPage(): void {
+    this.page.update((p) => Math.max(1, p - 1));
+  }
+
+  goNextPage(): void {
+    const total = this.stages().length;
+    if (total === 0) return;
+    const maxPage = Math.ceil(total / this.pageSize);
+    this.page.update((p) => Math.min(maxPage, p + 1));
   }
 }

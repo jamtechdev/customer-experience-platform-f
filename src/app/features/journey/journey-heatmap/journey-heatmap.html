@@ -36,7 +36,7 @@
             <span class="col-metric">Dissatisfaction</span>
             <span class="col-count">Feedback</span>
           </div>
-          @for (row of stages(); track row.stageName) {
+          @for (row of pagedStages(); track row.stageName) {
             <div class="heatmap-row">
               <span class="col-stage">{{ row.stageName }}</span>
               <span class="col-metric" [class]="getSatisfactionColor(row.satisfactionScore)">
@@ -48,6 +48,15 @@
               <span class="col-count">{{ row.feedbackCount }}</span>
             </div>
           }
+        </div>
+        <div *ngIf="totalPages() > 1" class="pagination">
+          <button mat-button type="button" (click)="goPrevPage()" [disabled]="page() <= 1">
+            Prev
+          </button>
+          <span class="pagination-label">Page {{ page() }} of {{ totalPages() }}</span>
+          <button mat-button type="button" (click)="goNextPage()" [disabled]="page() >= totalPages()">
+            Next
+          </button>
         </div>
         <div class="legend">
           <span class="legend-item heat-high">High satisfaction</span>

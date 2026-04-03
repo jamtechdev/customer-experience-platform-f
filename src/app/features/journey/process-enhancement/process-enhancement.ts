@@ -1,4 +1,4 @@
-import { Component, inject, signal, OnInit } from '@angular/core';
+import { Component, computed, inject, signal, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
@@ -29,6 +29,32 @@ export class ProcessEnhancement implements OnInit {
   loading = signal(false);
   plans = signal<ProcessEnhancementPlan[]>([]);
   error = signal<string | null>(null);
+  readonly pageSize = 20;
+  page = signal(1);
+  pagedPlans = computed(() => {
+    const all = this.plans();
+    const total = all.length;
+    if (total === 0) return [];
+    const maxPage = Math.max(1, Math.ceil(total / this.pageSize));
+    const p = Math.min(Math.max(1, this.page()), maxPage);
+    const start = (p - 1) * this.pageSize;
+    return all.slice(start, start + this.pageSize);
+  });
+  totalPages = computed(() => {
+    const total = this.plans().length;
+    return total === 0 ? 0 : Math.ceil(total / this.pageSize);
+  });
+
+  goPrevPage(): void {
+    this.page.update((p) => Math.max(1, p - 1));
+  }
+
+  goNextPage(): void {
+    const total = this.plans().length;
+    if (total === 0) return;
+    const maxPage = Math.ceil(total / this.pageSize);
+    this.page.update((p) => Math.min(maxPage, p + 1));
+  }
 
   ngOnInit(): void {
     // Auto-generate on page open so admin sees full plans immediately.
@@ -43,14 +69,17 @@ export class ProcessEnhancement implements OnInit {
       next: (res) => {
         if (res.success && res.data) {
           this.plans.set(res.data);
+          this.page.set(1);
         } else {
           this.plans.set([]);
+          this.page.set(1);
         }
         this.loading.set(false);
       },
       error: (err) => {
         this.error.set(err?.message || 'Failed to load enhancement plans');
         this.plans.set([]);
+        this.page.set(1);
         this.loading.set(false);
       },
     });

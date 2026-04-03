@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
@@ -40,6 +40,21 @@ export class JourneyMap implements OnInit {
 
   loading = signal(false);
   journeyStages = signal<JourneyStage[]>([]);
+  readonly pageSize = 20;
+  page = signal(1);
+  pagedJourneyStages = computed(() => {
+    const all = this.journeyStages();
+    const total = all.length;
+    if (total === 0) return [];
+    const maxPage = Math.max(1, Math.ceil(total / this.pageSize));
+    const p = Math.min(Math.max(1, this.page()), maxPage);
+    const start = (p - 1) * this.pageSize;
+    return all.slice(start, start + this.pageSize);
+  });
+  totalPages = computed(() => {
+    const total = this.journeyStages().length;
+    return total === 0 ? 0 : Math.ceil(total / this.pageSize);
+  });
 
   readonly flowStepTarget = 3;
 
@@ -53,36 +68,57 @@ export class JourneyMap implements OnInit {
     const companyId = user?.role === 'admin' ? undefined : (user?.settings?.companyId ?? 1);
     this.journeyService.analyzeJourney(companyId).subscribe({
       next: (response) => {
-        if (response.success && response.data) {
-          const data = response.data;
+        try {
+          if (response.success && response.data) {
+            const data = response.data;
           // Backend returns JourneyStageAnalysis[] like:
           // { stage: {id,name,...}, satisfactionScore, dissatisfactionScore, feedbackCount, painPoints, satisfactionPoints }
-          const list = Array.isArray(data) ? data : data?.stages;
-          if (!Array.isArray(list)) {
-            this.journeyStages.set([]);
-            this.loading.set(false);
-            return;
-          }
+            const list = Array.isArray(data) ? data : data?.stages;
+            if (!Array.isArray(list)) {
+              this.journeyStages.set([]);
+              this.page.set(1);
+              return;
+            }
 
-          this.journeyStages.set(
-            list.map((s: any) => ({
-              id: s?.stage?.id ?? s?.stageId ?? s?.id ?? 0,
-              name: s?.stage?.name ?? s?.name ?? '',
-              satisfactionScore: Number(s?.satisfactionScore ?? 0),
-              dissatisfactionScore: Number(s?.dissatisfactionScore ?? 0),
-              feedbackCount: Number(s?.feedbackCount ?? 0),
-              painPoints: Array.isArray(s?.painPoints) ? s.painPoints : [],
-              satisfactionPoints: Array.isArray(s?.satisfactionPoints) ? s.satisfactionPoints : [],
-            }))
-          );
+            this.journeyStages.set(
+              list.map((s: any) => ({
+                id: s?.stage?.id ?? s?.stageId ?? s?.id ?? 0,
+                name: s?.stage?.name ?? s?.name ?? '',
+                satisfactionScore: Number(s?.satisfactionScore ?? 0),
+                dissatisfactionScore: Number(s?.dissatisfactionScore ?? 0),
+                feedbackCount: Number(s?.feedbackCount ?? 0),
+                painPoints: Array.isArray(s?.painPoints) ? s.painPoints : [],
+                satisfactionPoints: Array.isArray(s?.satisfactionPoints) ? s.satisfactionPoints : [],
+              }))
+            );
+            this.page.set(1);
+          } else {
+            this.journeyStages.set([]);
+            this.page.set(1);
+          }
+        } finally {
+          // Ensure we never stay on spinner indefinitely.
+          this.loading.set(false);
         }
-        this.loading.set(false);
       },
       error: (error) => {
         this.loading.set(false);
         this.snackBar.open('Failed to load journey data', 'Close', { duration: 3000 });
+        this.journeyStages.set([]);
+        this.page.set(1);
       }
     });
+  }
+
+  goPrevPage(): void {
+    this.page.update((p) => Math.max(1, p - 1));
+  }
+
+  goNextPage(): void {
+    const total = this.journeyStages().length;
+    if (total === 0) return;
+    const maxPage = Math.ceil(total / this.pageSize);
+    this.page.update((p) => Math.min(maxPage, p + 1));
   }
 
   getSatisfactionColor(score: number): string {

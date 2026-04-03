@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatCardModule } from '@angular/material/card';
@@ -40,6 +40,21 @@ export class TouchpointManager implements OnInit {
 
   loading = signal(false);
   touchpoints = signal<Touchpoint[]>([]);
+  readonly pageSize = 20;
+  page = signal(1);
+  pagedTouchpoints = computed(() => {
+    const all = this.touchpoints();
+    const total = all.length;
+    if (total === 0) return [];
+    const maxPage = Math.max(1, Math.ceil(total / this.pageSize));
+    const p = Math.min(Math.max(1, this.page()), maxPage);
+    const start = (p - 1) * this.pageSize;
+    return all.slice(start, start + this.pageSize);
+  });
+  totalPages = computed(() => {
+    const total = this.touchpoints().length;
+    return total === 0 ? 0 : Math.ceil(total / this.pageSize);
+  });
   displayedColumns: string[] = ['order', 'name', 'description', 'category', 'actions'];
   showForm = signal(false);
   editingId = signal<number | null>(null);
@@ -75,17 +90,31 @@ export class TouchpointManager implements OnInit {
             satisfactionScore: t.satisfactionScore ?? 0
           }));
           this.touchpoints.set(mapped.sort((a, b) => (a.order ?? 0) - (b.order ?? 0)));
+          this.page.set(1);
         } else {
           this.touchpoints.set([]);
+          this.page.set(1);
         }
         this.loading.set(false);
       },
       error: () => {
         this.loading.set(false);
         this.touchpoints.set([]);
+        this.page.set(1);
         this.snackBar.open('Failed to load touchpoints', 'Close', { duration: 3000 });
       }
     });
+  }
+
+  goPrevPage(): void {
+    this.page.update((p) => Math.max(1, p - 1));
+  }
+
+  goNextPage(): void {
+    const total = this.touchpoints().length;
+    if (total === 0) return;
+    const maxPage = Math.ceil(total / this.pageSize);
+    this.page.update((p) => Math.min(maxPage, p + 1));
   }
 
   openCreate(): void {

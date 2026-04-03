@@ -22,11 +22,11 @@
   </div>
 
   <div *ngIf="!loading() && journeyStages().length > 0" class="journey-stages">
-    <div *ngFor="let stage of journeyStages(); let i = index" class="stage-card-wrapper">
+    <div *ngFor="let stage of pagedJourneyStages(); let i = index" class="stage-card-wrapper">
       <mat-card class="stage-card" [class]="getSatisfactionColor(stage.satisfactionScore)">
         <mat-card-header>
           <mat-card-title>
-            <span class="stage-number">{{ i + 1 }}</span>
+            <span class="stage-number">{{ (page() - 1) * pageSize + i + 1 }}</span>
             {{ stage.name }}
           </mat-card-title>
         </mat-card-header>
@@ -64,6 +64,16 @@
           </div>
         </mat-card-content>
       </mat-card>
+    </div>
+
+    <div *ngIf="totalPages() > 1" class="pagination">
+      <button mat-button type="button" (click)="goPrevPage()" [disabled]="page() <= 1">
+        Prev
+      </button>
+      <span class="pagination-label">Page {{ page() }} of {{ totalPages() }}</span>
+      <button mat-button type="button" (click)="goNextPage()" [disabled]="page() >= totalPages()">
+        Next
+      </button>
     </div>
   </div>
 </div>

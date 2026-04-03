@@ -80,7 +80,7 @@
     <div class="content-section">
       <mat-card>
         <mat-card-content>
-          <table mat-table [dataSource]="actionPlans()" class="action-plans-table">
+          <table mat-table [dataSource]="pagedActionPlans()" class="action-plans-table">
             <ng-container matColumnDef="title">
               <th mat-header-cell *matHeaderCellDef>Title</th>
               <td mat-cell *matCellDef="let plan">{{ plan.title }}</td>
@@ -124,6 +124,16 @@
               </td>
             </tr>
           </table>
+
+        <div *ngIf="totalPages() > 1" class="pagination">
+          <button mat-button type="button" (click)="goPrevPage()" [disabled]="page() <= 1">
+            Prev
+          </button>
+          <span class="pagination-label">Page {{ page() }} of {{ totalPages() }}</span>
+          <button mat-button type="button" (click)="goNextPage()" [disabled]="page() >= totalPages()">
+            Next
+          </button>
+        </div>
         </mat-card-content>
       </mat-card>
     </div>
