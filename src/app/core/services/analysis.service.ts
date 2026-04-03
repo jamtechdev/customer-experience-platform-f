@@ -4,7 +4,7 @@ import { Observable } from 'rxjs';
 import { 
   SentimentAnalysisResult,
   RootCauseAnalysis,
-  AIRecommendation,
+  Recommendation,
   ApiResponse,
   PaginationParams
 } from '../models';

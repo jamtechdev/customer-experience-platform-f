@@ -7,7 +7,7 @@ export * from './data-source.model';
 export * from './report.model';
 // Export analysis model but exclude duplicates - use export type for interfaces
 export type { 
-  AIRecommendation,
+  Recommendation,
   SuggestedAction,
   RecommendationFeedback,
   RootCauseAnalysis,

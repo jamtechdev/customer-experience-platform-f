@@ -48,7 +48,7 @@ export class ActionPlanService {
     return this.http.delete<ApiResponse<void>>(`${this.baseUrl}/${id}`);
   }
 
-  /** Creates draft plans from AI recommendations (when present) and from top root causes for the company. */
+  /** Creates draft plans from system recommendations and top root causes for the company. */
   generateFromRecommendations(companyId?: number): Observable<ApiResponse<ActionPlanItem[]>> {
     const body = companyId != null ? { companyId } : {};
     return this.http.post<ApiResponse<ActionPlanItem[]>>(`${this.baseUrl}/generate-from-recommendations`, body);

@@ -1,4 +1,4 @@
-export interface AIRecommendation {
+export interface Recommendation {
   id: string;
   type: RecommendationType;
   title: string;
@@ -173,7 +173,7 @@ export enum AnalysisMethod {
   FIVE_WHYS = 'FIVE_WHYS',
   FISHBONE = 'FISHBONE',
   PARETO = 'PARETO',
-  AI_POWERED = 'AI_POWERED',
+  SYSTEM_POWERED = 'SYSTEM_POWERED',
   HYBRID = 'HYBRID'
 }
 
