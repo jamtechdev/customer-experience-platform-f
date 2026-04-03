@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, signal, computed } from '@angular/core';
+import { Component, inject, OnInit, AfterViewInit, OnDestroy, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
 import { MatTableModule } from '@angular/material/table';
@@ -35,19 +35,37 @@ interface Alert {
   templateUrl: './alert-dashboard.html',
   styleUrl: './alert-dashboard.css',
 })
-export class AlertDashboard implements OnInit {
+export class AlertDashboard implements OnInit, AfterViewInit, OnDestroy {
   private alertService = inject(AlertService);
   private snackBar = inject(MatSnackBar);
 
   loading = signal(false);
   alerts = signal<Alert[]>([]);
-  displayedColumns: string[] = ['title', 'type', 'priority', 'createdAt', 'status', 'actions'];
+  
+  isMobile = signal(false);
+  displayedColumns = computed(() => this.isMobile() 
+    ? ['title', 'type', 'priority', 'status']
+    : ['title', 'type', 'priority', 'createdAt', 'status', 'actions']
+  );
 
   activeAlertsCount = computed(() => this.alerts().filter(a => !a.acknowledged).length);
   acknowledgedAlertsCount = computed(() => this.alerts().filter(a => a.acknowledged).length);
 
   ngOnInit(): void {
     this.loadAlerts();
+  }
+
+  ngAfterViewInit(): void {
+    this.updateMobileStatus();
+    window.addEventListener('resize', () => this.updateMobileStatus());
+  }
+
+  ngOnDestroy(): void {
+    window.removeEventListener('resize', () => this.updateMobileStatus());
+  }
+
+  private updateMobileStatus(): void {
+    this.isMobile.set(window.innerWidth <= 480);
   }
 
   loadAlerts(): void {

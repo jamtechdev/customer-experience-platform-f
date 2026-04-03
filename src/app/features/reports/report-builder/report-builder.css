@@ -48,4 +48,9 @@
   .report-builder-container {
     padding: 16px;
   }
+  .builder-form mat-form-field {
+  min-width: 180px;
+  width: 100%;
+ }
+
 }

@@ -807,7 +807,7 @@
 
 @media (max-width: 768px) {
   .dashboard-container {
-    padding: 16px;
+    padding: 10px;
   }
 
   .kpi-grid {
@@ -821,6 +821,10 @@
   .nps-score {
     font-size: 3rem;
   }
+  .header-actions a, .header-actions button{
+    width: 100%;
+  }
+ 
 
   .nps-breakdown {
     grid-template-columns: 1fr;
