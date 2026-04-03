@@ -147,6 +147,12 @@ export class SentimentAnalysis implements OnInit {
     return id ?? 1;
   }
 
+  /** Admin views aggregate all companies; deletes must still target one tenant (default company 1). */
+  private effectiveCompanyIdForMutations(): number {
+    const user = this.authService.currentUser();
+    return user?.settings?.companyId ?? 1;
+  }
+
   getDateRange(): { start: Date; end: Date } {
     if (!this.datesValid()) {
       const end = new Date();
@@ -234,7 +240,7 @@ export class SentimentAnalysis implements OnInit {
   deleteRecord(row: { id: number; content: string }): void {
     const ok = window.confirm('Delete this feedback record? This action cannot be undone.');
     if (!ok) return;
-    const companyId = this.getCompanyId();
+    const companyId = this.effectiveCompanyIdForMutations();
     this.analysisService.deleteFeedbackRecord(row.id, companyId).subscribe({
       next: () => {
         this.snackBar.open('Feedback record deleted', 'Close', { duration: 3000 });
@@ -252,7 +258,7 @@ export class SentimentAnalysis implements OnInit {
       `Delete all feedback records in current scope? (${total} items). This action cannot be undone.`
     );
     if (!ok) return;
-    const companyId = this.getCompanyId();
+    const companyId = this.effectiveCompanyIdForMutations();
     this.analysisService.deleteAllFeedbackRecords(companyId).subscribe({
       next: (res) => {
         const n = res?.data?.deletedFeedback ?? 0;

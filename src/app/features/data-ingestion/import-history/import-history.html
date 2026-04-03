@@ -148,8 +148,8 @@
                 color="warn"
                 [disabled]="deletingId() === row.id"
                 (click)="confirmDelete(row)"
-                matTooltip="Delete from history (does not remove saved feedback)"
-                aria-label="Delete import from history">
+                matTooltip="Delete this import and all feedback rows created from it"
+                aria-label="Delete import and related feedback">
                 @if (deletingId() === row.id) {
                   <mat-spinner diameter="22"></mat-spinner>
                 } @else {
