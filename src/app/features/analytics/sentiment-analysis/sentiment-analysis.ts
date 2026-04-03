@@ -158,9 +158,10 @@ export class SentimentAnalysis implements OnInit {
     return id ?? 1;
   }
 
-  /** Admin views aggregate all companies; deletes must still target one tenant (default company 1). */
-  private effectiveCompanyIdForMutations(): number {
+  /** Admin can delete in global scope (undefined companyId). */
+  private effectiveCompanyIdForMutations(): number | undefined {
     const user = this.authService.currentUser();
+    if (user?.role === 'admin') return undefined;
     return user?.settings?.companyId ?? 1;
   }
 
