@@ -111,6 +111,18 @@ export class ReportService {
     return this.http.post(`${this.baseUrl}/dashboard/export/excel`, config, { responseType: 'blob' });
   }
 
+  /** Per-row sentiment feedback for Excel comparison (matches selected date range). */
+  exportSentimentRecordsToExcel(config: { startDate: string; endDate: string; companyId?: number }): Observable<Blob> {
+    const body: Record<string, unknown> = {
+      startDate: config.startDate,
+      endDate: config.endDate,
+    };
+    if (config.companyId != null) {
+      body['companyId'] = config.companyId;
+    }
+    return this.http.post(`${this.baseUrl}/dashboard/export/sentiment-records`, body, { responseType: 'blob' });
+  }
+
   getDatePresets(): Observable<ApiResponse<{ presets: ReportDatePresetDto[] }>> {
     return this.http.get<ApiResponse<{ presets: ReportDatePresetDto[] }>>(
       `${this.baseUrl}/date-presets`

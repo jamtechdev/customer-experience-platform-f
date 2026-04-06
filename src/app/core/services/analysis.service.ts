@@ -97,4 +97,9 @@ export class AnalysisService {
   deleteCompetitor(competitorId: number): Observable<ApiResponse<{ deletedId: number }>> {
     return this.http.delete<ApiResponse<{ deletedId: number }>>(`${this.baseUrl}/competitor/${competitorId}`);
   }
+
+  /** Remove competitor rows whose names look like dates/timestamps (mis-imports). */
+  cleanupInvalidCompetitors(): Observable<ApiResponse<{ deleted: number }>> {
+    return this.http.post<ApiResponse<{ deleted: number }>>(`${this.baseUrl}/competitor/cleanup-invalid`, {});
+  }
 }

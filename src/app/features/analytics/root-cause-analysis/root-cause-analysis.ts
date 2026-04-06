@@ -11,6 +11,13 @@ import { AnalysisService } from '../../../core/services/analysis.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 
+interface RootCauseStructuredInsights {
+  problem: string;
+  rootCauseThemes: string[];
+  keyRootCause: string;
+  summary: string;
+}
+
 interface RootCause {
   id: number;
   title: string;
@@ -19,6 +26,7 @@ interface RootCause {
   severity: number;
   frequency: number;
   description: string;
+  structuredInsights?: RootCauseStructuredInsights | null;
 }
 
 @Component({
@@ -96,6 +104,7 @@ export class RootCauseAnalysis implements OnInit {
               severity: typeof item.severity === 'number' ? item.severity : 0,
               frequency: typeof item.frequency === 'number' ? item.frequency : fb,
               description: item.description || '',
+              structuredInsights: item.structuredInsights ?? null,
             };
           });
           this.rootCauses.set(mapped);

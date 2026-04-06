@@ -31,6 +31,14 @@
           <button mat-stroked-button color="primary" type="button" (click)="applyRangeAndReload()" [disabled]="loading()">
             Apply
           </button>
+          <button
+            mat-stroked-button
+            type="button"
+            (click)="exportSentimentRecords()"
+            [disabled]="loading() || !datesValid()">
+            <mat-icon>download</mat-icon>
+            Export to Excel
+          </button>
         </div>
       </mat-card-content>
     </mat-card>

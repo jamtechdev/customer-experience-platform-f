@@ -55,6 +55,7 @@ export class CompetitorComparison implements OnInit {
 
   loading = signal(false);
   addingCompetitor = signal(false);
+  cleaningCompetitors = signal(false);
   companyData = signal<CompetitorData | null>(null);
   competitors = signal<CompetitorData[]>([]);
   noDataInSelectedRange = signal(false);
@@ -134,6 +135,22 @@ export class CompetitorComparison implements OnInit {
       return;
     }
     this.loadComparisonData();
+  }
+
+  cleanupInvalidCompetitorNames(): void {
+    this.cleaningCompetitors.set(true);
+    this.analysisService.cleanupInvalidCompetitors().subscribe({
+      next: (res) => {
+        this.cleaningCompetitors.set(false);
+        const n = res.data?.deleted ?? 0;
+        this.snackBar.open(`Removed ${n} invalid competitor row(s)`, 'Close', { duration: 3500 });
+        this.loadComparisonData();
+      },
+      error: () => {
+        this.cleaningCompetitors.set(false);
+        this.snackBar.open('Cleanup failed', 'Close', { duration: 3000 });
+      },
+    });
   }
 
   addCompetitor(): void {

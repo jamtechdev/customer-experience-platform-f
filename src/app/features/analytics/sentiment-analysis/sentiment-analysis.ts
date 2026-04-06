@@ -146,6 +146,38 @@ export class SentimentAnalysis implements OnInit {
     this.reloadAll();
   }
 
+  exportSentimentRecords(): void {
+    if (!this.datesValid()) {
+      this.snackBar.open('Select a valid date range', 'Close', { duration: 4000 });
+      return;
+    }
+    const { start, end } = this.getDateRange();
+    const companyId = this.getCompanyId();
+    this.loading.set(true);
+    this.reportService
+      .exportSentimentRecordsToExcel({
+        startDate: start.toISOString(),
+        endDate: end.toISOString(),
+        ...(companyId != null ? { companyId } : {}),
+      })
+      .subscribe({
+        next: (blob) => {
+          const url = window.URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = `sentiment-records-${this.startDate()}-${this.endDate()}.xlsx`;
+          a.click();
+          window.URL.revokeObjectURL(url);
+          this.loading.set(false);
+          this.snackBar.open('Export downloaded', 'Close', { duration: 3000 });
+        },
+        error: () => {
+          this.loading.set(false);
+          this.snackBar.open('Export failed', 'Close', { duration: 3000 });
+        },
+      });
+  }
+
   private reloadAll(): void {
     this.loadSentimentStats();
     this.loadFeedbackList();
