@@ -10,6 +10,7 @@ import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 import { AnalysisService } from '../../../core/services/analysis.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { TranslationService } from '../../../core/services/translation.service';
 
 interface RootCauseStructuredInsights {
   painPointTitle?: string;
@@ -48,6 +49,7 @@ export class RootCauseAnalysis implements OnInit {
   private analysisService = inject(AnalysisService);
   private snackBar = inject(MatSnackBar);
   private authService = inject(AuthService);
+  private translationService = inject(TranslationService);
 
   loading = signal(false);
   reanalyzing = signal(false);
@@ -153,6 +155,10 @@ export class RootCauseAnalysis implements OnInit {
     const start = this.pageIndex * this.pageSize;
     const end = start + this.pageSize;
     return this.rootCauses().slice(start, end);
+  }
+
+  t(key: string): string {
+    return this.translationService.translate(key);
   }
 
   painPointTitle(cause: RootCause): string {

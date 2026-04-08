@@ -538,5 +538,40 @@
     "detailedReportsDesc": "PDF ve Excel formatında kapsamlı raporlar oluşturun ve paylaşın.",
     "signupButton": "Hesap Oluştur",
     "loginButton": "Giriş Yap"
+  },
+  "rootCausePage": {
+    "title": "Kök Neden Analizi",
+    "subtitle": "Müşteri geri bildirimlerinden ortak ağrı noktalarını belirleyin",
+    "analyzing": "Analiz ediliyor…",
+    "rerun": "Analizi yeniden çalıştır",
+    "loading": "Kök nedenler yükleniyor...",
+    "topRootCauses": "Öne Çıkan Ağrı Noktaları",
+    "noRootCauses": "Kök neden bulunamadı",
+    "noRootCausesHint": "CSV ile geri bildirim yükleyin ve şirket verinizden ağrı noktası kümeleri üretmek için analizi yeniden çalıştırın.",
+    "rootCause": "Ağrı Noktası",
+    "frequency": "Sıklık",
+    "severity": "Şiddet",
+    "painPoint": "Ağrı noktası",
+    "summary": "Özet",
+    "examples": "Örnekler"
+  },
+  "competitorPage": {
+    "title": "Rakip Karşılaştırması",
+    "subtitle": "Performansınızı geçerli rakiplerle karşılaştırın",
+    "cleanInvalidHint": "Eski içe aktarımlardaki geçersiz rakip adlarını temizle",
+    "cleanInvalid": "Geçersiz adları temizle",
+    "loading": "Karşılaştırma verileri yükleniyor...",
+    "noDataTitle": "Karşılaştırma verisi bulunamadı",
+    "noDataRangeTitle": "Seçilen tarih aralığında veri yok",
+    "noDataHint": "Rakip sütunları açıkça eşlenmiş CSV verisi yükleyin veya rakipleri manuel ekleyin.",
+    "noDataRangeHint": "Veriniz seçili dönemin dışında. Tüm zamanlar seçin veya CSV tarihlerinizi kapsayan bir aralık belirleyin.",
+    "tableTitle": "Duygu & NPS Karşılaştırması",
+    "validCompetitorHint": "Yalnızca açıkça eşlenen rakip satırları gösterilir. Geçersiz veya rastgele adlar yok sayılır.",
+    "company": "Şirket",
+    "sentimentGap": "Duygu Farkı",
+    "addCompetitor": "Rakip ekle",
+    "addCompetitorHint": "Rakibi manuel ekleyin veya competitor/competitorId eşlemesiyle içe aktarın. Karşılaştırmada yalnızca geçerli rakipler kullanılır.",
+    "competitorName": "Rakip adı",
+    "adding": "Ekleniyor..."
   }
 }

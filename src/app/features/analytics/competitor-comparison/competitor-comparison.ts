@@ -14,6 +14,7 @@ import { AnalysisService } from '../../../core/services/analysis.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { ReportService } from '../../../core/services/report.service';
+import { TranslationService } from '../../../core/services/translation.service';
 import {
   buildClientReportDatePresets,
   toIsoRangeFromYmd,
@@ -52,6 +53,7 @@ export class CompetitorComparison implements OnInit {
   private snackBar = inject(MatSnackBar);
   private authService = inject(AuthService);
   private reportService = inject(ReportService);
+  private translationService = inject(TranslationService);
 
   loading = signal(false);
   addingCompetitor = signal(false);
@@ -257,6 +259,10 @@ export class CompetitorComparison implements OnInit {
 
   hasValidCompetitors(): boolean {
     return this.competitors().length > 0;
+  }
+
+  t(key: string): string {
+    return this.translationService.translate(key);
   }
 
   removeCompetitor(competitorId: number): void {

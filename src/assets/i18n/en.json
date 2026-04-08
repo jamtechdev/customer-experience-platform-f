@@ -538,5 +538,40 @@
     "detailedReportsDesc": "Create comprehensive reports in PDF and Excel formats and share them.",
     "signupButton": "Create Account",
     "loginButton": "Sign In"
+  },
+  "rootCausePage": {
+    "title": "Root Cause Analysis",
+    "subtitle": "Identify common pain points from customer feedback",
+    "analyzing": "Analyzing…",
+    "rerun": "Re-run analysis",
+    "loading": "Loading root causes...",
+    "topRootCauses": "Top Pain Points",
+    "noRootCauses": "No Root Causes Found",
+    "noRootCausesHint": "Import feedback via CSV, then re-run analysis to generate pain-point clusters from your company data.",
+    "rootCause": "Pain Point",
+    "frequency": "Frequency",
+    "severity": "Severity",
+    "painPoint": "Pain point",
+    "summary": "Summary",
+    "examples": "Examples"
+  },
+  "competitorPage": {
+    "title": "Competitor Comparison",
+    "subtitle": "Benchmark your performance against valid competitors",
+    "cleanInvalidHint": "Remove invalid competitor names from old imports",
+    "cleanInvalid": "Clean invalid names",
+    "loading": "Loading comparison data...",
+    "noDataTitle": "No Comparison Data Available",
+    "noDataRangeTitle": "No data in selected date range",
+    "noDataHint": "Upload CSV data with explicit competitor columns, or add competitors manually.",
+    "noDataRangeHint": "Your data is outside the selected period. Use All time or choose a range that includes your CSV dates.",
+    "tableTitle": "Sentiment & NPS Comparison",
+    "validCompetitorHint": "Only explicitly mapped competitor rows are shown. Invalid or random names are ignored.",
+    "company": "Company",
+    "sentimentGap": "Sentiment Gap",
+    "addCompetitor": "Add competitor",
+    "addCompetitorHint": "Add competitor manually or import using columns mapped to competitor/competitorId. Only valid competitors are used for comparison.",
+    "competitorName": "Competitor name",
+    "adding": "Adding..."
   }
 }
