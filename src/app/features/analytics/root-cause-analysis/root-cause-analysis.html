@@ -39,7 +39,7 @@
         <table *ngIf="rootCauses().length > 0" mat-table [dataSource]="getPaginatedData()" class="root-cause-table">
           <ng-container matColumnDef="title">
             <th mat-header-cell *matHeaderCellDef>{{ t('rootCausePage.rootCause') }}</th>
-            <td mat-cell *matCellDef="let cause">{{ cause.title }}</td>
+            <td mat-cell *matCellDef="let cause">{{ painPointTitle(cause) }}</td>
           </ng-container>
 
           <ng-container matColumnDef="category">
