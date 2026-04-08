@@ -70,6 +70,13 @@
         <mat-card-title>Sentiment & NPS Comparison</mat-card-title>
       </mat-card-header>
       <mat-card-content>
+        <div *ngIf="!hasValidCompetitors()" class="empty-state-content" style="margin-bottom: 12px;">
+          <mat-icon>rule</mat-icon>
+          <p>
+            No valid competitors found in current data. Competitors are only created from explicit CSV columns mapped to
+            <strong>competitor</strong> (or <strong>competitorId</strong>) and invalid/random names are ignored.
+          </p>
+        </div>
         <div class="table-container">
         <table mat-table [dataSource]="getAllData()" class="comparison-table">
           <ng-container matColumnDef="name">
@@ -128,11 +135,9 @@
         <div class="add-competitor-section">
           <h3>Add competitor</h3>
           <p class="hint">
-            Add each competitor here first (or they are created automatically when you import CSV rows that name them).
-            During CSV import, map a column to <strong>competitor</strong> / <strong>competitor_name</strong> (or set
-            <strong>competitorId</strong>). Each row with that competitor name is stored with
-            <code>competitor_id</code>, and this page aggregates sentiment and feedback counts for those rows only.
-            “Main company” rows leave the competitor field empty.
+            Add each competitor manually or import via a CSV column mapped to <strong>competitor</strong> /
+            <strong>competitor_name</strong> (or set <strong>competitorId</strong>).
+            This page only compares valid competitor rows explicitly identified in your dataset.
           </p>
           <div class="add-competitor-form">
             <mat-form-field appearance="outline" class="competitor-name-field">

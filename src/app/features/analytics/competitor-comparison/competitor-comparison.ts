@@ -255,6 +255,10 @@ export class CompetitorComparison implements OnInit {
     return row.sentimentScore - company.sentimentScore;
   }
 
+  hasValidCompetitors(): boolean {
+    return this.competitors().length > 0;
+  }
+
   removeCompetitor(competitorId: number): void {
     if (!this.isAdminUser()) return;
     const ok = window.confirm('Remove this competitor? Related feedback will remain but will no longer count for that competitor.');

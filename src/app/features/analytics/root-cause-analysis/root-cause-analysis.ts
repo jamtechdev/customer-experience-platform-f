@@ -12,10 +12,9 @@ import { AuthService } from '../../../core/services/auth.service';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 
 interface RootCauseStructuredInsights {
-  problem: string;
-  rootCauseThemes: string[];
-  keyRootCause: string;
+  painPointTitle?: string;
   summary: string;
+  examples?: string[];
 }
 
 interface RootCause {
@@ -154,5 +153,17 @@ export class RootCauseAnalysis implements OnInit {
     const start = this.pageIndex * this.pageSize;
     const end = start + this.pageSize;
     return this.rootCauses().slice(start, end);
+  }
+
+  painPointTitle(cause: RootCause): string {
+    return cause.structuredInsights?.painPointTitle?.trim() || cause.title;
+  }
+
+  painPointSummary(cause: RootCause): string {
+    return cause.structuredInsights?.summary?.trim() || cause.description || 'No summary available.';
+  }
+
+  painPointExamples(cause: RootCause): string[] {
+    return (cause.structuredInsights?.examples || []).filter((x) => !!x?.trim()).slice(0, 3);
   }
 }

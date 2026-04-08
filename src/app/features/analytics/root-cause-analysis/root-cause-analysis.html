@@ -119,25 +119,23 @@
       </div>
 
       <div class="root-cause-modal-content">
+        <div class="detail-row">
+          <strong>Pain point:</strong> {{ painPointTitle(cause) }}
+        </div>
         <div class="detail-row"><strong>Category:</strong> {{ cause.category }}</div>
         <div class="detail-row"><strong>Priority:</strong> {{ cause.priority }}</div>
         <div class="detail-row"><strong>Frequency:</strong> {{ cause.frequency }}</div>
         <div class="detail-row"><strong>Severity:</strong> {{ cause.severity }}%</div>
         <div class="detail-row">
-          <strong>Description:</strong>
-          <p>{{ cause.description || 'No additional description available.' }}</p>
+          <strong>Summary:</strong>
+          <p>{{ painPointSummary(cause) }}</p>
         </div>
-        <ng-container *ngIf="cause.structuredInsights as si">
-          <div class="detail-row"><strong>Problem:</strong> {{ si.problem }}</div>
-          <div class="detail-row"><strong>Key root cause:</strong> {{ si.keyRootCause }}</div>
-          <div class="detail-row"><strong>Summary:</strong> {{ si.summary }}</div>
-          <div class="detail-row" *ngIf="si.rootCauseThemes.length">
-            <strong>Themes:</strong>
+        <div class="detail-row" *ngIf="painPointExamples(cause).length">
+          <strong>Examples:</strong>
             <ul class="insights-list">
-              <li *ngFor="let t of si.rootCauseThemes">{{ t }}</li>
+              <li *ngFor="let example of painPointExamples(cause)">{{ example }}</li>
             </ul>
-          </div>
-        </ng-container>
+        </div>
       </div>
 
       <div class="root-cause-modal-actions">
