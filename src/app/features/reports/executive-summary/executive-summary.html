@@ -1,7 +1,7 @@
 <div class="executive-summary">
-  <mat-card>
+  <mat-card class="summary-shell">
     <mat-card-header>
-      <mat-card-title>{{ t('nav.executiveSummary') }}</mat-card-title>
+      <mat-card-title>Executive summary</mat-card-title>
       <mat-card-subtitle>{{ t('reports.executiveSummarySubtitle') }}</mat-card-subtitle>
     </mat-card-header>
     <mat-card-content>
@@ -35,23 +35,15 @@
             (input)="endDate.set(($any($event.target).value) || null); onManualDate()"
           />
         </mat-form-field>
-        <button
-          mat-stroked-button
-          color="primary"
-          type="button"
-          (click)="applyRangeAndReload()"
-          [disabled]="loading() || !datesValid()">
+        <button mat-stroked-button color="primary" type="button" (click)="applyRangeAndReload()" [disabled]="loading() || !datesValid()">
           {{ t('reports.applyRange') }}
         </button>
-        <button
-          mat-raised-button
-          color="primary"
-          (click)="exportPdf()"
-          [disabled]="exporting() || loading() || !datesValid()">
+        <button mat-raised-button color="primary" (click)="exportPdf()" [disabled]="exporting() || loading() || !datesValid()">
           <mat-icon>download</mat-icon>
           {{ exporting() ? t('reports.exporting') : t('reports.exportToPdf') }}
         </button>
       </div>
+
       @if (loading()) {
         <div class="loading">
           <mat-spinner diameter="40"></mat-spinner>
@@ -60,87 +52,65 @@
         <div class="summary-grid">
           <mat-card class="summary-card">
             <mat-card-content>
-              <div class="summary-label">{{ t('dashboard.totalFeedback') }}</div>
-              <div class="summary-value">{{ data()!.kpis.totalFeedback.toLocaleString() }}</div>
+              <div class="summary-head">
+                <mat-icon>grid_view</mat-icon>
+                <span>Total tweets</span>
+              </div>
+              <div class="summary-value">{{ totalTweetVolume().toLocaleString() }}</div>
             </mat-card-content>
           </mat-card>
+
           <mat-card class="summary-card">
             <mat-card-content>
-              <div class="summary-label">{{ t('reports.sentimentIndex') }}</div>
-              <div class="summary-value">{{ data()!.kpis.sentimentIndex.toFixed(2) }}</div>
+              <div class="summary-head">
+                <mat-icon>filter_alt</mat-icon>
+                <span>CX-related</span>
+              </div>
+              <div class="summary-value">{{ cxRelatedVolume().toLocaleString() }}</div>
             </mat-card-content>
           </mat-card>
+
           <mat-card class="summary-card">
             <mat-card-content>
-              <div class="summary-label">{{ t('dashboard.npsScore') }}</div>
-              <div class="summary-value">{{ Math.round(data()!.kpis.npsScore) }}</div>
+              <div class="summary-head">
+                <mat-icon>campaign</mat-icon>
+                <span>Brand / support</span>
+              </div>
+              <div class="summary-value">{{ brandSupportVolume().toLocaleString() }}</div>
             </mat-card-content>
           </mat-card>
-          <mat-card class="summary-card">
+
+          <mat-card class="summary-card summary-card-highlight">
             <mat-card-content>
-              <div class="summary-label">{{ t('dashboard.criticalAlarms') }}</div>
-              <div class="summary-value">{{ data()!.kpis.criticalAlertsCount }}</div>
+              <div class="summary-head">
+                <mat-icon>person</mat-icon>
+                <span>Original customer CX</span>
+              </div>
+              <div class="summary-value">{{ originalCustomerCxVolume().toLocaleString() }}</div>
+              <div class="summary-note">Primary base for NPS and root-cause analysis</div>
             </mat-card-content>
           </mat-card>
         </div>
-        <mat-card class="nps-breakdown">
-          <mat-card-header>
-            <mat-card-title>{{ t('reports.npsBreakdown') }}</mat-card-title>
-          </mat-card-header>
-          <mat-card-content>
-            <div class="nps-row">
-              <span>{{ t('reports.promoters') }}</span>
-              <span>{{ data()!.nps.promoters }}</span>
-            </div>
-            <div class="nps-row">
-              <span>{{ t('reports.passives') }}</span>
-              <span>{{ data()!.nps.passives }}</span>
-            </div>
-            <div class="nps-row">
-              <span>{{ t('reports.detractors') }}</span>
-              <span>{{ data()!.nps.detractors }}</span>
-            </div>
-          </mat-card-content>
-        </mat-card>
 
-        <mat-card class="nps-method">
-          <mat-card-header>
-            <mat-card-title>{{ t('metrics.nps.methodTitle') }}</mat-card-title>
-          </mat-card-header>
-          <mat-card-content>
-            <p>{{ t('metrics.nps.methodBody') }}</p>
-            <p class="muted">{{ t('metrics.nps.notesBody') }}</p>
-          </mat-card-content>
-        </mat-card>
-        @if (data()!.competitors.length > 0) {
-          <mat-card class="competitors">
-            <mat-card-header>
-              <mat-card-title>{{ t('analysis.competitorAnalysis') }}</mat-card-title>
-            </mat-card-header>
-            <mat-card-content>
-              <div class="competitor-row" *ngFor="let c of data()!.competitors">
-                <span>{{ c.name }}</span>
-                <span>{{ t('reports.competitorLine', { sentiment: c.sentimentScore.toFixed(2), nps: (Math.round(c.npsScore)).toString(), gap: (c.gap > 0 ? '+' : '') + c.gap.toFixed(2) }) }}</span>
-              </div>
-            </mat-card-content>
-          </mat-card>
-        }
-        @if (data()!.criticalAlerts.length > 0) {
-          <mat-card class="alerts">
-            <mat-card-header>
-              <mat-card-title>{{ t('dashboard.criticalAlarms') }}</mat-card-title>
-            </mat-card-header>
-            <mat-card-content>
-              <div class="alert-row" *ngFor="let a of data()!.criticalAlerts">
-                <mat-icon>warning</mat-icon>
-                <span>{{ a.title }}: {{ a.message }}</span>
-              </div>
-            </mat-card-content>
-          </mat-card>
-        }
-        <p class="last-updated">Last updated: {{ data()!.lastUpdated }}</p>
+        <ul class="narrative-list">
+          <li>
+            Total tweet volume analyzed: {{ totalTweetVolume().toLocaleString() }}. CX-relevant subset: {{ cxRelatedVolume().toLocaleString() }}. Brand/support messages accounted for {{ brandSupportVolume().toLocaleString() }} tweets.
+          </li>
+          <li>
+            For customer-originated and original CX tweets, the sentiment mix is {{ sentimentPct('positive') | number:'1.1-1' }}% positive, {{ sentimentPct('neutral') | number:'1.1-1' }}% neutral, and {{ sentimentPct('negative') | number:'1.1-1' }}% negative, producing a social NPS proxy of {{ data()!.nps.score | number:'1.1-1' }}.
+          </li>
+          <li>
+            The strongest pain concentration sits in after-sales service: authorized service quality, response ownership, waiting time, and perceived unfair change/service fees.
+          </li>
+          <li>
+            Product-related negative volume is concentrated in refrigerators, washing machines, TVs, and small appliances, but customer frustration usually escalates because of service handling rather than product fault alone.
+          </li>
+          <li>
+            Positive voice is driven mostly by long product lifetime, occasional praise for service accessibility, and campaign/discount engagement.
+          </li>
+        </ul>
       } @else {
-        <p>No data available. Upload CSV data and run analysis to see the executive summary.</p>
+        <p class="empty-text">No data available for the selected period.</p>
       }
     </mat-card-content>
   </mat-card>

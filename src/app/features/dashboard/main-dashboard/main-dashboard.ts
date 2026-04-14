@@ -6,6 +6,10 @@ import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatSelectModule } from '@angular/material/select';
+import { MatInputModule } from '@angular/material/input';
+import { FormsModule } from '@angular/forms';
 import { DashboardService, DashboardStats, DashboardTrends } from '../../../core/services/dashboard.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { TranslationService } from '../../../core/services/translation.service';
@@ -45,7 +49,11 @@ interface SentimentCategoryBar {
     MatCardModule,
     MatIconModule,
     MatButtonModule,
-    MatProgressSpinnerModule
+    MatProgressSpinnerModule,
+    MatFormFieldModule,
+    MatSelectModule,
+    MatInputModule,
+    FormsModule
   ],
   templateUrl: './main-dashboard.html',
   styleUrl: './main-dashboard.css',
@@ -62,6 +70,7 @@ export class MainDashboard implements OnInit {
   dashboardTrends = signal<DashboardTrends | null>(null);
   backendUnavailable = signal(false);
   Math = Math; // Expose Math for template
+  today = new Date();
 
   t = (key: string): string => this.translationService.translate(key);
 
@@ -213,6 +222,7 @@ export class MainDashboard implements OnInit {
 
   dateRangeStart = signal<Date | null>(null);
   dateRangeEnd = signal<Date | null>(null);
+  selectedPreset = signal<'all_time' | 'last_30_days' | 'custom'>('all_time');
 
   dateRangeStartValue(): string {
     const d = this.dateRangeStart();
@@ -238,9 +248,37 @@ export class MainDashboard implements OnInit {
     this.loadDashboardData();
   }
 
+  onDateStartModelChange(value: string | null): void {
+    this.dateRangeStart.set(value ? new Date(value) : null);
+    this.selectedPreset.set('custom');
+  }
+
+  onDateEndModelChange(value: string | null): void {
+    this.dateRangeEnd.set(value ? new Date(value) : null);
+    this.selectedPreset.set('custom');
+  }
+
   clearDateRange(): void {
     this.dateRangeStart.set(null);
     this.dateRangeEnd.set(null);
+    this.loadDashboardData();
+  }
+
+  onPresetChange(value: 'all_time' | 'last_30_days' | 'custom'): void {
+    this.selectedPreset.set(value);
+    const today = new Date();
+    if (value === 'all_time') {
+      this.dateRangeStart.set(new Date('1970-01-01'));
+      this.dateRangeEnd.set(today);
+    } else if (value === 'last_30_days') {
+      const start = new Date(today);
+      start.setDate(today.getDate() - 29);
+      this.dateRangeStart.set(start);
+      this.dateRangeEnd.set(today);
+    }
+  }
+
+  applyDateRange(): void {
     this.loadDashboardData();
   }
 

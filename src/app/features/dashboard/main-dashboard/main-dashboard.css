@@ -64,6 +64,31 @@
   flex-wrap: wrap;
 }
 
+.period-card {
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+}
+
+.period-title {
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: #334155;
+  margin-bottom: 4px;
+}
+
+.period-active {
+  font-weight: 600;
+  color: #475569;
+  margin-bottom: 10px;
+}
+
+.period-filters {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 12px;
+  align-items: center;
+}
+
 .date-filters input[type="date"] {
   padding: 0.25rem 0.5rem;
   border: 1px solid #e5e7eb;

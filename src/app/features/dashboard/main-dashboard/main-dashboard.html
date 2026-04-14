@@ -16,12 +16,33 @@
         </button>
       </div>
     </div>
-    <div class="date-filters">
-      <input type="date" [value]="dateRangeStartValue()" (change)="onDateStartChange($event)" />
-      <span>–</span>
-      <input type="date" [value]="dateRangeEndValue()" (change)="onDateEndChange($event)" />
-      <button mat-button type="button" (click)="clearDateRange()">{{ t('app.clear') }}</button>
-    </div>
+    <mat-card class="period-card">
+      <mat-card-content>
+        <div class="period-title">Report period</div>
+        <div class="period-active">
+          Active range: {{ dateRangeStartValue() || '1970-01-01' }} → {{ dateRangeEndValue() || (today | date:'yyyy-MM-dd') }}
+        </div>
+        <div class="period-filters">
+          <mat-form-field appearance="outline">
+            <mat-label>Preset</mat-label>
+            <mat-select [value]="selectedPreset()" (selectionChange)="onPresetChange($event.value)">
+              <mat-option value="all_time">All time</mat-option>
+              <mat-option value="last_30_days">Last 30 days</mat-option>
+              <mat-option value="custom">Custom range</mat-option>
+            </mat-select>
+          </mat-form-field>
+          <mat-form-field appearance="outline">
+            <mat-label>From</mat-label>
+            <input matInput type="date" [ngModel]="dateRangeStartValue()" (ngModelChange)="onDateStartModelChange($event)" />
+          </mat-form-field>
+          <mat-form-field appearance="outline">
+            <mat-label>To</mat-label>
+            <input matInput type="date" [ngModel]="dateRangeEndValue()" (ngModelChange)="onDateEndModelChange($event)" />
+          </mat-form-field>
+          <button mat-flat-button color="primary" type="button" (click)="applyDateRange()">Apply</button>
+        </div>
+      </mat-card-content>
+    </mat-card>
   </div>
 
   <div *ngIf="loading()" class="loading-container">

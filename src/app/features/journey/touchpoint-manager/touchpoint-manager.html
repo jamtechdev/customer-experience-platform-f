@@ -1,59 +1,8 @@
 <div class="touchpoint-container">
   <div class="header-section">
-    <h1>Touchpoint Manager</h1>
-    <p class="subtitle">Manage customer touchpoints across the journey</p>
+    <h1>Touchpoints</h1>
+    <p class="subtitle">Modern view of touchpoint volumes and key observations</p>
   </div>
-
-  <div class="flow-milestone-hint" [class.flow-milestone-hint-complete]="touchpointFlowConfigured()">
-    <mat-icon>{{ touchpointFlowConfigured() ? 'verified' : 'flag' }}</mat-icon>
-    <p>
-      The journey flow is intended to be <strong>complete through the third touchpoint</strong>: add at least three
-      touchpoints with clear order (e.g. 0, 1, 2) so awareness → consideration → retention stages can all be measured.
-    </p>
-  </div>
-
-  <div class="actions-section">
-    @if (!showForm()) {
-      <button mat-raised-button color="primary" (click)="openCreate()">
-        <mat-icon>add</mat-icon>
-        Add Touchpoint
-      </button>
-    }
-  </div>
-
-  @if (showForm()) {
-    <form [formGroup]="form" (ngSubmit)="saveTouchpoint()" class="touchpoint-form">
-      <mat-form-field appearance="outline">
-        <mat-label>Name</mat-label>
-        <input matInput formControlName="name" placeholder="Touchpoint name" />
-        @if (form.get('name')?.hasError('required')) {
-          <mat-error>Name is required</mat-error>
-        }
-      </mat-form-field>
-      <mat-form-field appearance="outline">
-        <mat-label>Description</mat-label>
-        <textarea matInput formControlName="description" rows="2" placeholder="Description"></textarea>
-        @if (form.get('description')?.hasError('required')) {
-          <mat-error>Description is required</mat-error>
-        }
-      </mat-form-field>
-      <mat-form-field appearance="outline">
-        <mat-label>Category</mat-label>
-        <input matInput formControlName="category" placeholder="e.g. Awareness, Purchase" />
-        @if (form.get('category')?.hasError('required')) {
-          <mat-error>Category is required</mat-error>
-        }
-      </mat-form-field>
-      <mat-form-field appearance="outline">
-        <mat-label>Order</mat-label>
-        <input matInput type="number" formControlName="order" min="0" />
-      </mat-form-field>
-      <div class="form-actions">
-        <button mat-button type="button" (click)="cancelForm()">Cancel</button>
-        <button mat-raised-button color="primary" type="submit" [disabled]="form.invalid">Save</button>
-      </div>
-    </form>
-  }
 
   @if (loading()) {
     <div class="loading-container">
@@ -62,56 +11,55 @@
     </div>
   } @else {
     <div class="content-section">
-      <mat-card>
+      <mat-card class="section-card">
+        <mat-card-header>
+          <mat-card-title>Touchpoints</mat-card-title>
+          <mat-card-subtitle>Touchpoint volume in original customer-originated CX tweets.</mat-card-subtitle>
+        </mat-card-header>
         <mat-card-content>
-           <div class="table-container">
-          <table mat-table [dataSource]="pagedTouchpoints()" class="touchpoint-table">
-            <ng-container matColumnDef="order">
-              <th mat-header-cell *matHeaderCellDef>Order</th>
-              <td mat-cell *matCellDef="let t">{{ t.order ?? 0 }}</td>
-            </ng-container>
-            <ng-container matColumnDef="name">
-              <th mat-header-cell *matHeaderCellDef>Name</th>
-              <td mat-cell *matCellDef="let t">{{ t.name }}</td>
-            </ng-container>
-            <ng-container matColumnDef="description">
-              <th mat-header-cell *matHeaderCellDef>Description</th>
-              <td mat-cell *matCellDef="let t">{{ t.description || '—' }}</td>
-            </ng-container>
-            <ng-container matColumnDef="category">
-              <th mat-header-cell *matHeaderCellDef>Category</th>
-              <td mat-cell *matCellDef="let t">
-                <mat-chip>{{ t.category || t.type || '—' }}</mat-chip>
-              </td>
-            </ng-container>
-            <ng-container matColumnDef="actions">
-              <th mat-header-cell *matHeaderCellDef>Actions</th>
-              <td mat-cell *matCellDef="let t">
-                <div class="actions-inline">
-                  <button mat-icon-button color="primary" type="button" (click)="openEdit(t)" aria-label="Edit">
-                    <mat-icon>edit</mat-icon>
-                  </button>
-                  <button mat-icon-button color="warn" type="button" (click)="deleteTouchpoint(t.id)" aria-label="Delete">
-                    <mat-icon>delete</mat-icon>
-                  </button>
+          <figure class="mpl-figure" aria-label="Touchpoint volume chart">
+            <figcaption class="mpl-figure-title">Touchpoint Volumes in Original Customer CX Tweets.</figcaption>
+            <div class="mpl-chart mpl-chart-mplframe mpl-bar-touch">
+              <div class="mpl-axes-frame">
+                <div class="mpl-y-label-outer" aria-hidden="true">Count</div>
+                <div class="mpl-y-axis mpl-y-axis-mpl">
+                  <span>{{ touchpointMaxEffective() }}</span>
+                  <span>{{ (touchpointMaxEffective() * 3) / 4 | number : '1.0-0' }}</span>
+                  <span>{{ touchpointMaxEffective() / 2 | number : '1.0-0' }}</span>
+                  <span>{{ touchpointMaxEffective() / 4 | number : '1.0-0' }}</span>
+                  <span>0</span>
                 </div>
-              </td>
-            </ng-container>
-            <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-            <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
-            <tr class="mat-row" *matNoDataRow>
-              <td class="mat-cell" [attr.colspan]="displayedColumns.length">No touchpoints. Add one to get started.</td>
-            </tr>
-          </table></div>
-
-          <div *ngIf="totalPages() > 1" class="pagination">
-            <button mat-button type="button" (click)="goPrevPage()" [disabled]="page() <= 1">
-              Prev
-            </button>
-            <span class="pagination-label">Page {{ page() }} of {{ totalPages() }}</span>
-            <button mat-button type="button" (click)="goNextPage()" [disabled]="page() >= totalPages()">
-              Next
-            </button>
+                <div class="mpl-plot mpl-plot-mpl mpl-plot-touch">
+                  @for (row of reportTouchpoints(); track row.name) {
+                    <div class="mpl-bar-col mpl-bar-col-touch">
+                      <div class="mpl-bar-track">
+                        <div class="mpl-bar-fill mpl-bar-mpl" [style.height.%]="touchpointBarFillPct(row.volume)"></div>
+                      </div>
+                      <div class="mpl-bar-value">{{ row.volume }}</div>
+                      <div class="mpl-bar-cat mpl-bar-cat-rot mpl-bar-cat-mpl">{{ truncateChartLabel(row.name, 24) }}</div>
+                    </div>
+                  }
+                </div>
+              </div>
+            </div>
+          </figure>
+          <div class="table-container">
+            <table mat-table [dataSource]="reportTouchpoints()" class="touchpoint-table report-mat-table">
+              <ng-container matColumnDef="name">
+                <th mat-header-cell *matHeaderCellDef>Touchpoint</th>
+                <td mat-cell *matCellDef="let row">{{ row.name }}</td>
+              </ng-container>
+              <ng-container matColumnDef="volume">
+                <th mat-header-cell *matHeaderCellDef>Volume</th>
+                <td mat-cell *matCellDef="let row">{{ row.volume }}</td>
+              </ng-container>
+              <ng-container matColumnDef="observation">
+                <th mat-header-cell *matHeaderCellDef>Key observation</th>
+                <td mat-cell *matCellDef="let row">{{ row.observation }}</td>
+              </ng-container>
+              <tr mat-header-row *matHeaderRowDef="['name','volume','observation']"></tr>
+              <tr mat-row *matRowDef="let row; columns: ['name','volume','observation']"></tr>
+            </table>
           </div>
         </mat-card-content>
       </mat-card>

@@ -9,6 +9,7 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatInputModule } from '@angular/material/input';
 import { FormsModule } from '@angular/forms';
 import { DashboardService } from '../../../core/services/dashboard.service';
+import { AnalysisService } from '../../../core/services/analysis.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { ReportService } from '../../../core/services/report.service';
@@ -48,6 +49,7 @@ interface NPSData {
 })
 export class NpsAnalysis implements OnInit {
   private dashboardService = inject(DashboardService);
+  private analysisService = inject(AnalysisService);
   private snackBar = inject(MatSnackBar);
   private authService = inject(AuthService);
   private reportService = inject(ReportService);
@@ -143,7 +145,49 @@ export class NpsAnalysis implements OnInit {
     }
     const { startDate: sd, endDate: ed } = toIsoRangeFromYmd(this.startDate()!, this.endDate()!);
 
-    this.dashboardService.getStats(companyId, new Date(sd), new Date(ed)).subscribe({
+    const start = new Date(sd);
+    const end = new Date(ed);
+    this.analysisService.getTwitterCxReport(companyId, start, end).subscribe({
+      next: (res) => {
+        if (res.success && res.data?.sentiment) {
+          const sentiment = res.data.sentiment;
+          const total =
+            sentiment.total && sentiment.total > 0
+              ? sentiment.total
+              : (sentiment.positive || 0) + (sentiment.neutral || 0) + (sentiment.negative || 0);
+          const promoters = sentiment.positive || 0;
+          const passives = sentiment.neutral || 0;
+          const detractors = sentiment.negative || 0;
+          const promoterPercentage = total > 0 ? (promoters / total) * 100 : 0;
+          const detractorPercentage = total > 0 ? (detractors / total) * 100 : 0;
+          const score =
+            typeof res.data.socialNpsProxy === 'number'
+              ? res.data.socialNpsProxy
+              : promoterPercentage - detractorPercentage;
+          this.npsData.set({
+            score,
+            promoters,
+            passives,
+            detractors,
+            total,
+            promoterPercentage,
+            detractorPercentage
+          });
+          this.loading.set(false);
+          return;
+        }
+
+        // Fallback to dashboard endpoint if report payload is unavailable.
+        this.loadFromDashboardFallback(companyId, start, end);
+      },
+      error: () => {
+        this.loadFromDashboardFallback(companyId, start, end);
+      }
+    });
+  }
+
+  private loadFromDashboardFallback(companyId: number | undefined, start: Date, end: Date): void {
+    this.dashboardService.getStats(companyId, start, end).subscribe({
       next: (response) => {
         if (response.success && response.data?.nps) {
           const nps = response.data.nps;
@@ -158,7 +202,6 @@ export class NpsAnalysis implements OnInit {
             detractorPercentage: ((nps.detractors || 0) / total * 100)
           });
         } else {
-          // Set default empty data
           this.npsData.set({
             score: 0,
             promoters: 0,
@@ -174,7 +217,6 @@ export class NpsAnalysis implements OnInit {
       error: (error) => {
         console.error('Failed to load NPS data:', error);
         this.loading.set(false);
-        // Set default empty data on error
         this.npsData.set({
           score: 0,
           promoters: 0,
@@ -184,7 +226,6 @@ export class NpsAnalysis implements OnInit {
           promoterPercentage: 0,
           detractorPercentage: 0
         });
-        // Only show error if it's not a 500 (server might not have data yet)
         if (error.status !== 500) {
           this.snackBar.open('Failed to load NPS data', 'Close', { duration: 3000 });
         }
@@ -204,5 +245,27 @@ export class NpsAnalysis implements OnInit {
     if (score >= 0) return 'good';
     if (score >= -50) return 'needs-improvement';
     return 'poor';
+  }
+
+  passivesPercentage(): number {
+    const d = this.npsData();
+    if (!d || !d.total) return 0;
+    return (d.passives / d.total) * 100;
+  }
+
+  npsInterpretationText(): string {
+    const score = this.npsData()?.score ?? 0;
+    if (score < 0) {
+      return 'Detractor-class sentiment outweighs promoter-class; advocacy tone is net-negative — recovery, ownership, and fee fairness typically move this metric.';
+    }
+    if (score === 0) {
+      return 'Promoter and detractor shares are balanced; improving ownership and response quality can lift this metric.';
+    }
+    return 'Promoter-class sentiment outweighs detractor-class; sustain service quality and fairness to keep advocacy positive.';
+  }
+
+  formatPct(value: number): string {
+    const rounded = Number(value.toFixed(1));
+    return Number.isInteger(rounded) ? String(rounded) : rounded.toFixed(1);
   }
 }

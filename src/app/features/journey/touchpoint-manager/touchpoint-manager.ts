@@ -10,7 +10,10 @@ import { MatChipsModule } from '@angular/material/chips';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { TouchpointService, Touchpoint } from '../../../core/services/touchpoint.service';
+import { AnalysisService } from '../../../core/services/analysis.service';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { AuthService } from '../../../core/services/auth.service';
+import { buildClientReportDatePresets } from '../../../core/utils/report-date-presets';
 
 @Component({
   selector: 'app-touchpoint-manager',
@@ -32,6 +35,8 @@ import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 })
 export class TouchpointManager implements OnInit {
   private touchpointService = inject(TouchpointService);
+  private analysisService = inject(AnalysisService);
+  private authService = inject(AuthService);
   private fb = inject(FormBuilder);
   private snackBar = inject(MatSnackBar);
 
@@ -56,6 +61,7 @@ export class TouchpointManager implements OnInit {
     return total === 0 ? 0 : Math.ceil(total / this.pageSize);
   });
   displayedColumns: string[] = ['order', 'name', 'description', 'category', 'actions'];
+  reportTouchpoints = signal<Array<{ name: string; volume: number; observation: string }>>([]);
   showForm = signal(false);
   editingId = signal<number | null>(null);
   form: FormGroup;
@@ -75,24 +81,39 @@ export class TouchpointManager implements OnInit {
 
   loadTouchpoints(): void {
     this.loading.set(true);
-    this.touchpointService.getTouchpoints().subscribe({
+    const user = this.authService.currentUser();
+    const companyId = user?.role === 'admin' ? undefined : (user?.settings?.companyId ?? 1);
+    const presets = buildClientReportDatePresets();
+    const defaultId = user?.role === 'admin' ? 'all_time' : 'last_30_days';
+    const preset = presets.find((p) => p.id === defaultId) ?? presets[0];
+    const start = new Date(preset.startDate);
+    const end = new Date(preset.endDate);
+    this.analysisService.getTwitterCxReport(companyId, start, end).subscribe({
       next: (response) => {
-        if (response.success && Array.isArray(response.data)) {
-          const mapped = (response.data as any[]).map((t: any) => ({
-            id: typeof t.id === 'string' ? parseInt(t.id, 10) : t.id,
+        if (response.success && Array.isArray(response.data?.touchpoints)) {
+          const rows = response.data.touchpoints.map((t: any, idx: number) => ({
+            id: idx + 1,
             name: t.name ?? '',
-            description: t.description ?? '',
-            category: t.category ?? '',
-            order: typeof t.order === 'number' ? t.order : 0,
-            type: t.category ?? '',
+            description: t.observation ?? '',
+            category: 'touchpoint',
+            order: idx + 1,
+            type: 'touchpoint',
             stage: '-',
-            feedbackCount: t.feedbackCount ?? 0,
-            satisfactionScore: t.satisfactionScore ?? 0
+            feedbackCount: Number(t.volume ?? 0),
+            satisfactionScore: 0
           }));
-          this.touchpoints.set(mapped.sort((a, b) => (a.order ?? 0) - (b.order ?? 0)));
+          this.touchpoints.set(rows);
+          this.reportTouchpoints.set(
+            response.data.touchpoints.map((t: any) => ({
+              name: t.name ?? '',
+              volume: Number(t.volume ?? 0),
+              observation: t.observation ?? '',
+            }))
+          );
           this.page.set(1);
         } else {
           this.touchpoints.set([]);
+          this.reportTouchpoints.set([]);
           this.page.set(1);
         }
         this.loading.set(false);
@@ -100,10 +121,26 @@ export class TouchpointManager implements OnInit {
       error: () => {
         this.loading.set(false);
         this.touchpoints.set([]);
+        this.reportTouchpoints.set([]);
         this.page.set(1);
         this.snackBar.open('Failed to load touchpoints', 'Close', { duration: 3000 });
       }
     });
+  }
+
+  touchpointMaxEffective(): number {
+    const rows = this.reportTouchpoints();
+    return Math.max(1, ...rows.map((r) => r.volume));
+  }
+
+  touchpointBarFillPct(volume: number): number {
+    const max = this.touchpointMaxEffective();
+    return Math.min(100, max > 0 ? (volume / max) * 100 : 0);
+  }
+
+  truncateChartLabel(text: string, maxLen = 24): string {
+    const t = (text || '').trim();
+    return t.length <= maxLen ? t : `${t.slice(0, maxLen - 1)}…`;
   }
 
   goPrevPage(): void {

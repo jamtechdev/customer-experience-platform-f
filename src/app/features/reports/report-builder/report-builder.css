@@ -32,12 +32,38 @@
 
 .export-actions {
   margin-top: 0rem;
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
 }
 
 .hint {
   font-size: 0.875rem;
   color: #6b7280;
   margin-top: 1rem;
+}
+
+.created-reports-card {
+  margin-top: 1rem;
+  border: 1px solid #e5e7eb;
+  box-shadow: none;
+}
+
+.created-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.created-item {
+  display: grid;
+  grid-template-columns: 120px 80px 1fr 200px;
+  gap: 0.5rem;
+  align-items: center;
+  font-size: 0.875rem;
+  color: #334155;
+  padding: 0.5rem 0.25rem;
+  border-bottom: 1px solid #f1f5f9;
 }
 
 .mat-mdc-card-header{
@@ -51,6 +77,10 @@
   .builder-form mat-form-field {
   min-width: 180px;
   width: 100%;
+ }
+
+ .created-item {
+  grid-template-columns: 1fr;
  }
 
 }

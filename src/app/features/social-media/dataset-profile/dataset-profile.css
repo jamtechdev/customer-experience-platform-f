@@ -1,0 +1,26 @@
+.dataset-profile-container {
+  padding: 24px;
+}
+
+.section-card {
+  margin-bottom: 20px;
+}
+
+.table-wrap {
+  overflow-x: auto;
+}
+
+.report-table {
+  width: 100%;
+  min-width: 760px;
+}
+
+:host ::ng-deep .report-table .mat-mdc-header-cell {
+  background: #b8d4f2 !important;
+  color: #0f172a !important;
+  font-weight: 700 !important;
+}
+
+:host ::ng-deep .report-table .mat-mdc-cell {
+  border-bottom: 1px solid #e2e8f0;
+}

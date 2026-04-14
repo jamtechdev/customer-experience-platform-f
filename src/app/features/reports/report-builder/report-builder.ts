@@ -19,6 +19,13 @@ import {
 
 type ReportType = 'executive' | 'full';
 type ReportFormat = 'pdf' | 'excel';
+interface CreatedReportRecord {
+  id: number;
+  type: ReportType;
+  format: ReportFormat;
+  range: string;
+  createdAt: Date;
+}
 
 /** Report export: user must pick a fixed preset or custom range; backend also requires startDate/endDate. */
 
@@ -53,6 +60,7 @@ export class ReportBuilder implements OnInit {
   endDate = signal<string | null>(null);
   presets = signal<ReportDatePreset[]>([]);
   selectedPresetId = signal<string>('last_30_days');
+  createdReports = signal<CreatedReportRecord[]>([]);
 
   get companyId(): number {
     return this.authService.currentUser()?.settings?.companyId ?? 1;
@@ -143,6 +151,7 @@ export class ReportBuilder implements OnInit {
           a.download = `${type}-report-${dateStr}.pdf`;
           a.click();
           URL.revokeObjectURL(url);
+          this.pushCreatedReport(type, format);
           done();
         },
         error: fail,
@@ -156,10 +165,28 @@ export class ReportBuilder implements OnInit {
           a.download = `${type}-report-${dateStr}.xlsx`;
           a.click();
           URL.revokeObjectURL(url);
+          this.pushCreatedReport(type, format);
           done();
         },
         error: fail,
       });
     }
+  }
+
+  createReport(): void {
+    this.exportReport();
+  }
+
+  private pushCreatedReport(type: ReportType, format: ReportFormat): void {
+    const start = this.startDate() ?? '-';
+    const end = this.endDate() ?? '-';
+    const next: CreatedReportRecord = {
+      id: Date.now(),
+      type,
+      format,
+      range: `${start} -> ${end}`,
+      createdAt: new Date(),
+    };
+    this.createdReports.update((list) => [next, ...list]);
   }
 }

@@ -46,7 +46,6 @@ export class ExecutiveSummary implements OnInit {
   loading = signal(true);
   exporting = signal(false);
   data = signal<ExecutiveDashboardData | null>(null);
-  Math = Math;
 
   presets = signal<ReportDatePreset[]>([]);
   selectedPresetId = signal<string>('last_30_days');
@@ -173,5 +172,31 @@ export class ExecutiveSummary implements OnInit {
         this.snackBar.open(this.t('reports.exportFailed'), this.t('app.close'), { duration: 4000 });
       },
     });
+  }
+
+  totalTweetVolume(): number {
+    return this.data()?.kpis.totalFeedback ?? 0;
+  }
+
+  originalCustomerCxVolume(): number {
+    return this.data()?.nps.total ?? 0;
+  }
+
+  cxRelatedVolume(): number {
+    const original = this.originalCustomerCxVolume();
+    return original > 0 ? original : this.totalTweetVolume();
+  }
+
+  brandSupportVolume(): number {
+    const total = this.totalTweetVolume();
+    const original = this.originalCustomerCxVolume();
+    return Math.max(total - original, 0);
+  }
+
+  sentimentPct(kind: 'positive' | 'neutral' | 'negative'): number {
+    const s = this.data()?.sentiment;
+    const total = (s?.positive ?? 0) + (s?.neutral ?? 0) + (s?.negative ?? 0);
+    if (!total || !s) return 0;
+    return (s[kind] / total) * 100;
   }
 }

@@ -98,9 +98,17 @@ export class Sidebar implements OnInit, OnDestroy {
       icon: 'share',
       children: [
         { labelKey: 'nav.socialAnalysis', icon: 'analytics', route: '/app/social-media/social-analysis' },
-        { labelKey: 'nav.arcelikTwitterCxReport', icon: 'description', route: '/app/social-media/arcelik-twitter-cx' },
         { labelKey: 'nav.sourceExtraction', icon: 'cloud_download', route: '/app/social-media/source-extraction' },
-        { labelKey: 'nav.methodology', icon: 'menu_book', route: '/app/social-media/methodology' }
+        { labelKey: 'nav.methodology', icon: 'menu_book', route: '/app/social-media/methodology' },
+        { labelKey: 'nav.datasetProfile', icon: 'table_chart', route: '/app/social-media/dataset-profile' },
+        { labelKey: 'nav.executiveSummary', icon: 'summarize', route: '/app/reports/executive-summary' },
+        { labelKey: 'nav.sentimentAnalysis', icon: 'sentiment_satisfied', route: '/app/analysis/sentiment' },
+        { labelKey: 'nav.npsAnalysis', icon: 'trending_up', route: '/app/analytics/nps-analysis' },
+        { labelKey: 'nav.rootCause', icon: 'search', route: '/app/analysis/root-cause' },
+        { labelKey: 'nav.journeyMap', icon: 'route', route: '/app/cx/journeys' },
+        { labelKey: 'nav.journeyHeatmap', icon: 'grid_on', route: '/app/cx/journey-heatmap' },
+        { labelKey: 'nav.touchpoints', icon: 'place', route: '/app/cx/touchpoints' },
+        { labelKey: 'nav.actionPlans', icon: 'assignment', route: '/app/cx/action-plans' }
       ]
     },
     {
@@ -122,13 +130,18 @@ export class Sidebar implements OnInit, OnDestroy {
 
   private flatten(items: SidebarMenuItem[]): SidebarFlatItem[] {
     const out: SidebarFlatItem[] = [];
+    const seenRoutes = new Set<string>();
     for (const item of items) {
       if (item.children?.length) {
         for (const child of item.children) {
-          if (child.route) out.push({ label: this.t(child.labelKey), icon: child.icon, route: child.route });
+          if (child.route && !seenRoutes.has(child.route)) {
+            out.push({ label: this.t(child.labelKey), icon: child.icon, route: child.route });
+            seenRoutes.add(child.route);
+          }
         }
-      } else if (item.route) {
+      } else if (item.route && !seenRoutes.has(item.route)) {
         out.push({ label: this.t(item.labelKey), icon: item.icon, route: item.route });
+        seenRoutes.add(item.route);
       }
     }
     return out;

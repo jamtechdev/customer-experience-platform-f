@@ -1,216 +1,209 @@
 <div class="dashboard-reports-container">
-  <div class="header-section">
-    <h1>Dashboard Reports</h1>
-    <p class="subtitle">Track current status and history with periodic analysis</p>
-  </div>
-
-  <mat-card class="filter-card">
-    <mat-card-content>
-      <div class="filters-row">
-        <mat-form-field appearance="outline">
-          <mat-label>{{ t('reports.fixedPeriod') }}</mat-label>
-          <mat-select [value]="selectedPresetId()" (selectionChange)="onPresetChange($event.value)">
-            @for (p of presets(); track p.id) {
-              <mat-option [value]="p.id">{{ p.label }}</mat-option>
-            }
-            <mat-option value="custom">{{ t('reports.customRange') }}</mat-option>
-          </mat-select>
-        </mat-form-field>
-
-        <mat-form-field appearance="outline">
-          <mat-label>{{ t('reports.fromDate') }}</mat-label>
-          <input
-            matInput
-            type="date"
-            [ngModel]="startDate()"
-            [disabled]="selectedPresetId() !== 'custom'"
-            (ngModelChange)="startDate.set($event); onManualDate()"
-          />
-        </mat-form-field>
-
-        <mat-form-field appearance="outline">
-          <mat-label>{{ t('reports.toDate') }}</mat-label>
-          <input
-            matInput
-            type="date"
-            [ngModel]="endDate()"
-            [disabled]="selectedPresetId() !== 'custom'"
-            (ngModelChange)="endDate.set($event); onManualDate()"
-          />
-        </mat-form-field>
-
-        <button mat-stroked-button color="primary" type="button" (click)="applyRangeAndReload()" [disabled]="loading() && loadingTrends()">
-          {{ t('reports.applyRange') }}
-        </button>
-      </div>
-    </mat-card-content>
-  </mat-card>
-
-  <!-- Current status -->
-  <section class="section">
-    <h2 class="section-title">
-      <mat-icon>dashboard</mat-icon>
-      Current Status
-    </h2>
-    <div *ngIf="loading()" class="loading-container">
-      <mat-spinner diameter="40"></mat-spinner>
-      <p>Loading current status...</p>
+  <section class="hero">
+    <div class="hero-copy">
+      <h1>Dashboard Reports</h1>
+      <p>Track performance, sentiment shifts, and NPS movement in a modern analytics view.</p>
     </div>
-    <div *ngIf="!loading() && currentStats()" class="status-grid">
-      <mat-card class="status-card">
-        <mat-card-content>
-          <div class="status-label">Total Feedback</div>
-          <div class="status-value">{{ currentStats()!.sentiment.total | number }}</div>
-        </mat-card-content>
-      </mat-card>
-      <mat-card class="status-card">
-        <mat-card-content>
-          <div class="status-label">NPS Score</div>
-          <div class="status-value">{{ Math.round(currentStats()!.nps.score) }}</div>
-          <p class="muted small">{{ t('metrics.nps.methodBody') }}</p>
-          <p class="muted small">
-            Promoters: {{ currentStats()!.nps.promoters }} · Passives: {{ currentStats()!.nps.passives }} · Detractors: {{ currentStats()!.nps.detractors }}
-          </p>
-        </mat-card-content>
-      </mat-card>
-      <mat-card class="status-card">
-        <mat-card-content>
-          <div class="status-label">Positive Sentiment</div>
-          <div class="status-value">
-            {{ currentStats()!.sentiment.total > 0 ? (currentStats()!.sentiment.positive / currentStats()!.sentiment.total * 100 | number:'1.1-1') : 0 }}%
-          </div>
-        </mat-card-content>
-      </mat-card>
-      <mat-card class="status-card">
-        <mat-card-content>
-          <div class="status-label">Neutral Sentiment</div>
-          <div class="status-value">
-            {{ currentStats()!.sentiment.total > 0 ? (currentStats()!.sentiment.neutral / currentStats()!.sentiment.total * 100 | number:'1.1-1') : 0 }}%
-          </div>
-        </mat-card-content>
-      </mat-card>
-      <mat-card class="status-card">
-        <mat-card-content>
-          <div class="status-label">Negative Sentiment</div>
-          <div class="status-value">
-            {{ currentStats()!.sentiment.total > 0 ? (currentStats()!.sentiment.negative / currentStats()!.sentiment.total * 100 | number:'1.1-1') : 0 }}%
-          </div>
-        </mat-card-content>
-      </mat-card>
-      <mat-card class="status-card">
-        <mat-card-content>
-          <div class="status-label">Active Alerts</div>
-          <div class="status-value">{{ currentStats()!.alerts.total }}</div>
-        </mat-card-content>
-      </mat-card>
-    </div>
-    <div *ngIf="!loading() && !currentStats()" class="empty-hint">No current data available.</div>
+    <mat-card class="filter-card">
+      <mat-card-content>
+        <div class="filters-row">
+          <mat-form-field appearance="outline">
+            <mat-label>{{ t('reports.fixedPeriod') }}</mat-label>
+            <mat-select [value]="selectedPresetId()" (selectionChange)="onPresetChange($event.value)">
+              @for (p of presets(); track p.id) {
+                <mat-option [value]="p.id">{{ p.label }}</mat-option>
+              }
+              <mat-option value="custom">{{ t('reports.customRange') }}</mat-option>
+            </mat-select>
+          </mat-form-field>
+          <mat-form-field appearance="outline">
+            <mat-label>{{ t('reports.fromDate') }}</mat-label>
+            <input
+              matInput
+              type="date"
+              [ngModel]="startDate()"
+              [disabled]="selectedPresetId() !== 'custom'"
+              (ngModelChange)="startDate.set($event); onManualDate()"
+            />
+          </mat-form-field>
+          <mat-form-field appearance="outline">
+            <mat-label>{{ t('reports.toDate') }}</mat-label>
+            <input
+              matInput
+              type="date"
+              [ngModel]="endDate()"
+              [disabled]="selectedPresetId() !== 'custom'"
+              (ngModelChange)="endDate.set($event); onManualDate()"
+            />
+          </mat-form-field>
+          <button mat-flat-button color="primary" type="button" (click)="applyRangeAndReload()" [disabled]="loading() && loadingTrends()">
+            {{ t('reports.applyRange') }}
+          </button>
+        </div>
+      </mat-card-content>
+    </mat-card>
   </section>
 
-  <!-- History: periodic changes -->
   <section class="section">
-    <h2 class="section-title">
-      <mat-icon>show_chart</mat-icon>
-      History &amp; Periodic Changes
-    </h2>
-    <div class="period-controls">
-      <mat-form-field appearance="outline" class="period-select">
-        <mat-label>Period</mat-label>
-        <mat-select [ngModel]="period()" (ngModelChange)="period.set($event); onPeriodChange()">
-          <mat-option value="day">Daily</mat-option>
-          <mat-option value="week">Weekly</mat-option>
-          <mat-option value="month">Monthly</mat-option>
-        </mat-select>
-      </mat-form-field>
-      <button mat-stroked-button type="button" (click)="loadTrends()" [disabled]="loadingTrends()">
-        <mat-icon>refresh</mat-icon>
-        Refresh
-      </button>
+    <h2 class="section-title">Current Status</h2>
+    @if (loading()) {
+      <div class="loading-container">
+        <mat-spinner diameter="40"></mat-spinner>
+        <p>Loading current status...</p>
+      </div>
+    } @else if (currentStats()) {
+      <div class="status-grid">
+        <mat-card class="status-card kpi">
+          <mat-card-content>
+            <mat-icon>forum</mat-icon>
+            <div class="status-label">Total Feedback</div>
+            <div class="status-value">{{ currentStats()!.sentiment.total | number }}</div>
+          </mat-card-content>
+        </mat-card>
+        <mat-card class="status-card kpi">
+          <mat-card-content>
+            <mat-icon>trending_up</mat-icon>
+            <div class="status-label">NPS Score</div>
+            <div class="status-value">{{ Math.round(currentStats()!.nps.score) }}</div>
+            <p class="muted small">Promoters {{ currentStats()!.nps.promoters }} · Passives {{ currentStats()!.nps.passives }} · Detractors {{ currentStats()!.nps.detractors }}</p>
+          </mat-card-content>
+        </mat-card>
+        <mat-card class="status-card positive">
+          <mat-card-content>
+            <mat-icon>sentiment_very_satisfied</mat-icon>
+            <div class="status-label">Positive Sentiment</div>
+            <div class="status-value">{{ currentStats()!.sentiment.total > 0 ? (currentStats()!.sentiment.positive / currentStats()!.sentiment.total * 100 | number:'1.1-1') : 0 }}%</div>
+          </mat-card-content>
+        </mat-card>
+        <mat-card class="status-card neutral">
+          <mat-card-content>
+            <mat-icon>sentiment_neutral</mat-icon>
+            <div class="status-label">Neutral Sentiment</div>
+            <div class="status-value">{{ currentStats()!.sentiment.total > 0 ? (currentStats()!.sentiment.neutral / currentStats()!.sentiment.total * 100 | number:'1.1-1') : 0 }}%</div>
+          </mat-card-content>
+        </mat-card>
+        <mat-card class="status-card negative">
+          <mat-card-content>
+            <mat-icon>sentiment_dissatisfied</mat-icon>
+            <div class="status-label">Negative Sentiment</div>
+            <div class="status-value">{{ currentStats()!.sentiment.total > 0 ? (currentStats()!.sentiment.negative / currentStats()!.sentiment.total * 100 | number:'1.1-1') : 0 }}%</div>
+          </mat-card-content>
+        </mat-card>
+        <mat-card class="status-card kpi">
+          <mat-card-content>
+            <mat-icon>notifications_active</mat-icon>
+            <div class="status-label">Active Alerts</div>
+            <div class="status-value">{{ currentStats()!.alerts.total }}</div>
+          </mat-card-content>
+        </mat-card>
+      </div>
+    } @else {
+      <div class="empty-hint">No current data available.</div>
+    }
+  </section>
+
+  <section class="section">
+    <div class="section-head">
+      <h2 class="section-title">History &amp; Periodic Changes</h2>
+      <div class="period-controls">
+        <mat-form-field appearance="outline" class="period-select">
+          <mat-label>Period</mat-label>
+          <mat-select [ngModel]="period()" (ngModelChange)="period.set($event); onPeriodChange()">
+            <mat-option value="day">Daily</mat-option>
+            <mat-option value="week">Weekly</mat-option>
+            <mat-option value="month">Monthly</mat-option>
+          </mat-select>
+        </mat-form-field>
+        <button mat-stroked-button type="button" (click)="loadTrends()" [disabled]="loadingTrends()">
+          <mat-icon>refresh</mat-icon>
+          Refresh
+        </button>
+      </div>
     </div>
 
-    <div *ngIf="loadingTrends()" class="loading-container">
-      <mat-spinner diameter="40"></mat-spinner>
-      <p>Loading trend data...</p>
-    </div>
-
-    <div *ngIf="!loadingTrends()" class="trends-content">
-      <!-- Sentiment over time -->
-      <mat-card class="trend-card">
-        <mat-card-header>
-          <mat-card-title>Sentiment Over Time</mat-card-title>
-          <mat-card-subtitle>Feedback volume and mix by period</mat-card-subtitle>
-        </mat-card-header>
-        <mat-card-content>
-          <div *ngIf="sentimentTrends().length === 0" class="chart-empty">No sentiment trend data for the selected period.</div>
-          <div *ngIf="sentimentTrends().length > 0" class="trend-chart">
-            <div *ngFor="let point of sentimentTrends()" class="trend-row">
-              <span class="trend-label">{{ formatPeriodLabel(point.period) }}</span>
-              <div class="trend-bars">
-                <div class="bar-track full">
-                  <div class="bar-fill total" [style.width.%]="(point.total / maxSentimentTotal()) * 100"></div>
+    @if (loadingTrends()) {
+      <div class="loading-container">
+        <mat-spinner diameter="40"></mat-spinner>
+        <p>Loading trend data...</p>
+      </div>
+    } @else {
+      <div class="trends-content">
+        <mat-card class="trend-card">
+          <mat-card-header>
+            <mat-card-title>Sentiment Over Time</mat-card-title>
+            <mat-card-subtitle>Feedback volume and sentiment mix by period</mat-card-subtitle>
+          </mat-card-header>
+          <mat-card-content>
+            @if (sentimentTrends().length === 0) {
+              <div class="chart-empty">No sentiment trend data for the selected period.</div>
+            } @else {
+              <div class="trend-chart">
+                <div *ngFor="let point of sentimentTrends()" class="trend-row">
+                  <span class="trend-label">{{ formatPeriodLabel(point.period) }}</span>
+                  <div class="trend-bars">
+                    <div class="bar-track full">
+                      <div class="bar-fill total" [style.width.%]="(point.total / maxSentimentTotal()) * 100"></div>
+                    </div>
+                    <span class="trend-value">{{ point.total }} total</span>
+                  </div>
+                  <div class="trend-breakdown">
+                    <span class="breakdown positive">+{{ point.positive }}</span>
+                    <span class="breakdown neutral">~{{ point.neutral }}</span>
+                    <span class="breakdown negative">-{{ point.negative }}</span>
+                    <span class="breakdown avg">avg {{ point.averageScore | number:'1.2-2' }}</span>
+                  </div>
                 </div>
-                <span class="trend-value">{{ point.total }} total</span>
               </div>
-              <div class="trend-breakdown">
-                <span class="breakdown positive">+{{ point.positive }}</span>
-                <span class="breakdown neutral">~{{ point.neutral }}</span>
-                <span class="breakdown negative">−{{ point.negative }}</span>
-                <span class="breakdown avg">avg {{ point.averageScore | number:'1.2-2' }}</span>
-              </div>
-            </div>
-          </div>
-        </mat-card-content>
-      </mat-card>
+            }
+          </mat-card-content>
+        </mat-card>
 
-      <!-- NPS over time -->
-      <mat-card class="trend-card">
-        <mat-card-header>
-          <mat-card-title>NPS Score Over Time</mat-card-title>
-          <mat-card-subtitle>Net Promoter Score by period</mat-card-subtitle>
-        </mat-card-header>
-        <mat-card-content>
-          <div *ngIf="npsTrends().length === 0" class="chart-empty">No NPS trend data for the selected period.</div>
-          <div *ngIf="npsTrends().length > 0" class="trend-chart nps-chart">
-            <div *ngFor="let point of npsTrends()" class="trend-row">
-              <span class="trend-label">{{ formatPeriodLabel(point.period) }}</span>
-              <div class="nps-bar-wrap">
-                <div class="nps-bar-track">
-                  <div
-                    class="nps-bar-fill"
-                    [style.width.%]="npsBarWidth(point.npsScore)"
-                    [class.positive]="point.npsScore >= 0"
-                    [class.negative]="point.npsScore < 0"
-                  ></div>
+        <mat-card class="trend-card">
+          <mat-card-header>
+            <mat-card-title>NPS Score Over Time</mat-card-title>
+            <mat-card-subtitle>Net Promoter Score progression by period</mat-card-subtitle>
+          </mat-card-header>
+          <mat-card-content>
+            @if (npsTrends().length === 0) {
+              <div class="chart-empty">No NPS trend data for the selected period.</div>
+            } @else {
+              <div class="trend-chart nps-chart">
+                <div *ngFor="let point of npsTrends()" class="trend-row">
+                  <span class="trend-label">{{ formatPeriodLabel(point.period) }}</span>
+                  <div class="nps-bar-wrap">
+                    <div class="nps-bar-track">
+                      <div class="nps-bar-fill" [style.width.%]="npsBarWidth(point.npsScore)" [class.positive]="point.npsScore >= 0" [class.negative]="point.npsScore < 0"></div>
+                    </div>
+                    <span class="trend-value">{{ point.npsScore | number:'1.1-1' }} (n={{ point.count }})</span>
+                  </div>
                 </div>
-                <span class="trend-value">{{ point.npsScore | number:'1.1-1' }} (n={{ point.count }})</span>
               </div>
-            </div>
-          </div>
-        </mat-card-content>
-      </mat-card>
+            }
+          </mat-card-content>
+        </mat-card>
 
-      <!-- Feedback volume over time (simple) -->
-      <mat-card class="trend-card">
-        <mat-card-header>
-          <mat-card-title>Feedback Volume Over Time</mat-card-title>
-          <mat-card-subtitle>Total feedback count by period</mat-card-subtitle>
-        </mat-card-header>
-        <mat-card-content>
-          <div *ngIf="sentimentTrends().length === 0" class="chart-empty">No volume data for the selected period.</div>
-          <div *ngIf="sentimentTrends().length > 0" class="volume-chart">
-            <div *ngFor="let point of sentimentTrends()" class="volume-bar-row">
-              <span class="trend-label">{{ formatPeriodLabel(point.period) }}</span>
-              <div class="volume-bar-track">
-                <div
-                  class="volume-bar-fill"
-                  [style.width.%]="(point.total / maxSentimentTotal()) * 100"
-                ></div>
+        <mat-card class="trend-card">
+          <mat-card-header>
+            <mat-card-title>Feedback Volume Over Time</mat-card-title>
+            <mat-card-subtitle>Total feedback count by period</mat-card-subtitle>
+          </mat-card-header>
+          <mat-card-content>
+            @if (sentimentTrends().length === 0) {
+              <div class="chart-empty">No volume data for the selected period.</div>
+            } @else {
+              <div class="volume-chart">
+                <div *ngFor="let point of sentimentTrends()" class="volume-bar-row">
+                  <span class="trend-label">{{ formatPeriodLabel(point.period) }}</span>
+                  <div class="volume-bar-track">
+                    <div class="volume-bar-fill" [style.width.%]="(point.total / maxSentimentTotal()) * 100"></div>
+                  </div>
+                  <span class="trend-value">{{ point.total }}</span>
+                </div>
               </div>
-              <span class="trend-value">{{ point.total }}</span>
-            </div>
-          </div>
-        </mat-card-content>
-      </mat-card>
-    </div>
+            }
+          </mat-card-content>
+        </mat-card>
+      </div>
+    }
   </section>
 </div>

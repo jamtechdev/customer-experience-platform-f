@@ -58,13 +58,36 @@
           <button
             mat-raised-button
             color="primary"
-            (click)="exportReport()"
+            type="button"
+            (click)="createReport()"
             [disabled]="exporting() || !datesValid()">
-            <mat-icon>download</mat-icon>
-            {{ exporting() ? t('reports.exporting') : t('reports.exportReport') }}
+            <mat-icon>add_circle</mat-icon>
+            {{ exporting() ? t('reports.exporting') : 'Create report' }}
           </button>
         </div>
       </div>
+      <mat-card class="created-reports-card">
+        <mat-card-header>
+          <mat-card-title>Created reports ({{ createdReports().length }})</mat-card-title>
+          <mat-card-subtitle>Shows how many times you created report in this session.</mat-card-subtitle>
+        </mat-card-header>
+        <mat-card-content>
+          @if (createdReports().length === 0) {
+            <p class="hint">No report created yet.</p>
+          } @else {
+            <div class="created-list">
+              @for (r of createdReports(); track r.id) {
+                <div class="created-item">
+                  <strong>{{ r.type | titlecase }}</strong>
+                  <span>{{ r.format | uppercase }}</span>
+                  <span>{{ r.range }}</span>
+                  <span>{{ r.createdAt | date:'yyyy-MM-dd HH:mm:ss' }}</span>
+                </div>
+              }
+            </div>
+          }
+        </mat-card-content>
+      </mat-card>
       <p class="hint">{{ t('reports.builderHint') }}</p>
     </mat-card-content>
   </mat-card>

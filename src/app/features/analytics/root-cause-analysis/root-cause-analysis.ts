@@ -11,6 +11,7 @@ import { AnalysisService } from '../../../core/services/analysis.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { TranslationService } from '../../../core/services/translation.service';
+import { buildClientReportDatePresets } from '../../../core/utils/report-date-presets';
 
 interface RootCauseStructuredInsights {
   painPointTitle?: string;
@@ -27,6 +28,12 @@ interface RootCause {
   frequency: number;
   description: string;
   structuredInsights?: RootCauseStructuredInsights | null;
+}
+
+interface RootCauseChartRow {
+  cause: string;
+  count: number;
+  interpretation: string;
 }
 
 @Component({
@@ -89,49 +96,32 @@ export class RootCauseAnalysis implements OnInit {
   loadRootCauses(): void {
     this.loading.set(true);
     const user = this.authService.currentUser();
-    const companyId = user?.settings?.companyId || 1;
-    
-    this.analysisService.getRootCauses(companyId).subscribe({
+    const companyId = user?.role === 'admin' ? undefined : (user?.settings?.companyId || 1);
+    const presets = buildClientReportDatePresets();
+    const defaultId = user?.role === 'admin' ? 'all_time' : 'last_30_days';
+    const preset = presets.find((p) => p.id === defaultId) ?? presets[0];
+    const start = new Date(preset.startDate);
+    const end = new Date(preset.endDate);
+
+    this.analysisService.getTwitterCxReport(companyId, start, end).subscribe({
       next: (response) => {
-        if (response.success) {
-          // Map API response to component interface
-          const mapped = (response.data || []).map((item: any) => {
-            const fb = Array.isArray(item.feedbackIds) ? item.feedbackIds.length : 0;
-            const legacy = item.structuredInsights || {};
-            const legacySummary =
-              legacy.summary ||
-              legacy.problem ||
-              legacy.keyRootCause ||
-              item.description ||
-              '';
-            const legacyExamples = Array.isArray(legacy.examples)
-              ? legacy.examples
-              : Array.isArray(legacy.rootCauseThemes)
-                ? legacy.rootCauseThemes
-                : [];
-            return {
-              id: item.id,
-              title: item.title,
-              category: item.category || 'Other',
-              priority: item.priority || 'medium',
-              severity: typeof item.severity === 'number' ? item.severity : 0,
-              frequency: typeof item.frequency === 'number' ? item.frequency : fb,
-              description: item.description || '',
-              structuredInsights: {
-                painPointTitle:
-                  legacy.painPointTitle ||
-                  legacy.problem ||
-                  item.title,
-                summary: this.compactText(String(legacySummary), 200),
-                examples: legacyExamples
-                  .map((x: any) => this.compactText(String(x || ''), 100))
-                  .filter((x: string) => x.length > 0)
-                  .slice(0, 3),
-              },
-            };
-          });
+        if (response.success && response.data?.rootCauses) {
+          const mapped = (response.data.rootCauses || []).map((item, idx) => ({
+            id: idx + 1,
+            title: item.cause || 'Unknown cause',
+            category: 'Service',
+            priority: 'medium',
+            severity: 0,
+            frequency: item.count || 0,
+            description: item.interpretation || '',
+            structuredInsights: {
+              painPointTitle: item.cause || 'Unknown cause',
+              summary: this.compactText(String(item.interpretation || ''), 200),
+              examples: [],
+            },
+          }));
           this.rootCauses.set(mapped);
-          this.totalItems = this.rootCauses().length;
+          this.totalItems = mapped.length;
         } else {
           this.rootCauses.set([]);
           this.totalItems = 0;
@@ -143,7 +133,6 @@ export class RootCauseAnalysis implements OnInit {
         this.loading.set(false);
         this.rootCauses.set([]);
         this.totalItems = 0;
-        // Only show error if it's not a 500 (server might not have data yet)
         if (error.status !== 500) {
           this.snackBar.open('Failed to load root causes', 'Close', { duration: 3000 });
         }
@@ -181,6 +170,32 @@ export class RootCauseAnalysis implements OnInit {
 
   t(key: string): string {
     return this.translationService.translate(key);
+  }
+
+  rootCauseRows(): RootCauseChartRow[] {
+    return this.rootCauses()
+      .map((c) => ({
+        cause: this.painPointTitle(c),
+        count: c.frequency || 0,
+        interpretation: this.painPointSummary(c),
+      }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 12);
+  }
+
+  rootCauseMaxEffective(): number {
+    const rows = this.rootCauseRows();
+    return Math.max(1, ...rows.map((r) => r.count));
+  }
+
+  rootCauseBarFillPct(count: number): number {
+    const max = this.rootCauseMaxEffective();
+    return Math.min(100, max > 0 ? (count / max) * 100 : 0);
+  }
+
+  truncateChartLabel(text: string, maxLen = 28): string {
+    const t = (text || '').trim();
+    return t.length <= maxLen ? t : `${t.slice(0, maxLen - 1)}…`;
   }
 
   painPointTitle(cause: RootCause): string {

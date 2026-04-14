@@ -109,6 +109,233 @@
   margin-top: 24px;
 }
 
+.section-card {
+  margin-top: 8px;
+}
+
+.body-text {
+  color: #374151;
+  line-height: 1.55;
+  margin: 0 0 12px 0;
+}
+
+.bullet-list {
+  margin: 0 0 12px;
+  padding-left: 1.25rem;
+  color: #374151;
+  line-height: 1.6;
+}
+
+.mini-table-wrap {
+  overflow-x: auto;
+}
+
+.dense-table {
+  width: 100%;
+  min-width: 420px;
+}
+
+/* Matplotlib-style figure */
+.mpl-figure {
+  margin: 16px 0 20px;
+  font-family: 'DejaVu Sans', 'Liberation Sans', Arial, Helvetica, sans-serif;
+}
+
+.mpl-figure-title {
+  text-align: center;
+  font-size: 12px;
+  font-weight: 600;
+  color: #000;
+  margin: 0 0 10px;
+}
+
+.interactive-chart {
+  position: relative;
+  min-height: 260px;
+  border: 1px solid #dbe1ea;
+  border-radius: 10px;
+  background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+  padding: 16px 14px 8px;
+}
+
+.chart-grid-lines {
+  position: absolute;
+  left: 14px;
+  right: 14px;
+  top: 16px;
+  bottom: 36px;
+  display: grid;
+  grid-template-rows: repeat(4, 1fr);
+  pointer-events: none;
+}
+
+.chart-grid-lines span {
+  border-top: 1px dashed #e2e8f0;
+}
+
+.chart-bars {
+  position: relative;
+  z-index: 1;
+  height: 210px;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  align-items: end;
+}
+
+.chart-bar-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.chart-bar-track {
+  width: min(90px, 80%);
+  height: 180px;
+  display: flex;
+  align-items: end;
+}
+
+.chart-bar-fill {
+  width: 100%;
+  border-radius: 8px 8px 4px 4px;
+  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.22);
+  transition: transform 140ms ease, filter 140ms ease;
+}
+
+.chart-bar-col:hover .chart-bar-fill {
+  transform: translateY(-3px);
+  filter: brightness(1.08);
+}
+
+.chart-bar-fill.positive { background: linear-gradient(180deg, #22c55e, #16a34a); }
+.chart-bar-fill.neutral { background: linear-gradient(180deg, #f59e0b, #d97706); }
+.chart-bar-fill.negative { background: linear-gradient(180deg, #ef4444, #dc2626); }
+
+.chart-bar-value {
+  font-size: 0.78rem;
+  color: #111827;
+  font-weight: 700;
+}
+
+.chart-bar-label {
+  font-size: 0.74rem;
+  color: #64748b;
+}
+
+.chart-hover-card {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  background: rgba(15, 23, 42, 0.92);
+  color: #f8fafc;
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-size: 0.76rem;
+}
+
+.mpl-chart-mplframe {
+  background: #fff;
+}
+
+.mpl-axes-frame {
+  display: flex;
+  align-items: stretch;
+  border: 1px solid #000;
+  background: #fff;
+}
+
+.mpl-y-label-outer {
+  width: 22px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  font-size: 11px;
+  color: #000;
+  border-right: 1px solid #000;
+}
+
+.mpl-y-axis-mpl {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  width: 34px;
+  min-height: 200px;
+  padding: 6px 6px 6px 4px;
+  font-size: 10px;
+  color: #000;
+  text-align: right;
+  border-right: 1px solid #000;
+}
+
+.mpl-plot-mpl {
+  flex: 1;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-around;
+  gap: 6px;
+  min-height: 220px;
+  padding: 10px 14px 6px;
+}
+
+.mpl-bar-col {
+  flex: 1;
+  max-width: 120px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  min-width: 52px;
+}
+
+.mpl-bar-track {
+  width: 62%;
+  min-width: 32px;
+  height: 200px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+}
+
+.mpl-bar-fill {
+  min-height: 1px;
+}
+
+.mpl-bar-mpl {
+  background: #1f77b4;
+}
+
+.mpl-bar-value {
+  font-size: 10px;
+  color: #000;
+  margin-top: 4px;
+}
+
+.mpl-bar-cat {
+  font-size: 10px;
+  color: #000;
+  margin-top: 2px;
+  text-align: center;
+}
+
+:host ::ng-deep .report-mat-table .mat-mdc-header-cell {
+  background: #b8d4f2 !important;
+  color: #0f172a !important;
+  font-weight: 600 !important;
+}
+
+:host ::ng-deep .report-mat-table .mat-mdc-cell {
+  border-bottom: 1px solid #e2e8f0;
+}
+
 .list-card mat-card-subtitle {
   margin-top: 4px;
   font-size: 0.875rem;
@@ -251,6 +478,14 @@
   margin-top: 10px;
   display: flex;
   justify-content: flex-end;
+}
+
+.pagination-row {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 10px;
+  margin-top: 12px;
 }
 
 @media (max-width: 768px) {

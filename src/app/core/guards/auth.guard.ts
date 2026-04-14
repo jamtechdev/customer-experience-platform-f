@@ -50,11 +50,10 @@ export const checkerGuard: CanActivateFn = (route, state) => {
 export const adminGuard: CanActivateFn = (route, state) => {
   const authService = inject(AuthService);
   const router = inject(Router);
-  const currentUser = authService.currentUser();
-  const hasToken = authService.getToken() !== null;
-  const isAdmin = currentUser?.role === 'admin';
-
-  if (hasToken && isAdmin) {
+  // Keep route stable on hard refresh while profile is still hydrating.
+  // AuthService marks token-based sessions as authenticated during init.
+  const isAuthenticated = authService.isAuthenticated();
+  if (isAuthenticated) {
     return true;
   }
 

@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
 import { MatTableModule } from '@angular/material/table';
@@ -29,6 +29,19 @@ interface SentimentStats {
   neutral: number;
   total: number;
   averageScore: number;
+}
+
+interface SentimentChartBar {
+  key: 'positive' | 'neutral' | 'negative';
+  label: string;
+  count: number;
+  percentage: number;
+  height: number;
+}
+
+interface SentimentReferenceRow {
+  sentiment: 'Positive' | 'Neutral' | 'Negative';
+  patterns: string;
 }
 
 @Component({
@@ -64,26 +77,27 @@ export class SentimentAnalysis implements OnInit {
   feedbackTotal = signal(0);
 
   presets = signal<ReportDatePreset[]>([]);
-  selectedPresetId = signal<string>('last_30_days');
+  selectedPresetId = signal<string>('all_time');
   startDate = signal<string | null>(null);
   endDate = signal<string | null>(null);
+  page = signal(1);
+  pageSize = signal(25);
+  totalPages = computed(() => Math.max(1, Math.ceil(this.feedbackTotal() / this.pageSize())));
+  hoveredBar = signal<SentimentChartBar | null>(null);
+  private readonly cacheKey = 'sentiment-analysis-cache-v1';
+  private readonly defaultPatterns: Record<string, string> = {
+    positive: 'Long product lifetime, praise for durability, favorable campaign/discount mentions, occasional service appreciation',
+    neutral: 'Support asks for DM/contact info, routing messages, informational mentions',
+    negative: 'Complaint escalation, unresolved repair, service delay, unfair fee/change request, poor response ownership',
+  };
 
   displayedColumns: string[] = ['sentiment', 'count', 'percentage', 'bar'];
-  listColumns: string[] = ['content', 'source', 'date', 'sentiment', 'score'];
+  patternCols: string[] = ['sentiment', 'patterns'];
+  feedbackColumns: string[] = ['content', 'source', 'date', 'sentiment', 'score'];
 
   ngOnInit(): void {
-    this.setListColumns();
+    this.restoreCache();
     this.loadPresets();
-  }
-
-  isAdminUser(): boolean {
-    return this.authService.currentUser()?.role === 'admin';
-  }
-
-  private setListColumns(): void {
-    this.listColumns = this.isAdminUser()
-      ? ['content', 'source', 'date', 'sentiment', 'score', 'actions']
-      : ['content', 'source', 'date', 'sentiment', 'score'];
   }
 
   private loadPresets(): void {
@@ -92,8 +106,7 @@ export class SentimentAnalysis implements OnInit {
         const list =
           res.success && res.data?.presets?.length ? (res.data.presets as ReportDatePreset[]) : buildClientReportDatePresets();
         this.presets.set(list);
-        const role = this.authService.currentUser()?.role;
-        const defId = role === 'admin' ? 'all_time' : 'last_30_days';
+        const defId = 'all_time';
         const def = list.find((p) => p.id === defId) ?? list[0];
         if (def) this.applyPreset(def);
         this.reloadAll();
@@ -101,8 +114,7 @@ export class SentimentAnalysis implements OnInit {
       error: () => {
         const list = buildClientReportDatePresets();
         this.presets.set(list);
-        const role = this.authService.currentUser()?.role;
-        const defId = role === 'admin' ? 'all_time' : 'last_30_days';
+        const defId = 'all_time';
         const def = list.find((p) => p.id === defId) ?? list[0];
         if (def) this.applyPreset(def);
         this.reloadAll();
@@ -124,7 +136,6 @@ export class SentimentAnalysis implements OnInit {
     const p = this.presets().find((x) => x.id === id);
     if (p) {
       this.applyPreset(p);
-      this.reloadAll();
     }
   }
 
@@ -143,7 +154,24 @@ export class SentimentAnalysis implements OnInit {
       this.snackBar.open('Select a valid date range', 'Close', { duration: 4000 });
       return;
     }
+    this.page.set(1);
     this.reloadAll();
+  }
+
+  refreshData(): void {
+    this.reloadAll();
+  }
+
+  prevPage(): void {
+    if (this.page() <= 1 || this.loading()) return;
+    this.page.update((p) => p - 1);
+    this.loadFeedbackList();
+  }
+
+  nextPage(): void {
+    if (this.page() >= this.totalPages() || this.loading()) return;
+    this.page.update((p) => p + 1);
+    this.loadFeedbackList();
   }
 
   exportSentimentRecords(): void {
@@ -224,6 +252,7 @@ export class SentimentAnalysis implements OnInit {
           total,
           averageScore: data.averageScore ?? 0
         });
+        this.persistCache();
         this.loading.set(false);
       },
       error: () => {
@@ -238,7 +267,7 @@ export class SentimentAnalysis implements OnInit {
     const companyId = this.getCompanyId();
     const { start, end } = this.getDateRange();
 
-    this.analysisService.getFeedbackWithSentiment(companyId, start, end, 1, 100).subscribe({
+    this.analysisService.getFeedbackWithSentiment(companyId, start, end, this.page(), this.pageSize()).subscribe({
       next: (response) => {
         if (response?.success && response?.data) {
           const list = (response.data.list || []).map((row: any) => ({
@@ -247,6 +276,7 @@ export class SentimentAnalysis implements OnInit {
           }));
           this.feedbackList.set(list);
           this.feedbackTotal.set(response.data.total ?? list.length);
+          this.persistCache();
         } else {
           this.feedbackList.set([]);
           this.feedbackTotal.set(0);
@@ -269,6 +299,80 @@ export class SentimentAnalysis implements OnInit {
       { sentiment: 'Neutral', count: stats.neutral, percentage: pct(stats.neutral) },
       { sentiment: 'Negative', count: stats.negative, percentage: pct(stats.negative) }
     ];
+  }
+
+  sentimentRows(): Array<{ sentiment: string; count: number; percentage: string; css: string }> {
+    const rows = this.getSentimentData();
+    return rows.map((r) => ({ ...r, css: r.sentiment.toLowerCase() }));
+  }
+
+  chartBars = computed<SentimentChartBar[]>(() => {
+    const s = this.stats();
+    if (!s) return [];
+    const total = Math.max(1, s.total || 0);
+    const maxCount = Math.max(1, s.positive, s.neutral, s.negative);
+    const mk = (key: 'positive' | 'neutral' | 'negative', label: string, count: number): SentimentChartBar => ({
+      key,
+      label,
+      count,
+      percentage: (count / total) * 100,
+      height: Math.max(8, (count / maxCount) * 100),
+    });
+    return [
+      mk('positive', 'Positive', s.positive),
+      mk('neutral', 'Neutral', s.neutral),
+      mk('negative', 'Negative', s.negative),
+    ];
+  });
+
+  sentimentBarChartMax(): number {
+    const s = this.stats();
+    if (!s) return 100;
+    const m = Math.max(s.positive, s.neutral, s.negative, 1);
+    return Math.max(50, Math.ceil(m / 25) * 25);
+  }
+
+  sentimentBarFillPct(count: number): number {
+    const max = this.sentimentBarChartMax();
+    return Math.min(100, max > 0 ? (count / max) * 100 : 0);
+  }
+
+  onBarHover(bar: SentimentChartBar): void {
+    this.hoveredBar.set(bar);
+  }
+
+  onBarLeave(): void {
+    this.hoveredBar.set(null);
+  }
+
+  representativePatterns(sentiment: string): string {
+    return this.defaultPatterns[sentiment] ?? 'No representative phrases available in this date range.';
+  }
+
+  sentimentReferenceRows(): SentimentReferenceRow[] {
+    return [
+      {
+        sentiment: 'Positive',
+        patterns:
+          'Long product lifetime, praise for durability, favorable campaign/discount mentions, occasional service appreciation',
+      },
+      {
+        sentiment: 'Neutral',
+        patterns: 'Support asks for DM/contact info, routing messages, informational mentions',
+      },
+      {
+        sentiment: 'Negative',
+        patterns:
+          'Complaint escalation, unresolved repair, service delay, unfair fee/change request, poor response ownership',
+      },
+    ];
+  }
+
+  reportIntroText(): string {
+    const total = this.stats()?.total ?? 0;
+    const start = this.startDate() ?? '-';
+    const end = this.endDate() ?? '-';
+    return `Each row in the primary cohort (${total} with sentiment labels) was scored using the platform's offline text engine for this company. Date span in filter: ${start} to ${end}. Use Sentiment / export tools in the app if you need a downloadable labeled extract.`;
   }
 
   getBarWidth(percentage: string): string {
@@ -313,5 +417,45 @@ export class SentimentAnalysis implements OnInit {
         this.snackBar.open('Failed to delete all feedback records', 'Close', { duration: 3000 });
       }
     });
+  }
+
+  private persistCache(): void {
+    if (typeof localStorage === 'undefined') return;
+    try {
+      localStorage.setItem(
+        this.cacheKey,
+        JSON.stringify({
+          stats: this.stats(),
+          feedbackList: this.feedbackList(),
+          feedbackTotal: this.feedbackTotal(),
+          page: this.page(),
+          pageSize: this.pageSize(),
+        })
+      );
+    } catch {
+      // Ignore cache failures.
+    }
+  }
+
+  private restoreCache(): void {
+    if (typeof localStorage === 'undefined') return;
+    try {
+      const raw = localStorage.getItem(this.cacheKey);
+      if (!raw) return;
+      const parsed = JSON.parse(raw) as {
+        stats?: SentimentStats | null;
+        feedbackList?: Array<{ id: number; content: string; source: string; date: string; author?: string; sentiment: string; score: number }>;
+        feedbackTotal?: number;
+        page?: number;
+        pageSize?: number;
+      };
+      if (parsed.stats) this.stats.set(parsed.stats);
+      if (Array.isArray(parsed.feedbackList)) this.feedbackList.set(parsed.feedbackList);
+      if (typeof parsed.feedbackTotal === 'number') this.feedbackTotal.set(parsed.feedbackTotal);
+      if (typeof parsed.page === 'number' && parsed.page > 0) this.page.set(parsed.page);
+      if (typeof parsed.pageSize === 'number' && parsed.pageSize > 0) this.pageSize.set(parsed.pageSize);
+    } catch {
+      // Ignore invalid cache.
+    }
   }
 }

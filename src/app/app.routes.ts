@@ -134,8 +134,8 @@ export const routes: Routes = [
         children: [
           {
             path: '',
-            loadComponent: () => import('./features/reports/report-list/report-list').then(m => m.ReportList),
-            data: { title: 'Reports', breadcrumb: 'Reports' }
+            redirectTo: 'dashboard-reports',
+            pathMatch: 'full'
           },
           {
             path: 'dashboard-reports',
@@ -192,17 +192,19 @@ export const routes: Routes = [
             data: { title: 'Source Extraction', breadcrumb: 'Source Extraction' }
           },
           {
+            path: 'dataset-profile',
+            loadComponent: () => import('./features/social-media/dataset-profile/dataset-profile').then(m => m.DatasetProfile),
+            data: { title: 'Dataset profile', breadcrumb: 'Dataset profile' }
+          },
+          {
             path: 'methodology',
             loadComponent: () => import('./features/social-media/methodology/methodology').then(m => m.Methodology),
-            data: { title: 'Analysis Methodology', breadcrumb: 'Methodology' }
+            data: { title: 'Scope and method', breadcrumb: 'Scope and method' }
           },
           {
             path: 'arcelik-twitter-cx',
-            loadComponent: () =>
-              import('./features/social-media/arcelik-twitter-cx-report/arcelik-twitter-cx-report').then(
-                (m) => m.ArcelikTwitterCxReport
-              ),
-            data: { title: 'Arçelik Twitter CX Report', breadcrumb: 'Arçelik Twitter CX' }
+            redirectTo: '/app/reports/executive-summary',
+            pathMatch: 'full'
           }
         ]
       },

@@ -1,96 +1,51 @@
-import { Component, computed, inject, signal, OnInit } from '@angular/core';
+import { Component, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
-import { MatButtonModule } from '@angular/material/button';
-import { MatIconModule } from '@angular/material/icon';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatChipsModule } from '@angular/material/chips';
-import { CustomerJourneyService, ProcessEnhancementPlan } from '../../../core/services/customer-journey.service';
+import { AnalysisService } from '../../../core/services/analysis.service';
 import { AuthService } from '../../../core/services/auth.service';
+import { buildClientReportDatePresets } from '../../../core/utils/report-date-presets';
 
 @Component({
   selector: 'app-process-enhancement',
   standalone: true,
   imports: [
     CommonModule,
-    MatCardModule,
-    MatButtonModule,
-    MatIconModule,
-    MatProgressSpinnerModule,
-    MatChipsModule,
+    MatCardModule
   ],
   templateUrl: './process-enhancement.html',
   styleUrl: './process-enhancement.css',
 })
 export class ProcessEnhancement implements OnInit {
-  private journeyService = inject(CustomerJourneyService);
+  private analysisService = inject(AnalysisService);
   private authService = inject(AuthService);
 
   loading = signal(false);
-  plans = signal<ProcessEnhancementPlan[]>([]);
-  error = signal<string | null>(null);
-  readonly pageSize = 20;
-  page = signal(1);
-  pagedPlans = computed(() => {
-    const all = this.plans();
-    const total = all.length;
-    if (total === 0) return [];
-    const maxPage = Math.max(1, Math.ceil(total / this.pageSize));
-    const p = Math.min(Math.max(1, this.page()), maxPage);
-    const start = (p - 1) * this.pageSize;
-    return all.slice(start, start + this.pageSize);
-  });
-  totalPages = computed(() => {
-    const total = this.plans().length;
-    return total === 0 ? 0 : Math.ceil(total / this.pageSize);
-  });
-
-  goPrevPage(): void {
-    this.page.update((p) => Math.max(1, p - 1));
-  }
-
-  goNextPage(): void {
-    const total = this.plans().length;
-    if (total === 0) return;
-    const maxPage = Math.ceil(total / this.pageSize);
-    this.page.update((p) => Math.min(maxPage, p + 1));
-  }
+  processImprovements = signal<string[]>([]);
+  managementTakeaways = signal<string[]>([]);
 
   ngOnInit(): void {
-    // Auto-generate on page open so admin sees full plans immediately.
-    this.loadPlans();
-  }
-
-  loadPlans(): void {
-    const companyId = this.authService.currentUser()?.settings?.companyId || 1;
+    const user = this.authService.currentUser();
+    const companyId = user?.role === 'admin' ? undefined : (user?.settings?.companyId ?? 1);
+    const presets = buildClientReportDatePresets();
+    const defaultId = user?.role === 'admin' ? 'all_time' : 'last_30_days';
+    const preset = presets.find((p) => p.id === defaultId) ?? presets[0];
     this.loading.set(true);
-    this.error.set(null);
-    this.journeyService.getEnhancementPlans(companyId).subscribe({
+    this.analysisService.getTwitterCxReport(companyId, new Date(preset.startDate), new Date(preset.endDate)).subscribe({
       next: (res) => {
         if (res.success && res.data) {
-          this.plans.set(res.data);
-          this.page.set(1);
+          this.processImprovements.set(res.data.processImprovements ?? []);
+          this.managementTakeaways.set(res.data.managementTakeaways ?? []);
         } else {
-          this.plans.set([]);
-          this.page.set(1);
+          this.processImprovements.set([]);
+          this.managementTakeaways.set([]);
         }
         this.loading.set(false);
       },
-      error: (err) => {
-        this.error.set(err?.message || 'Failed to load enhancement plans');
-        this.plans.set([]);
-        this.page.set(1);
+      error: () => {
+        this.processImprovements.set([]);
+        this.managementTakeaways.set([]);
         this.loading.set(false);
       },
     });
-  }
-
-  getPriorityColor(p: string): string {
-    switch (p) {
-      case 'critical': return 'warn';
-      case 'high': return 'accent';
-      case 'medium': return 'primary';
-      default: return '';
-    }
   }
 }

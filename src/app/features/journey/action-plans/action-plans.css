@@ -182,3 +182,41 @@
     max-width: 100%;
   }
 }
+
+.section-card {
+  margin-bottom: 20px;
+}
+
+.table-wrap {
+  overflow-x: auto;
+}
+
+.action-table {
+  width: 100%;
+  min-width: 760px;
+}
+
+.pri-chip.p1 {
+  background: #fee2e2 !important;
+  --mdc-chip-label-text-color: #991b1b;
+}
+
+.pri-chip.p2 {
+  background: #fef3c7 !important;
+  --mdc-chip-label-text-color: #92400e;
+}
+
+.pri-chip.p3 {
+  background: #e0e7ff !important;
+  --mdc-chip-label-text-color: #3730a3;
+}
+
+:host ::ng-deep .report-mat-table .mat-mdc-header-cell {
+  background: #b8d4f2 !important;
+  color: #0f172a !important;
+  font-weight: 600 !important;
+}
+
+:host ::ng-deep .report-mat-table .mat-mdc-cell {
+  border-bottom: 1px solid #e2e8f0;
+}

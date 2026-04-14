@@ -1,67 +1,13 @@
 <div class="methodology-page">
-  @if (loading()) {
-    <div class="loading">
-      <mat-spinner diameter="40"></mat-spinner>
-    </div>
-  } @else if (methodology()) {
-    <mat-card class="methodology-card">
-      <mat-card-header>
-        <mat-card-title>{{ methodology()!.name }}</mat-card-title>
-        <mat-card-subtitle>Version {{ methodology()!.version }}</mat-card-subtitle>
-      </mat-card-header>
-      <mat-card-content>
-        <p class="description">{{ methodology()!.description }}</p>
-
-        <h3>Steps</h3>
-        <div class="steps">
-          @for (step of methodology()!.steps; track step.step) {
-            <mat-card class="step-card">
-              <mat-card-header>
-                <mat-card-title>Step {{ step.step }}: {{ step.name }}</mat-card-title>
-              </mat-card-header>
-              <mat-card-content>
-                <p>{{ step.description }}</p>
-                <div class="metrics">
-                  <strong>Metrics:</strong>
-                  <ul>
-                    @for (m of step.metrics; track m) {
-                      <li>{{ m }}</li>
-                    }
-                  </ul>
-                </div>
-                <p class="implementation"><strong>Implementation:</strong> {{ step.implementation }}</p>
-              </mat-card-content>
-            </mat-card>
-          }
-        </div>
-
-        <h3>Data Sources</h3>
-        <ul class="list">
-          @for (ds of methodology()!.dataSources; track ds) {
-            <li>{{ ds }}</li>
-          }
-        </ul>
-
-        <h3>Analysis Techniques</h3>
-        <ul class="list">
-          @for (tech of methodology()!.analysisTechniques; track tech) {
-            <li>{{ tech }}</li>
-          }
-        </ul>
-
-        <h3>Output Deliverables</h3>
-        <ul class="list">
-          @for (out of methodology()!.outputDeliverables; track out) {
-            <li>{{ out }}</li>
-          }
-        </ul>
-      </mat-card-content>
-    </mat-card>
-  } @else {
-    <mat-card>
-      <mat-card-content>
-        <p>Unable to load methodology.</p>
-      </mat-card-content>
-    </mat-card>
-  }
+  <mat-card class="methodology-card">
+    <mat-card-header>
+      <mat-card-title>Scope and method</mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+      <p *ngIf="loading()" class="muted">Loading scope and method...</p>
+      <ul class="list">
+        <li *ngFor="let line of bullets()">{{ line }}</li>
+      </ul>
+    </mat-card-content>
+  </mat-card>
 </div>

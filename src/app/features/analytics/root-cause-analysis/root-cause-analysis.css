@@ -106,6 +106,160 @@
   -webkit-overflow-scrolling: touch;
 }
 
+.section-card {
+  margin-bottom: 20px;
+}
+
+.dense-table {
+  width: 100%;
+  min-width: 520px;
+}
+
+/* Matplotlib-style figure used in report section 6 */
+.mpl-figure {
+  margin: 16px 0 20px;
+  font-family: 'DejaVu Sans', 'Liberation Sans', Arial, Helvetica, sans-serif;
+}
+
+.mpl-figure-title {
+  text-align: center;
+  font-size: 12px;
+  font-weight: 600;
+  color: #000;
+  margin: 0 0 10px;
+}
+
+.mpl-chart-mplframe {
+  margin: 0;
+  padding: 0;
+  background: #fff;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.mpl-axes-frame {
+  display: flex;
+  align-items: stretch;
+  border: 1px solid #000;
+  background: #fff;
+}
+
+.mpl-y-label-outer {
+  width: 22px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  font-size: 11px;
+  color: #000;
+  border-right: 1px solid #000;
+}
+
+.mpl-y-axis-mpl {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  width: 34px;
+  min-height: 200px;
+  padding: 6px 6px 6px 4px;
+  font-size: 10px;
+  color: #000;
+  text-align: right;
+  border-right: 1px solid #000;
+}
+
+.mpl-plot-mpl {
+  flex: 1;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-around;
+  gap: 6px;
+  min-height: 220px;
+  padding: 10px 14px 6px;
+}
+
+.mpl-plot-root {
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  justify-content: flex-start;
+  gap: 2px;
+  padding-bottom: 44px;
+}
+
+.mpl-bar-col {
+  flex: 1;
+  max-width: 120px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  min-width: 52px;
+}
+
+.mpl-bar-col-root {
+  flex: 0 0 auto;
+  min-width: 68px;
+}
+
+.mpl-bar-track {
+  width: 62%;
+  min-width: 32px;
+  height: 200px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: stretch;
+}
+
+.mpl-bar-fill {
+  min-height: 1px;
+}
+
+.mpl-bar-mpl {
+  background: #1f77b4;
+}
+
+.mpl-bar-value {
+  font-size: 10px;
+  color: #000;
+  margin-top: 4px;
+}
+
+.mpl-bar-cat {
+  font-size: 10px;
+  color: #000;
+  margin-top: 2px;
+  text-align: center;
+}
+
+.mpl-bar-cat-rot {
+  transform: rotate(-30deg);
+  transform-origin: top center;
+  white-space: nowrap;
+  max-width: 140px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  height: 52px;
+  line-height: 1.15;
+}
+
+.mpl-bar-cat-mpl {
+  font-size: 9px;
+}
+
+:host ::ng-deep .report-mat-table .mat-mdc-header-cell {
+  background: #b8d4f2 !important;
+  color: #0f172a !important;
+  font-weight: 600 !important;
+}
+
+:host ::ng-deep .report-mat-table .mat-mdc-cell {
+  border-bottom: 1px solid #e2e8f0;
+}
+
 @media (max-width: 768px) {
   .root-cause-container {
     padding: 16px;

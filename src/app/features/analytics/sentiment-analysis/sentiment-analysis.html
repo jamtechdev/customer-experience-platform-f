@@ -31,6 +31,10 @@
           <button mat-stroked-button color="primary" type="button" (click)="applyRangeAndReload()" [disabled]="loading()">
             Apply
           </button>
+          <button mat-stroked-button color="primary" type="button" (click)="refreshData()" [disabled]="loading()">
+            <mat-icon>refresh</mat-icon>
+            Refresh
+          </button>
           <button
             mat-stroked-button
             type="button"
@@ -57,94 +61,59 @@
 
 
 
-  <div *ngIf="!loading() && stats()" class="stats-section">
+  <div *ngIf="!loading()" class="stats-section">
     <p *ngIf="(stats()?.total ?? 0) === 0" class="empty-hint">No sentiment data in this period. Feedback uploaded via CSV is analyzed automatically; data will appear here once processing is complete.</p>
-    <div class="stats-grid">
-      <mat-card class="stat-card positive">
-        <mat-card-content>
-          <div class="stat-header">
-            <mat-icon>sentiment_very_satisfied</mat-icon>
-            <span>Positive</span>
-          </div>
-          <div class="stat-value">{{ stats()?.positive || 0 }}</div>
-          <div class="stat-percentage">{{ stats()?.total ? ((stats()!.positive || 0) / stats()!.total * 100).toFixed(1) : '0.0' }}%</div>
-        </mat-card-content>
-      </mat-card>
-
-      <mat-card class="stat-card neutral">
-        <mat-card-content>
-          <div class="stat-header">
-            <mat-icon>sentiment_neutral</mat-icon>
-            <span>Neutral</span>
-          </div>
-          <div class="stat-value">{{ stats()?.neutral || 0 }}</div>
-          <div class="stat-percentage">{{ stats()?.total ? ((stats()!.neutral || 0) / stats()!.total * 100).toFixed(1) : '0.0' }}%</div>
-        </mat-card-content>
-      </mat-card>
-
-      <mat-card class="stat-card negative">
-        <mat-card-content>
-          <div class="stat-header">
-            <mat-icon>sentiment_very_dissatisfied</mat-icon>
-            <span>Negative</span>
-          </div>
-          <div class="stat-value">{{ stats()?.negative || 0 }}</div>
-          <div class="stat-percentage">{{ stats()?.total ? ((stats()!.negative || 0) / stats()!.total * 100).toFixed(1) : '0.0' }}%</div>
-        </mat-card-content>
-      </mat-card>
-
-      <mat-card class="stat-card overall">
-        <mat-card-content>
-          <div class="stat-header">
-            <mat-icon>analytics</mat-icon>
-            <span>Average Score</span>
-          </div>
-          <div class="stat-value">{{ (stats()?.averageScore || 0).toFixed(2) }}</div>
-          <div class="stat-total">Total: {{ stats()?.total || 0 }}</div>
-        </mat-card-content>
-      </mat-card>
-    </div>
-
-    <mat-card class="distribution-card">
+    <mat-card class="section-card" *ngIf="stats()">
       <mat-card-header>
-        <mat-card-title>Sentiment Distribution</mat-card-title>
+        <mat-card-title>Tweet-level sentiment analysis</mat-card-title>
+        <mat-card-subtitle>Sentiment distribution for original customer-originated CX tweets.</mat-card-subtitle>
       </mat-card-header>
       <mat-card-content>
-        <div class="table-responsive">
-        <table mat-table [dataSource]="getSentimentData()" class="sentiment-table">
-          <ng-container matColumnDef="sentiment">
-            <th mat-header-cell *matHeaderCellDef>Sentiment</th>
-            <td mat-cell *matCellDef="let row">
-              <mat-chip-set>
-                <mat-chip [class]="'sentiment-chip ' + row.sentiment.toLowerCase()">
-                  {{ row.sentiment }}
-                </mat-chip>
-              </mat-chip-set>
-            </td>
-          </ng-container>
-
-          <ng-container matColumnDef="count">
-            <th mat-header-cell *matHeaderCellDef>Count</th>
-            <td mat-cell *matCellDef="let row">{{ row.count }}</td>
-          </ng-container>
-
-          <ng-container matColumnDef="percentage">
-            <th mat-header-cell *matHeaderCellDef>Percentage</th>
-            <td mat-cell *matCellDef="let row">{{ row.percentage }}%</td>
-          </ng-container>
-
-          <ng-container matColumnDef="bar">
-            <th mat-header-cell *matHeaderCellDef>Visual</th>
-            <td mat-cell *matCellDef="let row">
-              <div class="progress-bar-container">
-                <div class="progress-bar" [style.width]="getBarWidth(row.percentage)" [class]="row.sentiment.toLowerCase()"></div>
+        <p class="body-text">A tweet-level sentiment label was produced for every row in the uploaded CSV and exported as a separate file.</p>
+        <ul class="bullet-list">
+          <li>Positive tweets are typically linked to durability, appreciation, discount/campaign interest, and occasional service praise.</li>
+          <li>Negative tweets are dominated by complaints, service issues, delays, product faults, and fee objections.</li>
+          <li>Neutral tweets are mostly support responses, routing messages, or context-light mentions.</li>
+        </ul>
+        <figure class="mpl-figure" aria-label="Sentiment bar chart">
+          <figcaption class="mpl-figure-title">Customer-Originated CX Tweets - Sentiment Distribution</figcaption>
+          <div class="interactive-chart">
+            <div class="chart-grid-lines">
+              <span></span><span></span><span></span><span></span>
+            </div>
+            <div class="chart-bars">
+              @for (bar of chartBars(); track bar.key) {
+                <div class="chart-bar-col" (mouseenter)="onBarHover(bar)" (mouseleave)="onBarLeave()">
+                  <div class="chart-bar-track">
+                    <div class="chart-bar-fill" [class]="bar.key" [style.height.%]="bar.height" [attr.aria-label]="bar.label + ' ' + bar.count"></div>
+                  </div>
+                  <div class="chart-bar-value">{{ bar.count }}</div>
+                  <div class="chart-bar-label">{{ bar.label | lowercase }}</div>
+                </div>
+              }
+            </div>
+            @if (hoveredBar(); as h) {
+              <div class="chart-hover-card">
+                <strong>{{ h.label }}</strong>
+                <span>Count: {{ h.count }}</span>
+                <span>Share: {{ h.percentage | number:'1.1-1' }}%</span>
               </div>
-            </td>
-          </ng-container>
-
-          <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-          <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
-        </table>
+            }
+          </div>
+        </figure>
+        <div class="mini-table-wrap">
+          <table mat-table [dataSource]="sentimentReferenceRows()" class="dense-table report-mat-table">
+            <ng-container matColumnDef="sentiment">
+              <th mat-header-cell *matHeaderCellDef>Sentiment</th>
+              <td mat-cell *matCellDef="let row">{{ row.sentiment }}</td>
+            </ng-container>
+            <ng-container matColumnDef="patterns">
+              <th mat-header-cell *matHeaderCellDef>Representative patterns observed</th>
+              <td mat-cell *matCellDef="let row">{{ row.patterns }}</td>
+            </ng-container>
+            <tr mat-header-row *matHeaderRowDef="patternCols"></tr>
+            <tr mat-row *matRowDef="let row; columns: patternCols"></tr>
+          </table>
         </div>
       </mat-card-content>
     </mat-card>
@@ -155,16 +124,8 @@
         <mat-card-subtitle>Total: {{ feedbackTotal() }} items with sentiment analysis</mat-card-subtitle>
       </mat-card-header>
       <mat-card-content>
-        <div class="list-actions" *ngIf="isAdminUser() && feedbackList().length > 0">
-          <button mat-flat-button color="warn" type="button" (click)="deleteAllRecords()">
-            <mat-icon>delete_sweep</mat-icon>
-            Delete all
-          </button>
-        </div>
-        <p *ngIf="feedbackList().length === 0" class="empty-hint">No feedback in this period. Upload a CSV to see data here.</p>
-
-        <!-- Desktop table -->
-        <div *ngIf="feedbackList().length > 0" class="table-responsive hide-on-mobile">
+        <p *ngIf="feedbackList().length === 0" class="empty-hint">No feedback in this period.</p>
+        <div *ngIf="feedbackList().length > 0" class="table-responsive">
           <table mat-table [dataSource]="feedbackList()" class="feedback-table">
             <ng-container matColumnDef="content">
               <th mat-header-cell *matHeaderCellDef>Content</th>
@@ -190,48 +151,18 @@
               <th mat-header-cell *matHeaderCellDef>Score</th>
               <td mat-cell *matCellDef="let row">{{ row.score.toFixed(2) }}</td>
             </ng-container>
-            <ng-container matColumnDef="actions">
-              <th mat-header-cell *matHeaderCellDef>Actions</th>
-              <td mat-cell *matCellDef="let row">
-                <button mat-icon-button color="warn" type="button" (click)="deleteRecord(row)" aria-label="Delete feedback">
-                  <mat-icon>delete</mat-icon>
-                </button>
-              </td>
-            </ng-container>
-            <tr mat-header-row *matHeaderRowDef="listColumns"></tr>
-            <tr mat-row *matRowDef="let row; columns: listColumns;"></tr>
+            <tr mat-header-row *matHeaderRowDef="feedbackColumns"></tr>
+            <tr mat-row *matRowDef="let row; columns: feedbackColumns;"></tr>
           </table>
         </div>
 
-        <!-- Mobile cards -->
-        <div *ngIf="feedbackList().length > 0" class="feedback-cards show-on-mobile">
-          <div *ngFor="let row of feedbackList()" class="feedback-card">
-            <div class="feedback-card-row">
-              <mat-chip-set>
-                <mat-chip [class]="'sentiment-chip ' + row.sentiment.toLowerCase()">{{ row.sentiment || '—' }}</mat-chip>
-              </mat-chip-set>
-              <span class="feedback-score">Score: {{ row.score.toFixed(2) }}</span>
-            </div>
-            <p class="feedback-content">{{ row.content }}</p>
-            <div class="feedback-meta">
-              <span>{{ row.source }}</span>
-              <span>{{ formatDate(row.date) }}</span>
-            </div>
-            <div class="feedback-card-actions">
-              <button
-                *ngIf="isAdminUser()"
-                mat-stroked-button
-                color="warn"
-                type="button"
-                (click)="deleteRecord(row)"
-              >
-                <mat-icon>delete</mat-icon>
-                Delete
-              </button>
-            </div>
-          </div>
+        <div class="pagination-row" *ngIf="feedbackTotal() > pageSize()">
+          <button mat-stroked-button type="button" (click)="prevPage()" [disabled]="page() <= 1 || loading()">Prev</button>
+          <span>Page {{ page() }} / {{ totalPages() }}</span>
+          <button mat-stroked-button type="button" (click)="nextPage()" [disabled]="page() >= totalPages() || loading()">Next</button>
         </div>
       </mat-card-content>
     </mat-card>
+
   </div>
 </div>

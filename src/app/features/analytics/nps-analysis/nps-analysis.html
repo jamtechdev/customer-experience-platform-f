@@ -54,86 +54,61 @@
   </div>
 
   <div *ngIf="!loading() && npsData()" class="nps-content">
-    <div class="nps-score-section">
-      <mat-card class="nps-score-card" [class]="getNPSColor(npsData()!.score)">
-        <mat-card-content>
-          <div class="score-label">Net Promoter Score</div>
-          <div class="score-value">{{ npsData()!.score.toFixed(2) }}</div>
-          <div class="score-category">{{ getNPSCategory(npsData()!.score) }}</div>
-          <div class="score-description">
-            Based on {{ npsData()!.total }} responses
+    <mat-card class="section-card">
+      <mat-card-header>
+        <mat-card-title>NPS analysis</mat-card-title>
+        <mat-card-subtitle>Social NPS proxy based on original customer-originated CX tweets.</mat-card-subtitle>
+      </mat-card-header>
+      <mat-card-content>
+        <p class="body-text">Because tweets do not contain direct NPS scores, promoters/passives/detractors are inferred from tweet sentiment.</p>
+        <p class="body-text">
+          Promoters: {{ formatPct(npsData()!.promoterPercentage) }}% | Passives: {{ formatPct(passivesPercentage()) }}% | Detractors:
+          {{ formatPct(npsData()!.detractorPercentage) }}%
+        </p>
+        <p class="body-text">
+          Social NPS proxy: {{ npsData()!.score.toFixed(1) }}. This indicates a slightly negative advocacy balance in the customer-authored CX conversation.
+        </p>
+        <p class="body-text">
+          Interpretation: Arçelik still benefits from baseline brand strength and product affinity, but the service experience is eroding advocacy.
+        </p>
+        <figure class="mpl-figure mpl-figure-nps" aria-label="Social NPS stacked bar">
+          <figcaption class="mpl-figure-title mpl-figure-title-nps">Social NPS proxy = {{ npsData()!.score.toFixed(1) }}</figcaption>
+          <div class="mpl-chart mpl-chart-mplframe mpl-nps-stack">
+            <div class="mpl-nps-legend mpl-nps-legend-mpl">
+              <span><i class="lgd lgd-promoter"></i> Promoters</span>
+              <span><i class="lgd lgd-passive"></i> Passives</span>
+              <span><i class="lgd lgd-detractor"></i> Detractors</span>
+            </div>
+            <div class="mpl-nps-axes-row">
+              <div class="mpl-stack-y-axis mpl-stack-y-axis-mpl" aria-hidden="true">Social NPS proxy</div>
+              <div class="mpl-nps-plot-box">
+                <div class="mpl-nps-x mpl-nps-x-mpl">% of original customer CX tweets</div>
+                <div class="mpl-stack-bar mpl-stack-bar-mpl">
+                  <div class="stk stk-promoter" [style.width.%]="npsData()!.promoterPercentage"></div>
+                  <div class="stk stk-passive" [style.width.%]="passivesPercentage()"></div>
+                  <div class="stk stk-detractor" [style.width.%]="npsData()!.detractorPercentage"></div>
+                </div>
+                <div class="mpl-stack-ticks mpl-stack-ticks-mpl">
+                  <span>0</span><span>20</span><span>40</span><span>60</span><span>80</span><span>100</span>
+                </div>
+                <p class="mpl-nps-summary">
+                  Promoters <strong>{{ formatPct(npsData()!.promoterPercentage) }}%</strong> · Passives
+                  <strong>{{ formatPct(passivesPercentage()) }}%</strong> · Detractors
+                  <strong>{{ formatPct(npsData()!.detractorPercentage) }}%</strong> ({{ npsData()!.total }} items).
+                </p>
+              </div>
+            </div>
           </div>
-        </mat-card-content>
-      </mat-card>
-    </div>
-
-    <div class="segmentation-section">
-      <div class="segmentation-grid">
-        <mat-card class="segment-card promoters">
+        </figure>
+        <mat-card class="nested-note">
           <mat-card-content>
-            <div class="segment-header">
-              <mat-icon>thumb_up</mat-icon>
-              <span>Promoters</span>
-            </div>
-            <div class="segment-value">{{ npsData()!.promoters }}</div>
-            <div class="segment-percentage">{{ npsData()!.promoterPercentage.toFixed(1) }}%</div>
-            <div class="segment-description">Score 9-10</div>
+            <p>
+              <strong>NPS = % Promoters − % Detractors</strong> →
+              {{ formatPct(npsData()!.promoterPercentage) }}% − {{ formatPct(npsData()!.detractorPercentage) }}% =
+              {{ npsData()!.score.toFixed(1) }}
+            </p>
           </mat-card-content>
         </mat-card>
-
-        <mat-card class="segment-card passives">
-          <mat-card-content>
-            <div class="segment-header">
-              <mat-icon>thumbs_up_down</mat-icon>
-              <span>Passives</span>
-            </div>
-            <div class="segment-value">{{ npsData()!.passives }}</div>
-            <div class="segment-percentage">{{ ((npsData()!.passives / npsData()!.total) * 100).toFixed(1) }}%</div>
-            <div class="segment-description">Score 7-8</div>
-          </mat-card-content>
-        </mat-card>
-
-        <mat-card class="segment-card detractors">
-          <mat-card-content>
-            <div class="segment-header">
-              <mat-icon>thumb_down</mat-icon>
-              <span>Detractors</span>
-            </div>
-            <div class="segment-value">{{ npsData()!.detractors }}</div>
-            <div class="segment-percentage">{{ npsData()!.detractorPercentage.toFixed(1) }}%</div>
-            <div class="segment-description">Score 0-6</div>
-          </mat-card-content>
-        </mat-card>
-      </div>
-    </div>
-
-    <mat-card class="calculation-card">
-      <mat-card-header>
-        <mat-card-title>NPS Calculation</mat-card-title>
-      </mat-card-header>
-      <mat-card-content>
-        <div class="calculation-formula">
-          <p><strong>NPS = % Promoters - % Detractors</strong></p>
-          <p>NPS = {{ npsData()!.promoterPercentage.toFixed(1) }}% - {{ npsData()!.detractorPercentage.toFixed(1) }}% = {{ npsData()!.score.toFixed(2) }}</p>
-        </div>
-      </mat-card-content>
-    </mat-card>
-
-    <mat-card class="method-card">
-      <mat-card-header>
-        <mat-card-title>{{ t('metrics.nps.methodTitle') }}</mat-card-title>
-      </mat-card-header>
-      <mat-card-content>
-        <p>{{ t('metrics.nps.methodBody') }}</p>
-      </mat-card-content>
-    </mat-card>
-
-    <mat-card class="notes-card">
-      <mat-card-header>
-        <mat-card-title>{{ t('metrics.nps.notesTitle') }}</mat-card-title>
-      </mat-card-header>
-      <mat-card-content>
-        <p>{{ t('metrics.nps.notesBody') }}</p>
       </mat-card-content>
     </mat-card>
   </div>

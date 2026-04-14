@@ -27,27 +27,32 @@
       </mat-card-content>
     </mat-card>
   } @else {
-    <mat-card>
+    <mat-card class="section-card">
+      <mat-card-header>
+        <mat-card-title>Journey satisfaction heatmap</mat-card-title>
+        <mat-card-subtitle>Stage-level sentiment heatmap (%).</mat-card-subtitle>
+      </mat-card-header>
       <mat-card-content>
-        <div class="heatmap-table">
-          <div class="heatmap-header">
-            <span class="col-stage">Stage</span>
-            <span class="col-metric">Satisfaction</span>
-            <span class="col-metric">Dissatisfaction</span>
-            <span class="col-count">Feedback</span>
+        <p class="subtitle">The experience is most conversation-heavy in Usage and Purchase, with Delivery showing the weakest satisfaction balance.</p>
+        <div class="heatmap-pct-wrap">
+          <div class="heatmap-pct-grid" role="grid" aria-label="Journey satisfaction heatmap percent">
+            <div class="heatmap-pct-corner"></div>
+            <div class="heatmap-pct-hdr">positive</div>
+            <div class="heatmap-pct-hdr">neutral</div>
+            <div class="heatmap-pct-hdr">negative</div>
+            @for (row of pagedStages(); track row.stageName) {
+              <div class="heatmap-pct-stage">{{ row.stageName }}</div>
+              <div class="heatmap-pct-cell">{{ (row.satisfactionScore * 100).toFixed(0) }}</div>
+              <div class="heatmap-pct-cell">{{ Math.max(0, 100 - ((row.satisfactionScore + row.dissatisfactionScore) * 100)).toFixed(0) }}</div>
+              <div class="heatmap-pct-cell">{{ (row.dissatisfactionScore * 100).toFixed(0) }}</div>
+            }
           </div>
-          @for (row of pagedStages(); track row.stageName) {
-            <div class="heatmap-row">
-              <span class="col-stage">{{ row.stageName }}</span>
-              <span class="col-metric" [class]="getSatisfactionColor(row.satisfactionScore)">
-                {{ (row.satisfactionScore * 100).toFixed(0) }}%
-              </span>
-              <span class="col-metric" [class]="getDissatisfactionColor(row.dissatisfactionScore)">
-                {{ (row.dissatisfactionScore * 100).toFixed(0) }}%
-              </span>
-              <span class="col-count">{{ row.feedbackCount }}</span>
-            </div>
-          }
+          <div class="heatmap-legend-scale">
+            <span>0</span>
+            <div class="heatmap-legend-bar"></div>
+            <span>80</span>
+            <span class="heatmap-legend-cap">(% intensity)</span>
+          </div>
         </div>
         <div *ngIf="totalPages() > 1" class="pagination">
           <button mat-button type="button" (click)="goPrevPage()" [disabled]="page() <= 1">
@@ -57,10 +62,6 @@
           <button mat-button type="button" (click)="goNextPage()" [disabled]="page() >= totalPages()">
             Next
           </button>
-        </div>
-        <div class="legend">
-          <span class="legend-item heat-high">High satisfaction</span>
-          <span class="legend-item heat-pain-high">High dissatisfaction (pain)</span>
         </div>
       </mat-card-content>
     </mat-card>

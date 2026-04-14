@@ -5,9 +5,11 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatChipsModule } from '@angular/material/chips';
-import { CustomerJourneyService } from '../../../core/services/customer-journey.service';
+import { MatTableModule } from '@angular/material/table';
+import { AnalysisService } from '../../../core/services/analysis.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { buildClientReportDatePresets } from '../../../core/utils/report-date-presets';
 
 interface JourneyStage {
   id: number;
@@ -28,13 +30,14 @@ interface JourneyStage {
     MatIconModule,
     MatProgressSpinnerModule,
     MatChipsModule,
+    MatTableModule,
     MatSnackBarModule
   ],
   templateUrl: './journey-map.html',
   styleUrl: './journey-map.css',
 })
 export class JourneyMap implements OnInit {
-  private journeyService = inject(CustomerJourneyService);
+  private analysisService = inject(AnalysisService);
   private authService = inject(AuthService);
   private snackBar = inject(MatSnackBar);
 
@@ -66,29 +69,25 @@ export class JourneyMap implements OnInit {
     this.loading.set(true);
     const user = this.authService.currentUser();
     const companyId = user?.role === 'admin' ? undefined : (user?.settings?.companyId ?? 1);
-    this.journeyService.analyzeJourney(companyId).subscribe({
+    const presets = buildClientReportDatePresets();
+    const defaultId = user?.role === 'admin' ? 'all_time' : 'last_30_days';
+    const preset = presets.find((p) => p.id === defaultId) ?? presets[0];
+    const start = new Date(preset.startDate);
+    const end = new Date(preset.endDate);
+    this.analysisService.getTwitterCxReport(companyId, start, end).subscribe({
       next: (response) => {
         try {
-          if (response.success && response.data) {
-            const data = response.data;
-          // Backend returns JourneyStageAnalysis[] like:
-          // { stage: {id,name,...}, satisfactionScore, dissatisfactionScore, feedbackCount, painPoints, satisfactionPoints }
-            const list = Array.isArray(data) ? data : data?.stages;
-            if (!Array.isArray(list)) {
-              this.journeyStages.set([]);
-              this.page.set(1);
-              return;
-            }
-
+          if (response.success && response.data?.journeyRows) {
+            const rows = response.data.journeyRows;
             this.journeyStages.set(
-              list.map((s: any) => ({
-                id: s?.stage?.id ?? s?.stageId ?? s?.id ?? 0,
-                name: s?.stage?.name ?? s?.name ?? '',
-                satisfactionScore: Number(s?.satisfactionScore ?? 0),
-                dissatisfactionScore: Number(s?.dissatisfactionScore ?? 0),
-                feedbackCount: Number(s?.feedbackCount ?? 0),
-                painPoints: Array.isArray(s?.painPoints) ? s.painPoints : [],
-                satisfactionPoints: Array.isArray(s?.satisfactionPoints) ? s.satisfactionPoints : [],
+              rows.map((r: any, idx: number) => ({
+                id: idx + 1,
+                name: r?.stage ?? '',
+                satisfactionScore: 0,
+                dissatisfactionScore: 0,
+                feedbackCount: 0,
+                painPoints: [String(r?.dissatisfaction ?? '')].filter(Boolean),
+                satisfactionPoints: [String(r?.satisfaction ?? '')].filter(Boolean),
               }))
             );
             this.page.set(1);
@@ -97,11 +96,10 @@ export class JourneyMap implements OnInit {
             this.page.set(1);
           }
         } finally {
-          // Ensure we never stay on spinner indefinitely.
           this.loading.set(false);
         }
       },
-      error: (error) => {
+      error: () => {
         this.loading.set(false);
         this.snackBar.open('Failed to load journey data', 'Close', { duration: 3000 });
         this.journeyStages.set([]);

@@ -3,8 +3,9 @@ import { CommonModule } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { CustomerJourneyService } from '../../../core/services/customer-journey.service';
+import { AnalysisService } from '../../../core/services/analysis.service';
 import { AuthService } from '../../../core/services/auth.service';
+import { buildClientReportDatePresets } from '../../../core/utils/report-date-presets';
 
 interface StageRow {
   stageName: string;
@@ -23,12 +24,12 @@ interface StageRow {
   styleUrl: './journey-heatmap.css',
 })
 export class JourneyHeatmap implements OnInit {
-  private journeyService = inject(CustomerJourneyService);
+  private analysisService = inject(AnalysisService);
   private authService = inject(AuthService);
-
   loading = signal(false);
   stages = signal<StageRow[]>([]);
   error = signal<string | null>(null);
+  Math = Math;
 
   readonly pageSize = 20;
   page = signal(1);
@@ -53,19 +54,24 @@ export class JourneyHeatmap implements OnInit {
   loadHeatmap(): void {
     const user = this.authService.currentUser();
     const companyId = user?.role === 'admin' ? undefined : (user?.settings?.companyId ?? 1);
+    const presets = buildClientReportDatePresets();
+    const defaultId = user?.role === 'admin' ? 'all_time' : 'last_30_days';
+    const preset = presets.find((p) => p.id === defaultId) ?? presets[0];
+    const start = new Date(preset.startDate);
+    const end = new Date(preset.endDate);
     this.loading.set(true);
     this.error.set(null);
-    this.journeyService.analyzeJourney(companyId).subscribe({
+    this.analysisService.getTwitterCxReport(companyId, start, end).subscribe({
       next: (res) => {
-        if (res.success && Array.isArray(res.data)) {
+        if (res.success && Array.isArray(res.data?.heatmapPct)) {
           this.stages.set(
-            res.data.map((s: any) => ({
-              stageName: s.stage?.name ?? 'Unknown',
-              satisfactionScore: Number(s.satisfactionScore) ?? 0,
-              dissatisfactionScore: Number(s.dissatisfactionScore) ?? 0,
-              feedbackCount: Number(s.feedbackCount) ?? 0,
-              painPoints: Array.isArray(s.painPoints) ? s.painPoints : [],
-              satisfactionPoints: Array.isArray(s.satisfactionPoints) ? s.satisfactionPoints : [],
+            res.data.heatmapPct.map((r: any) => ({
+              stageName: r.stage ?? 'Unknown',
+              satisfactionScore: Number(r.positive ?? 0) / 100,
+              dissatisfactionScore: Number(r.negative ?? 0) / 100,
+              feedbackCount: Number(r.total ?? 0),
+              painPoints: [],
+              satisfactionPoints: [],
             }))
           );
           this.page.set(1);

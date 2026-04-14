@@ -4,14 +4,6 @@
     <p class="subtitle">Map customer touchpoints and identify satisfaction points</p>
   </div>
 
-  <div
-    *ngIf="!loading() && journeyStages().length > 0"
-    class="flow-milestone-banner"
-    [class.flow-milestone-banner-complete]="thirdFlowMilestoneMet()">
-    <mat-icon>{{ thirdFlowMilestoneMet() ? 'check_circle' : 'timeline' }}</mat-icon>
-    <span>{{ flowMilestoneMessage() }}</span>
-  </div>
-
   <div *ngIf="loading()" class="loading-container">
     <mat-spinner></mat-spinner>
     <p>Loading journey data...</p>
@@ -22,58 +14,30 @@
   </div>
 
   <div *ngIf="!loading() && journeyStages().length > 0" class="journey-stages">
-    <div *ngFor="let stage of pagedJourneyStages(); let i = index" class="stage-card-wrapper">
-      <mat-card class="stage-card" [class]="getSatisfactionColor(stage.satisfactionScore)">
-        <mat-card-header>
-          <mat-card-title>
-            <span class="stage-number">{{ (page() - 1) * pageSize + i + 1 }}</span>
-            {{ stage.name }}
-          </mat-card-title>
-        </mat-card-header>
-        <mat-card-content>
-          <div class="stage-metrics">
-            <div class="metric">
-              <mat-icon>sentiment_satisfied</mat-icon>
-              <span class="metric-value">{{ (stage.satisfactionScore * 100).toFixed(0) }}%</span>
-              <span class="metric-label">Satisfaction</span>
-            </div>
-            <div class="metric">
-              <mat-icon>sentiment_dissatisfied</mat-icon>
-              <span class="metric-value">{{ (stage.dissatisfactionScore * 100).toFixed(0) }}%</span>
-              <span class="metric-label">Dissatisfaction</span>
-            </div>
-            <div class="metric">
-              <mat-icon>feedback</mat-icon>
-              <span class="metric-value">{{ stage.feedbackCount }}</span>
-              <span class="metric-label">Feedback</span>
-            </div>
-          </div>
-
-          <div *ngIf="stage.satisfactionPoints.length > 0" class="points-section">
-            <h4>Satisfaction Points</h4>
-            <div class="chips-container">
-              <mat-chip *ngFor="let point of stage.satisfactionPoints">{{ point }}</mat-chip>
-            </div>
-          </div>
-
-          <div *ngIf="stage.painPoints.length > 0" class="points-section">
-            <h4>Pain Points</h4>
-            <div class="chips-container">
-              <mat-chip *ngFor="let point of stage.painPoints" color="warn">{{ point }}</mat-chip>
-            </div>
-          </div>
-        </mat-card-content>
-      </mat-card>
-    </div>
-
-    <div *ngIf="totalPages() > 1" class="pagination">
-      <button mat-button type="button" (click)="goPrevPage()" [disabled]="page() <= 1">
-        Prev
-      </button>
-      <span class="pagination-label">Page {{ page() }} of {{ totalPages() }}</span>
-      <button mat-button type="button" (click)="goNextPage()" [disabled]="page() >= totalPages()">
-        Next
-      </button>
-    </div>
+    <mat-card class="section-card">
+      <mat-card-header>
+        <mat-card-title>Journey map with satisfaction and dissatisfaction points</mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="table-wrapper">
+          <table mat-table [dataSource]="journeyStages()" class="journey-table report-mat-table">
+            <ng-container matColumnDef="stage">
+              <th mat-header-cell *matHeaderCellDef>Journey stage</th>
+              <td mat-cell *matCellDef="let row"><strong>{{ row.name }}</strong></td>
+            </ng-container>
+            <ng-container matColumnDef="satisfaction">
+              <th mat-header-cell *matHeaderCellDef>Main satisfaction points</th>
+              <td mat-cell *matCellDef="let row">{{ row.satisfactionPoints[0] || '-' }}</td>
+            </ng-container>
+            <ng-container matColumnDef="dissatisfaction">
+              <th mat-header-cell *matHeaderCellDef>Main dissatisfaction points</th>
+              <td mat-cell *matCellDef="let row">{{ row.painPoints[0] || '-' }}</td>
+            </ng-container>
+            <tr mat-header-row *matHeaderRowDef="['stage','satisfaction','dissatisfaction']"></tr>
+            <tr mat-row *matRowDef="let row; columns: ['stage','satisfaction','dissatisfaction']"></tr>
+          </table>
+        </div>
+      </mat-card-content>
+    </mat-card>
   </div>
 </div>

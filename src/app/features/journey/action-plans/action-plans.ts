@@ -11,10 +11,12 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { ActionPlanService, ActionPlanItem } from '../../../core/services/action-plan.service';
+import { AnalysisService } from '../../../core/services/analysis.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { UserRole } from '../../../core/models';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { formatApiDate, toInputDateValue } from '../../../core/utils/api-date';
+import { buildClientReportDatePresets } from '../../../core/utils/report-date-presets';
 
 @Component({
   selector: 'app-action-plans',
@@ -37,6 +39,7 @@ import { formatApiDate, toInputDateValue } from '../../../core/utils/api-date';
 })
 export class ActionPlans implements OnInit {
   private actionPlanService = inject(ActionPlanService);
+  private analysisService = inject(AnalysisService);
   private authService = inject(AuthService);
   private fb = inject(FormBuilder);
   private snackBar = inject(MatSnackBar);
@@ -60,6 +63,7 @@ export class ActionPlans implements OnInit {
     return total === 0 ? 0 : Math.ceil(total / this.pageSize);
   });
   displayedColumns: string[] = ['title', 'priority', 'status', 'dueDate', 'actions'];
+  reportPlanRows = signal<Array<{ priority: string; action: string; owner: string; impact: string; horizon: string }>>([]);
   showForm = signal(false);
   editingId = signal<number | null>(null);
   form: FormGroup;
@@ -80,25 +84,37 @@ export class ActionPlans implements OnInit {
 
   loadActionPlans(): void {
     this.loading.set(true);
-    const companyId = this.authService.currentUser()?.settings?.companyId ?? 1;
-    this.actionPlanService.getActionPlans({ companyId }).subscribe({
+    const user = this.authService.currentUser();
+    const companyId = user?.role === 'admin' ? undefined : (user?.settings?.companyId ?? 1);
+    const presets = buildClientReportDatePresets();
+    const defaultId = user?.role === 'admin' ? 'all_time' : 'last_30_days';
+    const preset = presets.find((p) => p.id === defaultId) ?? presets[0];
+    const start = new Date(preset.startDate);
+    const end = new Date(preset.endDate);
+    this.analysisService.getTwitterCxReport(companyId, start, end).subscribe({
       next: (response) => {
-        if (response.success && Array.isArray(response.data)) {
-          const mapped = (response.data as any[]).map((p: any) => ({
-            id: typeof p.id === 'string' ? parseInt(p.id, 10) : p.id,
-            title: p.title ?? '',
-            description: p.description ?? '',
-            priority: (p.priority ?? 'medium').toString(),
-            status: (p.status ?? 'draft').toString(),
-            dueDate: p.dueDate ?? undefined,
-            startDate: p.startDate,
-            completedDate: p.completedDate,
-            companyId: p.companyId,
-            departmentId: p.departmentId
-          }));
+        if (response.success && Array.isArray(response.data?.actionPlan)) {
+          this.reportPlanRows.set(
+            response.data.actionPlan.map((x: any) => ({
+              priority: x.priority ?? '',
+              action: x.action ?? '',
+              owner: x.owner ?? '',
+              impact: x.impact ?? '',
+              horizon: x.horizon ?? '',
+            }))
+          );
+          const mapped = this.reportPlanRows().map((x, idx) => ({
+            id: idx + 1,
+            title: x.action,
+            description: x.impact,
+            priority: x.priority.toLowerCase(),
+            status: 'draft',
+            dueDate: undefined,
+          })) as ActionPlanItem[];
           this.actionPlans.set(mapped);
           this.page.set(1);
         } else {
+          this.reportPlanRows.set([]);
           this.actionPlans.set([]);
           this.page.set(1);
         }
@@ -107,6 +123,7 @@ export class ActionPlans implements OnInit {
       error: () => {
         this.loading.set(false);
         this.actionPlans.set([]);
+        this.reportPlanRows.set([]);
         this.page.set(1);
         this.snackBar.open('Failed to load action plans', 'Close', { duration: 3000 });
       }
