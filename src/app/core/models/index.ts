@@ -18,7 +18,8 @@ export type {
   EmotionScore,
   AspectSentiment,
   KeywordSentiment,
-  EntityMention
+  EntityMention,
+  TwitterCxReportDto
 } from './analysis.model';
 // Export enums normally
 export { 

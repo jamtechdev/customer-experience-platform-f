@@ -239,3 +239,34 @@ export enum EntityType {
   ORGANIZATION = 'ORGANIZATION',
   FEATURE = 'FEATURE'
 }
+
+/** Response from GET /api/analysis/twitter-cx-report */
+export interface TwitterCxReportDto {
+  reportTitle: string;
+  reportSubtitle: string;
+  dataset: {
+    total: number;
+    cxRelated: number;
+    brandSupport: number;
+    originalCustomerCx: number;
+    primaryCohortSize: number;
+  };
+  datasetProfileRows: Array<{ metric: string; value: string; comment: string }>;
+  sentiment: { positive: number; negative: number; neutral: number; total: number; averageScore: number };
+  socialNpsProxy: number;
+  npsInterpretation: string;
+  executiveSummaryBullets: string[];
+  scopeAndMethodBullets: string[];
+  section4Intro: string;
+  section4Bullets: string[];
+  sentimentPatternRows: Array<{ sentiment: string; patterns: string }>;
+  heatmapPct: Array<{ stage: string; positive: number; neutral: number; negative: number; total: number }>;
+  heatmapFigureCaption: string;
+  touchpoints: Array<{ name: string; volume: number; observation: string }>;
+  rootCauses: Array<{ cause: string; count: number; interpretation: string }>;
+  journeyRows: Array<{ stage: string; satisfaction: string; dissatisfaction: string }>;
+  actionPlan: Array<{ priority: string; action: string; owner: string; impact: string; horizon: string }>;
+  processImprovements: string[];
+  managementTakeaways: string[];
+  cohortTagsUsed: boolean;
+}

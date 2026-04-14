@@ -6,7 +6,8 @@ import {
   RootCauseAnalysis,
   Recommendation,
   ApiResponse,
-  PaginationParams
+  PaginationParams,
+  TwitterCxReportDto
 } from '../models';
 import { environment } from '../../../environments/environment';
 
@@ -28,6 +29,21 @@ export class AnalysisService {
     if (startDate) params = params.set('startDate', startDate.toISOString());
     if (endDate) params = params.set('endDate', endDate.toISOString());
     return this.http.get<ApiResponse<any>>(`${this.baseUrl}/sentiment`, { params });
+  }
+
+  /** Bundled Twitter CX report (cohorts, social NPS proxy, heatmap %, touchpoints, root causes, narratives). */
+  getTwitterCxReport(
+    companyId: number | undefined,
+    startDate: Date,
+    endDate: Date,
+    csvImportId?: number
+  ): Observable<ApiResponse<TwitterCxReportDto>> {
+    let params = new HttpParams()
+      .set('startDate', startDate.toISOString())
+      .set('endDate', endDate.toISOString());
+    if (companyId != null) params = params.set('companyId', String(companyId));
+    if (csvImportId != null) params = params.set('csvImportId', String(csvImportId));
+    return this.http.get<ApiResponse<TwitterCxReportDto>>(`${this.baseUrl}/twitter-cx-report`, { params });
   }
 
   getFeedbackWithSentiment(

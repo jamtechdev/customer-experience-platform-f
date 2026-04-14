@@ -195,6 +195,14 @@ export const routes: Routes = [
             path: 'methodology',
             loadComponent: () => import('./features/social-media/methodology/methodology').then(m => m.Methodology),
             data: { title: 'Analysis Methodology', breadcrumb: 'Methodology' }
+          },
+          {
+            path: 'arcelik-twitter-cx',
+            loadComponent: () =>
+              import('./features/social-media/arcelik-twitter-cx-report/arcelik-twitter-cx-report').then(
+                (m) => m.ArcelikTwitterCxReport
+              ),
+            data: { title: 'Arçelik Twitter CX Report', breadcrumb: 'Arçelik Twitter CX' }
           }
         ]
       },

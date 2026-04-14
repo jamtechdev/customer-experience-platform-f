@@ -1,0 +1,852 @@
+.arc-report-page {
+  padding: 24px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.arc-report-doc {
+  background: #f8fafc;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
+}
+
+.exec-bullets {
+  margin: 0 0 16px 0;
+  padding-left: 1.25rem;
+  color: #1e293b;
+  line-height: 1.65;
+}
+
+.exec-bullets li {
+  margin-bottom: 8px;
+}
+
+.banner-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.chip-live {
+  background: #dcfce7 !important;
+  --mdc-chip-label-text-color: #166534;
+}
+
+.chip-ref {
+  background: #fef3c7 !important;
+  --mdc-chip-label-text-color: #92400e;
+}
+
+.chip-spin mat-icon {
+  font-size: 18px;
+  width: 18px;
+  height: 18px;
+  margin-right: 4px;
+  vertical-align: middle;
+}
+
+.error-inline {
+  color: #b91c1c;
+  font-size: 0.875rem;
+}
+
+.filter-card .filters-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+}
+
+.filter-card mat-form-field {
+  min-width: 160px;
+}
+
+.hint-below {
+  margin-top: 12px;
+  margin-bottom: 0;
+}
+
+.loading-block {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 32px;
+  color: #6b7280;
+}
+
+.nested-survey {
+  margin-top: 16px;
+  background: #f8fafc;
+}
+
+.header-section {
+  margin-bottom: 24px;
+}
+
+.header-section h1 {
+  font-size: 1.75rem;
+  font-weight: 600;
+  margin: 0 0 8px 0;
+  color: #111827;
+}
+
+.subtitle {
+  color: #6b7280;
+  font-size: 0.9375rem;
+  margin: 0;
+}
+
+.section-card {
+  margin-bottom: 20px;
+}
+
+.section-card mat-card-title {
+  font-size: 1.125rem;
+  color: #1e3a5f;
+}
+
+.arc-report-doc .section-card mat-card-subtitle {
+  color: #475569;
+  font-size: 0.875rem;
+}
+
+.mpl-heatmap-doc-title {
+  text-align: center;
+  font-size: 12px;
+  font-weight: 600;
+  color: #000;
+  margin-bottom: 8px;
+  font-family: 'DejaVu Sans', 'Liberation Sans', Arial, Helvetica, sans-serif;
+}
+
+.fig-caption {
+  margin-top: 0;
+}
+
+.body-text {
+  color: #374151;
+  line-height: 1.55;
+  margin: 0 0 12px 0;
+}
+
+.body-text.muted {
+  color: #6b7280;
+  font-size: 0.9375rem;
+}
+
+.bullet-list {
+  margin: 0;
+  padding-left: 1.25rem;
+  color: #374151;
+  line-height: 1.6;
+}
+
+.bullet-list.takeaways li {
+  margin-bottom: 8px;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.stat-card {
+  height: 100%;
+}
+
+.stat-card.highlight {
+  outline: 2px solid #3b82f6;
+  outline-offset: -2px;
+}
+
+.stat-card.positive .stat-value {
+  color: #22c55e;
+}
+
+.stat-card.neutral .stat-value {
+  color: #f59e0b;
+}
+
+.stat-card.negative .stat-value {
+  color: #ef4444;
+}
+
+.stat-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #6b7280;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  margin-bottom: 8px;
+}
+
+.stat-header mat-icon {
+  font-size: 20px;
+  width: 20px;
+  height: 20px;
+  color: #6b7280;
+}
+
+.stat-value {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #111827;
+}
+
+.stat-foot {
+  margin-top: 8px;
+  font-size: 0.75rem;
+  color: #6b7280;
+}
+
+.table-wrap {
+  overflow-x: auto;
+}
+
+.table-wrap.scroll-x {
+  max-width: 100%;
+}
+
+.dense-table,
+.sentiment-table,
+.root-table,
+.journey-table,
+.touch-table,
+.action-table {
+  width: 100%;
+  min-width: 520px;
+}
+
+.mini-table-wrap {
+  overflow-x: auto;
+  margin-bottom: 16px;
+}
+
+.mini-table-wrap .dense-table {
+  min-width: 360px;
+}
+
+.wrap-cell {
+  white-space: normal;
+  max-width: 420px;
+  line-height: 1.45;
+}
+
+.progress-bar-container {
+  width: 100%;
+  max-width: 220px;
+  height: 10px;
+  background: #e5e7eb;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.progress-bar-container.tall {
+  height: 12px;
+  max-width: 160px;
+}
+
+.progress-bar {
+  height: 100%;
+  border-radius: 6px;
+  transition: width 0.2s ease;
+}
+
+.progress-bar.positive {
+  background: #22c55e;
+}
+
+.progress-bar.neutral {
+  background: #f59e0b;
+}
+
+.progress-bar.negative {
+  background: #ef4444;
+}
+
+.sentiment-chip.positive {
+  --mdc-chip-label-text-color: #166534;
+  background: #dcfce7 !important;
+}
+
+.sentiment-chip.neutral {
+  --mdc-chip-label-text-color: #92400e;
+  background: #fef3c7 !important;
+}
+
+.sentiment-chip.negative {
+  --mdc-chip-label-text-color: #991b1b;
+  background: #fee2e2 !important;
+}
+
+.nps-score-section {
+  margin: 16px 0 20px;
+}
+
+.nps-score-card {
+  max-width: 400px;
+  margin: 0 auto;
+  text-align: center;
+  padding: 20px 16px;
+}
+
+.score-label {
+  font-size: 0.875rem;
+  color: #6b7280;
+  margin-bottom: 8px;
+}
+
+.score-value {
+  font-size: 3rem;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+
+.score-category {
+  font-size: 1.125rem;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.score-description {
+  font-size: 0.8125rem;
+  color: #6b7280;
+}
+
+.nps-score-card.excellent .score-value,
+.nps-score-card.excellent .score-category {
+  color: #22c55e;
+}
+
+.nps-score-card.good .score-value,
+.nps-score-card.good .score-category {
+  color: #3b82f6;
+}
+
+.nps-score-card.needs-improvement .score-value,
+.nps-score-card.needs-improvement .score-category {
+  color: #f59e0b;
+}
+
+.nps-score-card.poor .score-value,
+.nps-score-card.poor .score-category {
+  color: #ef4444;
+}
+
+.segmentation-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.segment-card mat-card-content {
+  text-align: center;
+}
+
+.segment-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  color: #6b7280;
+  font-size: 0.8125rem;
+  margin-bottom: 8px;
+}
+
+.segment-percentage {
+  font-size: 1.75rem;
+  font-weight: 700;
+}
+
+.segment-card.promoters .segment-percentage {
+  color: #22c55e;
+}
+
+.segment-card.passives .segment-percentage {
+  color: #f59e0b;
+}
+
+.segment-card.detractors .segment-percentage {
+  color: #ef4444;
+}
+
+.nested-note {
+  background: #f9fafb;
+}
+
+.nested-note mat-card-content p {
+  margin: 0 0 8px 0;
+}
+
+.heatmap-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.heatmap-row {
+  display: grid;
+  grid-template-columns: minmax(100px, 140px) 1fr minmax(160px, 1fr);
+  gap: 12px;
+  align-items: center;
+  padding: 10px 12px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  background: #fff;
+}
+
+@media (max-width: 768px) {
+  .heatmap-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+.heatmap-stage {
+  font-weight: 600;
+  color: #111827;
+}
+
+.heatmap-cells {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.heat-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 120px;
+}
+
+.heat-label {
+  font-size: 0.75rem;
+  color: #6b7280;
+}
+
+.heat-block {
+  height: 28px;
+  border-radius: 6px;
+  min-width: 100px;
+}
+
+.heat-high {
+  background: rgba(76, 175, 80, 0.45);
+}
+
+.heat-mid {
+  background: rgba(76, 175, 80, 0.25);
+}
+
+.heat-low {
+  background: rgba(76, 175, 80, 0.12);
+}
+
+.heat-none {
+  background: #f3f4f6;
+}
+
+.heat-pain-high {
+  background: rgba(244, 67, 54, 0.5);
+}
+
+.heat-pain-mid {
+  background: rgba(244, 67, 54, 0.3);
+}
+
+.heat-pain-low {
+  background: rgba(244, 67, 54, 0.15);
+}
+
+.heatmap-note {
+  font-size: 0.8125rem;
+  color: #6b7280;
+  line-height: 1.4;
+}
+
+.pri-chip.p1 {
+  background: #fee2e2 !important;
+  --mdc-chip-label-text-color: #991b1b;
+}
+
+.pri-chip.p2 {
+  background: #fef3c7 !important;
+  --mdc-chip-label-text-color: #92400e;
+}
+
+.pri-chip.p3 {
+  background: #e0e7ff !important;
+  --mdc-chip-label-text-color: #3730a3;
+}
+
+/* --- Matplotlib-style figures (matches supplied reference plots) --- */
+.mpl-figure {
+  margin: 16px 0 20px;
+  padding: 0;
+  font-family: 'DejaVu Sans', 'Liberation Sans', Arial, Helvetica, sans-serif;
+}
+
+.mpl-figure-title {
+  text-align: center;
+  font-size: 12px;
+  font-weight: 600;
+  color: #000;
+  margin: 0 0 10px;
+}
+
+.mpl-figure-sub {
+  display: block;
+  font-weight: 400;
+  font-size: 11px;
+  color: #333;
+  margin-top: 4px;
+}
+
+.mpl-chart-mplframe {
+  margin: 0;
+  padding: 0;
+  background: #fff;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.mpl-axes-frame {
+  display: flex;
+  align-items: stretch;
+  border: 1px solid #000;
+  background: #fff;
+}
+
+.mpl-y-label-outer {
+  width: 22px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  font-size: 11px;
+  font-weight: 400;
+  color: #000;
+  border-right: 1px solid #000;
+  background: #fff;
+}
+
+.mpl-y-axis-mpl {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  width: 34px;
+  min-height: 200px;
+  padding: 6px 6px 6px 4px;
+  font-size: 10px;
+  color: #000;
+  text-align: right;
+  border-right: 1px solid #000;
+  background: #fff;
+}
+
+.mpl-plot-mpl {
+  flex: 1;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-around;
+  gap: 6px;
+  min-height: 220px;
+  padding: 10px 14px 6px;
+  background: #fff;
+  position: relative;
+}
+
+.mpl-bar-col {
+  flex: 1;
+  max-width: 120px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  min-width: 52px;
+}
+
+.mpl-bar-track {
+  width: 62%;
+  min-width: 32px;
+  height: 200px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: stretch;
+}
+
+.mpl-bar-fill {
+  border-radius: 0;
+  min-height: 1px;
+  transition: height 0.2s ease;
+}
+
+/* Matplotlib default "C0" / tab:blue for all vertical bars */
+.mpl-bar-mpl {
+  background: #1f77b4;
+}
+
+.mpl-bar-value {
+  font-size: 10px;
+  font-weight: 400;
+  color: #000;
+  margin-top: 4px;
+}
+
+.mpl-bar-cat {
+  font-size: 10px;
+  color: #000;
+  margin-top: 2px;
+  text-align: center;
+}
+
+.mpl-bar-cat-rot {
+  transform: rotate(-30deg);
+  transform-origin: top center;
+  white-space: nowrap;
+  max-width: 140px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  height: 52px;
+  line-height: 1.15;
+}
+
+.mpl-bar-cat-mpl {
+  font-size: 9px;
+}
+
+.mpl-plot-root,
+.mpl-plot-touch {
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  justify-content: flex-start;
+  gap: 2px;
+  padding-bottom: 44px;
+}
+
+.mpl-bar-col-root,
+.mpl-bar-col-touch {
+  flex: 0 0 auto;
+  min-width: 68px;
+}
+
+/* Figure 2 — horizontal stacked bar (matplotlib tab colors) */
+.mpl-figure-nps {
+  margin-top: 12px;
+}
+
+.mpl-figure-title-nps {
+  font-size: 12px;
+}
+
+.mpl-nps-stack {
+  padding: 8px 12px 12px;
+}
+
+.mpl-nps-legend-mpl {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 18px;
+  justify-content: center;
+  font-size: 10px;
+  color: #000;
+  margin-bottom: 10px;
+}
+
+.mpl-nps-legend-mpl .lgd {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  margin-right: 5px;
+  border-radius: 0;
+  vertical-align: middle;
+}
+
+/* tab:blue, tab:orange, tab:green */
+.lgd-promoter,
+.stk-promoter {
+  background: #1f77b4;
+}
+
+.lgd-passive,
+.stk-passive {
+  background: #ff7f0e;
+}
+
+.lgd-detractor,
+.stk-detractor {
+  background: #2ca02c;
+}
+
+.mpl-nps-axes-row {
+  display: flex;
+  align-items: stretch;
+  gap: 0;
+}
+
+.mpl-stack-y-axis-mpl {
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  font-size: 11px;
+  font-weight: 400;
+  color: #000;
+  padding: 6px 4px;
+  border: 1px solid #000;
+  border-right: none;
+  min-width: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #fff;
+}
+
+.mpl-nps-plot-box {
+  flex: 1;
+  min-width: 0;
+  border: 1px solid #000;
+  padding: 10px 12px 8px;
+  background: #fff;
+}
+
+.mpl-nps-x-mpl {
+  text-align: center;
+  font-size: 10px;
+  color: #000;
+  margin-bottom: 8px;
+}
+
+.mpl-stack-bar-mpl {
+  display: flex;
+  height: 26px;
+  border: 1px solid #000;
+  border-radius: 0;
+  overflow: hidden;
+}
+
+.stk {
+  height: 100%;
+  flex-shrink: 0;
+}
+
+.mpl-stack-ticks-mpl {
+  display: flex;
+  justify-content: space-between;
+  font-size: 9px;
+  color: #000;
+  margin-top: 4px;
+  padding: 0 1px;
+}
+
+.mpl-nps-summary {
+  margin: 8px 0 0;
+  font-size: 10px;
+  color: #333;
+  text-align: center;
+}
+
+/* Figure 4 — % heatmap grid */
+.heatmap-pct-wrap {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  align-items: flex-start;
+  margin-top: 8px;
+}
+
+.heatmap-pct-grid {
+  display: grid;
+  grid-template-columns: minmax(100px, 140px) repeat(3, minmax(72px, 1fr));
+  gap: 1px;
+  background: #000;
+  border: 1px solid #000;
+  border-radius: 0;
+  overflow: hidden;
+  flex: 1;
+  min-width: 280px;
+}
+
+.heatmap-pct-corner {
+  background: #e2e8f0;
+}
+
+.heatmap-pct-hdr {
+  background: #b8d4f2;
+  font-weight: 700;
+  font-size: 0.8rem;
+  text-align: center;
+  padding: 8px 4px;
+  color: #0f172a;
+}
+
+.heatmap-pct-stage {
+  background: #f1f5f9;
+  font-weight: 600;
+  font-size: 0.8rem;
+  padding: 10px 8px;
+  color: #0f172a;
+  display: flex;
+  align-items: center;
+}
+
+.heatmap-pct-cell {
+  font-weight: 700;
+  font-size: 0.9rem;
+  text-align: center;
+  padding: 12px 8px;
+  border: none;
+}
+
+.heatmap-legend-scale {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 6px;
+  min-width: 100px;
+  font-size: 0.7rem;
+  color: #475569;
+}
+
+.heatmap-legend-bar {
+  width: 22px;
+  min-height: 160px;
+  border-radius: 0;
+  border: 1px solid #000;
+  background: linear-gradient(to top, #440154, #482878, #3e4989, #31688e, #26828e, #1f9e89, #35b779, #6ece58, #b5de2b, #fde725);
+  align-self: center;
+}
+
+.heatmap-legend-cap {
+  font-size: 0.65rem;
+  color: #64748b;
+}
+
+/* Report-style Material tables (light blue header) */
+:host ::ng-deep .report-mat-table .mat-mdc-header-cell {
+  background: #b8d4f2 !important;
+  color: #0f172a !important;
+  font-weight: 600 !important;
+}
+
+:host ::ng-deep .report-mat-table .mat-mdc-row:nth-child(even) .mat-mdc-cell {
+  background: #f8fafc;
+}
+
+:host ::ng-deep .report-mat-table .mat-mdc-row:nth-child(odd) .mat-mdc-cell {
+  background: #fff;
+}
+
+:host ::ng-deep .report-mat-table .mat-mdc-cell {
+  border-bottom: 1px solid #e2e8f0;
+}
+

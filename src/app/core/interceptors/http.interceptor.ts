@@ -10,6 +10,7 @@ import { LoaderService } from '../services/loader.service';
 
 const AUTH_FORM_PATH_RE = /(^|\/)auth\/(login|register|forgot-password|reset-password)(\/|\?|$)/i;
 const SNACKBAR_MAX_LEN = 500;
+const CONNECTED_ACCOUNTS_MSG_RE = /no connected platform accounts found to sync/i;
 
 function getRequestPath(url: string): string {
   try {
@@ -92,6 +93,11 @@ function normalizeHttpErrorMessage(error: HttpErrorResponse, req: HttpRequest<un
       console.warn('API unreachable:', logUrl, '(is the backend running?)');
     }
     errorMessage = 'Cannot reach API. Start the backend server to load data.';
+  }
+
+  // Avoid misleading provider-account text coming from third-party sync endpoints.
+  if (CONNECTED_ACCOUNTS_MSG_RE.test(errorMessage)) {
+    errorMessage = 'No source profiles available to sync right now.';
   }
 
   return errorMessage;
