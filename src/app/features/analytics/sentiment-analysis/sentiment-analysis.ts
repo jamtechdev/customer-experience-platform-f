@@ -100,23 +100,31 @@ export class SentimentAnalysis implements OnInit {
     this.loadPresets();
   }
 
+  private setTodayRange(): void {
+    const now = new Date();
+    const ymd = now.toISOString().slice(0, 10);
+    this.selectedPresetId.set('custom');
+    this.startDate.set(ymd);
+    this.endDate.set(ymd);
+  }
+
   private loadPresets(): void {
     this.reportService.getDatePresets().subscribe({
       next: (res) => {
         const list =
           res.success && res.data?.presets?.length ? (res.data.presets as ReportDatePreset[]) : buildClientReportDatePresets();
         this.presets.set(list);
-        const defId = 'all_time';
-        const def = list.find((p) => p.id === defId) ?? list[0];
+        const def = list.find((p) => p.id === 'today');
         if (def) this.applyPreset(def);
+        else this.setTodayRange();
         this.reloadAll();
       },
       error: () => {
         const list = buildClientReportDatePresets();
         this.presets.set(list);
-        const defId = 'all_time';
-        const def = list.find((p) => p.id === defId) ?? list[0];
+        const def = list.find((p) => p.id === 'today');
         if (def) this.applyPreset(def);
+        else this.setTodayRange();
         this.reloadAll();
       },
     });
