@@ -85,7 +85,7 @@ export class SentimentAnalysis implements OnInit {
   totalPages = computed(() => Math.max(1, Math.ceil(this.feedbackTotal() / this.pageSize())));
   hoveredBar = signal<SentimentChartBar | null>(null);
   private readonly cacheKey = 'sentiment-analysis-cache-v1';
-  private readonly defaultPatterns: Record<string, string> = {
+  private readonly fallbackPatterns: Record<string, string> = {
     positive: 'Long product lifetime, praise for durability, favorable campaign/discount mentions, occasional service appreciation',
     neutral: 'Support asks for DM/contact info, routing messages, informational mentions',
     negative: 'Complaint escalation, unresolved repair, service delay, unfair fee/change request, poor response ownership',
@@ -345,8 +345,60 @@ export class SentimentAnalysis implements OnInit {
     this.hoveredBar.set(null);
   }
 
+  private readonly stopWords = new Set([
+    've', 'ile', 'bir', 'bu', 'şu', 'çok', 'daha', 'için', 'gibi', 'kadar', 'ama', 'veya',
+    'the', 'and', 'for', 'with', 'that', 'this', 'from', 'have', 'has', 'was', 'are',
+  ]);
+
+  private extractTopPhrases(
+    items: Array<{ content: string }>,
+    maxPhrases: number = 5
+  ): string[] {
+    const text = items.map((x) => x.content || '').join(' ').toLocaleLowerCase('tr-TR');
+    const words = text
+      .replace(/https?:\/\/\S+/g, ' ')
+      .replace(/[@#][^\s]+/g, ' ')
+      .replace(/[^\p{L}\p{N}\s]/gu, ' ')
+      .split(/\s+/)
+      .map((w) => w.trim())
+      .filter((w) => w.length >= 3 && !this.stopWords.has(w));
+
+    const unigram = new Map<string, number>();
+    const bigram = new Map<string, number>();
+
+    for (let i = 0; i < words.length; i++) {
+      unigram.set(words[i], (unigram.get(words[i]) ?? 0) + 1);
+      if (i < words.length - 1) {
+        const phrase = `${words[i]} ${words[i + 1]}`;
+        if (words[i + 1].length >= 3) {
+          bigram.set(phrase, (bigram.get(phrase) ?? 0) + 1);
+        }
+      }
+    }
+
+    const phraseCandidates = [...bigram.entries()]
+      .filter(([, c]) => c >= 2)
+      .sort((a, b) => b[1] - a[1])
+      .map(([k]) => k);
+    if (phraseCandidates.length >= maxPhrases) {
+      return phraseCandidates.slice(0, maxPhrases);
+    }
+
+    const wordCandidates = [...unigram.entries()]
+      .filter(([, c]) => c >= 2)
+      .sort((a, b) => b[1] - a[1])
+      .map(([k]) => k);
+    return [...phraseCandidates, ...wordCandidates].slice(0, maxPhrases);
+  }
+
   representativePatterns(sentiment: string): string {
-    return this.defaultPatterns[sentiment] ?? 'No representative phrases available in this date range.';
+    const norm = sentiment.toLowerCase();
+    const target = this.feedbackList().filter((x) => (x.sentiment || '').toLowerCase() === norm);
+    const phrases = this.extractTopPhrases(target);
+    if (phrases.length > 0) {
+      return phrases.join(', ');
+    }
+    return this.fallbackPatterns[norm] ?? 'No representative phrases available in this date range.';
   }
 
   sentimentReferenceRows(): SentimentReferenceRow[] {

@@ -69,11 +69,11 @@
         <mat-card-subtitle>Sentiment distribution for original customer-originated CX tweets.</mat-card-subtitle>
       </mat-card-header>
       <mat-card-content>
-        <p class="body-text">A tweet-level sentiment label was produced for every row in the uploaded CSV and exported as a separate file.</p>
+        <p class="body-text">A sentiment label is calculated from your uploaded CSV rows and shown below for the selected date range.</p>
         <ul class="bullet-list">
-          <li>Positive tweets are typically linked to durability, appreciation, discount/campaign interest, and occasional service praise.</li>
-          <li>Negative tweets are dominated by complaints, service issues, delays, product faults, and fee objections.</li>
-          <li>Neutral tweets are mostly support responses, routing messages, or context-light mentions.</li>
+          <li><strong>Positive:</strong> {{ representativePatterns('positive') }}</li>
+          <li><strong>Neutral:</strong> {{ representativePatterns('neutral') }}</li>
+          <li><strong>Negative:</strong> {{ representativePatterns('negative') }}</li>
         </ul>
         <figure class="mpl-figure" aria-label="Sentiment bar chart">
           <figcaption class="mpl-figure-title">Customer-Originated CX Tweets - Sentiment Distribution</figcaption>
