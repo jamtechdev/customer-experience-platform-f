@@ -156,7 +156,7 @@
             <ng-container matColumnDef="score">
               <th mat-header-cell *matHeaderCellDef>Score</th>
               <td mat-cell *matCellDef="let row">
-                {{ String(row.sentiment || '').toLowerCase().includes('processing') ? '—' : row.score.toFixed(2) }}
+                {{ (row.sentiment || '').toLowerCase().includes('processing') ? '—' : row.score.toFixed(2) }}
               </td>
             </ng-container>
             <tr mat-header-row *matHeaderRowDef="feedbackColumns"></tr>

@@ -21,7 +21,7 @@ export const environment = {
 
   // Backend base URL. If NG_APP_API_URL is not provided at build time,
   // fall back to the deployed API endpoint.
-  apiUrl: getEnv('NG_APP_API_URL', 'http://localhost:5000/api'),
+  apiUrl: getEnv('NG_APP_API_URL', 'https://api.sentimenter.ai/api'),
   apiVersion: getEnv('NG_APP_API_VERSION', 'v1'),
   apiTimeout: getEnvNumber('NG_APP_API_TIMEOUT', 30000),
 
