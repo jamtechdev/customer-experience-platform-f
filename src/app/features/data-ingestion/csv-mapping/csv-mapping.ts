@@ -277,6 +277,16 @@ export class CsvMapping implements OnInit {
       });
   }
 
+  private aiSummaryText(aiSummary: {
+    enabled: boolean;
+    attempted: number;
+    succeeded: number;
+    failed: number;
+  } | undefined): string {
+    if (!aiSummary?.enabled) return '';
+    return ` Ollama: ${aiSummary.succeeded}/${aiSummary.attempted} success, ${aiSummary.failed} failed.`;
+  }
+
   startImport(): void {
     const importId = this.importId();
     if (!importId) return;
@@ -287,15 +297,18 @@ export class CsvMapping implements OnInit {
 
     const dt = this.dataType();
     this.importError.set(null);
+    this.validating.set(true);
     this.csvService.processImport(importId, mappings, this.companyId(), dt, this.dateFormat()).subscribe({
       next: (res) => {
+        this.validating.set(false);
         this.importError.set(null);
-        if (!res.success) {
+        if (!res.success || !res.data) {
           const msg = res.message || 'Import failed';
           this.snackBar.open(msg, 'Close', { duration: 8000 });
         }
       },
       error: (err) => {
+        this.validating.set(false);
         const api = err && typeof err === 'object' && 'error' in err ? (err as any).error : null;
         const msg = (api && typeof api.message === 'string' && api.message) ? api.message : 'Import failed';
         const errors: RowValidationError[] = Array.isArray(api?.data?.errors) ? api.data.errors : [];
@@ -331,63 +344,9 @@ export class CsvMapping implements OnInit {
       },
     });
 
-    // Background mode: do not block page with importing loader.
-    this.snackBar.open('Import started in background. Check Import History for status/issues.', 'Close', {
-      duration: 7000,
-    });
-    this.router.navigate(['/app/data-sources/import-history']);
-  }
-
-  autoImport(): void {
-    const importId = this.importId();
-    if (!importId) return;
-
-    // Backend will auto-generate mappings from CSV headers when mappings is empty.
-    this.importError.set(null);
-    this.csvService.processImport(importId, {}, this.companyId(), undefined, this.dateFormat()).subscribe({
-      next: (res) => {
-        this.importError.set(null);
-        if (!res.success) {
-          const msg = res.message || 'Import failed';
-          this.snackBar.open(msg, 'Close', { duration: 8000 });
-        }
-      },
-      error: (err) => {
-        const api = err && typeof err === 'object' && 'error' in err ? (err as any).error : null;
-        const msg = (api && typeof api.message === 'string' && api.message) ? api.message : 'Import failed';
-        const errors: RowValidationError[] = Array.isArray(api?.data?.errors) ? api.data.errors : [];
-        const errorDetails = api?.data?.errorDetails;
-
-        const guidance: string[] | undefined = errorDetails?.guidance;
-        const totalIssues: number | undefined = errorDetails?.totalIssues;
-
-        this.snackBar.open(
-          errors.length > 0
-            ? `${msg} (${errors.length} issue(s))`
-            : msg,
-          'Close',
-          { duration: 10000 }
-        );
-
-        if (errors.length > 0) {
-          this.importError.set({
-            message: msg,
-            totalIssues,
-            guidance,
-            errors,
-          });
-        } else {
-          this.importError.set({
-            message: msg,
-            guidance,
-            errors: [],
-          });
-        }
-      },
-    });
-
-    this.snackBar.open('Auto import started. Check Import History for status/issues.', 'Close', {
-      duration: 7000,
+    // Run import in background and show live progress in Import History page.
+    this.snackBar.open('Import started. Redirecting to Import History for live progress…', 'Close', {
+      duration: 5000,
     });
     this.router.navigate(['/app/data-sources/import-history']);
   }

@@ -12,6 +12,7 @@ import { ReportService } from '../../../core/services/report.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { TranslationService } from '../../../core/services/translation.service';
+import { OllamaLoader } from '../../../core/components/ollama-loader/ollama-loader';
 import {
   buildClientReportDatePresets,
   toIsoRangeFromYmd,
@@ -30,6 +31,7 @@ import {
     MatFormFieldModule,
     MatInputModule,
     MatSelectModule,
+    OllamaLoader,
   ],
   templateUrl: './executive-summary.html',
   styleUrl: './executive-summary.css',

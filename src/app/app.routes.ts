@@ -5,6 +5,7 @@ export const routes: Routes = [
   // Landing page (public)
   {
     path: '',
+    pathMatch: 'full',
     loadComponent: () => import('./landing/landing').then(m => m.Landing)
   },
   // All users use /app/dashboard; redirect old admin/manage URLs
@@ -32,7 +33,7 @@ export const routes: Routes = [
   {
     path: 'app',
     loadComponent: () => import('./layout/main-layout/main-layout').then(m => m.MainLayout),
-    canActivate: [authGuard, adminGuard],
+    canActivate: [authGuard],
     children: [
       // Dashboard
       {
@@ -42,8 +43,8 @@ export const routes: Routes = [
       },
       {
         path: 'dashboard',
-        loadComponent: () => import('./features/dashboard/main-dashboard/main-dashboard').then(m => m.MainDashboard),
-        data: { title: 'Dashboard', breadcrumb: 'Dashboard' }
+        redirectTo: 'reports/dashboard-reports',
+        pathMatch: 'full'
       },
       {
         path: 'executive-dashboard',

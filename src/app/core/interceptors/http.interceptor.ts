@@ -34,7 +34,8 @@ function isAuthFormEndpoint(url: string): boolean {
 
 function shouldSuppressErrorToast(req: HttpRequest<unknown>): boolean {
   if (!isBackendApiRequest(req)) return true;
-  if (isAuthFormEndpoint(req.url)) return true;
+  // In local/dev, show auth endpoint failures so debugging is visible immediately.
+  if (isAuthFormEndpoint(req.url) && environment.production) return true;
   return false;
 }
 

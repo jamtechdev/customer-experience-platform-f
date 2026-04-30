@@ -1,0 +1,11 @@
+<div class="ollama-loader-wrap">
+  <div class="base" aria-hidden="true">
+    @for (ring of loaderRings; track ring) {
+      <div class="circ" [class]="'circ circ-' + ring" [style.--ring-angle]="(ring * 24) + 'deg'"></div>
+    }
+  </div>
+  <div class="ai-loading-copy">
+    <p class="ai-loading-title">{{ title() }}</p>
+    <p class="ai-loading-subtitle">{{ subtitle() }}<span class="ai-dots"></span></p>
+  </div>
+</div>

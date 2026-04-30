@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { Component, inject, OnDestroy, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
 import { MatTableModule } from '@angular/material/table';
@@ -11,7 +11,9 @@ import { AnalysisService } from '../../../core/services/analysis.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { TranslationService } from '../../../core/services/translation.service';
-import { buildClientReportDatePresets } from '../../../core/utils/report-date-presets';
+import { CXWebSocketService, type CSVImportStatusEvent } from '../../../core/services/cx-websocket.service';
+import { Subscription } from 'rxjs';
+import { OllamaLoader } from '../../../core/components/ollama-loader/ollama-loader';
 
 interface RootCauseStructuredInsights {
   painPointTitle?: string;
@@ -47,16 +49,19 @@ interface RootCauseChartRow {
     MatChipsModule,
     MatProgressSpinnerModule,
     MatPaginatorModule,
-    MatSnackBarModule
+    MatSnackBarModule,
+    OllamaLoader
   ],
   templateUrl: './root-cause-analysis.html',
   styleUrl: './root-cause-analysis.css',
 })
-export class RootCauseAnalysis implements OnInit {
+export class RootCauseAnalysis implements OnInit, OnDestroy {
   private analysisService = inject(AnalysisService);
   private snackBar = inject(MatSnackBar);
   private authService = inject(AuthService);
   private translationService = inject(TranslationService);
+  private websocket = inject(CXWebSocketService);
+  private importStatusSub?: Subscription;
 
   loading = signal(false);
   reanalyzing = signal(false);
@@ -69,6 +74,15 @@ export class RootCauseAnalysis implements OnInit {
 
   ngOnInit(): void {
     this.loadRootCauses();
+    this.importStatusSub = this.websocket.onCSVImportStatus().subscribe((payload: CSVImportStatusEvent) => {
+      if (payload?.status === 'completed') {
+        this.loadRootCauses();
+      }
+    });
+  }
+
+  ngOnDestroy(): void {
+    this.importStatusSub?.unsubscribe();
   }
 
   /** Re-runs server-side extraction on negative feedback (creates additional rows; refreshes list). */
@@ -97,28 +111,21 @@ export class RootCauseAnalysis implements OnInit {
     this.loading.set(true);
     const user = this.authService.currentUser();
     const companyId = user?.role === 'admin' ? undefined : (user?.settings?.companyId || 1);
-    const presets = buildClientReportDatePresets();
-    const defaultId = user?.role === 'admin' ? 'all_time' : 'last_30_days';
-    const preset = presets.find((p) => p.id === defaultId) ?? presets[0];
-    const start = new Date(preset.startDate);
-    const end = new Date(preset.endDate);
-
-    this.analysisService.getTwitterCxReport(companyId, start, end).subscribe({
+    this.analysisService.getRootCauses(companyId).subscribe({
       next: (response) => {
-        if (response.success && response.data?.rootCauses) {
-          const mapped = (response.data.rootCauses || []).map((item, idx) => ({
-            id: idx + 1,
-            title: item.cause || 'Unknown cause',
-            category: 'Service',
-            priority: 'medium',
-            severity: 0,
-            frequency: item.count || 0,
-            description: item.interpretation || '',
-            structuredInsights: {
-              painPointTitle: item.cause || 'Unknown cause',
-              summary: this.compactText(String(item.interpretation || ''), 200),
-              examples: [],
-            },
+        if (response.success && Array.isArray(response.data)) {
+          const mapped = (response.data || []).map((item: any) => ({
+            id: Number(item.id) || 0,
+            title: typeof item.title === 'string' ? item.title : '',
+            category: typeof item.category === 'string' ? item.category : '',
+            priority: typeof item.priority === 'string' ? item.priority : '',
+            severity: typeof item.severity === 'number' ? item.severity : 0,
+            frequency: typeof item.frequency === 'number' ? item.frequency : 0,
+            description: typeof item.description === 'string' ? item.description : '',
+            structuredInsights:
+              item.structuredInsights && typeof item.structuredInsights === 'object'
+                ? item.structuredInsights
+                : null,
           }));
           this.rootCauses.set(mapped);
           this.totalItems = mapped.length;

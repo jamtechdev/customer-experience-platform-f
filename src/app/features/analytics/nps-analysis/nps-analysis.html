@@ -37,8 +37,10 @@
   </div>
 
   <div *ngIf="loading()" class="loading-container">
-    <mat-spinner></mat-spinner>
-    <p>Loading NPS data...</p>
+    <app-ollama-loader
+      [title]="'Ollama AI is analyzing NPS signals'"
+      [subtitle]="'Processing promoters, passives, detractors, and trend interpretation'">
+    </app-ollama-loader>
   </div>
 
   <div *ngIf="!loading() && !npsData()" class="empty-state">
@@ -68,8 +70,8 @@
         <p class="body-text">
           Social NPS proxy: {{ npsData()!.score.toFixed(1) }}. This indicates a slightly negative advocacy balance in the customer-authored CX conversation.
         </p>
-        <p class="body-text">
-          Interpretation: Arçelik still benefits from baseline brand strength and product affinity, but the service experience is eroding advocacy.
+        <p class="body-text" *ngIf="npsInterpretation()">
+          Interpretation: {{ npsInterpretation() }}
         </p>
         <figure class="mpl-figure mpl-figure-nps" aria-label="Social NPS stacked bar">
           <figcaption class="mpl-figure-title mpl-figure-title-nps">Social NPS proxy = {{ npsData()!.score.toFixed(1) }}</figcaption>

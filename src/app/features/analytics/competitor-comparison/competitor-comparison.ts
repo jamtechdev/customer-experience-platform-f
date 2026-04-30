@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { Component, inject, OnDestroy, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
 import { MatTableModule } from '@angular/material/table';
@@ -20,6 +20,9 @@ import {
   toIsoRangeFromYmd,
   type ReportDatePreset,
 } from '../../../core/utils/report-date-presets';
+import { CXWebSocketService, type CSVImportStatusEvent } from '../../../core/services/cx-websocket.service';
+import { Subscription } from 'rxjs';
+import { OllamaLoader } from '../../../core/components/ollama-loader/ollama-loader';
 
 interface CompetitorData {
   id: number;
@@ -44,22 +47,26 @@ interface CompetitorData {
     MatInputModule,
     MatSelectModule,
     MatTooltipModule,
+    OllamaLoader,
   ],
   templateUrl: './competitor-comparison.html',
   styleUrl: './competitor-comparison.css',
 })
-export class CompetitorComparison implements OnInit {
+export class CompetitorComparison implements OnInit, OnDestroy {
   private analysisService = inject(AnalysisService);
   private snackBar = inject(MatSnackBar);
   private authService = inject(AuthService);
   private reportService = inject(ReportService);
   private translationService = inject(TranslationService);
+  private websocket = inject(CXWebSocketService);
+  private importStatusSub?: Subscription;
 
   loading = signal(false);
   addingCompetitor = signal(false);
   cleaningCompetitors = signal(false);
   companyData = signal<CompetitorData | null>(null);
   competitors = signal<CompetitorData[]>([]);
+  insightSummary = signal<string>('');
   noDataInSelectedRange = signal(false);
   displayedColumns: string[] = ['name', 'sentimentScore', 'npsScore', 'feedbackCount', 'gap', 'actions'];
   newCompetitorName = '';
@@ -71,6 +78,15 @@ export class CompetitorComparison implements OnInit {
 
   ngOnInit(): void {
     this.loadPresets();
+    this.importStatusSub = this.websocket.onCSVImportStatus().subscribe((payload: CSVImportStatusEvent) => {
+      if (payload?.status === 'completed') {
+        this.loadComparisonData();
+      }
+    });
+  }
+
+  ngOnDestroy(): void {
+    this.importStatusSub?.unsubscribe();
   }
 
   isAdminUser(): boolean {
@@ -224,9 +240,11 @@ export class CompetitorComparison implements OnInit {
           } else {
             this.competitors.set([]);
           }
+          this.insightSummary.set(typeof data.insightSummary === 'string' ? data.insightSummary : '');
         } else {
           this.companyData.set(null);
           this.competitors.set([]);
+          this.insightSummary.set('');
           this.noDataInSelectedRange.set(false);
         }
         this.loading.set(false);
@@ -236,6 +254,7 @@ export class CompetitorComparison implements OnInit {
         this.loading.set(false);
         this.companyData.set(null);
         this.competitors.set([]);
+        this.insightSummary.set('');
         this.noDataInSelectedRange.set(false);
         // Only show error if it's not a 500 (server might not have data yet)
         if (error.status !== 500) {

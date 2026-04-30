@@ -1,4 +1,4 @@
-import { Component, computed, inject, OnInit, signal } from '@angular/core';
+import { Component, computed, inject, OnDestroy, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
 import { MatTableModule } from '@angular/material/table';
@@ -22,6 +22,9 @@ import {
   type ReportDatePreset,
 } from '../../../core/utils/report-date-presets';
 import { formatApiDate, normalizeApiDateToIso } from '../../../core/utils/api-date';
+import { CXWebSocketService, type CSVImportStatusEvent } from '../../../core/services/cx-websocket.service';
+import { Subscription } from 'rxjs';
+import { OllamaLoader } from '../../../core/components/ollama-loader/ollama-loader';
 
 interface SentimentStats {
   positive: number;
@@ -60,24 +63,28 @@ interface SentimentReferenceRow {
     MatNativeDateModule,
     MatProgressSpinnerModule,
     MatChipsModule,
-    MatSnackBarModule
+    MatSnackBarModule,
+    OllamaLoader
   ],
   templateUrl: './sentiment-analysis.html',
   styleUrl: './sentiment-analysis.css',
 })
-export class SentimentAnalysis implements OnInit {
+export class SentimentAnalysis implements OnInit, OnDestroy {
   private analysisService = inject(AnalysisService);
   private authService = inject(AuthService);
   private snackBar = inject(MatSnackBar);
   private reportService = inject(ReportService);
+  private websocket = inject(CXWebSocketService);
+  private importStatusSub?: Subscription;
 
   loading = signal(false);
   stats = signal<SentimentStats | null>(null);
+  sentimentInterpretation = signal<string>('');
   feedbackList = signal<Array<{ id: number; content: string; source: string; date: string; author?: string; sentiment: string; score: number }>>([]);
   feedbackTotal = signal(0);
 
   presets = signal<ReportDatePreset[]>([]);
-  selectedPresetId = signal<string>('all_time');
+  selectedPresetId = signal<string>('last_30_days');
   startDate = signal<string | null>(null);
   endDate = signal<string | null>(null);
   page = signal(1);
@@ -85,11 +92,6 @@ export class SentimentAnalysis implements OnInit {
   totalPages = computed(() => Math.max(1, Math.ceil(this.feedbackTotal() / this.pageSize())));
   hoveredBar = signal<SentimentChartBar | null>(null);
   private readonly cacheKey = 'sentiment-analysis-cache-v1';
-  private readonly fallbackPatterns: Record<string, string> = {
-    positive: 'Long product lifetime, praise for durability, favorable campaign/discount mentions, occasional service appreciation',
-    neutral: 'Support asks for DM/contact info, routing messages, informational mentions',
-    negative: 'Complaint escalation, unresolved repair, service delay, unfair fee/change request, poor response ownership',
-  };
 
   displayedColumns: string[] = ['sentiment', 'count', 'percentage', 'bar'];
   patternCols: string[] = ['sentiment', 'patterns'];
@@ -98,6 +100,15 @@ export class SentimentAnalysis implements OnInit {
   ngOnInit(): void {
     this.restoreCache();
     this.loadPresets();
+    this.importStatusSub = this.websocket.onCSVImportStatus().subscribe((payload: CSVImportStatusEvent) => {
+      if (payload?.status === 'completed') {
+        this.reloadAll();
+      }
+    });
+  }
+
+  ngOnDestroy(): void {
+    this.importStatusSub?.unsubscribe();
   }
 
   private setTodayRange(): void {
@@ -114,7 +125,13 @@ export class SentimentAnalysis implements OnInit {
         const list =
           res.success && res.data?.presets?.length ? (res.data.presets as ReportDatePreset[]) : buildClientReportDatePresets();
         this.presets.set(list);
-        const def = list.find((p) => p.id === 'today');
+        const user = this.authService.currentUser();
+        const preferred = user?.role === 'admin' ? 'all_time' : 'last_30_days';
+        const def =
+          list.find((p) => p.id === preferred) ??
+          list.find((p) => p.id === 'all_time') ??
+          list.find((p) => p.id === 'last_30_days') ??
+          list[0];
         if (def) this.applyPreset(def);
         else this.setTodayRange();
         this.reloadAll();
@@ -122,7 +139,13 @@ export class SentimentAnalysis implements OnInit {
       error: () => {
         const list = buildClientReportDatePresets();
         this.presets.set(list);
-        const def = list.find((p) => p.id === 'today');
+        const user = this.authService.currentUser();
+        const preferred = user?.role === 'admin' ? 'all_time' : 'last_30_days';
+        const def =
+          list.find((p) => p.id === preferred) ??
+          list.find((p) => p.id === 'all_time') ??
+          list.find((p) => p.id === 'last_30_days') ??
+          list[0];
         if (def) this.applyPreset(def);
         else this.setTodayRange();
         this.reloadAll();
@@ -260,11 +283,15 @@ export class SentimentAnalysis implements OnInit {
           total,
           averageScore: data.averageScore ?? 0
         });
+        this.sentimentInterpretation.set(
+          typeof data.interpretation === 'string' ? data.interpretation.trim() : ''
+        );
         this.persistCache();
         this.loading.set(false);
       },
       error: () => {
         this.stats.set({ positive: 0, negative: 0, neutral: 0, total: 0, averageScore: 0 });
+        this.sentimentInterpretation.set('');
         this.loading.set(false);
         this.snackBar.open('Failed to load sentiment data', 'Close', { duration: 3000 });
       }
@@ -281,6 +308,10 @@ export class SentimentAnalysis implements OnInit {
           const list = (response.data.list || []).map((row: any) => ({
             ...row,
             date: normalizeApiDateToIso(row.date),
+            sentiment:
+              String(row.sentiment || '').toLowerCase() === 'processing'
+                ? 'AI processing'
+                : row.sentiment,
           }));
           this.feedbackList.set(list);
           this.feedbackTotal.set(response.data.total ?? list.length);
@@ -403,36 +434,15 @@ export class SentimentAnalysis implements OnInit {
     const norm = sentiment.toLowerCase();
     const target = this.feedbackList().filter((x) => (x.sentiment || '').toLowerCase() === norm);
     const phrases = this.extractTopPhrases(target);
-    if (phrases.length > 0) {
-      return phrases.join(', ');
-    }
-    return this.fallbackPatterns[norm] ?? 'No representative phrases available in this date range.';
+    return phrases.join(', ');
   }
 
   sentimentReferenceRows(): SentimentReferenceRow[] {
     return [
-      {
-        sentiment: 'Positive',
-        patterns:
-          'Long product lifetime, praise for durability, favorable campaign/discount mentions, occasional service appreciation',
-      },
-      {
-        sentiment: 'Neutral',
-        patterns: 'Support asks for DM/contact info, routing messages, informational mentions',
-      },
-      {
-        sentiment: 'Negative',
-        patterns:
-          'Complaint escalation, unresolved repair, service delay, unfair fee/change request, poor response ownership',
-      },
-    ];
-  }
-
-  reportIntroText(): string {
-    const total = this.stats()?.total ?? 0;
-    const start = this.startDate() ?? '-';
-    const end = this.endDate() ?? '-';
-    return `Each row in the primary cohort (${total} with sentiment labels) was scored using the platform's offline text engine for this company. Date span in filter: ${start} to ${end}. Use Sentiment / export tools in the app if you need a downloadable labeled extract.`;
+      { sentiment: 'Positive' as const, patterns: this.representativePatterns('positive') },
+      { sentiment: 'Neutral' as const, patterns: this.representativePatterns('neutral') },
+      { sentiment: 'Negative' as const, patterns: this.representativePatterns('negative') },
+    ].filter((row) => row.patterns.trim().length > 0);
   }
 
   getBarWidth(percentage: string): string {

@@ -46,9 +46,22 @@
 
       @if (loading()) {
         <div class="loading">
-          <mat-spinner diameter="40"></mat-spinner>
+          <app-ollama-loader
+            [title]="'Ollama AI is generating executive summary'"
+            [subtitle]="'Analyzing KPI shifts, risk signals, and decision-ready business narrative'">
+          </app-ollama-loader>
         </div>
       } @else if (data()) {
+        <mat-card class="ai-summary-card" *ngIf="data()!.aiSummary">
+          <mat-card-content>
+            <div class="summary-head">
+              <mat-icon>auto_awesome</mat-icon>
+              <span>AI executive insight</span>
+            </div>
+            <p class="ai-summary-text">{{ data()!.aiSummary }}</p>
+          </mat-card-content>
+        </mat-card>
+
         <div class="summary-grid">
           <mat-card class="summary-card">
             <mat-card-content>

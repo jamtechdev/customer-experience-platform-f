@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
 import { MatTableModule } from '@angular/material/table';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
@@ -24,6 +25,7 @@ import { formatApiDate } from '../../../core/utils/api-date';
     MatCardModule,
     MatTableModule,
     MatProgressSpinnerModule,
+    MatProgressBarModule,
     MatChipsModule,
     MatIconModule,
     MatButtonModule,
@@ -43,6 +45,8 @@ export class ImportHistory implements OnInit {
   private router = inject(Router);
   private importStatusSub?: Subscription;
   private refreshTimer: any = null;
+  private progressAnimTimer: any = null;
+  private readonly loopDurationMs = 1400;
 
   loading = signal(false);
   refreshing = signal(false);
@@ -51,6 +55,7 @@ export class ImportHistory implements OnInit {
   bulkDeleting = signal(false);
   displayedColumns: string[] = [];
   deletingId = signal<number | null>(null);
+  animationNow = signal<number>(Date.now());
 
   ngOnInit(): void {
     this.configureDisplayedColumns();
@@ -85,10 +90,14 @@ export class ImportHistory implements OnInit {
       clearInterval(this.refreshTimer);
       this.refreshTimer = null;
     }
+    if (this.progressAnimTimer) {
+      clearInterval(this.progressAnimTimer);
+      this.progressAnimTimer = null;
+    }
   }
 
   private syncRefreshTimer(): void {
-    const hasActive = this.imports().some((r) => r.status === 'pending' || r.status === 'processing');
+    const hasActive = this.imports().some((r) => r.status === 'pending' || this.isProcessing(r));
     if (hasActive && !this.refreshTimer) {
       // Fallback: in case websocket is delayed/missed, keep DB in sync.
       this.refreshTimer = setInterval(() => this.loadImports(), 3000);
@@ -96,6 +105,17 @@ export class ImportHistory implements OnInit {
     if (!hasActive && this.refreshTimer) {
       clearInterval(this.refreshTimer);
       this.refreshTimer = null;
+    }
+
+    // Smooth UI loop animation while any import is active.
+    if (hasActive && !this.progressAnimTimer) {
+      this.progressAnimTimer = setInterval(() => {
+        this.animationNow.set(Date.now());
+      }, 90);
+    }
+    if (!hasActive && this.progressAnimTimer) {
+      clearInterval(this.progressAnimTimer);
+      this.progressAnimTimer = null;
     }
   }
 
@@ -115,9 +135,8 @@ export class ImportHistory implements OnInit {
         this.syncRefreshTimer();
       },
       error: () => {
-        if (!hasRows) {
-          this.imports.set([]);
-        }
+        // Do not keep stale rows when backend cannot confirm current state.
+        this.imports.set([]);
         this.loading.set(false);
         this.refreshing.set(false);
         this.syncRefreshTimer();
@@ -188,10 +207,65 @@ export class ImportHistory implements OnInit {
     return formatApiDate(d, { mode: 'datetime' });
   }
 
-  getStatusColor(status: string): 'primary' | 'accent' | 'warn' | undefined {
-    if (status === 'completed') return 'primary';
-    if (status === 'failed') return 'warn';
+  getStatusColor(row: CSVImport): 'primary' | 'accent' | 'warn' | undefined {
+    if (this.isEffectivelyCompleted(row)) return 'primary';
+    if (row.status === 'failed') return 'warn';
     return undefined;
+  }
+
+  getStatusLabel(row: CSVImport): string {
+    if (this.isEffectivelyCompleted(row)) {
+      if (row.errorDetails?.importOmissions) return 'Completed (with omissions)';
+      return 'Completed';
+    }
+    const custom = row.errorDetails?.statusLabel;
+    if (custom === 'completed_with_omissions') return 'Completed (with omissions)';
+    if (custom === 'processing') return 'Processing';
+    if (row.status === 'pending') return 'Pending mapping';
+    if (row.status === 'failed') return 'Failed';
+    if (row.status === 'completed') return 'Completed';
+    return row.status;
+  }
+
+  getProgressPct(row: CSVImport): number | null {
+    const details = row.errorDetails;
+    if (!details) return null;
+    if (typeof details.completionPct === 'number') return details.completionPct;
+    const total = details.totalRows ?? row.rowCount ?? 0;
+    if (!total) return null;
+    const processed = details.processedCount ?? 0;
+    return Math.round((processed / total) * 100);
+  }
+
+  isProcessing(row: CSVImport): boolean {
+    return row.status === 'processing' && !this.isEffectivelyCompleted(row);
+  }
+
+  isEffectivelyCompleted(row: CSVImport): boolean {
+    if (row.status === 'completed') return true;
+    if (row.status !== 'processing') return false;
+    const details = row.errorDetails;
+    if (!details) return false;
+    const pct = Number(details.completionPct ?? 0);
+    const total = Number(details.totalRows ?? row.rowCount ?? 0);
+    const processed = Number(details.processedCount ?? 0);
+    const imported = Number(details.importedCount ?? 0);
+    if (pct >= 100) return true;
+    if (total > 0 && processed >= total) return true;
+    if (imported > 0 && processed >= imported && total === 0) return true;
+    return false;
+  }
+
+  getLoopingProgress(row: CSVImport): number {
+    if (!this.isProcessing(row)) return 0;
+    const now = this.animationNow();
+    const cycle = now % this.loopDurationMs;
+    return Math.round((cycle / this.loopDurationMs) * 100);
+  }
+
+  getFinalProgress(row: CSVImport): number {
+    if (row.status === 'completed') return 100;
+    return Math.max(0, Math.min(100, this.getProgressPct(row) ?? 0));
   }
 
   goToUpload(): void {
@@ -224,6 +298,22 @@ export class ImportHistory implements OnInit {
         const m =
           (api && typeof api.message === 'string' && api.message) || 'Could not delete import.';
         this.snackBar.open(m, 'Close', { duration: 7000 });
+      },
+    });
+  }
+
+  downloadOmittedRows(row: CSVImport): void {
+    this.csvService.downloadOmittedRows(row.id).subscribe({
+      next: (blob) => {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = row.errorDetails?.omittedRowsFileName || `omitted-${row.id}.csv`;
+        a.click();
+        URL.revokeObjectURL(url);
+      },
+      error: () => {
+        this.snackBar.open('Could not download omitted rows file.', 'Close', { duration: 5000 });
       },
     });
   }

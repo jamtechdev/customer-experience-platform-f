@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, signal, computed } from '@angular/core';
+import { Component, inject, OnDestroy, OnInit, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
@@ -8,6 +8,7 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { FormsModule } from '@angular/forms';
+import { RouterModule } from '@angular/router';
 import { DashboardService, DashboardStats, DashboardTrends } from '../../../core/services/dashboard.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { TranslationService } from '../../../core/services/translation.service';
@@ -19,6 +20,9 @@ import {
   type ReportDatePreset,
 } from '../../../core/utils/report-date-presets';
 import { parseIsoDateOnlyLocal } from '../../../core/utils/api-date';
+import { CXWebSocketService, type CSVImportStatusEvent } from '../../../core/services/cx-websocket.service';
+import { Subscription } from 'rxjs';
+import { OllamaLoader } from '../../../core/components/ollama-loader/ollama-loader';
 
 @Component({
   selector: 'app-dashboard-reports',
@@ -32,15 +36,19 @@ import { parseIsoDateOnlyLocal } from '../../../core/utils/api-date';
     MatFormFieldModule,
     MatInputModule,
     FormsModule,
+    RouterModule,
+    OllamaLoader,
   ],
   templateUrl: './dashboard-reports.html',
   styleUrl: './dashboard-reports.css',
 })
-export class DashboardReports implements OnInit {
+export class DashboardReports implements OnInit, OnDestroy {
   private dashboardService = inject(DashboardService);
   private authService = inject(AuthService);
   private translationService = inject(TranslationService);
   private reportService = inject(ReportService);
+  private websocket = inject(CXWebSocketService);
+  private importStatusSub?: Subscription;
 
   loading = signal(true);
   loadingTrends = signal(true);
@@ -60,6 +68,10 @@ export class DashboardReports implements OnInit {
 
   sentimentTrends = computed(() => this.trends()?.sentimentTrends ?? []);
   npsTrends = computed(() => this.trends()?.npsTrends ?? []);
+  visibleNpsTrends = computed(() => {
+    if (!this.hasNpsBaseData()) return [];
+    return this.npsTrends().filter((p) => (p?.count ?? 0) > 0);
+  });
 
   maxSentimentTotal = computed(() => {
     const list = this.sentimentTrends();
@@ -68,14 +80,14 @@ export class DashboardReports implements OnInit {
   });
 
   maxNps = computed(() => {
-    const list = this.npsTrends();
+    const list = this.visibleNpsTrends();
     if (list.length === 0) return 100;
     const values = list.map((t) => t.npsScore);
     return Math.max(100, Math.ceil(Math.max(...values) / 10) * 10);
   });
 
   minNps = computed(() => {
-    const list = this.npsTrends();
+    const list = this.visibleNpsTrends();
     if (list.length === 0) return -100;
     const values = list.map((t) => t.npsScore);
     return Math.min(-100, Math.floor(Math.min(...values) / 10) * 10);
@@ -83,6 +95,15 @@ export class DashboardReports implements OnInit {
 
   ngOnInit(): void {
     this.loadPresets();
+    this.importStatusSub = this.websocket.onCSVImportStatus().subscribe((payload: CSVImportStatusEvent) => {
+      if (payload?.status === 'completed') {
+        this.reloadAll();
+      }
+    });
+  }
+
+  ngOnDestroy(): void {
+    this.importStatusSub?.unsubscribe();
   }
 
   private loadPresets(): void {
@@ -166,6 +187,7 @@ export class DashboardReports implements OnInit {
 
   loadCurrentStatus(): void {
     this.loading.set(true);
+    this.currentStats.set(null);
     const user = this.authService.currentUser();
     const companyId = user?.role === 'admin' ? undefined : (user?.settings?.companyId ?? 1);
     if (!this.datesValid()) {
@@ -177,6 +199,7 @@ export class DashboardReports implements OnInit {
     this.dashboardService.getStats(companyId, new Date(sd), new Date(ed)).subscribe({
       next: (res) => {
         if (res.success && res.data) this.currentStats.set(res.data);
+        else this.currentStats.set(null);
         this.loading.set(false);
       },
       error: () => {
@@ -188,6 +211,7 @@ export class DashboardReports implements OnInit {
 
   loadTrends(): void {
     this.loadingTrends.set(true);
+    this.trends.set(null);
     const user = this.authService.currentUser();
     const companyId = user?.role === 'admin' ? undefined : (user?.settings?.companyId ?? 1);
     if (!this.datesValid()) {
@@ -234,5 +258,10 @@ export class DashboardReports implements OnInit {
     const range = max - min;
     if (range <= 0) return 50;
     return ((score - min) / range) * 100;
+  }
+
+  hasNpsBaseData(): boolean {
+    const stats = this.currentStats();
+    return !!stats && stats.sentiment.total > 0 && stats.nps.total > 0;
   }
 }

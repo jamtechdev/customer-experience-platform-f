@@ -24,20 +24,20 @@ export class AuthService {
   readonly currentUser = signal<User | null>(null);
   readonly _isInitialized = signal<boolean>(false); // Made public for guard access
   private _isInitializing = false;
+  private _isHydratingProfile = signal<boolean>(false);
 
   readonly isAuthenticated = computed(() => {
     const hasToken = this.getToken() !== null;
     const hasUser = !!this.currentUser();
-    const isInitialized = this._isInitialized();
+    const isHydratingProfile = this._isHydratingProfile();
 
-    // After initialization, require both token and user
-    if (isInitialized) {
-      return hasToken && hasUser;
+    // Keep route stable on hard refresh while profile is still loading.
+    // Invalid tokens are still handled by getProfile()->logout().
+    if (hasToken && (hasUser || isHydratingProfile)) {
+      return true;
     }
 
-    // During initialization, if token exists, consider authenticated temporarily
-    // This prevents redirect loops during page refresh
-    return hasToken;
+    return hasToken && hasUser;
   });
 
   // Observable that emits when auth state is ready (initialized)
@@ -75,6 +75,7 @@ export class AuthService {
       // Token exists but user data is missing, try to get profile
       // Set ready immediately to prevent navigation blocking
       // This allows guards to check and allow access while profile loads
+      this._isHydratingProfile.set(true);
       this._isInitialized.set(true);
       this._isInitializing = false;
       this.authReady$.next(true);
@@ -83,9 +84,11 @@ export class AuthService {
       this.getProfile().subscribe({
         next: () => {
           // Profile loaded successfully
+          this._isHydratingProfile.set(false);
         },
         error: () => {
           // If profile fetch fails, clear invalid token
+          this._isHydratingProfile.set(false);
           this.logout();
         }
       });
@@ -93,6 +96,7 @@ export class AuthService {
       // No token, clear any stale user data and initialize immediately
       this.currentUser.set(null);
       this.currentUserSubject.next(null);
+      this._isHydratingProfile.set(false);
       this._isInitialized.set(true);
       this._isInitializing = false;
       this.authReady$.next(true);
@@ -143,6 +147,7 @@ export class AuthService {
     }
     this.currentUser.set(null);
     this.currentUserSubject.next(null);
+    this._isHydratingProfile.set(false);
     // Redirect to landing page after logout
     this.router.navigate(['/'], { replaceUrl: true });
   }
@@ -187,6 +192,7 @@ export class AuthService {
     }
     this.currentUser.set(authResult.user ?? null);
     this.currentUserSubject.next(authResult.user ?? null);
+    this._isHydratingProfile.set(false);
   }
 
   forgotPassword(email: string): Observable<ApiResponse<{ message: string }>> {

@@ -16,8 +16,10 @@
   </div>
 
   <div *ngIf="loading()" class="loading-container">
-    <mat-spinner></mat-spinner>
-    <p>{{ t('rootCausePage.loading') }}</p>
+    <app-ollama-loader
+      [title]="'Ollama AI is analyzing root causes'"
+      [subtitle]="'Clustering pain themes, customer impact, and action priorities'">
+    </app-ollama-loader>
   </div>
 
   <div *ngIf="!loading()" class="content-section">

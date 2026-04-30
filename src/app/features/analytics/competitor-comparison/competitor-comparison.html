@@ -44,8 +44,10 @@
   </mat-card>
 
   <div *ngIf="loading()" class="loading-container">
-    <mat-spinner></mat-spinner>
-    <p>{{ t('competitorPage.loading') }}</p>
+    <app-ollama-loader
+      [title]="'Ollama AI is analyzing competitor signals'"
+      [subtitle]="'Comparing sentiment gaps, benchmarks, and strategic opportunities'">
+    </app-ollama-loader>
   </div>
 
   <div *ngIf="!loading() && (!companyData() || noDataInSelectedRange())" class="empty-state">
@@ -65,6 +67,15 @@
   </div>
 
   <div *ngIf="!loading() && companyData()" class="content-section">
+    <mat-card *ngIf="insightSummary()" class="insight-card">
+      <mat-card-header>
+        <mat-card-title>AI insight</mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <p>{{ insightSummary() }}</p>
+      </mat-card-content>
+    </mat-card>
+
     <mat-card>
       <mat-card-header>
         <mat-card-title>{{ t('competitorPage.tableTitle') }}</mat-card-title>

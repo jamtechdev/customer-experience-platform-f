@@ -1,10 +1,8 @@
-// Dev-time proxy: all /api requests from localhost (any port) go to https://api.sentimenter.ai
-// so login/APIs work same as Postman without CORS. Browser sees same-origin /api.
+// Dev-time proxy: all /api requests from localhost (any port) go to local backend.
 module.exports = {
   '/api': {
-    // Local development: send /api requests to the local backend.
-    // (Angular interceptor may rewrite full API URLs into /api/* to avoid CORS.)
-    target: 'https://api.sentimenter.ai',
+    // Local development: send /api requests to local backend on port 5000.
+    target: 'http://localhost:5000',
     secure: false,
     changeOrigin: true,
     logLevel: 'debug',

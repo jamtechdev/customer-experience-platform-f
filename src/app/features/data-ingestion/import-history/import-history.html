@@ -5,7 +5,7 @@
       <p class="subtitle">View past CSV uploads and their status</p>
     </div>
     <div class="header-actions">
-      <button mat-raised-button color="primary" (click)="goToUpload()">
+      <button mat-stroked-button (click)="goToUpload()">
         <mat-icon>upload_file</mat-icon>
         Upload CSV
       </button>
@@ -60,24 +60,51 @@
           <ng-container matColumnDef="status">
             <th mat-header-cell *matHeaderCellDef>Status</th>
             <td mat-cell *matCellDef="let row">
-              <mat-chip [color]="getStatusColor(row.status)">{{ row.status }}</mat-chip>
+              <mat-chip [color]="getStatusColor(row)">{{ getStatusLabel(row) }}</mat-chip>
             </td>
           </ng-container>
           <ng-container matColumnDef="errorMessage">
             <th mat-header-cell *matHeaderCellDef>Reason / details</th>
             <td mat-cell *matCellDef="let row" class="error-cell">
-              @if (row.status === 'pending' || row.status === 'processing') {
-                @if (row.errorDetails?.progress) {
+              @if (row.status === 'pending' || isProcessing(row)) {
+                @if (row.status === 'pending') {
+                  <span class="muted">Awaiting mapping. Start import from CSV Mapping page.</span>
+                } @else {
                   <div class="error-structured">
                     <div class="error-line">
-                      <strong>Running in background</strong> —
-                      processed {{ row.errorDetails.processedCount ?? 0 }} / {{ row.errorDetails.totalRows ?? row.rowCount ?? '—' }},
-                      imported {{ row.errorDetails.importedCount ?? 0 }},
-                      omitted {{ row.errorDetails.omittedCount ?? 0 }}.
+                      <strong>Import in progress</strong> —
+                      processed {{ row.errorDetails?.processedCount ?? 0 }} / {{ row.errorDetails?.totalRows ?? row.rowCount ?? '—' }},
+                      imported {{ row.errorDetails?.importedCount ?? 0 }},
+                      omitted {{ row.errorDetails?.omittedCount ?? 0 }}.
                     </div>
+                    @if (isProcessing(row) && getProgressPct(row) !== null) {
+                      <div class="error-line">
+                        Completion: <strong>{{ getProgressPct(row) }}%</strong>
+                      </div>
+                      <div class="progress-wrap">
+                        <mat-progress-bar class="chunk-progress" mode="determinate" [value]="getLoopingProgress(row)"></mat-progress-bar>
+                      </div>
+                    } @else if (isProcessing(row)) {
+                      <div class="error-line">
+                        Completion: <strong>Processing…</strong>
+                      </div>
+                      <div class="progress-wrap">
+                        <mat-progress-bar class="chunk-progress" mode="determinate" [value]="getLoopingProgress(row)"></mat-progress-bar>
+                      </div>
+                    }
+                    <div class="error-line ai-loader-line">
+                      <mat-spinner diameter="16"></mat-spinner>
+                      <span><strong>Ollama AI</strong> analyzing feedback…</span>
+                    </div>
+                    @if (row.errorDetails?.aiSummary?.enabled) {
+                      <div class="error-line">
+                        <strong>Ollama:</strong>
+                        attempted {{ row.errorDetails?.aiSummary?.attempted ?? 0 }},
+                        success {{ row.errorDetails?.aiSummary?.succeeded ?? 0 }},
+                        failed {{ row.errorDetails?.aiSummary?.failed ?? 0 }}.
+                      </div>
+                    }
                   </div>
-                } @else {
-                  <span class="muted">Awaiting mapping / import or in progress.</span>
                 }
               } @else if (row.status === 'failed') {
                 @if (row.errorDetails) {
@@ -117,6 +144,24 @@
                         </ul>
                       </details>
                     }
+                    @if (row.errorDetails.aiSummary?.enabled) {
+                      <div class="error-line">
+                        <strong>Ollama:</strong>
+                        attempted {{ row.errorDetails.aiSummary?.attempted ?? 0 }},
+                        success {{ row.errorDetails.aiSummary?.succeeded ?? 0 }},
+                        failed {{ row.errorDetails.aiSummary?.failed ?? 0 }}.
+                      </div>
+                      @if (row.errorDetails.aiSummary?.failedExamples?.length) {
+                        <details class="error-details">
+                          <summary class="error-summary">Ollama error samples</summary>
+                          <ul class="examples">
+                            @for (x of row.errorDetails.aiSummary?.failedExamples ?? []; track x) {
+                              <li>{{ x }}</li>
+                            }
+                          </ul>
+                        </details>
+                      }
+                    }
                   </div>
                 }
                 @if (!row.errorDetails?.examples?.length && row.errorMessage && row.errorMessage.length > 120) {
@@ -135,6 +180,12 @@
                     <mat-icon class="inline-icon">check_circle</mat-icon>
                     Import finished. <strong>{{ row.errorDetails.omittedCount }}</strong> row(s) were omitted (not saved).
                   </div>
+                  <div class="error-line">
+                    Completion: <strong>{{ getFinalProgress(row) }}%</strong>
+                  </div>
+                  <div class="progress-wrap">
+                    <mat-progress-bar class="chunk-progress completed-progress" mode="determinate" [value]="getFinalProgress(row)"></mat-progress-bar>
+                  </div>
                   @if (row.errorMessage) {
                     <div class="error-line muted-line">{{ row.errorMessage }}</div>
                   }
@@ -152,6 +203,41 @@
                       </ul>
                     </details>
                   }
+                  @if (row.errorDetails.omittedRowsFileName) {
+                    <div class="error-line">
+                      <button mat-stroked-button type="button" (click)="downloadOmittedRows(row)">
+                        <mat-icon>download</mat-icon>
+                        Download omitted rows
+                      </button>
+                    </div>
+                  }
+                  @if (row.errorDetails.aiSummary?.enabled) {
+                    <div class="error-line">
+                      <strong>Ollama:</strong>
+                      attempted {{ row.errorDetails.aiSummary?.attempted ?? 0 }},
+                      success {{ row.errorDetails.aiSummary?.succeeded ?? 0 }},
+                      failed {{ row.errorDetails.aiSummary?.failed ?? 0 }}.
+                    </div>
+                  }
+                </div>
+              } @else if (row.status === 'completed' && row.errorDetails?.aiSummary?.enabled) {
+                <div class="error-structured import-omissions">
+                  <div class="error-line ok-line">
+                    <mat-icon class="inline-icon">check_circle</mat-icon>
+                    Import finished.
+                  </div>
+                  <div class="error-line">
+                    Completion: <strong>{{ getFinalProgress(row) }}%</strong>
+                  </div>
+                  <div class="progress-wrap">
+                    <mat-progress-bar class="chunk-progress completed-progress" mode="determinate" [value]="getFinalProgress(row)"></mat-progress-bar>
+                  </div>
+                  <div class="error-line">
+                    <strong>Ollama:</strong>
+                    attempted {{ row.errorDetails.aiSummary?.attempted ?? 0 }},
+                    success {{ row.errorDetails.aiSummary?.succeeded ?? 0 }},
+                    failed {{ row.errorDetails.aiSummary?.failed ?? 0 }}.
+                  </div>
                 </div>
               } @else {
                 —

@@ -137,3 +137,32 @@
     overflow-x: hidden;
     height: 200px;
 }
+
+.ai-loader-line {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.35rem;
+}
+
+.ai-loader-line mat-spinner {
+  flex-shrink: 0;
+}
+
+.progress-wrap {
+  margin-top: 0.3rem;
+}
+
+.chunk-progress {
+  --mdc-linear-progress-track-height: 8px;
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.chunk-progress .mdc-linear-progress__bar-inner {
+  transition: transform 140ms linear !important;
+}
+
+.completed-progress {
+  --mdc-linear-progress-active-indicator-color: #2e7d32;
+}

@@ -59,7 +59,6 @@ export class Sidebar implements OnInit, OnDestroy {
       icon: 'description',
       route: '/app/reports',
       children: [
-        { labelKey: 'nav.reportList', icon: 'list', route: '/app/reports' },
         { labelKey: 'nav.executiveSummary', icon: 'summarize', route: '/app/reports/executive-summary' },
         { labelKey: 'nav.reportBuilder', icon: 'edit', route: '/app/reports/builder' }
       ]

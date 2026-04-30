@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, signal, computed } from '@angular/core';
+import { Component, inject, OnDestroy, OnInit, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
@@ -13,6 +13,8 @@ import { FormsModule } from '@angular/forms';
 import { DashboardService, DashboardStats, DashboardTrends } from '../../../core/services/dashboard.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { TranslationService } from '../../../core/services/translation.service';
+import { CXWebSocketService, type CSVImportStatusEvent } from '../../../core/services/cx-websocket.service';
+import { Subscription } from 'rxjs';
 
 interface KPICard {
   title: string;
@@ -20,6 +22,8 @@ interface KPICard {
   change: number;
   icon: string;
   color: string;
+  badge?: string;
+  severity?: 'normal' | 'warning' | 'critical';
 }
 
 interface TrendPoint {
@@ -58,11 +62,13 @@ interface SentimentCategoryBar {
   templateUrl: './main-dashboard.html',
   styleUrl: './main-dashboard.css',
 })
-export class MainDashboard implements OnInit {
+export class MainDashboard implements OnInit, OnDestroy {
   private dashboardService = inject(DashboardService);
   private authService = inject(AuthService);
   private translationService = inject(TranslationService);
   private http = inject(HttpClient);
+  private websocket = inject(CXWebSocketService);
+  private importStatusSub?: Subscription;
 
   loading = signal(true);
   kpiCards = signal<KPICard[]>([]);
@@ -217,12 +223,22 @@ export class MainDashboard implements OnInit {
   }
 
   ngOnInit(): void {
+    this.onPresetChange('last_30_days');
     this.loadDashboardData();
+    this.importStatusSub = this.websocket.onCSVImportStatus().subscribe((payload: CSVImportStatusEvent) => {
+      if (payload?.status === 'completed') {
+        this.loadDashboardData();
+      }
+    });
+  }
+
+  ngOnDestroy(): void {
+    this.importStatusSub?.unsubscribe();
   }
 
   dateRangeStart = signal<Date | null>(null);
   dateRangeEnd = signal<Date | null>(null);
-  selectedPreset = signal<'all_time' | 'last_30_days' | 'custom'>('all_time');
+  selectedPreset = signal<'all_time' | 'last_30_days' | 'custom'>('last_30_days');
 
   dateRangeStartValue(): string {
     const d = this.dateRangeStart();
@@ -268,7 +284,7 @@ export class MainDashboard implements OnInit {
     this.selectedPreset.set(value);
     const today = new Date();
     if (value === 'all_time') {
-      this.dateRangeStart.set(new Date('1970-01-01'));
+      this.dateRangeStart.set(null);
       this.dateRangeEnd.set(today);
     } else if (value === 'last_30_days') {
       const start = new Date(today);
@@ -284,6 +300,10 @@ export class MainDashboard implements OnInit {
 
   loadDashboardData(): void {
     this.loading.set(true);
+    // Clear old UI state before each fetch to avoid stale cards when API/data context changes.
+    this.dashboardData.set(null);
+    this.dashboardTrends.set(null);
+    this.kpiCards.set([]);
     
     const user = this.authService.currentUser();
     // Admin should see aggregated dashboard across all companies.
@@ -315,6 +335,12 @@ export class MainDashboard implements OnInit {
             ? Math.round(npsTrend[npsTrend.length - 1].npsScore - npsTrend[npsTrend.length - 2].npsScore)
             : 0;
 
+          const npsScore = Number(data.nps.score || 0);
+          const isNpsCritical = npsScore < 0;
+          const negativeShare = data.sentiment.total > 0 ? (data.sentiment.negative / data.sentiment.total) * 100 : 0;
+          const isNegativeCritical = negativeShare >= 25;
+          const sentimentBenchmark = sentimentPercentage >= 55 ? 'Above industry avg (55%)' : 'Below industry avg (55%)';
+
           // Build KPI cards
           this.kpiCards.set([
             {
@@ -329,23 +355,32 @@ export class MainDashboard implements OnInit {
               value: Number(data.nps.score || 0).toFixed(2),
               change: npsChange,
               icon: 'trending_up',
-              color: 'accent'
+              color: 'accent',
+              badge: isNpsCritical ? 'Below benchmark' : 'Healthy',
+              severity: isNpsCritical ? 'critical' : 'normal'
             },
             {
               title: this.t('dashboard.averageSentimentScore'),
               value: `${sentimentPercentage}%`,
               change: sentimentChange,
               icon: 'sentiment_satisfied',
-              color: 'primary'
+              color: 'primary',
+              badge: sentimentBenchmark,
+              severity: sentimentPercentage < 45 ? 'warning' : 'normal'
             },
             {
               title: this.t('dashboard.negative'),
               value: data.sentiment.negative.toLocaleString(),
               change: 0,
               icon: 'warning',
-              color: 'warn'
+              color: 'warn',
+              badge: isNegativeCritical ? 'High negative volume' : 'Within expected range',
+              severity: isNegativeCritical ? 'critical' : 'normal'
             }
           ]);
+        } else {
+          this.dashboardData.set(null);
+          this.kpiCards.set([]);
         }
         this.loadTrendData(companyId);
         this.loading.set(false);

@@ -64,6 +64,11 @@ export interface DashboardStats {
     painPoints: string[];
     satisfactionPoints: string[];
   }>;
+  insights?: {
+    npsBenchmark: 'below_benchmark' | 'healthy';
+    sentimentBenchmark: 'below_industry_average' | 'within_expected_range';
+    topPriority: string;
+  };
 }
 
 export interface ExecutiveDashboardData {
@@ -112,6 +117,7 @@ export interface ExecutiveDashboardData {
     type: string;
     createdAt: Date;
   }>;
+  aiSummary?: string;
   lastUpdated: string;
 }
 
@@ -128,6 +134,7 @@ export class DashboardService {
     endDate?: Date
   ): Observable<ApiResponse<DashboardStats>> {
     let params = new HttpParams();
+    params = params.set('_t', Date.now().toString());
     if (companyId) params = params.set('companyId', companyId.toString());
     if (startDate) params = params.set('startDate', startDate.toISOString());
     if (endDate) params = params.set('endDate', endDate.toISOString());
@@ -141,6 +148,7 @@ export class DashboardService {
     endDate?: Date
   ): Observable<ApiResponse<any>> {
     let params = new HttpParams();
+    params = params.set('_t', Date.now().toString());
     if (companyId) params = params.set('companyId', companyId.toString());
     if (startDate) params = params.set('startDate', startDate.toISOString());
     if (endDate) params = params.set('endDate', endDate.toISOString());
@@ -149,7 +157,8 @@ export class DashboardService {
   }
 
   getDashboardStats(): Observable<ApiResponse<DashboardStats>> {
-    return this.http.get<ApiResponse<DashboardStats>>(`${this.baseUrl}/stats`);
+    const params = new HttpParams().set('_t', Date.now().toString());
+    return this.http.get<ApiResponse<DashboardStats>>(`${this.baseUrl}/stats`, { params });
   }
 
   getNPSDashboard(
@@ -227,6 +236,7 @@ export class DashboardService {
     days: number = 90
   ): Observable<ApiResponse<DashboardTrends>> {
     let params = new HttpParams()
+      .set('_t', Date.now().toString())
       .set('period', period)
       .set('days', days.toString());
     if (companyId) {

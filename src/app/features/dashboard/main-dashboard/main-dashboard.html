@@ -6,7 +6,7 @@
         <p class="subtitle">{{ t('dashboard.subtitle') }}</p>
       </div>
       <div class="header-actions">
-        <a mat-raised-button color="accent" routerLink="/app/data-sources/csv-upload" class="action-btn">
+        <a mat-stroked-button routerLink="/app/data-sources/csv-upload" class="action-btn">
           <mat-icon>upload</mat-icon>
           {{ t('nav.csvUpload') }}
         </a>
@@ -20,7 +20,7 @@
       <mat-card-content>
         <div class="period-title">Report period</div>
         <div class="period-active">
-          Active range: {{ dateRangeStartValue() || '1970-01-01' }} → {{ dateRangeEndValue() || (today | date:'yyyy-MM-dd') }}
+          Active range: {{ dateRangeStartValue() || 'Earliest upload' }} → {{ dateRangeEndValue() || (today | date:'yyyy-MM-dd') }}
         </div>
         <div class="period-filters">
           <mat-form-field appearance="outline">
@@ -58,13 +58,14 @@
 
   <div *ngIf="!loading() && dashboardData()" class="dashboard-content">
     <div class="kpi-grid">
-      <mat-card *ngFor="let kpi of kpiCards()" class="kpi-card">
+      <mat-card *ngFor="let kpi of kpiCards()" class="kpi-card" [class.kpi-critical]="kpi.severity === 'critical'" [class.kpi-warning]="kpi.severity === 'warning'">
         <mat-card-content>
           <div class="kpi-header">
             <mat-icon [class]="'kpi-icon ' + kpi.color">{{ kpi.icon }}</mat-icon>
             <span class="kpi-title">{{ kpi.title }}</span>
           </div>
           <div class="kpi-value">{{ kpi.value }}</div>
+          <div *ngIf="kpi.badge" class="kpi-badge">{{ kpi.badge }}</div>
           <div *ngIf="kpi.change !== 0" class="kpi-change" [class.positive]="kpi.change > 0" [class.negative]="kpi.change < 0">
             <mat-icon>{{ kpi.change > 0 ? 'arrow_upward' : 'arrow_downward' }}</mat-icon>
             <span>{{ Math.abs(kpi.change) }}%</span>
@@ -72,6 +73,11 @@
         </mat-card-content>
       </mat-card>
     </div>
+    <mat-card *ngIf="dashboardData()?.insights?.topPriority" class="chart-card">
+      <mat-card-content>
+        <strong>Priority insight:</strong> {{ dashboardData()?.insights?.topPriority }}
+      </mat-card-content>
+    </mat-card>
 
     <div class="charts-section">
       <mat-card class="chart-card">

@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { Component, inject, OnDestroy, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
@@ -19,6 +19,9 @@ import {
   toIsoRangeFromYmd,
   type ReportDatePreset,
 } from '../../../core/utils/report-date-presets';
+import { CXWebSocketService, type CSVImportStatusEvent } from '../../../core/services/cx-websocket.service';
+import { Subscription } from 'rxjs';
+import { OllamaLoader } from '../../../core/components/ollama-loader/ollama-loader';
 
 interface NPSData {
   score: number;
@@ -42,23 +45,27 @@ interface NPSData {
     MatFormFieldModule,
     MatSelectModule,
     MatInputModule,
-    MatSnackBarModule
+    MatSnackBarModule,
+    OllamaLoader
   ],
   templateUrl: './nps-analysis.html',
   styleUrl: './nps-analysis.css',
 })
-export class NpsAnalysis implements OnInit {
+export class NpsAnalysis implements OnInit, OnDestroy {
   private dashboardService = inject(DashboardService);
   private analysisService = inject(AnalysisService);
   private snackBar = inject(MatSnackBar);
   private authService = inject(AuthService);
   private reportService = inject(ReportService);
   private translationService = inject(TranslationService);
+  private websocket = inject(CXWebSocketService);
+  private importStatusSub?: Subscription;
 
   readonly t = (key: string): string => this.translationService.translate(key);
 
   loading = signal(false);
   npsData = signal<NPSData | null>(null);
+  npsInterpretation = signal<string>('');
   presets = signal<ReportDatePreset[]>([]);
   selectedPresetId = signal<string>('last_30_days');
   startDate = signal<string | null>(null);
@@ -66,6 +73,15 @@ export class NpsAnalysis implements OnInit {
 
   ngOnInit(): void {
     this.loadPresets();
+    this.importStatusSub = this.websocket.onCSVImportStatus().subscribe((payload: CSVImportStatusEvent) => {
+      if (payload?.status === 'completed') {
+        this.loadNPSData();
+      }
+    });
+  }
+
+  ngOnDestroy(): void {
+    this.importStatusSub?.unsubscribe();
   }
 
   private loadPresets(): void {
@@ -173,6 +189,11 @@ export class NpsAnalysis implements OnInit {
             promoterPercentage,
             detractorPercentage
           });
+          this.npsInterpretation.set(
+            typeof res.data.npsInterpretation === 'string' && res.data.npsInterpretation.trim().length
+              ? res.data.npsInterpretation.trim()
+              : ''
+          );
           this.loading.set(false);
           return;
         }
@@ -201,6 +222,7 @@ export class NpsAnalysis implements OnInit {
             promoterPercentage: ((nps.promoters || 0) / total * 100),
             detractorPercentage: ((nps.detractors || 0) / total * 100)
           });
+          this.npsInterpretation.set('');
         } else {
           this.npsData.set({
             score: 0,
@@ -211,6 +233,7 @@ export class NpsAnalysis implements OnInit {
             promoterPercentage: 0,
             detractorPercentage: 0
           });
+          this.npsInterpretation.set('');
         }
         this.loading.set(false);
       },
@@ -226,6 +249,7 @@ export class NpsAnalysis implements OnInit {
           promoterPercentage: 0,
           detractorPercentage: 0
         });
+        this.npsInterpretation.set('');
         if (error.status !== 500) {
           this.snackBar.open('Failed to load NPS data', 'Close', { duration: 3000 });
         }
@@ -251,17 +275,6 @@ export class NpsAnalysis implements OnInit {
     const d = this.npsData();
     if (!d || !d.total) return 0;
     return (d.passives / d.total) * 100;
-  }
-
-  npsInterpretationText(): string {
-    const score = this.npsData()?.score ?? 0;
-    if (score < 0) {
-      return 'Detractor-class sentiment outweighs promoter-class; advocacy tone is net-negative — recovery, ownership, and fee fairness typically move this metric.';
-    }
-    if (score === 0) {
-      return 'Promoter and detractor shares are balanced; improving ownership and response quality can lift this metric.';
-    }
-    return 'Promoter-class sentiment outweighs detractor-class; sustain service quality and fairness to keep advocacy positive.';
   }
 
   formatPct(value: number): string {

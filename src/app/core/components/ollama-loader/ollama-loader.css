@@ -1,0 +1,95 @@
+.ollama-loader-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+}
+
+.base {
+  height: 10.5rem;
+  width: 10.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  perspective: 800px;
+}
+
+.base .circ {
+  width: 10rem;
+  height: 10rem;
+  border-radius: 50%;
+  position: absolute;
+  transform-style: preserve-3d;
+  backdrop-filter: blur(0.5px);
+  border: 1.9px solid;
+  border-top-color: rgba(220, 128, 109, 0.5);
+  border-bottom-color: rgba(151, 93, 193, 0.5);
+  border-left-color: rgba(151, 93, 193, 0.5);
+  border-right-color: rgba(220, 128, 109, 0.5);
+  opacity: 0;
+  --ring-angle: 0deg;
+}
+
+.base .circ-1 { animation: rotate 2s linear infinite; animation-delay: 0.133s; }
+.base .circ-2 { animation: rotate 2s linear infinite; animation-delay: 0.266s; }
+.base .circ-3 { animation: rotate 2s linear infinite; animation-delay: 0.4s; }
+.base .circ-4 { animation: rotate 2s linear infinite; animation-delay: 0.533s; }
+.base .circ-5 { animation: rotate 2s linear infinite; animation-delay: 0.666s; }
+.base .circ-6 { animation: rotate 2s linear infinite; animation-delay: 0.8s; }
+.base .circ-7 { animation: rotate 2s linear infinite; animation-delay: 0.933s; }
+.base .circ-8 { animation: rotate-2 3s linear infinite; animation-delay: 1.066s; }
+.base .circ-9 { animation: rotate-2 3s linear infinite; animation-delay: 1.2s; }
+.base .circ-10 { animation: rotate-2 3s linear infinite; animation-delay: 1.333s; }
+.base .circ-11 { animation: rotate-2 3s linear infinite; animation-delay: 1.466s; }
+.base .circ-12 { animation: rotate-2 3s linear infinite; animation-delay: 1.6s; }
+.base .circ-13 { animation: rotate-2 3s linear infinite; animation-delay: 1.733s; }
+.base .circ-14 { animation: rotate-2 3s linear infinite; animation-delay: 1.866s; }
+.base .circ-15 { animation: rotate-2 3s linear infinite; animation-delay: 2s; }
+
+.ai-loading-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  align-items: center;
+  text-align: center;
+}
+
+.ai-loading-title {
+  margin: 0;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.ai-loading-subtitle {
+  margin: 0;
+  color: #4b5563;
+  font-size: 0.92rem;
+}
+
+.ai-dots::after {
+  content: '';
+  display: inline-block;
+  width: 1.2em;
+  text-align: left;
+  animation: sentiment-loader-dots 1.2s steps(4, end) infinite;
+}
+
+@keyframes sentiment-loader-dots {
+  0% { content: ''; }
+  25% { content: '.'; }
+  50% { content: '..'; }
+  75% { content: '...'; }
+  100% { content: ''; }
+}
+
+@keyframes rotate {
+  from { opacity: 1; transform: rotateY(var(--ring-angle)) rotate3d(0, 1, 1, 360deg); }
+  to { opacity: 1; transform: rotateY(var(--ring-angle)) rotate3d(0, 1, 1, 0deg); }
+}
+
+@keyframes rotate-2 {
+  from { opacity: 1; transform: rotateX(var(--ring-angle)) rotate3d(1, 0, 1, 0deg); }
+  to { opacity: 1; transform: rotateX(var(--ring-angle)) rotate3d(1, 0, 1, 360deg); }
+}

@@ -178,6 +178,18 @@
   border-radius: 14px 0 0 14px;
 }
 
+.kpi-card.kpi-critical {
+  border-color: #fecaca;
+}
+
+.kpi-card.kpi-critical::before {
+  background: linear-gradient(180deg, #ef4444, #b91c1c);
+}
+
+.kpi-card.kpi-warning::before {
+  background: linear-gradient(180deg, #f59e0b, #b45309);
+}
+
 .kpi-card mat-card-content {
   padding: 14px 16px 12px;
   min-height: 112px;
@@ -234,6 +246,16 @@
   animation: fadeIn 520ms ease both;
   direction: ltr;
   unicode-bidi: isolate;
+}
+
+.kpi-badge {
+  margin-top: 6px;
+  font-size: 0.72rem;
+  color: #475569;
+  background: #f1f5f9;
+  border-radius: 999px;
+  padding: 3px 8px;
+  width: fit-content;
 }
 
 .kpi-change {

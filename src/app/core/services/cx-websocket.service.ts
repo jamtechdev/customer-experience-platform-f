@@ -22,6 +22,7 @@ export class CXWebSocketService {
 
   private started = signal(false);
   private socket: Socket | null = null;
+  private latestCompanyId: number | null = null;
 
   private importStatusSubject = new Subject<CSVImportStatusEvent>();
 
@@ -38,20 +39,27 @@ export class CXWebSocketService {
 
     this.socket = io(socketUrl, {
       path: '/socket.io',
-      transports: ['websocket'],
+      // Allow polling fallback in local/dev where websocket upgrades may be delayed.
+      transports: ['websocket', 'polling'],
+      reconnection: true,
+      reconnectionAttempts: Infinity,
+      reconnectionDelay: 1000,
+      reconnectionDelayMax: 5000,
     });
 
     this.started.set(true);
 
-    let latestCompanyId: number | null = null;
-
     const tryJoin = () => {
       if (!this.socket || !this.socket.connected) return;
-      if (latestCompanyId == null) return;
-      this.socket.emit('join:company', String(latestCompanyId));
+      if (this.latestCompanyId == null) return;
+      this.socket.emit('join:company', String(this.latestCompanyId));
     };
 
     this.socket.on('connect', () => {
+      tryJoin();
+    });
+
+    this.socket.on('reconnect', () => {
       tryJoin();
     });
 
@@ -68,7 +76,7 @@ export class CXWebSocketService {
 
     // Keep company room in sync with auth changes
     this.authService.currentUser$.subscribe((u) => {
-      latestCompanyId = u?.settings?.companyId ?? 1;
+      this.latestCompanyId = u?.settings?.companyId ?? 1;
       tryJoin();
     });
   }

@@ -30,6 +30,20 @@ export interface CSVImport {
     importOmissions?: boolean;
     omittedCount?: number;
     omittedExamplesTruncated?: boolean;
+    omittedRowsFileName?: string;
+    statusLabel?: 'processing' | 'completed_with_omissions' | 'completed' | 'failed';
+    progress?: boolean;
+    totalRows?: number;
+    processedCount?: number;
+    importedCount?: number;
+    completionPct?: number;
+    aiSummary?: {
+      enabled: boolean;
+      attempted: number;
+      succeeded: number;
+      failed: number;
+      failedExamples: string[];
+    };
   };
   createdAt: Date;
   updatedAt: Date;
@@ -84,6 +98,13 @@ export interface CSVImportResult {
   errors: string[];
   dataType: 'social_media' | 'app_review' | 'nps_survey' | 'complaint' | 'unknown';
   omissionSummary?: ImportOmissionSummary;
+  aiSummary?: {
+    enabled: boolean;
+    attempted: number;
+    succeeded: number;
+    failed: number;
+    failedExamples: string[];
+  };
 }
 
 export interface CSVFormat {
@@ -123,7 +144,8 @@ export class CSVService {
   }
 
   getImports(): Observable<ApiResponse<CSVImport[]>> {
-    return this.http.get<ApiResponse<CSVImport[]>>(`${this.baseUrl}/imports`);
+    const params = new HttpParams().set('_t', Date.now().toString());
+    return this.http.get<ApiResponse<CSVImport[]>>(`${this.baseUrl}/imports`, { params });
   }
 
   previewCSV(importId: number, limit: number = 10): Observable<ApiResponse<CSVPreview>> {
@@ -179,6 +201,10 @@ export class CSVService {
 
   getImportStatus(importId: number): Observable<ApiResponse<CSVImport>> {
     return this.http.get<ApiResponse<CSVImport>>(`${this.baseUrl}/imports/${importId}`);
+  }
+
+  downloadOmittedRows(importId: number): Observable<Blob> {
+    return this.http.get(`${this.baseUrl}/imports/${importId}/omitted-rows`, { responseType: 'blob' });
   }
 
   deleteImport(importId: number, deleteImportedFeedback: boolean = true): Observable<ApiResponse<{ deletedId: number }>> {
