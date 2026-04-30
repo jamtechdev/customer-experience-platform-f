@@ -307,6 +307,7 @@ export class SentimentAnalysis implements OnInit, OnDestroy {
         if (response?.success && response?.data) {
           const list = (response.data.list || []).map((row: any) => ({
             ...row,
+            content: this.humanizeFeedbackText(row.content),
             date: normalizeApiDateToIso(row.date),
             sentiment:
               String(row.sentiment || '').toLowerCase() === 'processing'
@@ -455,6 +456,29 @@ export class SentimentAnalysis implements OnInit, OnDestroy {
     return formatApiDate(d, { mode: 'date', empty: '' });
   }
 
+  private humanizeFeedbackText(value: unknown): string {
+    const raw = String(value || '').trim();
+    if (!raw) return 'No clear customer feedback text available.';
+
+    const cleaned = raw
+      .replace(/^RT\s+@\w+:\s*/i, '')
+      .replace(/@\w+/g, ' ')
+      .replace(/#(\p{L}[\p{L}\p{N}_]*)/gu, '$1')
+      .replace(/https?:\/\/\S+/gi, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+
+    if (!cleaned) return 'No clear customer feedback text available.';
+    if (/^\d{1,2}[./-]\d{1,2}[./-]\d{2,4}(?:\s+\d{1,2}:\d{2}(?::\d{2})?)?$/.test(cleaned)) {
+      return 'Timestamp-only row detected in uploaded data.';
+    }
+    if (/^[^()]{1,120}\s+\(@[A-Za-z0-9_]{1,30}\)$/.test(cleaned)) {
+      return 'Profile-label row detected in uploaded data.';
+    }
+
+    return cleaned;
+  }
+
   deleteRecord(row: { id: number; content: string }): void {
     const ok = window.confirm('Delete this feedback record? This action cannot be undone.');
     if (!ok) return;
@@ -520,7 +544,14 @@ export class SentimentAnalysis implements OnInit, OnDestroy {
         pageSize?: number;
       };
       if (parsed.stats) this.stats.set(parsed.stats);
-      if (Array.isArray(parsed.feedbackList)) this.feedbackList.set(parsed.feedbackList);
+      if (Array.isArray(parsed.feedbackList)) {
+        this.feedbackList.set(
+          parsed.feedbackList.map((row) => ({
+            ...row,
+            content: this.humanizeFeedbackText(row.content),
+          }))
+        );
+      }
       if (typeof parsed.feedbackTotal === 'number') this.feedbackTotal.set(parsed.feedbackTotal);
       if (typeof parsed.page === 'number' && parsed.page > 0) this.page.set(parsed.page);
       if (typeof parsed.pageSize === 'number' && parsed.pageSize > 0) this.pageSize.set(parsed.pageSize);

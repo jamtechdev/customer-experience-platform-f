@@ -71,12 +71,14 @@ export class RootCauseAnalysis implements OnInit, OnDestroy {
   pageSize = 10;
   pageIndex = 0;
   totalItems = 0;
+  private autoAnalyzeTriggered = false;
 
   ngOnInit(): void {
     this.loadRootCauses();
     this.importStatusSub = this.websocket.onCSVImportStatus().subscribe((payload: CSVImportStatusEvent) => {
       if (payload?.status === 'completed') {
-        this.loadRootCauses();
+        this.autoAnalyzeTriggered = false;
+        this.tryAutoAnalyzeAfterImport();
       }
     });
   }
@@ -107,6 +109,23 @@ export class RootCauseAnalysis implements OnInit, OnDestroy {
     });
   }
 
+  private tryAutoAnalyzeAfterImport(): void {
+    if (this.reanalyzing()) return;
+    const user = this.authService.currentUser();
+    const companyId = user?.settings?.companyId || 1;
+    this.reanalyzing.set(true);
+    this.analysisService.analyzeRootCauses(companyId, 50).subscribe({
+      next: () => {
+        this.reanalyzing.set(false);
+        this.loadRootCauses();
+      },
+      error: () => {
+        this.reanalyzing.set(false);
+        this.loadRootCauses();
+      },
+    });
+  }
+
   loadRootCauses(): void {
     this.loading.set(true);
     const user = this.authService.currentUser();
@@ -129,9 +148,19 @@ export class RootCauseAnalysis implements OnInit, OnDestroy {
           }));
           this.rootCauses.set(mapped);
           this.totalItems = mapped.length;
+          if (mapped.length === 0 && !this.autoAnalyzeTriggered) {
+            this.autoAnalyzeTriggered = true;
+            this.tryAutoAnalyzeAfterImport();
+            return;
+          }
         } else {
           this.rootCauses.set([]);
           this.totalItems = 0;
+          if (!this.autoAnalyzeTriggered) {
+            this.autoAnalyzeTriggered = true;
+            this.tryAutoAnalyzeAfterImport();
+            return;
+          }
         }
         this.loading.set(false);
       },
