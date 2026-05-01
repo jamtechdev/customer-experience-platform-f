@@ -27,6 +27,21 @@
   gap: 16px;
 }
 
+.narrative-card {
+  margin-bottom: 24px;
+}
+
+.narrative-body .ai-narrative {
+  margin: 0 0 12px;
+  line-height: 1.55;
+  color: #374151;
+  font-size: 0.95rem;
+}
+
+.narrative-body .ai-narrative:last-child {
+  margin-bottom: 0;
+}
+
 .summary-cards {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));

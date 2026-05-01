@@ -10,6 +10,7 @@ import { AnalysisService } from '../../../core/services/analysis.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { buildClientReportDatePresets } from '../../../core/utils/report-date-presets';
+import { OllamaLoader } from '../../../core/components/ollama-loader/ollama-loader';
 
 interface JourneyStage {
   id: number;
@@ -31,7 +32,8 @@ interface JourneyStage {
     MatProgressSpinnerModule,
     MatChipsModule,
     MatTableModule,
-    MatSnackBarModule
+    MatSnackBarModule,
+    OllamaLoader
   ],
   templateUrl: './journey-map.html',
   styleUrl: './journey-map.css',

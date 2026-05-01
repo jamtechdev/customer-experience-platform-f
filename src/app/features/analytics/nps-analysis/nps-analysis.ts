@@ -189,11 +189,19 @@ export class NpsAnalysis implements OnInit, OnDestroy {
             promoterPercentage,
             detractorPercentage
           });
-          this.npsInterpretation.set(
+          const serverInterpretation =
             typeof res.data.npsInterpretation === 'string' && res.data.npsInterpretation.trim().length
               ? res.data.npsInterpretation.trim()
-              : ''
-          );
+              : '';
+          this.npsInterpretation.set(serverInterpretation || this.localNpsInterpretation({
+            score,
+            promoters,
+            passives,
+            detractors,
+            total,
+            promoterPercentage,
+            detractorPercentage,
+          }));
           this.loading.set(false);
           return;
         }
@@ -213,7 +221,7 @@ export class NpsAnalysis implements OnInit, OnDestroy {
         if (response.success && response.data?.nps) {
           const nps = response.data.nps;
           const total = nps.total || 1;
-          this.npsData.set({
+          const data = {
             score: nps.score || 0,
             promoters: nps.promoters || 0,
             passives: nps.passives || 0,
@@ -221,10 +229,11 @@ export class NpsAnalysis implements OnInit, OnDestroy {
             total,
             promoterPercentage: ((nps.promoters || 0) / total * 100),
             detractorPercentage: ((nps.detractors || 0) / total * 100)
-          });
-          this.npsInterpretation.set('');
+          };
+          this.npsData.set(data);
+          this.npsInterpretation.set(this.localNpsInterpretation(data));
         } else {
-          this.npsData.set({
+          const empty = {
             score: 0,
             promoters: 0,
             passives: 0,
@@ -232,8 +241,11 @@ export class NpsAnalysis implements OnInit, OnDestroy {
             total: 0,
             promoterPercentage: 0,
             detractorPercentage: 0
-          });
-          this.npsInterpretation.set('');
+          };
+          this.npsData.set(empty);
+          this.npsInterpretation.set(
+            'NPS proxy could not be computed for this range yet. Upload more CSV feedback or widen the date range so Ollama can infer promoter, passive, and detractor mix.'
+          );
         }
         this.loading.set(false);
       },
@@ -249,12 +261,28 @@ export class NpsAnalysis implements OnInit, OnDestroy {
           promoterPercentage: 0,
           detractorPercentage: 0
         });
-        this.npsInterpretation.set('');
+        this.npsInterpretation.set(
+          'NPS analysis is temporarily unavailable. Please retry after a moment; Ollama-based inference will populate this section once data is reachable.'
+        );
         if (error.status !== 500) {
           this.snackBar.open('Failed to load NPS data', 'Close', { duration: 3000 });
         }
       }
     });
+  }
+
+  private localNpsInterpretation(data: NPSData): string {
+    if (!data.total) {
+      return 'No usable responses were found in this date range. Add or reprocess CSV feedback so Ollama can infer an NPS-style distribution.';
+    }
+    const score = Number(data.score.toFixed(1));
+    if (score >= 30) {
+      return `Customer advocacy is healthy in this window: promoters (${this.formatPct(data.promoterPercentage)}%) clearly outnumber detractors (${this.formatPct(data.detractorPercentage)}%). Focus on scaling what customers already appreciate.`;
+    }
+    if (score >= 0) {
+      return `Sentiment is slightly positive but fragile. Promoters (${this.formatPct(data.promoterPercentage)}%) are only marginally ahead of detractors (${this.formatPct(data.detractorPercentage)}%), so targeted fixes in recurring complaint themes can lift loyalty quickly.`;
+    }
+    return `Advocacy is currently negative: detractors (${this.formatPct(data.detractorPercentage)}%) are outweighing promoters (${this.formatPct(data.promoterPercentage)}%). Prioritize top pain points and service recovery actions to reverse the trend.`;
   }
 
   getNPSCategory(score: number): string {

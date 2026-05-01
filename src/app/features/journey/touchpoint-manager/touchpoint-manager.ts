@@ -14,6 +14,7 @@ import { AnalysisService } from '../../../core/services/analysis.service';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { AuthService } from '../../../core/services/auth.service';
 import { buildClientReportDatePresets } from '../../../core/utils/report-date-presets';
+import { OllamaLoader } from '../../../core/components/ollama-loader/ollama-loader';
 
 @Component({
   selector: 'app-touchpoint-manager',
@@ -28,7 +29,8 @@ import { buildClientReportDatePresets } from '../../../core/utils/report-date-pr
     MatChipsModule,
     MatFormFieldModule,
     MatInputModule,
-    MatSnackBarModule
+    MatSnackBarModule,
+    OllamaLoader
   ],
   templateUrl: './touchpoint-manager.html',
   styleUrl: './touchpoint-manager.css',

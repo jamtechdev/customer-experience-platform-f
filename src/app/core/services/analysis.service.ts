@@ -118,4 +118,10 @@ export class AnalysisService {
   cleanupInvalidCompetitors(): Observable<ApiResponse<{ deleted: number }>> {
     return this.http.post<ApiResponse<{ deleted: number }>>(`${this.baseUrl}/competitor/cleanup-invalid`, {});
   }
+
+  getOllamaStatus(): Observable<ApiResponse<{ enabled: boolean; reachable: boolean; model: string }>> {
+    return this.http.get<ApiResponse<{ enabled: boolean; reachable: boolean; model: string }>>(
+      `${this.baseUrl}/ollama-status`
+    );
+  }
 }

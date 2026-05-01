@@ -93,7 +93,10 @@ function normalizeHttpErrorMessage(error: HttpErrorResponse, req: HttpRequest<un
     if (typeof ngDevMode === 'undefined' || ngDevMode) {
       console.warn('API unreachable:', logUrl, '(is the backend running?)');
     }
-    errorMessage = 'Cannot reach API. Start the backend server to load data.';
+    // In production, avoid noisy backend-connectivity toast text for users.
+    errorMessage = environment.production
+      ? ''
+      : 'Cannot reach API. Start the backend server to load data.';
   }
 
   // Avoid misleading provider-account text coming from third-party sync endpoints.
@@ -112,6 +115,7 @@ function notifyHttpError(
 ): void {
   if (!isPlatformBrowser(platformId)) return;
   if (shouldSuppressErrorToast(req)) return;
+  if (!message || !message.trim()) return;
   const text =
     message.length > SNACKBAR_MAX_LEN ? `${message.slice(0, SNACKBAR_MAX_LEN)}…` : message;
   snackBar.open(text, 'Close', {

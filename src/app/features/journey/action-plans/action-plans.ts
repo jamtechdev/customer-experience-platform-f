@@ -17,6 +17,7 @@ import { UserRole } from '../../../core/models';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { formatApiDate, toInputDateValue } from '../../../core/utils/api-date';
 import { buildClientReportDatePresets } from '../../../core/utils/report-date-presets';
+import { OllamaLoader } from '../../../core/components/ollama-loader/ollama-loader';
 
 @Component({
   selector: 'app-action-plans',
@@ -32,7 +33,8 @@ import { buildClientReportDatePresets } from '../../../core/utils/report-date-pr
     MatFormFieldModule,
     MatInputModule,
     MatSelectModule,
-    MatSnackBarModule
+    MatSnackBarModule,
+    OllamaLoader
   ],
   templateUrl: './action-plans.html',
   styleUrl: './action-plans.css',

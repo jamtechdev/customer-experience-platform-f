@@ -4,8 +4,13 @@
       <mat-card-title>Scope and method</mat-card-title>
     </mat-card-header>
     <mat-card-content>
-      <p *ngIf="loading()" class="muted">Loading scope and method...</p>
-      <ul class="list">
+      <div *ngIf="loading()" class="loading-container">
+        <app-ollama-loader
+          [title]="'Ollama AI is drafting methodology notes'"
+          [subtitle]="'Compiling scope, cohort logic, and analysis method for the selected data window'">
+        </app-ollama-loader>
+      </div>
+      <ul *ngIf="!loading()" class="list">
         <li *ngFor="let line of bullets()">{{ line }}</li>
       </ul>
     </mat-card-content>

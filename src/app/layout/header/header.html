@@ -4,6 +4,10 @@
   </button>
 
   <span class="toolbar-title">{{ t('app.title') }}</span>
+  <span class="ollama-status-badge" [class.connected]="ollamaConnected()" [class.disconnected]="!ollamaConnected()">
+    <span class="status-dot"></span>
+    {{ ollamaConnected() ? 'Ollama Connected' : 'Ollama Disconnected' }}
+  </span>
 
   <span class="spacer"></span>
 

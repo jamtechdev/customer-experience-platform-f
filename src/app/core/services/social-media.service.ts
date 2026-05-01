@@ -26,6 +26,7 @@ export interface VolumeAnalysis {
   totalMentions: number;
   mentionsPerPlatform: Record<string, number>;
   trends: Array<{ date: string; count: number }>;
+  aiNarrative?: string;
 }
 
 export interface SentimentDistribution {
@@ -34,6 +35,7 @@ export interface SentimentDistribution {
   neutral: number;
   sentimentIndex: number;
   channelComparison: Record<string, { positive: number; negative: number; neutral: number }>;
+  aiNarrative?: string;
 }
 
 @Injectable({

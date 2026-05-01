@@ -9,6 +9,7 @@ import { MatChipsModule } from '@angular/material/chips';
 import { SocialMediaService } from '../../../core/services/social-media.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { OllamaLoader } from '../../../core/components/ollama-loader/ollama-loader';
 
 interface PlatformData {
   platform: string;
@@ -29,7 +30,8 @@ interface PlatformData {
     MatIconModule,
     MatProgressSpinnerModule,
     MatChipsModule,
-    MatSnackBarModule
+    MatSnackBarModule,
+    OllamaLoader
   ],
   templateUrl: './social-analysis.html',
   styleUrl: './social-analysis.css',
@@ -42,6 +44,8 @@ export class SocialAnalysis implements OnInit {
   loading = signal(false);
   error = signal<string | null>(null);
   platformData = signal<PlatformData[]>([]);
+  volumeNarrative = signal<string | null>(null);
+  sentimentNarrative = signal<string | null>(null);
   displayedColumns: string[] = ['platform', 'volume', 'sentiment', 'positive', 'negative', 'neutral'];
 
   totalVolume = computed(() => {
@@ -64,12 +68,16 @@ export class SocialAnalysis implements OnInit {
     this.loading.set(true);
     this.error.set(null);
 
+    this.volumeNarrative.set(null);
+    this.sentimentNarrative.set(null);
     this.socialMediaService.getVolume(companyId).subscribe({
       next: (volRes) => {
         this.socialMediaService.getSentimentDistribution(companyId).subscribe({
           next: (distRes) => {
             const volume = volRes.success ? volRes.data : null;
             const dist = distRes.success ? distRes.data : null;
+            this.volumeNarrative.set(volume?.aiNarrative?.trim() ? volume.aiNarrative : null);
+            this.sentimentNarrative.set(dist?.aiNarrative?.trim() ? dist.aiNarrative : null);
             const rows: PlatformData[] = [];
             const platforms = new Set<string>();
             if (volume?.mentionsPerPlatform) {
@@ -99,6 +107,8 @@ export class SocialAnalysis implements OnInit {
           },
           error: () => {
             this.loading.set(false);
+            this.volumeNarrative.set(null);
+            this.sentimentNarrative.set(null);
             this.error.set('Failed to load sentiment distribution');
             this.snackBar.open('Failed to load sentiment distribution', 'Close', { duration: 3000 });
           }
@@ -106,6 +116,8 @@ export class SocialAnalysis implements OnInit {
       },
       error: () => {
         this.loading.set(false);
+        this.volumeNarrative.set(null);
+        this.sentimentNarrative.set(null);
         this.error.set('Failed to load volume data');
         this.snackBar.open('Failed to load volume data', 'Close', { duration: 3000 });
       }

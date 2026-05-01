@@ -9,8 +9,10 @@
 
   @if (loading()) {
     <div class="loading-container">
-      <mat-spinner diameter="40"></mat-spinner>
-      <p>Analyzing journey...</p>
+      <app-ollama-loader
+        [title]="'Ollama AI is generating journey heatmap insights'"
+        [subtitle]="'Computing stage-wise sentiment split and experience intensity from uploaded feedback'">
+      </app-ollama-loader>
     </div>
   } @else if (error()) {
     <mat-card class="error-card">

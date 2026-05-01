@@ -813,7 +813,14 @@ button:disabled,
 }
 
 /* Global HTTP error toasts (opened from HttpInterceptor; lives in CDK overlay) */
+.mat-mdc-snack-bar-container {
+  --mat-snackbar-container-color: #166534;
+  --mat-snackbar-supporting-text-color: #ffffff;
+  --mat-snackbar-button-color: #bbf7d0;
+}
+
 .http-error-snackbar.mat-mdc-snack-bar-container {
-  --mat-snackbar-container-color: #3d1f1f;
-  --mat-snackbar-supporting-text-color: #fff;
+  --mat-snackbar-container-color: #b91c1c;
+  --mat-snackbar-supporting-text-color: #ffffff;
+  --mat-snackbar-button-color: #fecaca;
 }

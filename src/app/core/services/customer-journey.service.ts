@@ -29,6 +29,24 @@ export interface ProcessEnhancementPlan {
   stakeholders: string[];
 }
 
+/** Backend wraps journey stage rows with optional AI narrative (legacy: raw array). */
+export interface JourneyAnalysisPayload {
+  stages: unknown[];
+  aiNarrative?: string;
+}
+
+export function normalizeJourneyAnalysisPayload(
+  data: unknown[] | JourneyAnalysisPayload | null | undefined
+): JourneyAnalysisPayload {
+  if (data == null) return { stages: [] };
+  if (Array.isArray(data)) return { stages: data };
+  const d = data as JourneyAnalysisPayload;
+  return {
+    stages: Array.isArray(d.stages) ? d.stages : [],
+    aiNarrative: typeof d.aiNarrative === 'string' ? d.aiNarrative : undefined,
+  };
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -87,10 +105,10 @@ export class CustomerJourneyService {
     return this.http.delete<ApiResponse<void>>(`${this.journeyApiUrl}/stages/${id}`);
   }
 
-  analyzeJourney(companyId?: number): Observable<ApiResponse<any>> {
+  analyzeJourney(companyId?: number): Observable<ApiResponse<JourneyAnalysisPayload>> {
     let params = new HttpParams();
     if (companyId) params = params.set('companyId', companyId.toString());
-    return this.http.get<ApiResponse<any>>(`${this.journeyApiUrl}/analysis`, { params });
+    return this.http.get<ApiResponse<JourneyAnalysisPayload>>(`${this.journeyApiUrl}/analysis`, { params });
   }
 
   getJourneyTrends(companyId?: number, period?: 'day' | 'week' | 'month'): Observable<ApiResponse<any>> {

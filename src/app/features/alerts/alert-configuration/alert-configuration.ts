@@ -12,6 +12,7 @@ import { SettingsService, AlertEmailSettings } from '../../../core/services/sett
 import { AlertService } from '../../../core/services/alert.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { MatCheckboxModule } from '@angular/material/checkbox';
+import { OllamaLoader } from '../../../core/components/ollama-loader/ollama-loader';
 
 @Component({
   selector: 'app-alert-configuration',
@@ -28,6 +29,7 @@ import { MatCheckboxModule } from '@angular/material/checkbox';
     MatProgressSpinnerModule,
     MatSnackBarModule,
     MatCheckboxModule,
+    OllamaLoader,
   ],
   templateUrl: './alert-configuration.html',
   styleUrl: './alert-configuration.css',

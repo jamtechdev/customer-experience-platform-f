@@ -1,4 +1,12 @@
 <div class="process-enhancement-container">
+  <div *ngIf="loading()" class="loading-container">
+    <app-ollama-loader
+      [title]="'Ollama AI is generating process enhancement insights'"
+      [subtitle]="'Synthesizing management takeaways and process-level improvement opportunities'">
+    </app-ollama-loader>
+  </div>
+
+  <div *ngIf="!loading()">
   <mat-card class="section-card">
     <mat-card-header>
       <mat-card-title>Process improvements</mat-card-title>
@@ -21,4 +29,5 @@
       </ul>
     </mat-card-content>
   </mat-card>
+  </div>
 </div>

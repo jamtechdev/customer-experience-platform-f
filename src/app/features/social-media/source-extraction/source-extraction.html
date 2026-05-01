@@ -1,4 +1,12 @@
 <div class="source-extraction-container">
+  <div *ngIf="processing()" class="loading-container">
+    <app-ollama-loader
+      [title]="'Ollama AI is preparing source extraction data'"
+      [subtitle]="'Processing imported CSV rows for source-level analysis workflow'">
+    </app-ollama-loader>
+  </div>
+
+  <div *ngIf="!processing()">
   <div class="header">
     <h1>Source Extraction</h1>
     <p>Offline ingestion for social media and app-market comments for your company and competitors.</p>
@@ -115,5 +123,6 @@
       </div>
     </mat-card-content>
   </mat-card>
+  </div>
 </div>
 

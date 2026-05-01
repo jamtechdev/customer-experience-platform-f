@@ -4,13 +4,15 @@ import { MatCardModule } from '@angular/material/card';
 import { AnalysisService } from '../../../core/services/analysis.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { buildClientReportDatePresets } from '../../../core/utils/report-date-presets';
+import { OllamaLoader } from '../../../core/components/ollama-loader/ollama-loader';
 
 @Component({
   selector: 'app-process-enhancement',
   standalone: true,
   imports: [
     CommonModule,
-    MatCardModule
+    MatCardModule,
+    OllamaLoader
   ],
   templateUrl: './process-enhancement.html',
   styleUrl: './process-enhancement.css',

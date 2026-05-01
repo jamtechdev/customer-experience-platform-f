@@ -4,8 +4,13 @@
       <mat-card-title>Dataset profile</mat-card-title>
     </mat-card-header>
     <mat-card-content>
-      <p *ngIf="loading()" class="muted">Loading dataset profile...</p>
-      <div class="table-wrap">
+      <div *ngIf="loading()" class="loading-container">
+        <app-ollama-loader
+          [title]="'Ollama AI is building dataset profile'"
+          [subtitle]="'Preparing profile metrics and cohort context for your selected period'">
+        </app-ollama-loader>
+      </div>
+      <div *ngIf="!loading()" class="table-wrap">
         <table mat-table [dataSource]="rows()" class="report-table">
           <ng-container matColumnDef="metric">
             <th mat-header-cell *matHeaderCellDef>Metric</th>

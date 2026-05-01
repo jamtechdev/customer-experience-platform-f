@@ -18,6 +18,34 @@
   font-weight: 500;
 }
 
+.ollama-status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  border-radius: 999px;
+  padding: 4px 10px;
+  background: rgba(255, 255, 255, 0.15);
+  color: #f8fafc;
+}
+
+.ollama-status-badge .status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #ef4444;
+}
+
+.ollama-status-badge.connected .status-dot {
+  background: #22c55e;
+}
+
+.ollama-status-badge.disconnected .status-dot {
+  background: #ef4444;
+}
+
 .spacer {
   flex: 1 1 auto;
 }
@@ -140,6 +168,12 @@
   .toolbar-title {
     font-size: 1rem;
     display: none;
+  }
+
+  .ollama-status-badge {
+    margin-left: 0;
+    padding: 2px 8px;
+    font-size: 0.7rem;
   }
 
   .spacer {

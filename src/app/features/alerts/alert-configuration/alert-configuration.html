@@ -8,8 +8,10 @@
     <mat-card-content>
       @if (loading()) {
         <div class="loading-container">
-          <mat-spinner diameter="36"></mat-spinner>
-          <span>Loading thresholds...</span>
+          <app-ollama-loader
+            [title]="'Ollama AI is loading alert configuration context'"
+            [subtitle]="'Preparing threshold and notification settings for intelligent alerting'">
+          </app-ollama-loader>
         </div>
       } @else {
         <form [formGroup]="form">

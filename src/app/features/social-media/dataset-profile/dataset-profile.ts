@@ -5,6 +5,7 @@ import { MatTableModule } from '@angular/material/table';
 import { AnalysisService } from '../../../core/services/analysis.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { buildClientReportDatePresets } from '../../../core/utils/report-date-presets';
+import { OllamaLoader } from '../../../core/components/ollama-loader/ollama-loader';
 
 interface DatasetProfileRow {
   metric: string;
@@ -15,7 +16,7 @@ interface DatasetProfileRow {
 @Component({
   selector: 'app-dataset-profile',
   standalone: true,
-  imports: [CommonModule, MatCardModule, MatTableModule],
+  imports: [CommonModule, MatCardModule, MatTableModule, OllamaLoader],
   templateUrl: './dataset-profile.html',
   styleUrl: './dataset-profile.css',
 })

@@ -2,7 +2,7 @@ import { ApplicationConfig, importProvidersFrom, provideBrowserGlobalErrorListen
 import { provideRouter, withComponentInputBinding } from '@angular/router';
 import { provideHttpClient, withInterceptors, withFetch } from '@angular/common/http';
 import { provideNoopAnimations } from '@angular/platform-browser/animations';
-import { MatSnackBarModule } from '@angular/material/snack-bar';
+import { MAT_SNACK_BAR_DEFAULT_OPTIONS, MatSnackBarModule } from '@angular/material/snack-bar';
 
 import { routes } from './app.routes';
 import { provideClientHydration, withEventReplay } from '@angular/platform-browser';
@@ -17,6 +17,14 @@ export const appConfig: ApplicationConfig = {
   providers: [
     provideNoopAnimations(),
     importProvidersFrom(MatSnackBarModule),
+    {
+      provide: MAT_SNACK_BAR_DEFAULT_OPTIONS,
+      useValue: {
+        duration: 3000,
+        verticalPosition: 'top',
+        horizontalPosition: 'right'
+      }
+    },
     provideBrowserGlobalErrorListeners(),
     provideRouter(
       routes,

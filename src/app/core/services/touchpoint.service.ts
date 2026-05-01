@@ -28,6 +28,22 @@ export interface TouchpointPerformance {
   trend: Array<{ date: Date; score: number }>;
 }
 
+export interface TouchpointsPayload {
+  touchpoints: Touchpoint[];
+  aiNarrative?: string;
+}
+
+export function normalizeTouchpointsPayload(
+  data: Touchpoint[] | TouchpointsPayload | null | undefined
+): TouchpointsPayload {
+  if (data == null) return { touchpoints: [] };
+  if (Array.isArray(data)) return { touchpoints: data };
+  return {
+    touchpoints: Array.isArray(data.touchpoints) ? data.touchpoints : [],
+    aiNarrative: typeof data.aiNarrative === 'string' ? data.aiNarrative : undefined,
+  };
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -35,8 +51,8 @@ export class TouchpointService {
   private readonly http = inject(HttpClient);
   private readonly baseUrl = environment.apiUrl ? `${environment.apiUrl.replace(/\/$/, '')}/touchpoints` : '/api/touchpoints';
 
-  getTouchpoints(): Observable<ApiResponse<Touchpoint[]>> {
-    return this.http.get<ApiResponse<Touchpoint[]>>(this.baseUrl);
+  getTouchpoints(): Observable<ApiResponse<TouchpointsPayload>> {
+    return this.http.get<ApiResponse<TouchpointsPayload>>(this.baseUrl);
   }
 
   updateTouchpoint(id: number, touchpoint: Partial<Touchpoint>): Observable<ApiResponse<Touchpoint>> {

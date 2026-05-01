@@ -15,6 +15,21 @@ export interface Alert {
   updatedAt: Date;
 }
 
+/** Backend wraps list alerts with optional AI narrative (supports legacy array-only payloads). */
+export interface AlertsPayload {
+  alerts: Alert[];
+  aiNarrative?: string;
+}
+
+export function normalizeAlertsPayload(data: Alert[] | AlertsPayload | null | undefined): AlertsPayload {
+  if (data == null) return { alerts: [] };
+  if (Array.isArray(data)) return { alerts: data };
+  return {
+    alerts: Array.isArray(data.alerts) ? data.alerts : [],
+    aiNarrative: typeof data.aiNarrative === 'string' ? data.aiNarrative : undefined,
+  };
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -22,12 +37,12 @@ export class AlertService {
   private readonly http = inject(HttpClient);
   private readonly baseUrl = environment.apiUrl ? `${environment.apiUrl.replace(/\/$/, '')}/alerts` : '/api/alerts';
 
-  getAlerts(acknowledged?: boolean): Observable<ApiResponse<Alert[]>> {
+  getAlerts(acknowledged?: boolean): Observable<ApiResponse<AlertsPayload>> {
     let params = new HttpParams();
     if (acknowledged !== undefined) {
       params = params.set('acknowledged', acknowledged.toString());
     }
-    return this.http.get<ApiResponse<Alert[]>>(this.baseUrl, { params });
+    return this.http.get<ApiResponse<AlertsPayload>>(this.baseUrl, { params });
   }
 
   acknowledgeAlert(id: number): Observable<ApiResponse<Alert>> {

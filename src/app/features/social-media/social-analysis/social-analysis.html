@@ -14,11 +14,23 @@
   </div>
 
   <div *ngIf="loading()" class="loading-container">
-    <mat-spinner></mat-spinner>
-    <p>Loading social media data...</p>
+    <app-ollama-loader
+      [title]="'Ollama AI is analyzing social media signals'"
+      [subtitle]="'Combining platform volume, sentiment patterns, and narrative insights from imported data'">
+    </app-ollama-loader>
   </div>
 
   <div *ngIf="!loading()" class="content-section">
+    <mat-card *ngIf="volumeNarrative() || sentimentNarrative()" class="narrative-card">
+      <mat-card-header>
+        <mat-card-title>Analysis summary</mat-card-title>
+      </mat-card-header>
+      <mat-card-content class="narrative-body">
+        <p *ngIf="volumeNarrative()" class="ai-narrative">{{ volumeNarrative() }}</p>
+        <p *ngIf="sentimentNarrative()" class="ai-narrative">{{ sentimentNarrative() }}</p>
+      </mat-card-content>
+    </mat-card>
+
     <div class="summary-cards">
       <mat-card class="summary-card">
         <mat-card-content>

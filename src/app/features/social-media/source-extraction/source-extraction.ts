@@ -11,6 +11,7 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatTableModule } from '@angular/material/table';
 import { FormsModule } from '@angular/forms';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { OllamaLoader } from '../../../core/components/ollama-loader/ollama-loader';
 
 interface ExtractedRecord {
   id: string;
@@ -39,6 +40,7 @@ const STORAGE_KEY = 'source_extraction_records_v1';
     MatSelectModule,
     MatTableModule,
     MatSnackBarModule,
+    OllamaLoader,
   ],
   templateUrl: './source-extraction.html',
   styleUrl: './source-extraction.css',
@@ -58,6 +60,7 @@ export class SourceExtraction {
   sourceFilter = '';
 
   records = signal<ExtractedRecord[]>(this.loadRecords());
+  processing = signal(false);
   filteredRecords = computed(() => {
     const filter = this.sourceFilter.trim().toLowerCase();
     if (!filter) return this.records();
@@ -100,18 +103,25 @@ export class SourceExtraction {
     const file = input.files?.[0];
     if (!file) return;
     const reader = new FileReader();
+    this.processing.set(true);
     reader.onload = () => {
       const text = typeof reader.result === 'string' ? reader.result : '';
       const parsed = this.parseCsv(text);
       if (parsed.length === 0) {
+        this.processing.set(false);
         this.snackBar.open('No valid rows found in CSV.', 'Close', { duration: 2500 });
         return;
       }
       const updated = [...parsed, ...this.records()];
       this.records.set(updated);
       this.persist(updated);
+      this.processing.set(false);
       this.snackBar.open(`${parsed.length} rows imported.`, 'Close', { duration: 2500 });
       input.value = '';
+    };
+    reader.onerror = () => {
+      this.processing.set(false);
+      this.snackBar.open('CSV import failed. Please try again.', 'Close', { duration: 2500 });
     };
     reader.readAsText(file);
   }

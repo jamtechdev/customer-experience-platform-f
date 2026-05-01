@@ -68,10 +68,10 @@
           {{ formatPct(npsData()!.detractorPercentage) }}%
         </p>
         <p class="body-text">
-          Social NPS proxy: {{ npsData()!.score.toFixed(1) }}. This indicates a slightly negative advocacy balance in the customer-authored CX conversation.
+          Social NPS proxy: {{ npsData()!.score.toFixed(1) }} ({{ getNPSCategory(npsData()!.score) }}).
         </p>
         <p class="body-text" *ngIf="npsInterpretation()">
-          Interpretation: {{ npsInterpretation() }}
+          {{ npsInterpretation() }}
         </p>
         <figure class="mpl-figure mpl-figure-nps" aria-label="Social NPS stacked bar">
           <figcaption class="mpl-figure-title mpl-figure-title-nps">Social NPS proxy = {{ npsData()!.score.toFixed(1) }}</figcaption>

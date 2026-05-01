@@ -6,6 +6,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { AnalysisService } from '../../../core/services/analysis.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { buildClientReportDatePresets } from '../../../core/utils/report-date-presets';
+import { OllamaLoader } from '../../../core/components/ollama-loader/ollama-loader';
 
 interface StageRow {
   stageName: string;
@@ -19,7 +20,7 @@ interface StageRow {
 @Component({
   selector: 'app-journey-heatmap',
   standalone: true,
-  imports: [CommonModule, MatCardModule, MatButtonModule, MatProgressSpinnerModule],
+  imports: [CommonModule, MatCardModule, MatButtonModule, MatProgressSpinnerModule, OllamaLoader],
   templateUrl: './journey-heatmap.html',
   styleUrl: './journey-heatmap.css',
 })

@@ -5,8 +5,10 @@
   </div>
 
   <div *ngIf="loading()" class="loading-container">
-    <mat-spinner></mat-spinner>
-    <p>Loading journey data...</p>
+    <app-ollama-loader
+      [title]="'Ollama AI is generating journey insights'"
+      [subtitle]="'Analyzing touchpoints, root causes, and journey-stage patterns from uploaded feedback'">
+    </app-ollama-loader>
   </div>
 
   <div *ngIf="!loading() && journeyStages().length === 0" class="empty-hint">

@@ -5,11 +5,22 @@
   </div>
 
   <div *ngIf="loading()" class="loading-container">
-    <mat-spinner></mat-spinner>
-    <p>Loading alerts...</p>
+    <app-ollama-loader
+      [title]="'Ollama AI is evaluating alerts'"
+      [subtitle]="'Reviewing priority, risk patterns, and recent event signals for your dashboard'">
+    </app-ollama-loader>
   </div>
 
   <div *ngIf="!loading()" class="content-section">
+    <mat-card *ngIf="aiNarrative()" class="ai-narrative-card">
+      <mat-card-header>
+        <mat-card-title>Summary</mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <p class="ai-narrative">{{ aiNarrative() }}</p>
+      </mat-card-content>
+    </mat-card>
+
     <div class="alert-summary">
       <mat-card class="summary-card">
         <mat-card-content>
