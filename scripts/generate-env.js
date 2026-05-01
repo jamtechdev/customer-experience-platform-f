@@ -47,8 +47,8 @@ const apiUrl = frontendApiUrl || backendEnv.API_URL || '';
 const apiBase =
   apiUrl && apiUrl.endsWith('/api') ? apiUrl.replace(/\/api$/, '/api') : apiUrl ? `${apiUrl.replace(/\/$/, '')}/api` : '';
 
-// Fallback to local default if backend .env missing.
-const finalApiBase = apiBase || 'http://localhost:5000/api';
+// Fallback to deployed API if env is missing.
+const finalApiBase = apiBase || 'https://api.sentimenter.ai/api';
 
 ensureDir(path.dirname(outFile));
 

@@ -1,9 +1,8 @@
-// Dev-time proxy: all /api requests from localhost (any port) go to local backend.
+// Proxy /api requests to deployed backend.
 module.exports = {
   '/api': {
-    // Local development: send /api requests to local backend on port 5000.
-    target: 'http://localhost:5000',
-    secure: false,
+    target: 'https://api.sentimenter.ai',
+    secure: true,
     changeOrigin: true,
     logLevel: 'debug',
   },
