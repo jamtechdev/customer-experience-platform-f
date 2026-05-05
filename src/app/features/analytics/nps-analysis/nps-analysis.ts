@@ -70,6 +70,7 @@ export class NpsAnalysis implements OnInit, OnDestroy {
   selectedPresetId = signal<string>('last_30_days');
   startDate = signal<string | null>(null);
   endDate = signal<string | null>(null);
+  private filtersApplied = signal(false);
 
   ngOnInit(): void {
     this.loadPresets();
@@ -97,7 +98,7 @@ export class NpsAnalysis implements OnInit, OnDestroy {
           list.find((p) => p.id === 'last_30_days') ??
           list[0];
         if (def) this.applyPreset(def);
-        this.loadNPSData();
+        this.loadNPSData(false);
       },
       error: () => {
         const list = buildClientReportDatePresets();
@@ -109,7 +110,7 @@ export class NpsAnalysis implements OnInit, OnDestroy {
           list.find((p) => p.id === 'last_30_days') ??
           list[0];
         if (def) this.applyPreset(def);
-        this.loadNPSData();
+        this.loadNPSData(false);
       },
     });
   }
@@ -128,7 +129,6 @@ export class NpsAnalysis implements OnInit, OnDestroy {
     const p = this.presets().find((x) => x.id === id);
     if (p) {
       this.applyPreset(p);
-      this.loadNPSData();
     }
   }
 
@@ -147,22 +147,28 @@ export class NpsAnalysis implements OnInit, OnDestroy {
       this.snackBar.open('Select a valid date range', 'Close', { duration: 4000 });
       return;
     }
+    this.filtersApplied.set(true);
     this.loadNPSData();
   }
 
-  loadNPSData(): void {
+  loadNPSData(withFilters: boolean = this.filtersApplied()): void {
     this.loading.set(true);
     const user = this.authService.currentUser();
     // Admin should aggregate across all companies
     const companyId = user?.role === 'admin' ? undefined : (user?.settings?.companyId || 1);
-    if (!this.datesValid()) {
-      this.loading.set(false);
-      return;
-    }
-    const { startDate: sd, endDate: ed } = toIsoRangeFromYmd(this.startDate()!, this.endDate()!);
 
-    const start = new Date(sd);
-    const end = new Date(ed);
+    let start: Date | undefined;
+    let end: Date | undefined;
+    if (withFilters) {
+      if (!this.datesValid()) {
+        this.loading.set(false);
+        return;
+      }
+      const { startDate: sd, endDate: ed } = toIsoRangeFromYmd(this.startDate()!, this.endDate()!);
+      start = new Date(sd);
+      end = new Date(ed);
+    }
+
     this.analysisService.getTwitterCxReport(companyId, start, end).subscribe({
       next: (res) => {
         if (res.success && res.data?.sentiment) {
@@ -215,7 +221,7 @@ export class NpsAnalysis implements OnInit, OnDestroy {
     });
   }
 
-  private loadFromDashboardFallback(companyId: number | undefined, start: Date, end: Date): void {
+  private loadFromDashboardFallback(companyId: number | undefined, start?: Date, end?: Date): void {
     this.dashboardService.getStats(companyId, start, end).subscribe({
       next: (response) => {
         if (response.success && response.data?.nps) {

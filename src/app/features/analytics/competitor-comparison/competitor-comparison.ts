@@ -75,6 +75,7 @@ export class CompetitorComparison implements OnInit, OnDestroy {
   selectedPresetId = signal<string>('ytd');
   startDate = signal<string | null>(null);
   endDate = signal<string | null>(null);
+  private filtersApplied = signal(false);
 
   ngOnInit(): void {
     this.loadPresets();
@@ -104,7 +105,7 @@ export class CompetitorComparison implements OnInit, OnDestroy {
           list.find((p) => p.id === 'last_30_days') ??
           list[0];
         if (def) this.applyPreset(def);
-        this.loadComparisonData();
+        this.loadComparisonData(false);
       },
       error: () => {
         const list = buildClientReportDatePresets();
@@ -114,7 +115,7 @@ export class CompetitorComparison implements OnInit, OnDestroy {
           list.find((p) => p.id === 'last_30_days') ??
           list[0];
         if (def) this.applyPreset(def);
-        this.loadComparisonData();
+        this.loadComparisonData(false);
       },
     });
   }
@@ -133,7 +134,6 @@ export class CompetitorComparison implements OnInit, OnDestroy {
     const p = this.presets().find((x) => x.id === id);
     if (p) {
       this.applyPreset(p);
-      this.loadComparisonData();
     }
   }
 
@@ -152,6 +152,7 @@ export class CompetitorComparison implements OnInit, OnDestroy {
       this.snackBar.open('Select a valid date range', 'Close', { duration: 4000 });
       return;
     }
+    this.filtersApplied.set(true);
     this.loadComparisonData();
   }
 
@@ -196,17 +197,23 @@ export class CompetitorComparison implements OnInit, OnDestroy {
     });
   }
 
-  loadComparisonData(): void {
+  loadComparisonData(withFilters: boolean = this.filtersApplied()): void {
     this.loading.set(true);
     const user = this.authService.currentUser();
     const companyId = user?.settings?.companyId || 1;
-    if (!this.datesValid()) {
-      this.loading.set(false);
-      return;
+    let startDate: Date | undefined;
+    let endDate: Date | undefined;
+    if (withFilters) {
+      if (!this.datesValid()) {
+        this.loading.set(false);
+        return;
+      }
+      const { startDate: sd, endDate: ed } = toIsoRangeFromYmd(this.startDate()!, this.endDate()!);
+      startDate = new Date(sd);
+      endDate = new Date(ed);
     }
-    const { startDate: sd, endDate: ed } = toIsoRangeFromYmd(this.startDate()!, this.endDate()!);
 
-    this.analysisService.getCompetitorAnalysis(companyId, new Date(sd), new Date(ed)).subscribe({
+    this.analysisService.getCompetitorAnalysis(companyId, startDate, endDate).subscribe({
       next: (response: any) => {
         if (response.success && response.data) {
           const data = response.data;

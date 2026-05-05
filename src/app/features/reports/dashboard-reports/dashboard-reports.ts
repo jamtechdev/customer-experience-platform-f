@@ -62,6 +62,7 @@ export class DashboardReports implements OnInit, OnDestroy {
   selectedPresetId = signal<string>('last_30_days');
   startDate = signal<string | null>(null);
   endDate = signal<string | null>(null);
+  private filtersApplied = signal(false);
   private manualReloadTimer: ReturnType<typeof setTimeout> | null = null;
 
   t = (key: string): string => this.translationService.translate(key);
@@ -116,7 +117,7 @@ export class DashboardReports implements OnInit, OnDestroy {
         const defId = role === 'admin' ? 'all_time' : 'last_30_days';
         const def = list.find((p) => p.id === defId) ?? list[0];
         if (def) this.applyPreset(def);
-        this.reloadAll();
+        this.reloadAll(false);
       },
       error: () => {
         const list = buildClientReportDatePresets();
@@ -125,7 +126,7 @@ export class DashboardReports implements OnInit, OnDestroy {
         const defId = role === 'admin' ? 'all_time' : 'last_30_days';
         const def = list.find((p) => p.id === defId) ?? list[0];
         if (def) this.applyPreset(def);
-        this.reloadAll();
+        this.reloadAll(false);
       },
     });
   }
@@ -150,17 +151,11 @@ export class DashboardReports implements OnInit, OnDestroy {
     const p = this.presets().find((x) => x.id === id);
     if (p) {
       this.applyPreset(p);
-      this.reloadAll();
     }
   }
 
   onManualDate(): void {
     this.selectedPresetId.set('custom');
-    if (!this.datesValid()) return;
-
-    if (this.manualReloadTimer) clearTimeout(this.manualReloadTimer);
-    // Debounce for smoother UX while editing.
-    this.manualReloadTimer = setTimeout(() => this.reloadAll(), 400);
   }
 
   datesValid(): boolean {
@@ -171,32 +166,40 @@ export class DashboardReports implements OnInit, OnDestroy {
 
   applyRangeAndReload(): void {
     if (!this.datesValid()) return;
+    this.filtersApplied.set(true);
     const days = inclusiveDaysBetweenYmd(this.startDate()!, this.endDate()!);
     this.days.set(Math.max(7, days));
     this.reloadAll();
   }
 
-  private reloadAll(): void {
-    this.loadCurrentStatus();
-    this.loadTrends();
+  private reloadAll(withFilters: boolean = this.filtersApplied()): void {
+    this.loadCurrentStatus(withFilters);
+    this.loadTrends(withFilters);
   }
 
   onPeriodChange(): void {
-    this.loadTrends();
+    if (!this.filtersApplied()) return;
+    this.loadTrends(true);
   }
 
-  loadCurrentStatus(): void {
+  loadCurrentStatus(withFilters: boolean = this.filtersApplied()): void {
     this.loading.set(true);
     this.currentStats.set(null);
     const user = this.authService.currentUser();
     const companyId = user?.role === 'admin' ? undefined : (user?.settings?.companyId ?? 1);
-    if (!this.datesValid()) {
-      this.loading.set(false);
-      return;
+    let startDate: Date | undefined;
+    let endDate: Date | undefined;
+    if (withFilters) {
+      if (!this.datesValid()) {
+        this.loading.set(false);
+        return;
+      }
+      const { startDate: sd, endDate: ed } = toIsoRangeFromYmd(this.startDate()!, this.endDate()!);
+      startDate = new Date(sd);
+      endDate = new Date(ed);
     }
-    const { startDate: sd, endDate: ed } = toIsoRangeFromYmd(this.startDate()!, this.endDate()!);
 
-    this.dashboardService.getStats(companyId, new Date(sd), new Date(ed)).subscribe({
+    this.dashboardService.getStats(companyId, startDate, endDate).subscribe({
       next: (res) => {
         if (res.success && res.data) this.currentStats.set(res.data);
         else this.currentStats.set(null);
@@ -209,16 +212,19 @@ export class DashboardReports implements OnInit, OnDestroy {
     });
   }
 
-  loadTrends(): void {
+  loadTrends(withFilters: boolean = this.filtersApplied()): void {
+    if (!withFilters) {
+      this.loadingTrends.set(false);
+      this.trends.set(null);
+      return;
+    }
     this.loadingTrends.set(true);
     this.trends.set(null);
     const user = this.authService.currentUser();
     const companyId = user?.role === 'admin' ? undefined : (user?.settings?.companyId ?? 1);
-    if (!this.datesValid()) {
-      this.loadingTrends.set(false);
-      return;
-    }
-    const days = inclusiveDaysBetweenYmd(this.startDate()!, this.endDate()!);
+    const days = withFilters && this.datesValid()
+      ? inclusiveDaysBetweenYmd(this.startDate()!, this.endDate()!)
+      : this.days();
 
     this.dashboardService.getDashboardTrends(companyId, this.period(), Math.max(7, days)).subscribe({
       next: (res) => {

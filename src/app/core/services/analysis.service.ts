@@ -34,13 +34,13 @@ export class AnalysisService {
   /** Bundled Twitter CX report (cohorts, social NPS proxy, heatmap %, touchpoints, root causes, narratives). */
   getTwitterCxReport(
     companyId: number | undefined,
-    startDate: Date,
-    endDate: Date,
+    startDate?: Date,
+    endDate?: Date,
     csvImportId?: number
   ): Observable<ApiResponse<TwitterCxReportDto>> {
-    let params = new HttpParams()
-      .set('startDate', startDate.toISOString())
-      .set('endDate', endDate.toISOString());
+    let params = new HttpParams();
+    if (startDate) params = params.set('startDate', startDate.toISOString());
+    if (endDate) params = params.set('endDate', endDate.toISOString());
     if (companyId != null) params = params.set('companyId', String(companyId));
     if (csvImportId != null) params = params.set('csvImportId', String(csvImportId));
     return this.http.get<ApiResponse<TwitterCxReportDto>>(`${this.baseUrl}/twitter-cx-report`, { params });

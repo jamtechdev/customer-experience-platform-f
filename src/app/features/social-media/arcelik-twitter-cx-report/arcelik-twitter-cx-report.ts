@@ -100,6 +100,7 @@ export class ArcelikTwitterCxReport implements OnInit {
   selectedPresetId = signal<string>('last_30_days');
   startDate = signal<string | null>(null);
   endDate = signal<string | null>(null);
+  private filtersApplied = signal(false);
 
   reportTitleDisplay = computed(() => this.reportBundle()?.reportTitle ?? 'Twitter CX Analysis Report');
 
@@ -248,7 +249,7 @@ export class ArcelikTwitterCxReport implements OnInit {
         const defId = role === 'admin' ? 'all_time' : 'last_30_days';
         const def = list.find((p) => p.id === defId) ?? list[0];
         if (def) this.applyPreset(def);
-        this.reload();
+        this.reload(false);
       },
       error: () => {
         const list = buildClientReportDatePresets();
@@ -257,7 +258,7 @@ export class ArcelikTwitterCxReport implements OnInit {
         const defId = role === 'admin' ? 'all_time' : 'last_30_days';
         const def = list.find((p) => p.id === defId) ?? list[0];
         if (def) this.applyPreset(def);
-        this.reload();
+        this.reload(false);
       },
     });
   }
@@ -276,7 +277,6 @@ export class ArcelikTwitterCxReport implements OnInit {
     const p = this.presets().find((x) => x.id === id);
     if (p) {
       this.applyPreset(p);
-      this.reload();
     }
   }
 
@@ -295,6 +295,7 @@ export class ArcelikTwitterCxReport implements OnInit {
       this.snackBar.open('Select a valid date range', 'Close', { duration: 4000 });
       return;
     }
+    this.filtersApplied.set(true);
     this.reload();
   }
 
@@ -304,15 +305,20 @@ export class ArcelikTwitterCxReport implements OnInit {
     return user?.settings?.companyId ?? 1;
   }
 
-  reload(): void {
-    if (!this.datesValid()) {
-      return;
-    }
+  reload(withFilters: boolean = this.filtersApplied()): void {
     this.loading.set(true);
     this.loadError.set(null);
-    const { startDate: sd, endDate: ed } = toIsoRangeFromYmd(this.startDate()!, this.endDate()!);
-    const start = new Date(sd);
-    const end = new Date(ed);
+    let start: Date | undefined;
+    let end: Date | undefined;
+    if (withFilters) {
+      if (!this.datesValid()) {
+        this.loading.set(false);
+        return;
+      }
+      const { startDate: sd, endDate: ed } = toIsoRangeFromYmd(this.startDate()!, this.endDate()!);
+      start = new Date(sd);
+      end = new Date(ed);
+    }
     const sentCo = this.sentimentCompanyId();
 
     this.analysisService

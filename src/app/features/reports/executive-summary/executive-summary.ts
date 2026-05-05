@@ -53,6 +53,7 @@ export class ExecutiveSummary implements OnInit {
   selectedPresetId = signal<string>('last_30_days');
   startDate = signal<string | null>(null);
   endDate = signal<string | null>(null);
+  private filtersApplied = signal(false);
   private manualReloadTimer: ReturnType<typeof setTimeout> | null = null;
 
   ngOnInit(): void {
@@ -69,7 +70,7 @@ export class ExecutiveSummary implements OnInit {
         const defId = role === 'admin' ? 'all_time' : 'last_30_days';
         const def = list.find((p) => p.id === defId) ?? list[0];
         if (def) this.applyPreset(def);
-        this.loadSummary();
+        this.loadSummary(false);
       },
       error: () => {
         const list = buildClientReportDatePresets();
@@ -78,7 +79,7 @@ export class ExecutiveSummary implements OnInit {
         const defId = role === 'admin' ? 'all_time' : 'last_30_days';
         const def = list.find((p) => p.id === defId) ?? list[0];
         if (def) this.applyPreset(def);
-        this.loadSummary();
+        this.loadSummary(false);
       },
     });
   }
@@ -101,17 +102,11 @@ export class ExecutiveSummary implements OnInit {
     const p = this.presets().find((x) => x.id === id);
     if (p) {
       this.applyPreset(p);
-      this.loadSummary();
     }
   }
 
   onManualDate(): void {
     this.selectedPresetId.set('custom');
-    if (!this.datesValid()) return;
-
-    if (this.manualReloadTimer) clearTimeout(this.manualReloadTimer);
-    // Debounce to avoid spamming the API while the user is editing.
-    this.manualReloadTimer = setTimeout(() => this.loadSummary(), 400);
   }
 
   datesValid(): boolean {
@@ -125,20 +120,27 @@ export class ExecutiveSummary implements OnInit {
       this.snackBar.open(this.t('reports.selectValidRange'), this.t('app.close'), { duration: 5000 });
       return;
     }
+    this.filtersApplied.set(true);
     this.loadSummary();
   }
 
-  loadSummary(): void {
+  loadSummary(withFilters: boolean = this.filtersApplied()): void {
     this.loading.set(true);
     const user = this.authService.currentUser();
     const isAdmin = user?.role === 'admin';
     const companyId = isAdmin ? undefined : (user?.settings?.companyId ?? 1);
-    if (!this.datesValid()) {
-      this.loading.set(false);
-      return;
+    let startDate: Date | undefined;
+    let endDate: Date | undefined;
+    if (withFilters) {
+      if (!this.datesValid()) {
+        this.loading.set(false);
+        return;
+      }
+      const { startDate: sd, endDate: ed } = toIsoRangeFromYmd(this.startDate()!, this.endDate()!);
+      startDate = new Date(sd);
+      endDate = new Date(ed);
     }
-    const { startDate: sd, endDate: ed } = toIsoRangeFromYmd(this.startDate()!, this.endDate()!);
-    this.dashboardService.getExecutiveDashboard(companyId, new Date(sd), new Date(ed)).subscribe({
+    this.dashboardService.getExecutiveDashboard(companyId, startDate, endDate).subscribe({
       next: (res) => {
         if (res.success && res.data) this.data.set(res.data);
         this.loading.set(false);
