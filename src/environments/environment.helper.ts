@@ -45,8 +45,13 @@ export function getEnvArray(key: string, defaultValue: string[] = []): string[] 
  * Check if running in production
  */
 export function isProduction(): boolean {
-  return getEnv('NG_APP_PRODUCTION', 'false') === 'true' || 
-         getEnv('NODE_ENV', '') === 'production';
+  if (getEnv('NG_APP_PRODUCTION', '') === 'true') return true;
+  if (getEnv('NODE_ENV', '') === 'production') return true;
+  if (typeof window !== 'undefined' && window.location?.hostname) {
+    const h = window.location.hostname.toLowerCase();
+    if (h === 'sentimenter.ai' || h.endsWith('.sentimenter.ai')) return true;
+  }
+  return false;
 }
 
 /**
