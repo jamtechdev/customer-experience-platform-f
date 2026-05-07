@@ -64,7 +64,7 @@
 
 
   <div *ngIf="!loading()" class="stats-section">
-    <p *ngIf="(stats()?.total ?? 0) === 0" class="empty-hint">No sentiment data in this period. Feedback uploaded via CSV is analyzed automatically; data will appear here once processing is complete.</p>
+    <p *ngIf="(stats()?.total ?? 0) === 0" class="empty-hint">No sentiment data yet for this date range. Please check Import history, confirm your CSV import is completed, then click Refresh.</p>
     <mat-card class="section-card" *ngIf="stats()">
       <mat-card-header>
         <mat-card-title>Tweet-level sentiment analysis</mat-card-title>
@@ -127,7 +127,7 @@
     <mat-card class="list-card">
       <mat-card-header>
         <mat-card-title>All feedback (from CSV upload &amp; other sources)</mat-card-title>
-        <mat-card-subtitle>Total: {{ feedbackTotal() }} items with sentiment analysis</mat-card-subtitle>
+        <mat-card-subtitle>Total: {{ feedbackTotal() }} feedback items in this period</mat-card-subtitle>
       </mat-card-header>
       <mat-card-content>
         <p *ngIf="feedbackList().length === 0" class="empty-hint">No feedback in this period.</p>

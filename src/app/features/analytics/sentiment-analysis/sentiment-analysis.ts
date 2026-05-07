@@ -76,6 +76,8 @@ export class SentimentAnalysis implements OnInit, OnDestroy {
   private reportService = inject(ReportService);
   private websocket = inject(CXWebSocketService);
   private importStatusSub?: Subscription;
+  private autoRefreshTimer: ReturnType<typeof setTimeout> | null = null;
+  private readonly autoRefreshMs = 5000;
 
   loading = signal(false);
   stats = signal<SentimentStats | null>(null);
@@ -109,6 +111,7 @@ export class SentimentAnalysis implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.importStatusSub?.unsubscribe();
+    this.stopAutoRefreshLoop();
   }
 
   private setTodayRange(): void {
@@ -238,6 +241,7 @@ export class SentimentAnalysis implements OnInit, OnDestroy {
   }
 
   private reloadAll(): void {
+    this.stopAutoRefreshLoop();
     this.loadSentimentStats();
     this.loadFeedbackList();
   }
@@ -317,16 +321,50 @@ export class SentimentAnalysis implements OnInit, OnDestroy {
           this.feedbackList.set(list);
           this.feedbackTotal.set(response.data.total ?? list.length);
           this.persistCache();
+          this.syncAutoRefreshWithList(list);
         } else {
           this.feedbackList.set([]);
           this.feedbackTotal.set(0);
+          this.stopAutoRefreshLoop();
         }
       },
       error: () => {
         this.feedbackList.set([]);
         this.feedbackTotal.set(0);
+        this.stopAutoRefreshLoop();
       }
     });
+  }
+
+  private hasProcessingRows(
+    list: Array<{ sentiment: string }>
+  ): boolean {
+    return list.some((row) => String(row.sentiment || '').toLowerCase().includes('processing'));
+  }
+
+  private syncAutoRefreshWithList(
+    list: Array<{ sentiment: string }>
+  ): void {
+    if (this.hasProcessingRows(list)) {
+      this.scheduleAutoRefresh();
+      return;
+    }
+    this.stopAutoRefreshLoop();
+  }
+
+  private scheduleAutoRefresh(): void {
+    if (this.autoRefreshTimer) return;
+    this.autoRefreshTimer = setTimeout(() => {
+      this.autoRefreshTimer = null;
+      this.loadSentimentStats();
+      this.loadFeedbackList();
+    }, this.autoRefreshMs);
+  }
+
+  private stopAutoRefreshLoop(): void {
+    if (!this.autoRefreshTimer) return;
+    clearTimeout(this.autoRefreshTimer);
+    this.autoRefreshTimer = null;
   }
 
   getSentimentData() {
