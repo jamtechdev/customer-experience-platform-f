@@ -84,8 +84,9 @@ export class AnalysisService {
   }
 
   // NPS Analysis - matches backend /api/analysis/nps
-  analyzeNPS(companyId: number, startDate?: Date, endDate?: Date): Observable<ApiResponse<any>> {
-    const body: any = { companyId };
+  analyzeNPS(companyId?: number, startDate?: Date, endDate?: Date): Observable<ApiResponse<any>> {
+    const body: any = {};
+    if (companyId != null) body.companyId = companyId;
     if (startDate) body.startDate = startDate.toISOString();
     if (endDate) body.endDate = endDate.toISOString();
     return this.http.post<ApiResponse<any>>(`${this.baseUrl}/nps`, body);

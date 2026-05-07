@@ -169,23 +169,19 @@ export class NpsAnalysis implements OnInit, OnDestroy {
       end = new Date(ed);
     }
 
-    this.analysisService.getTwitterCxReport(companyId, start, end).subscribe({
+    this.analysisService.analyzeNPS(companyId, start, end).subscribe({
       next: (res) => {
-        if (res.success && res.data?.sentiment) {
-          const sentiment = res.data.sentiment;
-          const total =
-            sentiment.total && sentiment.total > 0
-              ? sentiment.total
-              : (sentiment.positive || 0) + (sentiment.neutral || 0) + (sentiment.negative || 0);
-          const promoters = sentiment.positive || 0;
-          const passives = sentiment.neutral || 0;
-          const detractors = sentiment.negative || 0;
+        if (res.success && res.data) {
+          const nps = res.data;
+          const total = Number(nps.total || 0);
+          const promoters = Number(nps.promoters || 0);
+          const passives = Number(nps.passives || 0);
+          const detractors = Number(nps.detractors || 0);
           const promoterPercentage = total > 0 ? (promoters / total) * 100 : 0;
           const detractorPercentage = total > 0 ? (detractors / total) * 100 : 0;
-          const score =
-            typeof res.data.socialNpsProxy === 'number'
-              ? res.data.socialNpsProxy
-              : promoterPercentage - detractorPercentage;
+          const score = Number.isFinite(Number(nps.npsScore))
+            ? Number(nps.npsScore)
+            : promoterPercentage - detractorPercentage;
           this.npsData.set({
             score,
             promoters,
@@ -195,11 +191,7 @@ export class NpsAnalysis implements OnInit, OnDestroy {
             promoterPercentage,
             detractorPercentage
           });
-          const serverInterpretation =
-            typeof res.data.npsInterpretation === 'string' && res.data.npsInterpretation.trim().length
-              ? res.data.npsInterpretation.trim()
-              : '';
-          this.npsInterpretation.set(serverInterpretation || this.localNpsInterpretation({
+          this.npsInterpretation.set(this.localNpsInterpretation({
             score,
             promoters,
             passives,
@@ -212,7 +204,7 @@ export class NpsAnalysis implements OnInit, OnDestroy {
           return;
         }
 
-        // Fallback to dashboard endpoint if report payload is unavailable.
+        // Fallback to dashboard endpoint if NPS payload is unavailable.
         this.loadFromDashboardFallback(companyId, start, end);
       },
       error: () => {
