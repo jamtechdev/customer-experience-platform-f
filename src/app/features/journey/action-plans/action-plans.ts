@@ -18,6 +18,10 @@ import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { formatApiDate, toInputDateValue } from '../../../core/utils/api-date';
 import { buildClientReportDatePresets } from '../../../core/utils/report-date-presets';
 import { OllamaLoader } from '../../../core/components/ollama-loader/ollama-loader';
+import { catchError, timeout } from 'rxjs/operators';
+import { of } from 'rxjs';
+import type { ApiResponse } from '../../../core/models';
+import type { TwitterCxReportDto } from '../../../core/models/analysis.model';
 
 @Component({
   selector: 'app-action-plans',
@@ -93,7 +97,29 @@ export class ActionPlans implements OnInit {
     const preset = presets.find((p) => p.id === defaultId) ?? presets[0];
     const start = new Date(preset.startDate);
     const end = new Date(preset.endDate);
-    this.analysisService.getTwitterCxReport(companyId, start, end).subscribe({
+    const reportTimeoutMs = 180_000;
+    this.analysisService
+      .getTwitterCxReport(companyId, start, end)
+      .pipe(
+        timeout(reportTimeoutMs),
+        catchError(() => {
+          this.loading.set(false);
+          this.actionPlans.set([]);
+          this.reportPlanRows.set([]);
+          this.page.set(1);
+          this.snackBar.open(
+            'Report request timed out. Try a narrower date range or retry in a moment.',
+            'Close',
+            { duration: 6000 }
+          );
+          return of<ApiResponse<TwitterCxReportDto | null>>({
+            success: false,
+            data: null,
+            message: 'timeout',
+          });
+        })
+      )
+      .subscribe({
       next: (response) => {
         if (response.success && Array.isArray(response.data?.actionPlan)) {
           this.reportPlanRows.set(
