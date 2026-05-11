@@ -6,6 +6,7 @@ import { AnalysisService } from '../../../core/services/analysis.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { buildClientReportDatePresets } from '../../../core/utils/report-date-presets';
 import { OllamaLoader } from '../../../core/components/ollama-loader/ollama-loader';
+import { HttpErrorResponse } from '@angular/common/http';
 import { catchError, timeout } from 'rxjs/operators';
 import { of } from 'rxjs';
 import type { ApiResponse } from '../../../core/models';
@@ -44,15 +45,19 @@ export class ProcessEnhancement implements OnInit {
       .getTwitterCxReport(companyId, new Date(preset.startDate), new Date(preset.endDate))
       .pipe(
         timeout(reportTimeoutMs),
-        catchError(() => {
+        catchError((err: unknown) => {
           this.loading.set(false);
           this.processImprovements.set([]);
           this.managementTakeaways.set([]);
-          this.snackBar.open(
-            'Report request timed out. Try a narrower date range or retry in a moment.',
-            'Close',
-            { duration: 6000 }
-          );
+          let msg =
+            'Report request timed out. Try a narrower date range or retry in a moment.';
+          if (err instanceof HttpErrorResponse && (err.status === 504 || err.status === 502)) {
+            msg =
+              'The server gateway timed out (504) while building this report. Try a shorter date range, or ask your administrator to increase the reverse-proxy read timeout for the analysis API.';
+          } else if (err instanceof HttpErrorResponse && err.status >= 500) {
+            msg = 'The report service returned a server error. Please retry in a moment.';
+          }
+          this.snackBar.open(msg, 'Close', { duration: 8000 });
           return of<ApiResponse<TwitterCxReportDto | null>>({
             success: false,
             data: null,
