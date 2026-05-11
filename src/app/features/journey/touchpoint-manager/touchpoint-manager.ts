@@ -13,8 +13,8 @@ import { TouchpointService, Touchpoint } from '../../../core/services/touchpoint
 import { AnalysisService } from '../../../core/services/analysis.service';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { AuthService } from '../../../core/services/auth.service';
-import { buildClientReportDatePresets } from '../../../core/utils/report-date-presets';
 import { OllamaLoader } from '../../../core/components/ollama-loader/ollama-loader';
+import { twitterCxReportFailureMessage } from '../../../core/utils/twitter-cx-report-load';
 
 @Component({
   selector: 'app-touchpoint-manager',
@@ -85,13 +85,16 @@ export class TouchpointManager implements OnInit {
     this.loading.set(true);
     const user = this.authService.currentUser();
     const companyId = user?.role === 'admin' ? undefined : (user?.settings?.companyId ?? 1);
-    const presets = buildClientReportDatePresets();
-    const defaultId = user?.role === 'admin' ? 'all_time' : 'last_30_days';
-    const preset = presets.find((p) => p.id === defaultId) ?? presets[0];
-    const start = new Date(preset.startDate);
-    const end = new Date(preset.endDate);
-    this.analysisService.getTwitterCxReport(companyId, start, end).subscribe({
+    this.analysisService.getTwitterCxReport(companyId).subscribe({
       next: (response) => {
+        if (!response.success) {
+          this.touchpoints.set([]);
+          this.reportTouchpoints.set([]);
+          this.page.set(1);
+          this.snackBar.open(twitterCxReportFailureMessage(response.message), 'Close', { duration: 7000 });
+          this.loading.set(false);
+          return;
+        }
         if (response.success && Array.isArray(response.data?.touchpoints)) {
           const rows = response.data.touchpoints.map((t: any, idx: number) => ({
             id: idx + 1,
@@ -125,7 +128,7 @@ export class TouchpointManager implements OnInit {
         this.touchpoints.set([]);
         this.reportTouchpoints.set([]);
         this.page.set(1);
-        this.snackBar.open('Failed to load touchpoints', 'Close', { duration: 3000 });
+        this.snackBar.open(twitterCxReportFailureMessage(), 'Close', { duration: 6000 });
       }
     });
   }

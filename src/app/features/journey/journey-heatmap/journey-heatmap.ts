@@ -3,10 +3,11 @@ import { CommonModule } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { AnalysisService } from '../../../core/services/analysis.service';
 import { AuthService } from '../../../core/services/auth.service';
-import { buildClientReportDatePresets } from '../../../core/utils/report-date-presets';
 import { OllamaLoader } from '../../../core/components/ollama-loader/ollama-loader';
+import { twitterCxReportFailureMessage } from '../../../core/utils/twitter-cx-report-load';
 
 interface StageRow {
   stageName: string;
@@ -20,13 +21,21 @@ interface StageRow {
 @Component({
   selector: 'app-journey-heatmap',
   standalone: true,
-  imports: [CommonModule, MatCardModule, MatButtonModule, MatProgressSpinnerModule, OllamaLoader],
+  imports: [
+    CommonModule,
+    MatCardModule,
+    MatButtonModule,
+    MatProgressSpinnerModule,
+    MatSnackBarModule,
+    OllamaLoader,
+  ],
   templateUrl: './journey-heatmap.html',
   styleUrl: './journey-heatmap.css',
 })
 export class JourneyHeatmap implements OnInit {
   private analysisService = inject(AnalysisService);
   private authService = inject(AuthService);
+  private snackBar = inject(MatSnackBar);
   loading = signal(false);
   stages = signal<StageRow[]>([]);
   error = signal<string | null>(null);
@@ -55,15 +64,20 @@ export class JourneyHeatmap implements OnInit {
   loadHeatmap(): void {
     const user = this.authService.currentUser();
     const companyId = user?.role === 'admin' ? undefined : (user?.settings?.companyId ?? 1);
-    const presets = buildClientReportDatePresets();
-    const defaultId = user?.role === 'admin' ? 'all_time' : 'last_30_days';
-    const preset = presets.find((p) => p.id === defaultId) ?? presets[0];
-    const start = new Date(preset.startDate);
-    const end = new Date(preset.endDate);
     this.loading.set(true);
     this.error.set(null);
-    this.analysisService.getTwitterCxReport(companyId, start, end).subscribe({
+    this.analysisService.getTwitterCxReport(companyId).subscribe({
       next: (res) => {
+        if (!res.success) {
+          this.stages.set([]);
+          this.page.set(1);
+          const hint = twitterCxReportFailureMessage(res.message);
+          this.error.set(hint);
+          this.snackBar.open(hint, 'Close', { duration: 7000 });
+          this.loading.set(false);
+          return;
+        }
+        this.error.set(null);
         if (res.success && Array.isArray(res.data?.heatmapPct)) {
           this.stages.set(
             res.data.heatmapPct.map((r: any) => ({
@@ -82,8 +96,10 @@ export class JourneyHeatmap implements OnInit {
         }
         this.loading.set(false);
       },
-      error: (err) => {
-        this.error.set(err?.message || 'Failed to load journey analysis');
+      error: () => {
+        const hint = twitterCxReportFailureMessage();
+        this.error.set(hint);
+        this.snackBar.open(hint, 'Close', { duration: 6000 });
         this.stages.set([]);
         this.page.set(1);
         this.loading.set(false);

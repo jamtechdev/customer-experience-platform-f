@@ -1,6 +1,7 @@
 import { Injectable, inject } from '@angular/core';
-import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { HttpClient, HttpParams, HttpErrorResponse } from '@angular/common/http';
+import { Observable, of } from 'rxjs';
+import { catchError, retry, timeout } from 'rxjs/operators';
 import { 
   SentimentAnalysisResult,
   RootCauseAnalysis,
@@ -17,6 +18,8 @@ import { environment } from '../../../environments/environment';
 export class AnalysisService {
   private readonly http = inject(HttpClient);
   private readonly baseUrl = environment.apiUrl ? `${environment.apiUrl.replace(/\/$/, '')}/analysis` : '/api/analysis';
+  /** Client wait for bundled Twitter CX report (align above typical gateway limits where possible). */
+  private readonly twitterCxReportTimeoutMs = 300_000;
 
   // Sentiment Analysis - matches backend /api/analysis/sentiment
   analyzeSentiment(feedbackId: number): Observable<ApiResponse<SentimentAnalysisResult>> {
@@ -43,7 +46,28 @@ export class AnalysisService {
     if (endDate) params = params.set('endDate', endDate.toISOString());
     if (companyId != null) params = params.set('companyId', String(companyId));
     if (csvImportId != null) params = params.set('csvImportId', String(csvImportId));
-    return this.http.get<ApiResponse<TwitterCxReportDto>>(`${this.baseUrl}/twitter-cx-report`, { params });
+    return this.http.get<ApiResponse<TwitterCxReportDto>>(`${this.baseUrl}/twitter-cx-report`, { params }).pipe(
+      timeout(this.twitterCxReportTimeoutMs),
+      retry({ count: 1, delay: 2000 }),
+      catchError((err: unknown) => {
+        let message = 'network';
+        if (err instanceof HttpErrorResponse) {
+          message = `http_${err.status}`;
+        } else if (
+          err &&
+          typeof err === 'object' &&
+          'name' in err &&
+          (err as { name?: string }).name === 'TimeoutError'
+        ) {
+          message = 'timeout';
+        }
+        return of({
+          success: false,
+          data: undefined as unknown as TwitterCxReportDto,
+          message,
+        } as ApiResponse<TwitterCxReportDto>);
+      })
+    );
   }
 
   getFeedbackWithSentiment(

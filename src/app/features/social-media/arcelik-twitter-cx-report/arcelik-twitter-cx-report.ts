@@ -1,8 +1,7 @@
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { catchError, finalize } from 'rxjs/operators';
-import { of } from 'rxjs';
+import { finalize } from 'rxjs/operators';
 import { MatCardModule } from '@angular/material/card';
 import { MatTableModule } from '@angular/material/table';
 import { MatChipsModule } from '@angular/material/chips';
@@ -22,6 +21,7 @@ import {
   toIsoRangeFromYmd,
   type ReportDatePreset,
 } from '../../../core/utils/report-date-presets';
+import { twitterCxReportFailureMessage } from '../../../core/utils/twitter-cx-report-load';
 
 type SortDir = 'asc' | 'desc';
 
@@ -311,22 +311,24 @@ export class ArcelikTwitterCxReport implements OnInit {
     let start: Date | undefined;
     let end: Date | undefined;
     if (withFilters) {
-      if (!this.datesValid()) {
-        this.loading.set(false);
-        return;
+      if (this.selectedPresetId() === 'all_time') {
+        start = undefined;
+        end = undefined;
+      } else {
+        if (!this.datesValid()) {
+          this.loading.set(false);
+          return;
+        }
+        const { startDate: sd, endDate: ed } = toIsoRangeFromYmd(this.startDate()!, this.endDate()!);
+        start = new Date(sd);
+        end = new Date(ed);
       }
-      const { startDate: sd, endDate: ed } = toIsoRangeFromYmd(this.startDate()!, this.endDate()!);
-      start = new Date(sd);
-      end = new Date(ed);
     }
     const sentCo = this.sentimentCompanyId();
 
     this.analysisService
       .getTwitterCxReport(sentCo, start, end)
-      .pipe(
-        catchError(() => of({ success: false, data: null as TwitterCxReportDto | null, message: 'Network error' })),
-        finalize(() => this.loading.set(false))
-      )
+      .pipe(finalize(() => this.loading.set(false)))
       .subscribe({
         next: (res) => {
           if (res.success && res.data) {
@@ -334,8 +336,9 @@ export class ArcelikTwitterCxReport implements OnInit {
             this.loadError.set(null);
           } else {
             this.reportBundle.set(null);
-            this.loadError.set(res.message || 'Could not load Twitter CX report.');
-            this.snackBar.open(this.loadError() ?? 'Report failed', 'Close', { duration: 4000 });
+            const hint = twitterCxReportFailureMessage(res.message);
+            this.loadError.set(hint);
+            this.snackBar.open(hint, 'Close', { duration: 6000 });
           }
         },
       });

@@ -16,13 +16,8 @@ import { AuthService } from '../../../core/services/auth.service';
 import { UserRole } from '../../../core/models';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { formatApiDate, toInputDateValue } from '../../../core/utils/api-date';
-import { buildClientReportDatePresets } from '../../../core/utils/report-date-presets';
 import { OllamaLoader } from '../../../core/components/ollama-loader/ollama-loader';
-import { HttpErrorResponse } from '@angular/common/http';
-import { catchError, timeout } from 'rxjs/operators';
-import { of } from 'rxjs';
-import type { ApiResponse } from '../../../core/models';
-import type { TwitterCxReportDto } from '../../../core/models/analysis.model';
+import { twitterCxReportFailureMessage } from '../../../core/utils/twitter-cx-report-load';
 
 @Component({
   selector: 'app-action-plans',
@@ -93,39 +88,16 @@ export class ActionPlans implements OnInit {
     this.loading.set(true);
     const user = this.authService.currentUser();
     const companyId = user?.role === 'admin' ? undefined : (user?.settings?.companyId ?? 1);
-    const presets = buildClientReportDatePresets();
-    const defaultId = user?.role === 'admin' ? 'all_time' : 'last_30_days';
-    const preset = presets.find((p) => p.id === defaultId) ?? presets[0];
-    const start = new Date(preset.startDate);
-    const end = new Date(preset.endDate);
-    const reportTimeoutMs = 180_000;
-    this.analysisService
-      .getTwitterCxReport(companyId, start, end)
-      .pipe(
-        timeout(reportTimeoutMs),
-        catchError((err: unknown) => {
-          this.loading.set(false);
-          this.actionPlans.set([]);
-          this.reportPlanRows.set([]);
-          this.page.set(1);
-          let msg =
-            'Report request timed out. Try a narrower date range or retry in a moment.';
-          if (err instanceof HttpErrorResponse && (err.status === 504 || err.status === 502)) {
-            msg =
-              'The server gateway timed out (504) while building this report. Try a shorter date range, or ask your administrator to increase the reverse-proxy read timeout for the analysis API.';
-          } else if (err instanceof HttpErrorResponse && err.status >= 500) {
-            msg = 'The report service returned a server error. Please retry in a moment.';
-          }
-          this.snackBar.open(msg, 'Close', { duration: 8000 });
-          return of<ApiResponse<TwitterCxReportDto | null>>({
-            success: false,
-            data: null,
-            message: 'timeout',
-          });
-        })
-      )
-      .subscribe({
+    this.analysisService.getTwitterCxReport(companyId).subscribe({
       next: (response) => {
+        if (!response.success) {
+          this.reportPlanRows.set([]);
+          this.actionPlans.set([]);
+          this.page.set(1);
+          this.snackBar.open(twitterCxReportFailureMessage(response.message), 'Close', { duration: 8000 });
+          this.loading.set(false);
+          return;
+        }
         if (response.success && Array.isArray(response.data?.actionPlan)) {
           this.reportPlanRows.set(
             response.data.actionPlan.map((x: any) => ({
@@ -158,7 +130,7 @@ export class ActionPlans implements OnInit {
         this.actionPlans.set([]);
         this.reportPlanRows.set([]);
         this.page.set(1);
-        this.snackBar.open('Failed to load action plans', 'Close', { duration: 3000 });
+        this.snackBar.open(twitterCxReportFailureMessage(), 'Close', { duration: 6000 });
       }
     });
   }

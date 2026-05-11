@@ -1,16 +1,18 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
+import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { AnalysisService } from '../../../core/services/analysis.service';
 import { AuthService } from '../../../core/services/auth.service';
-import { buildClientReportDatePresets } from '../../../core/utils/report-date-presets';
 import { OllamaLoader } from '../../../core/components/ollama-loader/ollama-loader';
+import { twitterCxReportFailureMessage } from '../../../core/utils/twitter-cx-report-load';
 
 @Component({
   selector: 'app-methodology',
   imports: [
     CommonModule,
     MatCardModule,
+    MatSnackBarModule,
     OllamaLoader
   ],
   templateUrl: './methodology.html',
@@ -19,6 +21,7 @@ import { OllamaLoader } from '../../../core/components/ollama-loader/ollama-load
 export class Methodology implements OnInit {
   private analysisService = inject(AnalysisService);
   private authService = inject(AuthService);
+  private snackBar = inject(MatSnackBar);
 
   loading = signal(false);
   bullets = signal<string[]>([]);
@@ -26,18 +29,21 @@ export class Methodology implements OnInit {
   ngOnInit(): void {
     const user = this.authService.currentUser();
     const companyId = user?.role === 'admin' ? undefined : (user?.settings?.companyId ?? 1);
-    const presets = buildClientReportDatePresets();
-    const defaultId = user?.role === 'admin' ? 'all_time' : 'last_30_days';
-    const preset = presets.find((p) => p.id === defaultId) ?? presets[0];
     this.loading.set(true);
-    this.analysisService.getTwitterCxReport(companyId, new Date(preset.startDate), new Date(preset.endDate)).subscribe({
+    this.analysisService.getTwitterCxReport(companyId).subscribe({
       next: (res) => {
-        this.bullets.set((res.success && res.data?.scopeAndMethodBullets) ? res.data.scopeAndMethodBullets : []);
+        if (!res.success) {
+          this.bullets.set([]);
+          this.snackBar.open(twitterCxReportFailureMessage(res.message), 'Close', { duration: 7000 });
+        } else {
+          this.bullets.set(res.data?.scopeAndMethodBullets ? res.data.scopeAndMethodBullets : []);
+        }
         this.loading.set(false);
       },
       error: () => {
         this.bullets.set([]);
         this.loading.set(false);
+        this.snackBar.open(twitterCxReportFailureMessage(), 'Close', { duration: 6000 });
       },
     });
   }

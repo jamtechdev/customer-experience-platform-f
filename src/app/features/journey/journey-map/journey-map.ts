@@ -9,8 +9,8 @@ import { MatTableModule } from '@angular/material/table';
 import { AnalysisService } from '../../../core/services/analysis.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
-import { buildClientReportDatePresets } from '../../../core/utils/report-date-presets';
 import { OllamaLoader } from '../../../core/components/ollama-loader/ollama-loader';
+import { twitterCxReportFailureMessage } from '../../../core/utils/twitter-cx-report-load';
 
 interface JourneyStage {
   id: number;
@@ -71,13 +71,15 @@ export class JourneyMap implements OnInit {
     this.loading.set(true);
     const user = this.authService.currentUser();
     const companyId = user?.role === 'admin' ? undefined : (user?.settings?.companyId ?? 1);
-    const presets = buildClientReportDatePresets();
-    const defaultId = user?.role === 'admin' ? 'all_time' : 'last_30_days';
-    const preset = presets.find((p) => p.id === defaultId) ?? presets[0];
-    const start = new Date(preset.startDate);
-    const end = new Date(preset.endDate);
-    this.analysisService.getTwitterCxReport(companyId, start, end).subscribe({
+    this.analysisService.getTwitterCxReport(companyId).subscribe({
       next: (response) => {
+        if (!response.success) {
+          this.journeyStages.set([]);
+          this.page.set(1);
+          this.snackBar.open(twitterCxReportFailureMessage(response.message), 'Close', { duration: 7000 });
+          this.loading.set(false);
+          return;
+        }
         try {
           if (response.success && response.data?.journeyRows) {
             const rows = response.data.journeyRows;
@@ -103,7 +105,7 @@ export class JourneyMap implements OnInit {
       },
       error: () => {
         this.loading.set(false);
-        this.snackBar.open('Failed to load journey data', 'Close', { duration: 3000 });
+        this.snackBar.open(twitterCxReportFailureMessage(), 'Close', { duration: 6000 });
         this.journeyStages.set([]);
         this.page.set(1);
       }

@@ -2,10 +2,11 @@ import { Component, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
 import { MatTableModule } from '@angular/material/table';
+import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { AnalysisService } from '../../../core/services/analysis.service';
 import { AuthService } from '../../../core/services/auth.service';
-import { buildClientReportDatePresets } from '../../../core/utils/report-date-presets';
 import { OllamaLoader } from '../../../core/components/ollama-loader/ollama-loader';
+import { twitterCxReportFailureMessage } from '../../../core/utils/twitter-cx-report-load';
 
 interface DatasetProfileRow {
   metric: string;
@@ -16,13 +17,14 @@ interface DatasetProfileRow {
 @Component({
   selector: 'app-dataset-profile',
   standalone: true,
-  imports: [CommonModule, MatCardModule, MatTableModule, OllamaLoader],
+  imports: [CommonModule, MatCardModule, MatTableModule, MatSnackBarModule, OllamaLoader],
   templateUrl: './dataset-profile.html',
   styleUrl: './dataset-profile.css',
 })
 export class DatasetProfile implements OnInit {
   private analysisService = inject(AnalysisService);
   private authService = inject(AuthService);
+  private snackBar = inject(MatSnackBar);
 
   readonly displayedColumns = ['metric', 'value', 'comment'];
   loading = signal(false);
@@ -32,18 +34,21 @@ export class DatasetProfile implements OnInit {
   ngOnInit(): void {
     const user = this.authService.currentUser();
     const companyId = user?.role === 'admin' ? undefined : (user?.settings?.companyId ?? 1);
-    const presets = buildClientReportDatePresets();
-    const defaultId = user?.role === 'admin' ? 'all_time' : 'last_30_days';
-    const preset = presets.find((p) => p.id === defaultId) ?? presets[0];
     this.loading.set(true);
-    this.analysisService.getTwitterCxReport(companyId, new Date(preset.startDate), new Date(preset.endDate)).subscribe({
+    this.analysisService.getTwitterCxReport(companyId).subscribe({
       next: (res) => {
-        this.rows.set((res.success && res.data?.datasetProfileRows) ? res.data.datasetProfileRows : []);
+        if (!res.success) {
+          this.rows.set([]);
+          this.snackBar.open(twitterCxReportFailureMessage(res.message), 'Close', { duration: 7000 });
+        } else {
+          this.rows.set(res.data?.datasetProfileRows ? res.data.datasetProfileRows : []);
+        }
         this.loading.set(false);
       },
       error: () => {
         this.rows.set([]);
         this.loading.set(false);
+        this.snackBar.open(twitterCxReportFailureMessage(), 'Close', { duration: 6000 });
       },
     });
   }
