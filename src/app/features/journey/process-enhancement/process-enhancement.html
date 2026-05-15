@@ -10,13 +10,23 @@
   <mat-card class="section-card">
     <mat-card-header>
       <mat-card-title>Process improvements</mat-card-title>
+      <mat-card-subtitle>AI-written recommendations grounded in brand-relevant feedback (Ollama)</mat-card-subtitle>
     </mat-card-header>
     <mat-card-content>
-      <p *ngIf="loading()" class="muted">Loading process insights...</p>
       <ul class="list" *ngIf="processImprovements().length > 0">
-        <li *ngFor="let line of processImprovements()">{{ line }}</li>
+        <li *ngFor="let row of processImprovements()" class="improvement-row">
+          <span>{{ row.text }}</span>
+          <button
+            *ngIf="row.referenceFeedbackIds.length"
+            mat-stroked-button
+            type="button"
+            class="ref-btn"
+            (click)="openReferences(row)">
+            View references ({{ row.referenceFeedbackIds.length }})
+          </button>
+        </li>
       </ul>
-      <p *ngIf="!loading() && processImprovements().length === 0" class="muted empty-hint">
+      <p *ngIf="processImprovements().length === 0" class="muted empty-hint">
         No process improvement lines for this date range. Widen the filter, re-import feedback, or run analysis again so the report can populate this section.
       </p>
     </mat-card-content>
@@ -30,10 +40,29 @@
       <ul class="list" *ngIf="managementTakeaways().length > 0">
         <li *ngFor="let line of managementTakeaways()">{{ line }}</li>
       </ul>
-      <p *ngIf="!loading() && managementTakeaways().length === 0" class="muted empty-hint">
+      <p *ngIf="managementTakeaways().length === 0" class="muted empty-hint">
         No management takeaways for this date range yet. Once the Twitter CX report returns data, bullets will appear here.
       </p>
     </mat-card-content>
   </mat-card>
+  </div>
+
+  <div
+    class="reference-overlay"
+    *ngIf="drilldownOpen()"
+    (click)="closeDrilldown()"
+    role="dialog"
+    aria-modal="true">
+    <div class="reference-modal" (click)="$event.stopPropagation()">
+      <h3>{{ drilldownTitle() }}</h3>
+      <p *ngIf="drilldownLoading()" class="muted">Loading reference tweets…</p>
+      <ul *ngIf="!drilldownLoading() && drilldownRows().length">
+        <li *ngFor="let r of drilldownRows()">
+          <pre class="reference-text">{{ r.content }}</pre>
+          <span class="meta" *ngIf="r.author">{{ r.author }} · {{ r.date | date:'short' }}</span>
+        </li>
+      </ul>
+      <button mat-stroked-button type="button" (click)="closeDrilldown()">Close</button>
+    </div>
   </div>
 </div>

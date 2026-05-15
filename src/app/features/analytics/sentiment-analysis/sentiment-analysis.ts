@@ -111,7 +111,13 @@ export class SentimentAnalysis implements OnInit, OnDestroy {
   filterIsRelevant = signal<string>('');
   filterSearch = signal<string>('');
   referenceOpen = signal(false);
-  referenceRow = signal<{ content: string; referenceContent?: string; journeyStage?: string } | null>(null);
+  referenceRow = signal<{
+    content: string;
+    referenceContent?: string;
+    journeyStage?: string;
+    relevanceReason?: string;
+    isRelevant?: boolean;
+  } | null>(null);
 
   presets = signal<ReportDatePreset[]>([]);
   selectedPresetId = signal<string>(NO_DATE_FILTER_PRESET_ID);
@@ -344,6 +350,8 @@ export class SentimentAnalysis implements OnInit, OnDestroy {
     content: string;
     referenceContent?: string;
     journeyStage?: string;
+    relevanceReason?: string;
+    isRelevant?: boolean;
   }): void {
     this.referenceRow.set(row);
     this.referenceOpen.set(true);

@@ -242,6 +242,10 @@
     <div class="reference-modal" (click)="$event.stopPropagation()">
       <h3>Reference data</h3>
       <p *ngIf="referenceRow()?.journeyStage"><strong>Journey stage:</strong> {{ referenceRow()?.journeyStage }}</p>
+      <p *ngIf="referenceRow()?.isRelevant !== undefined"><strong>Brand-relevant:</strong> {{ referenceRow()?.isRelevant === false ? 'No' : 'Yes' }}</p>
+      <p *ngIf="referenceRow()?.relevanceReason"><strong>Why:</strong> {{ referenceRow()?.relevanceReason }}</p>
+      <p><strong>AI summary:</strong> {{ referenceRow()?.content }}</p>
+      <p><strong>Source tweet:</strong></p>
       <pre class="reference-text">{{ referenceRow()?.referenceContent || referenceRow()?.content }}</pre>
       <button mat-stroked-button type="button" (click)="closeReference()">Close</button>
     </div>
