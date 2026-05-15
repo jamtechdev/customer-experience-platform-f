@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams, HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { Observable, of, timer, defer, EMPTY } from 'rxjs';
-import { catchError, filter, switchMap, take, timeout, expand, mergeMap, delay } from 'rxjs/operators';
+import { Observable, of, timer, defer, EMPTY, throwError } from 'rxjs';
+import { catchError, filter, switchMap, take, timeout, expand, mergeMap, delay, retry } from 'rxjs/operators';
 import {
   SentimentAnalysisResult,
   RootCauseAnalysis,
@@ -254,7 +254,19 @@ export class AnalysisService {
     let params = new HttpParams().set('companyId', companyId.toString());
     if (startDate) params = params.set('startDate', startDate.toISOString());
     if (endDate) params = params.set('endDate', endDate.toISOString());
-    return this.http.get<ApiResponse<any>>(`${this.baseUrl}/competitor`, { params });
+    return this.http.get<ApiResponse<any>>(`${this.baseUrl}/competitor`, { params }).pipe(
+      timeout(120_000),
+      retry({
+        count: 1,
+        delay: (err: unknown) => {
+          const status = err instanceof HttpErrorResponse ? err.status : 0;
+          if (status === 504 || status === 503) {
+            return timer(2500);
+          }
+          return throwError(() => err);
+        },
+      })
+    );
   }
 
   createCompetitor(name: string): Observable<ApiResponse<{ id: number; name: string; companyId: number }>> {
