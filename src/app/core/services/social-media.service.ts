@@ -49,25 +49,13 @@ export class SocialMediaService {
     return this.http.get<ApiResponse<Methodology>>(`${this.baseUrl}/methodology`);
   }
 
-  getVolume(
-    companyId: number,
-    startDate?: Date,
-    endDate?: Date
-  ): Observable<ApiResponse<VolumeAnalysis>> {
-    let params = new HttpParams().set('companyId', companyId.toString());
-    if (startDate) params = params.set('startDate', startDate.toISOString());
-    if (endDate) params = params.set('endDate', endDate.toISOString());
+  getVolume(companyId: number): Observable<ApiResponse<VolumeAnalysis>> {
+    const params = new HttpParams().set('companyId', companyId.toString());
     return this.http.get<ApiResponse<VolumeAnalysis>>(`${this.baseUrl}/volume`, { params });
   }
 
-  getSentimentDistribution(
-    companyId: number,
-    startDate?: Date,
-    endDate?: Date
-  ): Observable<ApiResponse<SentimentDistribution>> {
-    let params = new HttpParams().set('companyId', companyId.toString());
-    if (startDate) params = params.set('startDate', startDate.toISOString());
-    if (endDate) params = params.set('endDate', endDate.toISOString());
+  getSentimentDistribution(companyId: number): Observable<ApiResponse<SentimentDistribution>> {
+    const params = new HttpParams().set('companyId', companyId.toString());
     return this.http.get<ApiResponse<SentimentDistribution>>(`${this.baseUrl}/sentiment-distribution`, { params });
   }
 }

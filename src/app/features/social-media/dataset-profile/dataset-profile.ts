@@ -3,9 +3,9 @@ import { CommonModule } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
 import { MatTableModule } from '@angular/material/table';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
-import { AnalysisService } from '../../../core/services/analysis.service';
+import { TwitterCxReportStore } from '../../../core/services/twitter-cx-report.store';
 import { AuthService } from '../../../core/services/auth.service';
-import { OllamaLoader } from '../../../core/components/ollama-loader/ollama-loader';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { twitterCxReportFailureMessage } from '../../../core/utils/twitter-cx-report-load';
 
 interface DatasetProfileRow {
@@ -17,12 +17,12 @@ interface DatasetProfileRow {
 @Component({
   selector: 'app-dataset-profile',
   standalone: true,
-  imports: [CommonModule, MatCardModule, MatTableModule, MatSnackBarModule, OllamaLoader],
+  imports: [CommonModule, MatCardModule, MatTableModule, MatSnackBarModule, MatProgressSpinnerModule],
   templateUrl: './dataset-profile.html',
   styleUrl: './dataset-profile.css',
 })
 export class DatasetProfile implements OnInit {
-  private analysisService = inject(AnalysisService);
+  private twitterCxReportStore = inject(TwitterCxReportStore);
   private authService = inject(AuthService);
   private snackBar = inject(MatSnackBar);
 
@@ -35,7 +35,7 @@ export class DatasetProfile implements OnInit {
     const user = this.authService.currentUser();
     const companyId = user?.role === 'admin' ? undefined : (user?.settings?.companyId ?? 1);
     this.loading.set(true);
-    this.analysisService.getTwitterCxReport(companyId).subscribe({
+    this.twitterCxReportStore.loadTwitterCxReport(companyId).subscribe({
       next: (res) => {
         if (!res.success) {
           this.rows.set([]);

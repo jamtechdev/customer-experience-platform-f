@@ -2,7 +2,7 @@ import { Component, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
-import { AnalysisService } from '../../../core/services/analysis.service';
+import { TwitterCxReportStore } from '../../../core/services/twitter-cx-report.store';
 import { AuthService } from '../../../core/services/auth.service';
 import { OllamaLoader } from '../../../core/components/ollama-loader/ollama-loader';
 import { twitterCxReportFailureMessage } from '../../../core/utils/twitter-cx-report-load';
@@ -19,7 +19,7 @@ import { twitterCxReportFailureMessage } from '../../../core/utils/twitter-cx-re
   styleUrl: './methodology.css',
 })
 export class Methodology implements OnInit {
-  private analysisService = inject(AnalysisService);
+  private twitterCxReportStore = inject(TwitterCxReportStore);
   private authService = inject(AuthService);
   private snackBar = inject(MatSnackBar);
 
@@ -30,7 +30,7 @@ export class Methodology implements OnInit {
     const user = this.authService.currentUser();
     const companyId = user?.role === 'admin' ? undefined : (user?.settings?.companyId ?? 1);
     this.loading.set(true);
-    this.analysisService.getTwitterCxReport(companyId).subscribe({
+    this.twitterCxReportStore.loadTwitterCxReport(companyId).subscribe({
       next: (res) => {
         if (!res.success) {
           this.bullets.set([]);

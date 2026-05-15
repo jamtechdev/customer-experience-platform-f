@@ -263,10 +263,12 @@ export interface TwitterCxReportDto {
   heatmapPct: Array<{ stage: string; positive: number; neutral: number; negative: number; total: number }>;
   heatmapFigureCaption: string;
   touchpoints: Array<{ name: string; volume: number; observation: string }>;
-  rootCauses: Array<{ cause: string; count: number; interpretation: string }>;
-  journeyRows: Array<{ stage: string; satisfaction: string; dissatisfaction: string }>;
+  rootCauses: Array<{ cause: string; count: number; interpretation: string; feedbackIds?: number[] }>;
+  journeyRows: Array<{ stage: string; satisfaction: string; dissatisfaction: string; feedbackCount?: number }>;
   actionPlan: Array<{ priority: string; action: string; owner: string; impact: string; horizon: string }>;
   processImprovements: string[];
   managementTakeaways: string[];
   cohortTagsUsed: boolean;
+  /** Present when served from snapshot / live rebuild path (UI may ignore). */
+  _snapshotMeta?: { fromCache?: boolean; stale?: boolean; rebuilding?: boolean; live?: boolean; fallback?: boolean; persisted?: boolean };
 }

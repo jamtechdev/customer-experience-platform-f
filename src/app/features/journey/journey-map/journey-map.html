@@ -6,13 +6,13 @@
 
   <div *ngIf="loading()" class="loading-container">
     <app-ollama-loader
-      [title]="'Ollama AI is generating journey insights'"
-      [subtitle]="'Analyzing touchpoints, root causes, and journey-stage patterns from uploaded feedback'">
+      title="Preparing your saved CX report"
+      subtitle="Reading journey stages from the database. First load after import may take a few minutes while the batch job runs.">
     </app-ollama-loader>
   </div>
 
   <div *ngIf="!loading() && journeyStages().length === 0" class="empty-hint">
-    No journey map data. Configure journey stages in Admin, ensure CSV mapping creates touchpoints, then run analysis.
+    No journey map data yet. Import CSV feedback with sentiment labels, wait for the post-import report build, or trigger rebuild from Import history.
   </div>
 
   <div *ngIf="!loading() && journeyStages().length > 0" class="journey-stages">

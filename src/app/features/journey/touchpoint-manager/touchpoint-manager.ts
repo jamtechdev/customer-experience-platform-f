@@ -10,7 +10,7 @@ import { MatChipsModule } from '@angular/material/chips';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { TouchpointService, Touchpoint } from '../../../core/services/touchpoint.service';
-import { AnalysisService } from '../../../core/services/analysis.service';
+import { TwitterCxReportStore } from '../../../core/services/twitter-cx-report.store';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { AuthService } from '../../../core/services/auth.service';
 import { OllamaLoader } from '../../../core/components/ollama-loader/ollama-loader';
@@ -37,7 +37,7 @@ import { twitterCxReportFailureMessage } from '../../../core/utils/twitter-cx-re
 })
 export class TouchpointManager implements OnInit {
   private touchpointService = inject(TouchpointService);
-  private analysisService = inject(AnalysisService);
+  private twitterCxReportStore = inject(TwitterCxReportStore);
   private authService = inject(AuthService);
   private fb = inject(FormBuilder);
   private snackBar = inject(MatSnackBar);
@@ -85,7 +85,7 @@ export class TouchpointManager implements OnInit {
     this.loading.set(true);
     const user = this.authService.currentUser();
     const companyId = user?.role === 'admin' ? undefined : (user?.settings?.companyId ?? 1);
-    this.analysisService.getTwitterCxReport(companyId).subscribe({
+    this.twitterCxReportStore.loadTwitterCxReport(companyId).subscribe({
       next: (response) => {
         if (!response.success) {
           this.touchpoints.set([]);

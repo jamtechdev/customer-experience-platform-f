@@ -11,7 +11,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { ActionPlanService, ActionPlanItem } from '../../../core/services/action-plan.service';
-import { AnalysisService } from '../../../core/services/analysis.service';
+import { TwitterCxReportStore } from '../../../core/services/twitter-cx-report.store';
 import { AuthService } from '../../../core/services/auth.service';
 import { UserRole } from '../../../core/models';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
@@ -41,7 +41,7 @@ import { twitterCxReportFailureMessage } from '../../../core/utils/twitter-cx-re
 })
 export class ActionPlans implements OnInit {
   private actionPlanService = inject(ActionPlanService);
-  private analysisService = inject(AnalysisService);
+  private twitterCxReportStore = inject(TwitterCxReportStore);
   private authService = inject(AuthService);
   private fb = inject(FormBuilder);
   private snackBar = inject(MatSnackBar);
@@ -88,7 +88,7 @@ export class ActionPlans implements OnInit {
     this.loading.set(true);
     const user = this.authService.currentUser();
     const companyId = user?.role === 'admin' ? undefined : (user?.settings?.companyId ?? 1);
-    this.analysisService.getTwitterCxReport(companyId).subscribe({
+    this.twitterCxReportStore.loadTwitterCxReport(companyId).subscribe({
       next: (response) => {
         if (!response.success) {
           this.reportPlanRows.set([]);

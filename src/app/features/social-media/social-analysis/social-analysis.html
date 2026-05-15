@@ -14,10 +14,8 @@
   </div>
 
   <div *ngIf="loading()" class="loading-container">
-    <app-ollama-loader
-      [title]="'Ollama AI is analyzing social media signals'"
-      [subtitle]="'Combining platform volume, sentiment patterns, and narrative insights from imported data'">
-    </app-ollama-loader>
+    <mat-progress-spinner mode="indeterminate" diameter="48"></mat-progress-spinner>
+    <p class="loading-caption">Loading saved volume and sentiment metrics from the database…</p>
   </div>
 
   <div *ngIf="!loading()" class="content-section">

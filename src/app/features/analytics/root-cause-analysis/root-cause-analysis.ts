@@ -29,13 +29,16 @@ interface RootCause {
   severity: number;
   frequency: number;
   description: string;
+  feedbackIds: number[];
   structuredInsights?: RootCauseStructuredInsights | null;
 }
 
 interface RootCauseChartRow {
+  id?: number;
   cause: string;
   count: number;
   interpretation: string;
+  feedbackIds: number[];
 }
 
 @Component({
@@ -67,18 +70,28 @@ export class RootCauseAnalysis implements OnInit, OnDestroy {
   reanalyzing = signal(false);
   rootCauses = signal<RootCause[]>([]);
   selectedCause = signal<RootCause | null>(null);
+  drilldownOpen = signal(false);
+  drilldownLoading = signal(false);
+  drilldownTitle = signal('');
+  drilldownRows = signal<
+    Array<{ id: number; content: string; source: string; date: string; author?: string; sentiment: string; score: number }>
+  >([]);
   displayedColumns: string[] = ['title', 'category', 'priority', 'frequency', 'severity', 'actions'];
   pageSize = 10;
   pageIndex = 0;
   totalItems = 0;
-  private autoAnalyzeTriggered = false;
+  emptyHint = signal<string | null>(null);
 
   ngOnInit(): void {
     this.loadRootCauses();
     this.importStatusSub = this.websocket.onCSVImportStatus().subscribe((payload: CSVImportStatusEvent) => {
       if (payload?.status === 'completed') {
-        this.autoAnalyzeTriggered = false;
-        this.tryAutoAnalyzeAfterImport();
+        this.loadRootCauses();
+        this.snackBar.open(
+          'Import finished. Root causes are updated in the background—click Re-run analysis if the list is still empty.',
+          'Close',
+          { duration: 6000 }
+        );
       }
     });
   }
@@ -109,23 +122,6 @@ export class RootCauseAnalysis implements OnInit, OnDestroy {
     });
   }
 
-  private tryAutoAnalyzeAfterImport(): void {
-    if (this.reanalyzing()) return;
-    const user = this.authService.currentUser();
-    const companyId = user?.settings?.companyId || 1;
-    this.reanalyzing.set(true);
-    this.analysisService.analyzeRootCauses(companyId, 50).subscribe({
-      next: () => {
-        this.reanalyzing.set(false);
-        this.loadRootCauses();
-      },
-      error: () => {
-        this.reanalyzing.set(false);
-        this.loadRootCauses();
-      },
-    });
-  }
-
   loadRootCauses(): void {
     this.loading.set(true);
     const user = this.authService.currentUser();
@@ -141,6 +137,11 @@ export class RootCauseAnalysis implements OnInit, OnDestroy {
             severity: typeof item.severity === 'number' ? item.severity : 0,
             frequency: typeof item.frequency === 'number' ? item.frequency : 0,
             description: typeof item.description === 'string' ? item.description : '',
+            feedbackIds: Array.isArray(item.feedbackIds)
+              ? (item.feedbackIds as unknown[])
+                  .map((x) => Number(x))
+                  .filter((n) => Number.isFinite(n) && n > 0)
+              : [],
             structuredInsights:
               item.structuredInsights && typeof item.structuredInsights === 'object'
                 ? item.structuredInsights
@@ -148,19 +149,15 @@ export class RootCauseAnalysis implements OnInit, OnDestroy {
           }));
           this.rootCauses.set(mapped);
           this.totalItems = mapped.length;
-          if (mapped.length === 0 && !this.autoAnalyzeTriggered) {
-            this.autoAnalyzeTriggered = true;
-            this.tryAutoAnalyzeAfterImport();
-            return;
-          }
+          this.emptyHint.set(
+            mapped.length === 0
+              ? 'No root causes yet. They are created after CSV import (batch). Use Re-run analysis to refresh.'
+              : null
+          );
         } else {
           this.rootCauses.set([]);
           this.totalItems = 0;
-          if (!this.autoAnalyzeTriggered) {
-            this.autoAnalyzeTriggered = true;
-            this.tryAutoAnalyzeAfterImport();
-            return;
-          }
+          this.emptyHint.set('No root causes yet. Run analysis after importing feedback, or click Re-run analysis.');
         }
         this.loading.set(false);
       },
@@ -189,6 +186,15 @@ export class RootCauseAnalysis implements OnInit, OnDestroy {
     this.selectedCause.set(cause);
   }
 
+  viewCauseRecords(cause: RootCause): void {
+    this.openRelatedRecords({
+      cause: this.painPointTitle(cause),
+      count: cause.frequency || 0,
+      interpretation: this.painPointSummary(cause),
+      feedbackIds: cause.feedbackIds || [],
+    });
+  }
+
   closeRootCauseModal(): void {
     this.selectedCause.set(null);
   }
@@ -211,9 +217,11 @@ export class RootCauseAnalysis implements OnInit, OnDestroy {
   rootCauseRows(): RootCauseChartRow[] {
     return this.rootCauses()
       .map((c) => ({
+        id: c.id,
         cause: this.painPointTitle(c),
         count: c.frequency || 0,
         interpretation: this.painPointSummary(c),
+        feedbackIds: c.feedbackIds?.length ? c.feedbackIds : [],
       }))
       .sort((a, b) => b.count - a.count)
       .slice(0, 12);
@@ -247,6 +255,70 @@ export class RootCauseAnalysis implements OnInit, OnDestroy {
 
   painPointExamples(cause: RootCause): string[] {
     return (cause.structuredInsights?.examples || []).filter((x) => !!x?.trim()).slice(0, 3);
+  }
+
+  closeDrilldown(): void {
+    this.drilldownOpen.set(false);
+    this.drilldownRows.set([]);
+    this.drilldownTitle.set('');
+  }
+
+  relinkRecords(row: RootCauseChartRow, causeId?: number): void {
+    const user = this.authService.currentUser();
+    const companyId = user?.settings?.companyId || 1;
+    const id = causeId ?? row.id ?? this.rootCauses().find((c) => this.painPointTitle(c) === row.cause)?.id;
+    if (!id) {
+      this.snackBar.open('Cannot re-link: root cause id missing.', 'Close', { duration: 4000 });
+      return;
+    }
+    this.analysisService.relinkRootCause(id, companyId).subscribe({
+      next: (res) => {
+        if (res.success) {
+          this.snackBar.open('Records re-linked. Opening list…', 'Close', { duration: 3000 });
+          this.loadRootCauses();
+          const data = res.data as unknown as { feedbackIds?: number[] };
+          const ids = Array.isArray(data?.feedbackIds) ? data.feedbackIds : row.feedbackIds;
+          this.openRelatedRecords({ ...row, feedbackIds: ids });
+        } else {
+          this.snackBar.open(res.message || 'Re-link failed', 'Close', { duration: 4000 });
+        }
+      },
+      error: () => this.snackBar.open('Re-link request failed', 'Close', { duration: 4000 }),
+    });
+  }
+
+  openRelatedRecords(row: RootCauseChartRow): void {
+    if (!row.feedbackIds?.length) {
+      this.snackBar.open('No linked records. Try Re-link records.', 'Close', { duration: 3500 });
+      return;
+    }
+    this.drilldownTitle.set(row.cause);
+    this.drilldownOpen.set(true);
+    this.drilldownLoading.set(true);
+    this.drilldownRows.set([]);
+    const user = this.authService.currentUser();
+    const companyId = user?.role === 'admin' ? undefined : (user?.settings?.companyId || 1);
+    this.analysisService.getFeedbackByIds(companyId, row.feedbackIds).subscribe({
+      next: (res) => {
+        this.drilldownLoading.set(false);
+        if (res.success && Array.isArray(res.data?.list)) {
+          this.drilldownRows.set(res.data.list);
+        } else {
+          this.snackBar.open(res.message || 'Could not load related records', 'Close', { duration: 5000 });
+          this.closeDrilldown();
+        }
+      },
+      error: () => {
+        this.drilldownLoading.set(false);
+        this.snackBar.open('Could not load related records', 'Close', { duration: 4000 });
+        this.closeDrilldown();
+      },
+    });
+  }
+
+  formatFeedbackDate(iso: string): string {
+    const d = new Date(iso);
+    return Number.isNaN(d.getTime()) ? iso : d.toLocaleString();
   }
 
   private compactText(text: string, max: number): string {

@@ -12,15 +12,12 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
-import { AnalysisService } from '../../../core/services/analysis.service';
+import { TwitterCxReportStore } from '../../../core/services/twitter-cx-report.store';
 import { AuthService } from '../../../core/services/auth.service';
 import { ReportService } from '../../../core/services/report.service';
+import { AnalysisService } from '../../../core/services/analysis.service';
 import type { TwitterCxReportDto } from '../../../core/models/analysis.model';
-import {
-  buildClientReportDatePresets,
-  toIsoRangeFromYmd,
-  type ReportDatePreset,
-} from '../../../core/utils/report-date-presets';
+import { buildClientReportDatePresets, type ReportDatePreset } from '../../../core/utils/report-date-presets';
 import { twitterCxReportFailureMessage } from '../../../core/utils/twitter-cx-report-load';
 
 type SortDir = 'asc' | 'desc';
@@ -36,6 +33,7 @@ interface RootCauseRow {
   cause: string;
   count: number;
   interpretation: string;
+  feedbackIds: number[];
 }
 
 interface JourneyRow {
@@ -87,14 +85,23 @@ interface ActionPlanRow {
   styleUrl: './arcelik-twitter-cx-report.css',
 })
 export class ArcelikTwitterCxReport implements OnInit {
-  private analysisService = inject(AnalysisService);
+  private twitterCxReportStore = inject(TwitterCxReportStore);
   private authService = inject(AuthService);
   private reportService = inject(ReportService);
+  private analysisService = inject(AnalysisService);
   private snackBar = inject(MatSnackBar);
 
   loading = signal(false);
+  loadingMessage = signal<string>('Computing report…');
   loadError = signal<string | null>(null);
   reportBundle = signal<TwitterCxReportDto | null>(null);
+
+  drilldownOpen = signal(false);
+  drilldownLoading = signal(false);
+  drilldownTitle = signal('');
+  drilldownRows = signal<
+    Array<{ id: number; content: string; source: string; date: string; author?: string; sentiment: string; score: number }>
+  >([]);
 
   presets = signal<ReportDatePreset[]>([]);
   selectedPresetId = signal<string>('last_30_days');
@@ -176,7 +183,16 @@ export class ArcelikTwitterCxReport implements OnInit {
 
   touchpointsEffective = computed((): TouchRow[] => this.reportBundle()?.touchpoints ?? []);
 
-  rootCausesEffective = computed((): RootCauseRow[] => this.reportBundle()?.rootCauses ?? []);
+  rootCausesEffective = computed((): RootCauseRow[] =>
+    (this.reportBundle()?.rootCauses ?? []).map((r) => ({
+      cause: typeof r.cause === 'string' ? r.cause : '',
+      count: typeof r.count === 'number' ? r.count : 0,
+      interpretation: typeof r.interpretation === 'string' ? r.interpretation : '',
+      feedbackIds: Array.isArray(r.feedbackIds)
+        ? (r.feedbackIds as unknown[]).map((x) => Number(x)).filter((n) => Number.isFinite(n) && n > 0)
+        : [],
+    }))
+  );
 
   actionPlanDisplay = computed((): ActionPlanRow[] => this.reportBundle()?.actionPlan ?? []);
 
@@ -305,30 +321,28 @@ export class ArcelikTwitterCxReport implements OnInit {
     return user?.settings?.companyId ?? 1;
   }
 
-  reload(withFilters: boolean = this.filtersApplied()): void {
+  reload(_withFilters: boolean = this.filtersApplied()): void {
     this.loading.set(true);
+    this.loadingMessage.set('Checking for cached report…');
     this.loadError.set(null);
-    let start: Date | undefined;
-    let end: Date | undefined;
-    if (withFilters) {
-      if (this.selectedPresetId() === 'all_time') {
-        start = undefined;
-        end = undefined;
-      } else {
-        if (!this.datesValid()) {
-          this.loading.set(false);
-          return;
-        }
-        const { startDate: sd, endDate: ed } = toIsoRangeFromYmd(this.startDate()!, this.endDate()!);
-        start = new Date(sd);
-        end = new Date(ed);
-      }
-    }
     const sentCo = this.sentimentCompanyId();
 
-    this.analysisService
-      .getTwitterCxReport(sentCo, start, end)
-      .pipe(finalize(() => this.loading.set(false)))
+    // After 3 s switch message to let user know a longer build may be running
+    const msgTimer = setTimeout(() => {
+      if (this.loading()) {
+        this.loadingMessage.set('Building report in the background — this may take 30–60 s on first load…');
+      }
+    }, 3000);
+
+    this.twitterCxReportStore
+      .loadTwitterCxReport(sentCo)
+      .pipe(
+        finalize(() => {
+          clearTimeout(msgTimer);
+          this.loading.set(false);
+          this.loadingMessage.set('Computing report…');
+        })
+      )
       .subscribe({
         next: (res) => {
           if (res.success && res.data) {
@@ -392,5 +406,45 @@ export class ArcelikTwitterCxReport implements OnInit {
     }
     this.touchSortField.set(field);
     this.touchSortDir.set(field === 'volume' ? 'desc' : 'asc');
+  }
+
+  closeDrilldown(): void {
+    this.drilldownOpen.set(false);
+    this.drilldownRows.set([]);
+    this.drilldownTitle.set('');
+  }
+
+  openRelatedRecords(row: RootCauseRow): void {
+    if (!row.feedbackIds?.length) {
+      this.snackBar.open('No linked feedback records for this theme.', 'Close', { duration: 3500 });
+      return;
+    }
+    this.drilldownTitle.set(row.cause);
+    this.drilldownOpen.set(true);
+    this.drilldownLoading.set(true);
+    this.drilldownRows.set([]);
+    const user = this.authService.currentUser();
+    const companyId = user?.role === 'admin' ? undefined : (user?.settings?.companyId ?? 1);
+    this.analysisService.getFeedbackByIds(companyId, row.feedbackIds).subscribe({
+      next: (res) => {
+        this.drilldownLoading.set(false);
+        if (res.success && Array.isArray(res.data?.list)) {
+          this.drilldownRows.set(res.data.list);
+        } else {
+          this.snackBar.open(res.message || 'Could not load related records', 'Close', { duration: 5000 });
+          this.closeDrilldown();
+        }
+      },
+      error: () => {
+        this.drilldownLoading.set(false);
+        this.snackBar.open('Could not load related records', 'Close', { duration: 4000 });
+        this.closeDrilldown();
+      },
+    });
+  }
+
+  formatFeedbackDate(iso: string): string {
+    const d = new Date(iso);
+    return Number.isNaN(d.getTime()) ? iso : d.toLocaleString();
   }
 }

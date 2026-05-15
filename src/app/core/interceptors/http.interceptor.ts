@@ -39,11 +39,16 @@ function shouldSuppressErrorToast(req: HttpRequest<unknown>): boolean {
   return false;
 }
 
+function isHtmlErrorBody(text: string): boolean {
+  const t = text.trim().toLowerCase();
+  return t.startsWith('<!doctype') || t.startsWith('<html') || t.includes('<title>504') || t.includes('gateway time-out');
+}
+
 function extractBodyMessage(error: HttpErrorResponse): string {
   let errorMessage = 'An error occurred';
   if (error.error) {
     if (typeof error.error === 'string') {
-      errorMessage = error.error;
+      errorMessage = isHtmlErrorBody(error.error) ? '' : error.error;
     } else if ((error.error as { message?: string }).message) {
       errorMessage = (error.error as { message: string }).message;
     } else if ((error.error as { error?: string }).error) {
@@ -87,6 +92,25 @@ function normalizeHttpErrorMessage(error: HttpErrorResponse, req: HttpRequest<un
       details: errorDetails,
     });
     errorMessage = errorMessage || 'Server error. Please try again later.';
+  }
+
+  if (error.status === 502 || error.status === 504) {
+    errorMessage =
+      'The server took too long to respond (gateway timeout). Try a shorter date range such as Last 30 days, then click Apply.';
+  }
+
+  if (error.status === 503) {
+    errorMessage =
+      errorMessage && !isHtmlErrorBody(errorMessage)
+        ? errorMessage
+        : 'The service is temporarily unavailable. Wait for batch processing to finish, then refresh.';
+  }
+
+  if (isHtmlErrorBody(errorMessage)) {
+    errorMessage =
+      error.status === 502 || error.status === 504
+        ? 'The server took too long to respond (gateway timeout). Try again in a moment.'
+        : 'The server returned an error. Please try again.';
   }
 
   if (error.status === 0) {

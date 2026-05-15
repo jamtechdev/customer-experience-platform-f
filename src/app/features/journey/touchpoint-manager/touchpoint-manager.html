@@ -7,8 +7,8 @@
   @if (loading()) {
     <div class="loading-container">
       <app-ollama-loader
-        [title]="'Ollama AI is analyzing touchpoints'"
-        [subtitle]="'Mapping touchpoint volume and key observations from the current CX dataset'">
+        title="Loading saved touchpoints"
+        subtitle="Reading channel volumes and observations from the database.">
       </app-ollama-loader>
     </div>
   } @else {

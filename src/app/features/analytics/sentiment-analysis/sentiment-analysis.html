@@ -28,10 +28,10 @@
             <input matInput type="date" [ngModel]="endDate()" (ngModelChange)="endDate.set($event); onManualDate()" name="sentEnd" />
           </mat-form-field>
 
-          <button mat-stroked-button color="primary" type="button" (click)="applyRangeAndReload()" [disabled]="loading()">
+          <button mat-stroked-button color="primary" type="button" (click)="applyRangeAndReload()" [disabled]="initialLoading()">
             Apply
           </button>
-          <button mat-stroked-button color="primary" type="button" (click)="refreshData()" [disabled]="loading()">
+          <button mat-stroked-button color="primary" type="button" (click)="refreshData()" [disabled]="initialLoading()">
             <mat-icon>refresh</mat-icon>
             Refresh
           </button>
@@ -39,7 +39,7 @@
             mat-stroked-button
             type="button"
             (click)="exportSentimentRecords()"
-            [disabled]="loading() || !datesValid()">
+            [disabled]="exportLoading() || !datesValid()">
             <mat-icon>download</mat-icon>
             Export to Excel
           </button>
@@ -51,10 +51,10 @@
 
 
 
-  <div *ngIf="loading()" class="loading-container">
+  <div *ngIf="initialLoading()" class="loading-container">
     <app-ollama-loader
-      [title]="'Ollama AI is analyzing customer sentiment'"
-      [subtitle]="'Processing feedback patterns, emotional tone, and business signals'">
+      [title]="'Loading sentiment statistics'"
+      [subtitle]="'Aggregating feedback for the selected date range.'">
     </app-ollama-loader>
   </div>
 
@@ -63,7 +63,7 @@
 
 
 
-  <div *ngIf="!loading()" class="stats-section">
+  <div *ngIf="stats()" class="stats-section">
     <p *ngIf="(stats()?.total ?? 0) === 0" class="empty-hint">No sentiment data yet for this date range. Please check Import history, confirm your CSV import is completed, then click Refresh.</p>
     <mat-card class="section-card" *ngIf="stats()">
       <mat-card-header>
@@ -165,9 +165,9 @@
         </div>
 
         <div class="pagination-row" *ngIf="feedbackTotal() > pageSize()">
-          <button mat-stroked-button type="button" (click)="prevPage()" [disabled]="page() <= 1 || loading()">Prev</button>
+          <button mat-stroked-button type="button" (click)="prevPage()" [disabled]="page() <= 1">Prev</button>
           <span>Page {{ page() }} / {{ totalPages() }}</span>
-          <button mat-stroked-button type="button" (click)="nextPage()" [disabled]="page() >= totalPages() || loading()">Next</button>
+          <button mat-stroked-button type="button" (click)="nextPage()" [disabled]="page() >= totalPages()">Next</button>
         </div>
       </mat-card-content>
     </mat-card>

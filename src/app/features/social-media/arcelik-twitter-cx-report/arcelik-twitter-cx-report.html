@@ -5,7 +5,7 @@
     @if (loading()) {
       <div class="loading-block" aria-busy="true">
         <mat-progress-spinner diameter="36" mode="indeterminate"></mat-progress-spinner>
-        <span>Computing report…</span>
+        <span>{{ loadingMessage() }}</span>
       </div>
     }
     @if (loadError()) {
@@ -270,7 +270,15 @@
                     <div class="mpl-bar-track">
                       <div class="mpl-bar-fill mpl-bar-mpl" [style.height.%]="rootCauseBarFillPct(row.count)"></div>
                     </div>
-                    <div class="mpl-bar-value">{{ row.count }}</div>
+                    <div class="mpl-bar-value">
+                      <button
+                        type="button"
+                        class="arc-count-link"
+                        (click)="openRelatedRecords(row)"
+                        [disabled]="row.feedbackIds.length === 0">
+                        {{ row.count }}
+                      </button>
+                    </div>
                     <div class="mpl-bar-cat mpl-bar-cat-rot mpl-bar-cat-mpl">{{ truncateChartLabel(row.cause, 28) }}</div>
                   </div>
                 }
@@ -286,7 +294,16 @@
             </ng-container>
             <ng-container matColumnDef="count">
               <th mat-header-cell *matHeaderCellDef>Negative tweet count</th>
-              <td mat-cell *matCellDef="let row"><strong>{{ row.count }}</strong></td>
+              <td mat-cell *matCellDef="let row">
+                <button
+                  type="button"
+                  mat-button
+                  color="primary"
+                  (click)="openRelatedRecords(row)"
+                  [disabled]="row.feedbackIds.length === 0">
+                  <strong>{{ row.count }}</strong>
+                </button>
+              </td>
             </ng-container>
             <ng-container matColumnDef="interpretation">
               <th mat-header-cell *matHeaderCellDef>Interpretation</th>
@@ -490,4 +507,42 @@
       </ul>
     </mat-card-content>
   </mat-card>
+
+  @if (drilldownOpen()) {
+    <div class="arc-drilldown-overlay" role="dialog" aria-modal="true" (click)="closeDrilldown()">
+      <div class="arc-drilldown-panel" (click)="$event.stopPropagation()">
+        <div class="arc-drilldown-head">
+          <h2>Related feedback · {{ drilldownTitle() }}</h2>
+          <button mat-icon-button type="button" aria-label="Close" (click)="closeDrilldown()">
+            <mat-icon>close</mat-icon>
+          </button>
+        </div>
+        <div class="arc-drilldown-body">
+          @if (drilldownLoading()) {
+            <div class="arc-drilldown-loading">
+              <mat-progress-spinner mode="indeterminate" diameter="36"></mat-progress-spinner>
+            </div>
+          } @else if (drilldownRows().length === 0) {
+            <p class="muted">No rows returned.</p>
+          } @else {
+            <ul class="arc-drilldown-list">
+              @for (r of drilldownRows(); track r.id) {
+                <li>
+                  <div class="arc-dr-meta">
+                    <span>#{{ r.id }}</span>
+                    <span>{{ r.sentiment }}</span>
+                    <span>{{ formatFeedbackDate(r.date) }}</span>
+                  </div>
+                  <p class="arc-dr-content">{{ r.content }}</p>
+                </li>
+              }
+            </ul>
+          }
+        </div>
+        <div class="arc-drilldown-actions">
+          <button mat-raised-button color="primary" type="button" (click)="closeDrilldown()">Close</button>
+        </div>
+      </div>
+    </div>
+  }
 </div>

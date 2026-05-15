@@ -4,7 +4,7 @@ import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
-import { AnalysisService } from '../../../core/services/analysis.service';
+import { TwitterCxReportStore } from '../../../core/services/twitter-cx-report.store';
 import { AuthService } from '../../../core/services/auth.service';
 import { OllamaLoader } from '../../../core/components/ollama-loader/ollama-loader';
 import { twitterCxReportFailureMessage } from '../../../core/utils/twitter-cx-report-load';
@@ -33,7 +33,7 @@ interface StageRow {
   styleUrl: './journey-heatmap.css',
 })
 export class JourneyHeatmap implements OnInit {
-  private analysisService = inject(AnalysisService);
+  private twitterCxReportStore = inject(TwitterCxReportStore);
   private authService = inject(AuthService);
   private snackBar = inject(MatSnackBar);
   loading = signal(false);
@@ -66,7 +66,7 @@ export class JourneyHeatmap implements OnInit {
     const companyId = user?.role === 'admin' ? undefined : (user?.settings?.companyId ?? 1);
     this.loading.set(true);
     this.error.set(null);
-    this.analysisService.getTwitterCxReport(companyId).subscribe({
+    this.twitterCxReportStore.loadTwitterCxReport(companyId).subscribe({
       next: (res) => {
         if (!res.success) {
           this.stages.set([]);

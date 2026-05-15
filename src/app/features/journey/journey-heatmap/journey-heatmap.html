@@ -10,8 +10,8 @@
   @if (loading()) {
     <div class="loading-container">
       <app-ollama-loader
-        [title]="'Ollama AI is generating journey heatmap insights'"
-        [subtitle]="'Computing stage-wise sentiment split and experience intensity from uploaded feedback'">
+        title="Loading saved journey heatmap"
+        subtitle="Reading pre-calculated satisfaction by stage from the database.">
       </app-ollama-loader>
     </div>
   } @else if (error()) {

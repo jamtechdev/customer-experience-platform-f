@@ -1,19 +1,18 @@
 import { Injectable, inject } from '@angular/core';
-import { HttpClient, HttpParams, HttpErrorResponse } from '@angular/common/http';
-import { Observable, of } from 'rxjs';
-import { catchError, retry, timeout } from 'rxjs/operators';
-import { 
+import { HttpClient, HttpParams, HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { Observable, of, timer, defer, EMPTY } from 'rxjs';
+import { catchError, filter, switchMap, take, timeout, expand, mergeMap, delay } from 'rxjs/operators';
+import {
   SentimentAnalysisResult,
   RootCauseAnalysis,
   Recommendation,
   ApiResponse,
-  PaginationParams,
-  TwitterCxReportDto
+  TwitterCxReportDto,
 } from '../models';
 import { environment } from '../../../environments/environment';
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class AnalysisService {
   private readonly http = inject(HttpClient);
@@ -34,40 +33,155 @@ export class AnalysisService {
     return this.http.get<ApiResponse<any>>(`${this.baseUrl}/sentiment`, { params });
   }
 
-  /** Bundled Twitter CX report (cohorts, social NPS proxy, heatmap %, touchpoints, root causes, narratives). */
-  getTwitterCxReport(
+  getTwitterCxCompanySnapshotStatus(companyId: number): Observable<
+    ApiResponse<{
+      status: 'none' | 'pending' | 'ready' | 'failed';
+      snapshotId?: number;
+      errorMessage?: string | null;
+    }>
+  > {
+    const params = new HttpParams().set('companyId', String(companyId));
+    return this.http.get<
+      ApiResponse<{
+        status: 'none' | 'pending' | 'ready' | 'failed';
+        snapshotId?: number;
+        errorMessage?: string | null;
+      }>
+    >(`${this.baseUrl}/twitter-cx-report/company-snapshot-status`, { params });
+  }
+
+  rebuildTwitterCxReport(companyId: number): Observable<ApiResponse<unknown>> {
+    return this.http.post<ApiResponse<unknown>>(`${this.baseUrl}/twitter-cx-report/rebuild`, { companyId });
+  }
+
+  getTwitterCxReportSnapshotStatus(snapshotId: number): Observable<
+    ApiResponse<{
+      status: 'pending' | 'ready' | 'failed';
+      errorMessage?: string | null;
+      report?: TwitterCxReportDto;
+    }>
+  > {
+    const params = new HttpParams().set('snapshotId', String(snapshotId));
+    return this.http.get<
+      ApiResponse<{
+        status: 'pending' | 'ready' | 'failed';
+        errorMessage?: string | null;
+        report?: TwitterCxReportDto;
+      }>
+    >(`${this.baseUrl}/twitter-cx-report/snapshot-status`, { params });
+  }
+
+  getFeedbackByIds(
     companyId: number | undefined,
-    startDate?: Date,
-    endDate?: Date,
-    csvImportId?: number
-  ): Observable<ApiResponse<TwitterCxReportDto>> {
+    ids: number[]
+  ): Observable<ApiResponse<{ list: any[]; requested: number; returned: number }>> {
+    const capped = [...new Set(ids.filter((n) => Number.isFinite(n) && n > 0))].slice(0, 200);
+    let params = new HttpParams().set('ids', capped.join(','));
+    if (companyId != null) params = params.set('companyId', String(companyId));
+    return this.http.get<ApiResponse<{ list: any[]; requested: number; returned: number }>>(
+      `${this.baseUrl}/feedback-by-ids`,
+      { params }
+    );
+  }
+
+  /**
+   * Bundled Twitter CX report. Does not send startDate/endDate — server uses the full imported
+   * date span from the database (matches snapshot cache key and avoids per-range recomputation).
+   */
+  getTwitterCxReport(companyId: number | undefined, csvImportId?: number): Observable<ApiResponse<TwitterCxReportDto>> {
     let params = new HttpParams();
-    if (startDate) params = params.set('startDate', startDate.toISOString());
-    if (endDate) params = params.set('endDate', endDate.toISOString());
     if (companyId != null) params = params.set('companyId', String(companyId));
     if (csvImportId != null) params = params.set('csvImportId', String(csvImportId));
-    return this.http.get<ApiResponse<TwitterCxReportDto>>(`${this.baseUrl}/twitter-cx-report`, { params }).pipe(
-      timeout(this.twitterCxReportTimeoutMs),
-      retry({ count: 1, delay: 2000 }),
-      catchError((err: unknown) => {
-        let message = 'network';
-        if (err instanceof HttpErrorResponse) {
-          message = `http_${err.status}`;
-        } else if (
-          err &&
-          typeof err === 'object' &&
-          'name' in err &&
-          (err as { name?: string }).name === 'TimeoutError'
-        ) {
-          message = 'timeout';
-        }
-        return of({
-          success: false,
-          data: undefined as unknown as TwitterCxReportDto,
-          message,
-        } as ApiResponse<TwitterCxReportDto>);
-      })
-    );
+    return this.http
+      .get<ApiResponse<TwitterCxReportDto | { snapshotPending: boolean; snapshotId: number }>>(
+        `${this.baseUrl}/twitter-cx-report`,
+        { params, observe: 'response' }
+      )
+      .pipe(
+        switchMap((httpResp: HttpResponse<ApiResponse<any>>) => {
+          const body = httpResp.body;
+          if (!body) {
+            return of({
+              success: false,
+              message: 'empty_response',
+              data: undefined as unknown as TwitterCxReportDto,
+            } as ApiResponse<TwitterCxReportDto>);
+          }
+          if (httpResp.status === 202 && body.data?.snapshotPending && body.data?.snapshotId != null) {
+            const sid = Number(body.data.snapshotId);
+            // Exponential back-off: 2s → 4s → 6s → 8s → capped at 10s per poll.
+            // This avoids hammering the server while a long Ollama build runs.
+            const INTERVALS = [2000, 4000, 6000, 8000];
+            const getDelay = (attempt: number) => INTERVALS[Math.min(attempt, INTERVALS.length - 1)];
+            let attempt = 0;
+
+            const poll$ = defer(() => this.getTwitterCxReportSnapshotStatus(sid)).pipe(
+              expand((st) => {
+                if (st?.data?.status === 'ready' || st?.data?.status === 'failed') {
+                  return EMPTY;
+                }
+                const wait = getDelay(attempt++);
+                return timer(wait).pipe(mergeMap(() => this.getTwitterCxReportSnapshotStatus(sid)));
+              }),
+              filter((st) => !!st?.data && (st.data.status === 'ready' || st.data.status === 'failed')),
+              take(1)
+            );
+
+            return timer(2000).pipe(
+              switchMap(() => poll$),
+              switchMap((st) => {
+                if (!st.success || st.data?.status !== 'ready' || !st.data?.report) {
+                  const errMsg = st.data?.errorMessage || 'snapshot_failed';
+                  return of({
+                    success: false,
+                    message: errMsg,
+                    data: undefined as unknown as TwitterCxReportDto,
+                  } as ApiResponse<TwitterCxReportDto>);
+                }
+                return of({
+                  success: true,
+                  code: 200,
+                  message: 'Twitter CX report (snapshot)',
+                  data: st.data.report as TwitterCxReportDto,
+                } as ApiResponse<TwitterCxReportDto>);
+              }),
+              timeout(this.twitterCxReportTimeoutMs),
+              catchError((err: unknown) => {
+                const isTimeout =
+                  err &&
+                  typeof err === 'object' &&
+                  'name' in err &&
+                  (err as { name?: string }).name === 'TimeoutError';
+                return of({
+                  success: false,
+                  message: isTimeout ? 'timeout' : 'snapshot_poll_failed',
+                  data: undefined as unknown as TwitterCxReportDto,
+                } as ApiResponse<TwitterCxReportDto>);
+              })
+            );
+          }
+          return of(body as ApiResponse<TwitterCxReportDto>);
+        }),
+        timeout(this.twitterCxReportTimeoutMs + 5000),
+        catchError((err: unknown) => {
+          let message = 'network';
+          if (err instanceof HttpErrorResponse) {
+            message = `http_${err.status}`;
+          } else if (
+            err &&
+            typeof err === 'object' &&
+            'name' in err &&
+            (err as { name?: string }).name === 'TimeoutError'
+          ) {
+            message = 'timeout';
+          }
+          return of({
+            success: false,
+            data: undefined as unknown as TwitterCxReportDto,
+            message,
+          } as ApiResponse<TwitterCxReportDto>);
+        })
+      );
   }
 
   getFeedbackWithSentiment(
@@ -105,6 +219,12 @@ export class AnalysisService {
     let params = new HttpParams();
     if (companyId) params = params.set('companyId', companyId.toString());
     return this.http.get<ApiResponse<RootCauseAnalysis[]>>(`${this.baseUrl}/root-cause`, { params });
+  }
+
+  relinkRootCause(rootCauseId: number, companyId: number): Observable<ApiResponse<RootCauseAnalysis>> {
+    return this.http.post<ApiResponse<RootCauseAnalysis>>(`${this.baseUrl}/root-cause/relink/${rootCauseId}`, {
+      companyId,
+    });
   }
 
   // NPS Analysis - matches backend /api/analysis/nps

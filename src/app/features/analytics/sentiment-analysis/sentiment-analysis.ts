@@ -76,10 +76,12 @@ export class SentimentAnalysis implements OnInit, OnDestroy {
   private reportService = inject(ReportService);
   private websocket = inject(CXWebSocketService);
   private importStatusSub?: Subscription;
-  private autoRefreshTimer: ReturnType<typeof setTimeout> | null = null;
-  private readonly autoRefreshMs = 5000;
+  /** After first successful stats load, never show the full-page loader again this session. */
+  private hasCompletedInitialLoad = false;
 
-  loading = signal(false);
+  /** Full-page loader — shown at most once per session when no cached stats exist. */
+  initialLoading = signal(false);
+  exportLoading = signal(false);
   stats = signal<SentimentStats | null>(null);
   sentimentInterpretation = signal<string>('');
   feedbackList = signal<Array<{ id: number; content: string; source: string; date: string; author?: string; sentiment: string; score: number }>>([]);
@@ -111,7 +113,6 @@ export class SentimentAnalysis implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.importStatusSub?.unsubscribe();
-    this.stopAutoRefreshLoop();
   }
 
   private setTodayRange(): void {
@@ -129,7 +130,7 @@ export class SentimentAnalysis implements OnInit, OnDestroy {
           res.success && res.data?.presets?.length ? (res.data.presets as ReportDatePreset[]) : buildClientReportDatePresets();
         this.presets.set(list);
         const user = this.authService.currentUser();
-        const preferred = user?.role === 'admin' ? 'all_time' : 'last_30_days';
+        const preferred = 'last_30_days';
         const def =
           list.find((p) => p.id === preferred) ??
           list.find((p) => p.id === 'all_time') ??
@@ -143,7 +144,7 @@ export class SentimentAnalysis implements OnInit, OnDestroy {
         const list = buildClientReportDatePresets();
         this.presets.set(list);
         const user = this.authService.currentUser();
-        const preferred = user?.role === 'admin' ? 'all_time' : 'last_30_days';
+        const preferred = 'last_30_days';
         const def =
           list.find((p) => p.id === preferred) ??
           list.find((p) => p.id === 'all_time') ??
@@ -197,13 +198,13 @@ export class SentimentAnalysis implements OnInit, OnDestroy {
   }
 
   prevPage(): void {
-    if (this.page() <= 1 || this.loading()) return;
+    if (this.page() <= 1) return;
     this.page.update((p) => p - 1);
     this.loadFeedbackList();
   }
 
   nextPage(): void {
-    if (this.page() >= this.totalPages() || this.loading()) return;
+    if (this.page() >= this.totalPages()) return;
     this.page.update((p) => p + 1);
     this.loadFeedbackList();
   }
@@ -215,7 +216,7 @@ export class SentimentAnalysis implements OnInit, OnDestroy {
     }
     const { start, end } = this.getDateRange();
     const companyId = this.getCompanyId();
-    this.loading.set(true);
+    this.exportLoading.set(true);
     this.reportService
       .exportSentimentRecordsToExcel({
         startDate: start.toISOString(),
@@ -230,27 +231,24 @@ export class SentimentAnalysis implements OnInit, OnDestroy {
           a.download = `sentiment-records-${this.startDate()}-${this.endDate()}.xlsx`;
           a.click();
           window.URL.revokeObjectURL(url);
-          this.loading.set(false);
+          this.exportLoading.set(false);
           this.snackBar.open('Export downloaded', 'Close', { duration: 3000 });
         },
         error: () => {
-          this.loading.set(false);
+          this.exportLoading.set(false);
           this.snackBar.open('Export failed', 'Close', { duration: 3000 });
         },
       });
   }
 
   private reloadAll(): void {
-    this.stopAutoRefreshLoop();
     this.loadSentimentStats();
     this.loadFeedbackList();
   }
 
-  getCompanyId(): number | undefined {
+  getCompanyId(): number {
     const user = this.authService.currentUser();
-    if (user?.role === 'admin') return undefined;
-    const id = user?.settings?.companyId;
-    return id ?? 1;
+    return user?.settings?.companyId ?? 1;
   }
 
   /** Admin can delete in global scope (undefined companyId). */
@@ -272,7 +270,11 @@ export class SentimentAnalysis implements OnInit, OnDestroy {
   }
 
   loadSentimentStats(): void {
-    this.loading.set(true);
+    const showInitialLoader = !this.hasCompletedInitialLoad && !this.stats();
+    if (showInitialLoader) {
+      this.initialLoading.set(true);
+    }
+
     const companyId = this.getCompanyId();
     const { start, end } = this.getDateRange();
 
@@ -291,13 +293,14 @@ export class SentimentAnalysis implements OnInit, OnDestroy {
           typeof data.interpretation === 'string' ? data.interpretation.trim() : ''
         );
         this.persistCache();
-        this.loading.set(false);
+        this.hasCompletedInitialLoad = true;
+        this.initialLoading.set(false);
       },
       error: () => {
         this.stats.set({ positive: 0, negative: 0, neutral: 0, total: 0, averageScore: 0 });
         this.sentimentInterpretation.set('');
-        this.loading.set(false);
-        this.snackBar.open('Failed to load sentiment data', 'Close', { duration: 3000 });
+        this.hasCompletedInitialLoad = true;
+        this.initialLoading.set(false);
       }
     });
   }
@@ -313,58 +316,21 @@ export class SentimentAnalysis implements OnInit, OnDestroy {
             ...row,
             content: this.humanizeFeedbackText(row.content),
             date: normalizeApiDateToIso(row.date),
-            sentiment:
-              String(row.sentiment || '').toLowerCase() === 'processing'
-                ? 'AI processing'
-                : row.sentiment,
+            sentiment: row.sentiment,
           }));
           this.feedbackList.set(list);
           this.feedbackTotal.set(response.data.total ?? list.length);
           this.persistCache();
-          this.syncAutoRefreshWithList(list);
         } else {
           this.feedbackList.set([]);
           this.feedbackTotal.set(0);
-          this.stopAutoRefreshLoop();
         }
       },
       error: () => {
         this.feedbackList.set([]);
         this.feedbackTotal.set(0);
-        this.stopAutoRefreshLoop();
       }
     });
-  }
-
-  private hasProcessingRows(
-    list: Array<{ sentiment: string }>
-  ): boolean {
-    return list.some((row) => String(row.sentiment || '').toLowerCase().includes('processing'));
-  }
-
-  private syncAutoRefreshWithList(
-    list: Array<{ sentiment: string }>
-  ): void {
-    if (this.hasProcessingRows(list)) {
-      this.scheduleAutoRefresh();
-      return;
-    }
-    this.stopAutoRefreshLoop();
-  }
-
-  private scheduleAutoRefresh(): void {
-    if (this.autoRefreshTimer) return;
-    this.autoRefreshTimer = setTimeout(() => {
-      this.autoRefreshTimer = null;
-      this.loadSentimentStats();
-      this.loadFeedbackList();
-    }, this.autoRefreshMs);
-  }
-
-  private stopAutoRefreshLoop(): void {
-    if (!this.autoRefreshTimer) return;
-    clearTimeout(this.autoRefreshTimer);
-    this.autoRefreshTimer = null;
   }
 
   getSentimentData() {
@@ -581,7 +547,10 @@ export class SentimentAnalysis implements OnInit, OnDestroy {
         page?: number;
         pageSize?: number;
       };
-      if (parsed.stats) this.stats.set(parsed.stats);
+      if (parsed.stats) {
+        this.stats.set(parsed.stats);
+        this.hasCompletedInitialLoad = true;
+      }
       if (Array.isArray(parsed.feedbackList)) {
         this.feedbackList.set(
           parsed.feedbackList.map((row) => ({

@@ -38,6 +38,8 @@ export interface ApiResponse<T> {
   data: T;
   message?: string;
   errors?: string[];
+  /** Mirrors HTTP status when API sets it explicitly (e.g. 202 snapshot pending). */
+  code?: number;
   meta?: ResponseMeta;
 }
 

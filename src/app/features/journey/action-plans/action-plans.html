@@ -7,8 +7,8 @@
   @if (loading()) {
     <div class="loading-container">
       <app-ollama-loader
-        [title]="'Ollama AI is preparing action plans'"
-        [subtitle]="'Prioritizing recommendations, owner mapping, and execution horizon from current insights'">
+        title="Loading saved action plans"
+        subtitle="Reading prioritized actions from the database batch report.">
       </app-ollama-loader>
     </div>
   } @else {

@@ -6,7 +6,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatTableModule } from '@angular/material/table';
-import { AnalysisService } from '../../../core/services/analysis.service';
+import { TwitterCxReportStore } from '../../../core/services/twitter-cx-report.store';
 import { AuthService } from '../../../core/services/auth.service';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { OllamaLoader } from '../../../core/components/ollama-loader/ollama-loader';
@@ -39,7 +39,7 @@ interface JourneyStage {
   styleUrl: './journey-map.css',
 })
 export class JourneyMap implements OnInit {
-  private analysisService = inject(AnalysisService);
+  private twitterCxReportStore = inject(TwitterCxReportStore);
   private authService = inject(AuthService);
   private snackBar = inject(MatSnackBar);
 
@@ -71,7 +71,7 @@ export class JourneyMap implements OnInit {
     this.loading.set(true);
     const user = this.authService.currentUser();
     const companyId = user?.role === 'admin' ? undefined : (user?.settings?.companyId ?? 1);
-    this.analysisService.getTwitterCxReport(companyId).subscribe({
+    this.twitterCxReportStore.loadTwitterCxReport(companyId).subscribe({
       next: (response) => {
         if (!response.success) {
           this.journeyStages.set([]);
@@ -89,7 +89,7 @@ export class JourneyMap implements OnInit {
                 name: r?.stage ?? '',
                 satisfactionScore: 0,
                 dissatisfactionScore: 0,
-                feedbackCount: 0,
+                feedbackCount: typeof r?.feedbackCount === 'number' ? r.feedbackCount : 0,
                 painPoints: [String(r?.dissatisfaction ?? '')].filter(Boolean),
                 satisfactionPoints: [String(r?.satisfaction ?? '')].filter(Boolean),
               }))

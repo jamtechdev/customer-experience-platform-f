@@ -340,3 +340,71 @@
   line-height: 1.45;
 }
 
+.count-link {
+  min-width: auto;
+  padding: 0 4px;
+  line-height: 1.2;
+}
+
+.bar-count-link {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-weight: 700;
+  font-size: inherit;
+  color: #111827;
+  padding: 2px 4px;
+}
+
+.bar-count-link:disabled {
+  cursor: default;
+  opacity: 0.45;
+}
+
+.drilldown-modal {
+  max-width: 720px;
+  max-height: 85vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.drilldown-loading {
+  display: flex;
+  justify-content: center;
+  padding: 24px;
+}
+
+.drilldown-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-height: 55vh;
+  overflow-y: auto;
+}
+
+.drilldown-list li {
+  border-bottom: 1px solid #e5e7eb;
+  padding: 12px 0;
+}
+
+.drilldown-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  font-size: 0.8rem;
+  color: #6b7280;
+  margin-bottom: 6px;
+}
+
+.dr-id {
+  font-weight: 600;
+  color: #111827;
+}
+
+.dr-content {
+  margin: 0;
+  white-space: pre-wrap;
+  line-height: 1.45;
+  color: #374151;
+}
