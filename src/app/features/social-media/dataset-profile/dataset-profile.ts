@@ -1,4 +1,5 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { Component, inject, OnDestroy, OnInit, signal } from '@angular/core';
+import { Subscription } from 'rxjs';
 import { CommonModule } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
 import { MatTableModule } from '@angular/material/table';
@@ -21,10 +22,11 @@ interface DatasetProfileRow {
   templateUrl: './dataset-profile.html',
   styleUrl: './dataset-profile.css',
 })
-export class DatasetProfile implements OnInit {
+export class DatasetProfile implements OnInit, OnDestroy {
   private twitterCxReportStore = inject(TwitterCxReportStore);
   private authService = inject(AuthService);
   private snackBar = inject(MatSnackBar);
+  private refreshSub?: Subscription;
 
   readonly displayedColumns = ['metric', 'value', 'comment'];
   loading = signal(false);
@@ -32,6 +34,15 @@ export class DatasetProfile implements OnInit {
   rows = signal<DatasetProfileRow[]>([]);
 
   ngOnInit(): void {
+    this.loadProfile();
+    this.refreshSub = this.twitterCxReportStore.onRefresh$.subscribe(() => this.loadProfile());
+  }
+
+  ngOnDestroy(): void {
+    this.refreshSub?.unsubscribe();
+  }
+
+  loadProfile(): void {
     const user = this.authService.currentUser();
     const companyId = user?.role === 'admin' ? undefined : (user?.settings?.companyId ?? 1);
     this.loading.set(true);

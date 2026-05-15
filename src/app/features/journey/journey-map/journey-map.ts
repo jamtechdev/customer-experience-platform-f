@@ -1,4 +1,5 @@
-import { Component, computed, inject, OnInit, signal } from '@angular/core';
+import { Component, computed, inject, OnDestroy, OnInit, signal } from '@angular/core';
+import { Subscription } from 'rxjs';
 import { CommonModule } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
@@ -38,10 +39,11 @@ interface JourneyStage {
   templateUrl: './journey-map.html',
   styleUrl: './journey-map.css',
 })
-export class JourneyMap implements OnInit {
+export class JourneyMap implements OnInit, OnDestroy {
   private twitterCxReportStore = inject(TwitterCxReportStore);
   private authService = inject(AuthService);
   private snackBar = inject(MatSnackBar);
+  private refreshSub?: Subscription;
 
   loading = signal(false);
   journeyStages = signal<JourneyStage[]>([]);
@@ -65,6 +67,11 @@ export class JourneyMap implements OnInit {
 
   ngOnInit(): void {
     this.loadJourneyData();
+    this.refreshSub = this.twitterCxReportStore.onRefresh$.subscribe(() => this.loadJourneyData());
+  }
+
+  ngOnDestroy(): void {
+    this.refreshSub?.unsubscribe();
   }
 
   loadJourneyData(): void {

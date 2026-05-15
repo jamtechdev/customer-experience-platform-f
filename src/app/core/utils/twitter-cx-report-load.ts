@@ -3,6 +3,9 @@ export function twitterCxReportFailureMessage(apiMessage?: string): string {
   if (apiMessage === 'http_504' || apiMessage === 'http_502') {
     return 'The server took too long to build this report (gateway timeout). Try a shorter date range or refresh. If it keeps happening, the API gateway timeout on the host may need to be increased.';
   }
+  if (apiMessage === 'snapshot_still_building') {
+    return 'Your CX report is still building in the background after import. Wait 1–2 minutes, then click Retry or refresh this page.';
+  }
   if (apiMessage === 'snapshot_failed' || apiMessage === 'snapshot_poll_failed') {
     return 'The report is still being prepared in the background. Please wait a moment and refresh the page.';
   }

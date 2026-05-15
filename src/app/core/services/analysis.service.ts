@@ -114,13 +114,17 @@ export class AnalysisService {
             const sid = Number(body.data.snapshotId);
             // Exponential back-off: 2s → 4s → 6s → 8s → capped at 10s per poll.
             // This avoids hammering the server while a long Ollama build runs.
-            const INTERVALS = [2000, 4000, 6000, 8000];
+            const INTERVALS = [2000, 4000, 6000, 8000, 10000];
+            const MAX_POLL_ATTEMPTS = 36;
             const getDelay = (attempt: number) => INTERVALS[Math.min(attempt, INTERVALS.length - 1)];
             let attempt = 0;
 
             const poll$ = defer(() => this.getTwitterCxReportSnapshotStatus(sid)).pipe(
               expand((st) => {
                 if (st?.data?.status === 'ready' || st?.data?.status === 'failed') {
+                  return EMPTY;
+                }
+                if (attempt >= MAX_POLL_ATTEMPTS) {
                   return EMPTY;
                 }
                 const wait = getDelay(attempt++);
@@ -134,7 +138,10 @@ export class AnalysisService {
               switchMap(() => poll$),
               switchMap((st) => {
                 if (!st.success || st.data?.status !== 'ready' || !st.data?.report) {
-                  const errMsg = st.data?.errorMessage || 'snapshot_failed';
+                  const errMsg =
+                    st.data?.status === 'pending' || attempt >= MAX_POLL_ATTEMPTS
+                      ? 'snapshot_still_building'
+                      : st.data?.errorMessage || 'snapshot_failed';
                   return of({
                     success: false,
                     message: errMsg,

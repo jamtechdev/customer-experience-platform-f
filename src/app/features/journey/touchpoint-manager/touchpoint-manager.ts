@@ -1,4 +1,5 @@
-import { Component, computed, inject, OnInit, signal } from '@angular/core';
+import { Component, computed, inject, OnDestroy, OnInit, signal } from '@angular/core';
+import { Subscription } from 'rxjs';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatCardModule } from '@angular/material/card';
@@ -35,9 +36,10 @@ import { twitterCxReportFailureMessage } from '../../../core/utils/twitter-cx-re
   templateUrl: './touchpoint-manager.html',
   styleUrl: './touchpoint-manager.css',
 })
-export class TouchpointManager implements OnInit {
+export class TouchpointManager implements OnInit, OnDestroy {
   private touchpointService = inject(TouchpointService);
   private twitterCxReportStore = inject(TwitterCxReportStore);
+  private refreshSub?: Subscription;
   private authService = inject(AuthService);
   private fb = inject(FormBuilder);
   private snackBar = inject(MatSnackBar);
@@ -64,6 +66,8 @@ export class TouchpointManager implements OnInit {
   });
   displayedColumns: string[] = ['order', 'name', 'description', 'category', 'actions'];
   reportTouchpoints = signal<Array<{ name: string; volume: number; observation: string }>>([]);
+  /** Snapshot rows use synthetic ids; CRUD applies to Admin touchpoint config only. */
+  snapshotViewOnly = signal(true);
   showForm = signal(false);
   editingId = signal<number | null>(null);
   form: FormGroup;
@@ -79,6 +83,11 @@ export class TouchpointManager implements OnInit {
 
   ngOnInit(): void {
     this.loadTouchpoints();
+    this.refreshSub = this.twitterCxReportStore.onRefresh$.subscribe(() => this.loadTouchpoints());
+  }
+
+  ngOnDestroy(): void {
+    this.refreshSub?.unsubscribe();
   }
 
   loadTouchpoints(): void {

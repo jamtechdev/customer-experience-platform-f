@@ -1,5 +1,5 @@
 import { Injectable, inject } from '@angular/core';
-import { Observable, of } from 'rxjs';
+import { Observable, of, Subject } from 'rxjs';
 import { finalize, shareReplay, tap } from 'rxjs/operators';
 import { AnalysisService } from './analysis.service';
 import { ApiResponse, TwitterCxReportDto } from '../models';
@@ -10,6 +10,10 @@ export class TwitterCxReportStore {
   private readonly analysis = inject(AnalysisService);
   private readonly inflight = new Map<string, Observable<ApiResponse<TwitterCxReportDto>>>();
   private readonly cache = new Map<string, ApiResponse<TwitterCxReportDto>>();
+  private readonly refreshSubject = new Subject<number | undefined>();
+
+  /** Emits companyId when snapshot cache was cleared (e.g. after CSV import). */
+  readonly onRefresh$ = this.refreshSubject.asObservable();
 
   getCachedReport(
     companyId: number | undefined,
@@ -51,6 +55,7 @@ export class TwitterCxReportStore {
     if (companyId == null && csvImportId == null) {
       this.cache.clear();
       this.inflight.clear();
+      this.refreshSubject.next(undefined);
       return;
     }
     const prefix = `${companyId ?? ''}|`;
@@ -60,6 +65,7 @@ export class TwitterCxReportStore {
         this.inflight.delete(k);
       }
     }
+    this.refreshSubject.next(companyId);
   }
 
   private cacheKey(

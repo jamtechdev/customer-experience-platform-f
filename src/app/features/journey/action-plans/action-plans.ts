@@ -1,4 +1,5 @@
-import { Component, computed, inject, OnInit, signal } from '@angular/core';
+import { Component, computed, inject, OnDestroy, OnInit, signal } from '@angular/core';
+import { Subscription } from 'rxjs';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatCardModule } from '@angular/material/card';
@@ -39,9 +40,10 @@ import { twitterCxReportFailureMessage } from '../../../core/utils/twitter-cx-re
   templateUrl: './action-plans.html',
   styleUrl: './action-plans.css',
 })
-export class ActionPlans implements OnInit {
+export class ActionPlans implements OnInit, OnDestroy {
   private actionPlanService = inject(ActionPlanService);
   private twitterCxReportStore = inject(TwitterCxReportStore);
+  private refreshSub?: Subscription;
   private authService = inject(AuthService);
   private fb = inject(FormBuilder);
   private snackBar = inject(MatSnackBar);
@@ -82,6 +84,11 @@ export class ActionPlans implements OnInit {
 
   ngOnInit(): void {
     this.loadActionPlans();
+    this.refreshSub = this.twitterCxReportStore.onRefresh$.subscribe(() => this.loadActionPlans());
+  }
+
+  ngOnDestroy(): void {
+    this.refreshSub?.unsubscribe();
   }
 
   loadActionPlans(): void {

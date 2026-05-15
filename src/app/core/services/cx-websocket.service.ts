@@ -4,6 +4,8 @@ import { PLATFORM_ID } from '@angular/core';
 import { io, Socket } from 'socket.io-client';
 import { Subject, Observable } from 'rxjs';
 import { AuthService } from './auth.service';
+import { AnalysisService } from './analysis.service';
+import { TwitterCxReportStore } from './twitter-cx-report.store';
 import { environment } from '../../../environments/environment';
 
 export type CSVImportStatusEvent = {
@@ -19,6 +21,8 @@ export type CSVImportStatusEvent = {
 export class CXWebSocketService {
   private platformId = inject(PLATFORM_ID);
   private authService = inject(AuthService);
+  private twitterCxReportStore = inject(TwitterCxReportStore);
+  private analysisService = inject(AnalysisService);
 
   private started = signal(false);
   private socket: Socket | null = null;
@@ -72,6 +76,15 @@ export class CXWebSocketService {
       };
       if (ev.importId == null || !ev.status) return;
       this.importStatusSubject.next(ev);
+
+      if (ev.status === 'completed' && this.latestCompanyId != null) {
+        this.twitterCxReportStore.invalidate(this.latestCompanyId);
+        this.analysisService.rebuildTwitterCxReport(this.latestCompanyId).subscribe({
+          error: () => {
+            /* rebuild is best-effort; pages reload from onRefresh$ */
+          },
+        });
+      }
     });
 
     // Keep company room in sync with auth changes

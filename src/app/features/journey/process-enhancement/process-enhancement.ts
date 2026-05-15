@@ -1,4 +1,5 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { Component, inject, OnDestroy, OnInit, signal } from '@angular/core';
+import { Subscription } from 'rxjs';
 import { CommonModule } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
@@ -19,16 +20,26 @@ import { twitterCxReportFailureMessage } from '../../../core/utils/twitter-cx-re
   templateUrl: './process-enhancement.html',
   styleUrl: './process-enhancement.css',
 })
-export class ProcessEnhancement implements OnInit {
+export class ProcessEnhancement implements OnInit, OnDestroy {
   private twitterCxReportStore = inject(TwitterCxReportStore);
   private authService = inject(AuthService);
   private snackBar = inject(MatSnackBar);
+  private refreshSub?: Subscription;
 
   loading = signal(false);
   processImprovements = signal<string[]>([]);
   managementTakeaways = signal<string[]>([]);
 
   ngOnInit(): void {
+    this.loadProcessData();
+    this.refreshSub = this.twitterCxReportStore.onRefresh$.subscribe(() => this.loadProcessData());
+  }
+
+  ngOnDestroy(): void {
+    this.refreshSub?.unsubscribe();
+  }
+
+  loadProcessData(): void {
     const user = this.authService.currentUser();
     const companyId = user?.role === 'admin' ? undefined : (user?.settings?.companyId ?? 1);
     this.loading.set(true);

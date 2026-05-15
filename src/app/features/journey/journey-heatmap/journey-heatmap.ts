@@ -1,4 +1,5 @@
-import { Component, computed, inject, OnInit, signal } from '@angular/core';
+import { Component, computed, inject, OnDestroy, OnInit, signal } from '@angular/core';
+import { Subscription } from 'rxjs';
 import { CommonModule } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
@@ -32,10 +33,11 @@ interface StageRow {
   templateUrl: './journey-heatmap.html',
   styleUrl: './journey-heatmap.css',
 })
-export class JourneyHeatmap implements OnInit {
+export class JourneyHeatmap implements OnInit, OnDestroy {
   private twitterCxReportStore = inject(TwitterCxReportStore);
   private authService = inject(AuthService);
   private snackBar = inject(MatSnackBar);
+  private refreshSub?: Subscription;
   loading = signal(false);
   stages = signal<StageRow[]>([]);
   error = signal<string | null>(null);
@@ -59,6 +61,11 @@ export class JourneyHeatmap implements OnInit {
 
   ngOnInit(): void {
     this.loadHeatmap();
+    this.refreshSub = this.twitterCxReportStore.onRefresh$.subscribe(() => this.loadHeatmap());
+  }
+
+  ngOnDestroy(): void {
+    this.refreshSub?.unsubscribe();
   }
 
   loadHeatmap(): void {
