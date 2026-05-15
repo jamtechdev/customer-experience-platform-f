@@ -11,6 +11,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatNativeDateModule } from '@angular/material/core';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatChipsModule } from '@angular/material/chips';
+import { MatDialogModule } from '@angular/material/dialog';
 import { FormsModule } from '@angular/forms';
 import { AnalysisService } from '../../../core/services/analysis.service';
 import { AuthService } from '../../../core/services/auth.service';
@@ -66,6 +67,7 @@ interface SentimentReferenceRow {
     MatProgressSpinnerModule,
     MatChipsModule,
     MatSnackBarModule,
+    MatDialogModule,
     OllamaLoader
   ],
   templateUrl: './sentiment-analysis.html',
@@ -84,10 +86,32 @@ export class SentimentAnalysis implements OnInit, OnDestroy {
   /** Full-page loader — shown at most once per session when no cached stats exist. */
   initialLoading = signal(false);
   exportLoading = signal(false);
+  reanalyzing = signal(false);
   stats = signal<SentimentStats | null>(null);
   sentimentInterpretation = signal<string>('');
-  feedbackList = signal<Array<{ id: number; content: string; source: string; date: string; author?: string; sentiment: string; score: number }>>([]);
+  feedbackList = signal<
+    Array<{
+      id: number;
+      content: string;
+      referenceContent?: string;
+      source: string;
+      date: string;
+      author?: string;
+      sentiment: string;
+      score: number;
+      journeyStage?: string;
+      isRelevant?: boolean;
+      relevanceReason?: string;
+      contentSummary?: string;
+    }>
+  >([]);
   feedbackTotal = signal(0);
+  serverPatterns = signal<SentimentReferenceRow[]>([]);
+  filterJourneyStage = signal<string>('');
+  filterIsRelevant = signal<string>('');
+  filterSearch = signal<string>('');
+  referenceOpen = signal(false);
+  referenceRow = signal<{ content: string; referenceContent?: string; journeyStage?: string } | null>(null);
 
   presets = signal<ReportDatePreset[]>([]);
   selectedPresetId = signal<string>(NO_DATE_FILTER_PRESET_ID);
@@ -102,7 +126,26 @@ export class SentimentAnalysis implements OnInit, OnDestroy {
 
   displayedColumns: string[] = ['sentiment', 'count', 'percentage', 'bar'];
   patternCols: string[] = ['sentiment', 'patterns'];
-  feedbackColumns: string[] = ['content', 'source', 'date', 'sentiment', 'score'];
+  feedbackColumns: string[] = [
+    'content',
+    'journeyStage',
+    'relevant',
+    'source',
+    'date',
+    'sentiment',
+    'score',
+    'reference',
+  ];
+  readonly journeyStageOptions = [
+    '',
+    'Awareness',
+    'Consideration',
+    'Purchase',
+    'Delivery',
+    'Usage',
+    'Support',
+    'Retention',
+  ];
 
   ngOnInit(): void {
     this.restoreCache();
@@ -195,6 +238,32 @@ export class SentimentAnalysis implements OnInit, OnDestroy {
     this.reloadAll();
   }
 
+  reRunAiEnrichment(): void {
+    const companyId = this.getCompanyId();
+    const { start, end } = resolveOptionalApiDateRange(this.filtersApplied(), this.startDate(), this.endDate());
+    const ok = window.confirm(
+      'Re-run Ollama enrichment for all feedback in range? This updates sentiment, journey stage, and relevance (may take several minutes). After it finishes, rebuild the CX report from Import history.'
+    );
+    if (!ok) return;
+
+    this.reanalyzing.set(true);
+    this.analysisService.reanalyzeEnrichment(companyId, start, end).subscribe({
+      next: (res) => {
+        this.reanalyzing.set(false);
+        const d = res?.data;
+        const msg = d
+          ? `Enrichment complete: ${d.succeeded ?? 0} succeeded, ${d.failed ?? 0} failed of ${d.total ?? 0}.`
+          : 'Enrichment finished.';
+        this.snackBar.open(msg, 'Close', { duration: 8000 });
+        this.reloadAll();
+      },
+      error: () => {
+        this.reanalyzing.set(false);
+        this.snackBar.open('AI enrichment failed. Check Ollama is running.', 'Close', { duration: 6000 });
+      },
+    });
+  }
+
   prevPage(): void {
     if (this.page() <= 1) return;
     this.page.update((p) => p - 1);
@@ -245,7 +314,44 @@ export class SentimentAnalysis implements OnInit, OnDestroy {
 
   private reloadAll(withFilters: boolean = this.filtersApplied()): void {
     this.loadSentimentStats(withFilters);
+    this.loadSentimentPatterns(withFilters);
     this.loadFeedbackList(withFilters);
+  }
+
+  loadSentimentPatterns(withFilters: boolean = this.filtersApplied()): void {
+    const companyId = this.getCompanyId();
+    const { start, end } = resolveOptionalApiDateRange(withFilters, this.startDate(), this.endDate());
+    this.analysisService.getSentimentPatterns(companyId, start, end).subscribe({
+      next: (res) => {
+        const patterns = res?.data?.patterns ?? [];
+        this.serverPatterns.set(
+          patterns.map((p) => ({
+            sentiment: (p.sentiment || '') as SentimentReferenceRow['sentiment'],
+            patterns: p.patterns || '—',
+          }))
+        );
+      },
+      error: () => this.serverPatterns.set([]),
+    });
+  }
+
+  applyListFilters(): void {
+    this.page.set(1);
+    this.loadFeedbackList(this.filtersApplied());
+  }
+
+  openReference(row: {
+    content: string;
+    referenceContent?: string;
+    journeyStage?: string;
+  }): void {
+    this.referenceRow.set(row);
+    this.referenceOpen.set(true);
+  }
+
+  closeReference(): void {
+    this.referenceOpen.set(false);
+    this.referenceRow.set(null);
   }
 
   getCompanyId(): number {
@@ -300,7 +406,17 @@ export class SentimentAnalysis implements OnInit, OnDestroy {
     const companyId = this.getCompanyId();
     const { start, end } = resolveOptionalApiDateRange(withFilters, this.startDate(), this.endDate());
 
-    this.analysisService.getFeedbackWithSentiment(companyId, start, end, this.page(), this.pageSize()).subscribe({
+    const rel = this.filterIsRelevant();
+    const isRelevant = rel === 'true' ? true : rel === 'false' ? false : undefined;
+
+    this.analysisService
+      .getFeedbackWithSentiment(companyId, start, end, this.page(), this.pageSize(), {
+        journeyStage: this.filterJourneyStage() || undefined,
+        isRelevant,
+        includeIrrelevant: rel === 'all',
+        search: this.filterSearch().trim() || undefined,
+      })
+      .subscribe({
       next: (response) => {
         if (response?.success && response?.data) {
           const list = (response.data.list || []).map((row: any) => ({
@@ -434,6 +550,8 @@ export class SentimentAnalysis implements OnInit, OnDestroy {
   }
 
   sentimentReferenceRows(): SentimentReferenceRow[] {
+    const server = this.serverPatterns();
+    if (server.length) return server.filter((row) => row.patterns.trim().length > 0 && row.patterns !== '—');
     return [
       { sentiment: 'Positive' as const, patterns: this.representativePatterns('positive') },
       { sentiment: 'Neutral' as const, patterns: this.representativePatterns('neutral') },

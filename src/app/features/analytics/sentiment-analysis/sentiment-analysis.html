@@ -1,7 +1,18 @@
 <div class="sentiment-container">
-  <div class="header-section">
-    <h1>Sentiment Analysis</h1>
-    <p class="subtitle">Analyze customer sentiment across all feedback sources</p>
+  <div class="header-section header-with-action">
+    <div>
+      <h1>Sentiment Analysis</h1>
+      <p class="subtitle">Brand-relevant feedback with journey stage, relevance, and reference tweets</p>
+    </div>
+    <button
+      mat-stroked-button
+      color="primary"
+      type="button"
+      (click)="reRunAiEnrichment()"
+      [disabled]="reanalyzing() || initialLoading()">
+      <mat-icon>psychology</mat-icon>
+      {{ reanalyzing() ? 'Re-running AI…' : 'Re-run AI enrichment' }}
+    </button>
   </div>
 
   <div class="filters-section">
@@ -131,12 +142,53 @@
         <mat-card-subtitle>Total: {{ feedbackTotal() }} feedback items in this period</mat-card-subtitle>
       </mat-card-header>
       <mat-card-content>
+        <div class="filters filters-row list-filters">
+          <mat-form-field appearance="outline">
+            <mat-label>Journey stage</mat-label>
+            <mat-select [value]="filterJourneyStage()" (selectionChange)="filterJourneyStage.set($event.value); applyListFilters()">
+              <mat-option value="">All stages</mat-option>
+              @for (s of journeyStageOptions; track s) {
+                @if (s) {
+                  <mat-option [value]="s">{{ s }}</mat-option>
+                }
+              }
+            </mat-select>
+          </mat-form-field>
+          <mat-form-field appearance="outline">
+            <mat-label>Relevance</mat-label>
+            <mat-select [value]="filterIsRelevant()" (selectionChange)="filterIsRelevant.set($event.value); applyListFilters()">
+              <mat-option value="">Relevant only</mat-option>
+              <mat-option value="true">Relevant</mat-option>
+              <mat-option value="false">Not relevant</mat-option>
+              <mat-option value="all">Include all</mat-option>
+            </mat-select>
+          </mat-form-field>
+          <mat-form-field appearance="outline" class="search-field">
+            <mat-label>Search content</mat-label>
+            <input matInput [ngModel]="filterSearch()" (ngModelChange)="filterSearch.set($event)" (keyup.enter)="applyListFilters()" />
+          </mat-form-field>
+          <button mat-stroked-button type="button" (click)="applyListFilters()">Apply filters</button>
+        </div>
         <p *ngIf="feedbackList().length === 0" class="empty-hint">No feedback in this period.</p>
         <div *ngIf="feedbackList().length > 0" class="table-responsive">
           <table mat-table [dataSource]="feedbackList()" class="feedback-table">
             <ng-container matColumnDef="content">
-              <th mat-header-cell *matHeaderCellDef>Content</th>
+              <th mat-header-cell *matHeaderCellDef>Summary</th>
               <td mat-cell *matCellDef="let row" class="content-cell">{{ row.content }}</td>
+            </ng-container>
+            <ng-container matColumnDef="journeyStage">
+              <th mat-header-cell *matHeaderCellDef>Journey stage</th>
+              <td mat-cell *matCellDef="let row">{{ row.journeyStage || '—' }}</td>
+            </ng-container>
+            <ng-container matColumnDef="relevant">
+              <th mat-header-cell *matHeaderCellDef>Relevant</th>
+              <td mat-cell *matCellDef="let row">
+                <mat-chip-set>
+                  <mat-chip [class]="row.isRelevant === false ? 'sentiment-chip negative' : 'sentiment-chip positive'">
+                    {{ row.isRelevant === false ? 'No' : 'Yes' }}
+                  </mat-chip>
+                </mat-chip-set>
+              </td>
             </ng-container>
             <ng-container matColumnDef="source">
               <th mat-header-cell *matHeaderCellDef>Source</th>
@@ -160,6 +212,12 @@
                 {{ (row.sentiment || '').toLowerCase().includes('processing') ? '—' : row.score.toFixed(2) }}
               </td>
             </ng-container>
+            <ng-container matColumnDef="reference">
+              <th mat-header-cell *matHeaderCellDef>Reference</th>
+              <td mat-cell *matCellDef="let row">
+                <button mat-button type="button" (click)="openReference(row)">View tweet</button>
+              </td>
+            </ng-container>
             <tr mat-header-row *matHeaderRowDef="feedbackColumns"></tr>
             <tr mat-row *matRowDef="let row; columns: feedbackColumns;"></tr>
           </table>
@@ -173,5 +231,19 @@
       </mat-card-content>
     </mat-card>
 
+  </div>
+
+  <div
+    class="reference-overlay"
+    *ngIf="referenceOpen()"
+    (click)="closeReference()"
+    role="dialog"
+    aria-modal="true">
+    <div class="reference-modal" (click)="$event.stopPropagation()">
+      <h3>Reference data</h3>
+      <p *ngIf="referenceRow()?.journeyStage"><strong>Journey stage:</strong> {{ referenceRow()?.journeyStage }}</p>
+      <pre class="reference-text">{{ referenceRow()?.referenceContent || referenceRow()?.content }}</pre>
+      <button mat-stroked-button type="button" (click)="closeReference()">Close</button>
+    </div>
   </div>
 </div>

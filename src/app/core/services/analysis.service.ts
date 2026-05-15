@@ -177,17 +177,76 @@ export class AnalysisService {
       );
   }
 
+  getSentimentPatterns(
+    companyId?: number,
+    startDate?: Date,
+    endDate?: Date
+  ): Observable<ApiResponse<{ patterns: Array<{ sentiment: string; patterns: string }> }>> {
+    let params = new HttpParams();
+    if (companyId) params = params.set('companyId', companyId.toString());
+    if (startDate) params = params.set('startDate', startDate.toISOString());
+    if (endDate) params = params.set('endDate', endDate.toISOString());
+    return this.http.get<ApiResponse<{ patterns: Array<{ sentiment: string; patterns: string }> }>>(
+      `${this.baseUrl}/sentiment/patterns`,
+      { params }
+    );
+  }
+
+  reanalyzeEnrichment(
+    companyId?: number,
+    startDate?: Date,
+    endDate?: Date
+  ): Observable<ApiResponse<{ scanned?: number; total: number; succeeded: number; failed: number }>> {
+    const body: Record<string, unknown> = {};
+    if (companyId != null) body['companyId'] = companyId;
+    if (startDate) body['startDate'] = startDate.toISOString();
+    if (endDate) body['endDate'] = endDate.toISOString();
+    return this.http.post<ApiResponse<{ total: number; succeeded: number; failed: number }>>(
+      `${this.baseUrl}/enrichment/reanalyze`,
+      body
+    );
+  }
+
   getFeedbackWithSentiment(
     companyId?: number,
     startDate?: Date,
     endDate?: Date,
     page: number = 1,
-    limit: number = 50
-  ): Observable<ApiResponse<{ list: Array<{ id: number; content: string; source: string; date: string; author?: string; sentiment: string; score: number }>; total: number }>> {
+    limit: number = 50,
+    filters?: {
+      journeyStage?: string;
+      isRelevant?: boolean;
+      includeIrrelevant?: boolean;
+      search?: string;
+    }
+  ): Observable<
+    ApiResponse<{
+      list: Array<{
+        id: number;
+        content: string;
+        referenceContent?: string;
+        source: string;
+        date: string;
+        author?: string;
+        sentiment: string;
+        score: number;
+        journeyStage?: string;
+        isRelevant?: boolean;
+        relevanceReason?: string;
+        contentSummary?: string;
+      }>;
+      total: number;
+    }>
+  > {
     let params = new HttpParams().set('page', page.toString()).set('limit', limit.toString());
     if (companyId) params = params.set('companyId', companyId.toString());
     if (startDate) params = params.set('startDate', startDate.toISOString());
     if (endDate) params = params.set('endDate', endDate.toISOString());
+    if (filters?.journeyStage) params = params.set('journeyStage', filters.journeyStage);
+    if (filters?.isRelevant === true) params = params.set('isRelevant', 'true');
+    if (filters?.isRelevant === false) params = params.set('isRelevant', 'false');
+    if (filters?.includeIrrelevant) params = params.set('includeIrrelevant', 'true');
+    if (filters?.search) params = params.set('search', filters.search);
     return this.http.get<ApiResponse<{ list: any[]; total: number }>>(`${this.baseUrl}/sentiment/list`, { params });
   }
 

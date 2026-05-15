@@ -8,6 +8,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatTableModule } from '@angular/material/table';
 import { TwitterCxReportStore } from '../../../core/services/twitter-cx-report.store';
+import { AnalysisService } from '../../../core/services/analysis.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { OllamaLoader } from '../../../core/components/ollama-loader/ollama-loader';
@@ -21,6 +22,8 @@ interface JourneyStage {
   feedbackCount: number;
   painPoints: string[];
   satisfactionPoints: string[];
+  satisfactionReferenceIds: number[];
+  dissatisfactionReferenceIds: number[];
 }
 
 @Component({
@@ -41,8 +44,13 @@ interface JourneyStage {
 })
 export class JourneyMap implements OnInit, OnDestroy {
   private twitterCxReportStore = inject(TwitterCxReportStore);
+  private analysisService = inject(AnalysisService);
   private authService = inject(AuthService);
   private snackBar = inject(MatSnackBar);
+  drilldownOpen = signal(false);
+  drilldownLoading = signal(false);
+  drilldownTitle = signal('');
+  drilldownRows = signal<Array<{ id: number; content: string; author?: string; date: string }>>([]);
   private refreshSub?: Subscription;
 
   loading = signal(false);
@@ -97,8 +105,18 @@ export class JourneyMap implements OnInit, OnDestroy {
                 satisfactionScore: 0,
                 dissatisfactionScore: 0,
                 feedbackCount: typeof r?.feedbackCount === 'number' ? r.feedbackCount : 0,
-                painPoints: [String(r?.dissatisfaction ?? '')].filter(Boolean),
-                satisfactionPoints: [String(r?.satisfaction ?? '')].filter(Boolean),
+                painPoints: [
+                  String(r?.dissatisfactionSummary ?? r?.dissatisfaction ?? ''),
+                ].filter(Boolean),
+                satisfactionPoints: [
+                  String(r?.satisfactionSummary ?? r?.satisfaction ?? ''),
+                ].filter(Boolean),
+                satisfactionReferenceIds: Array.isArray(r?.satisfactionReferenceIds)
+                  ? r.satisfactionReferenceIds
+                  : [],
+                dissatisfactionReferenceIds: Array.isArray(r?.dissatisfactionReferenceIds)
+                  ? r.dissatisfactionReferenceIds
+                  : [],
               }))
             );
             this.page.set(1);
@@ -148,6 +166,27 @@ export class JourneyMap implements OnInit, OnDestroy {
     return this.journeyStages()
       .slice(0, this.flowStepTarget)
       .filter((s) => s.feedbackCount > 0).length;
+  }
+
+  openReferences(stageName: string, polarity: 'satisfaction' | 'dissatisfaction', ids: number[]): void {
+    if (!ids.length) return;
+    this.drilldownTitle.set(`${stageName} · ${polarity}`);
+    this.drilldownOpen.set(true);
+    this.drilldownLoading.set(true);
+    this.drilldownRows.set([]);
+    const companyId = this.authService.currentUser()?.settings?.companyId ?? 1;
+    this.analysisService.getFeedbackByIds(companyId, ids).subscribe({
+      next: (res) => {
+        this.drilldownLoading.set(false);
+        if (res?.data?.list) this.drilldownRows.set(res.data.list);
+      },
+      error: () => this.drilldownLoading.set(false),
+    });
+  }
+
+  closeDrilldown(): void {
+    this.drilldownOpen.set(false);
+    this.drilldownRows.set([]);
   }
 
   flowMilestoneMessage(): string {

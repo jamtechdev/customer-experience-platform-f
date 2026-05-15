@@ -13,6 +13,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { ActionPlanService, ActionPlanItem } from '../../../core/services/action-plan.service';
 import { TwitterCxReportStore } from '../../../core/services/twitter-cx-report.store';
+import { AnalysisService } from '../../../core/services/analysis.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { UserRole } from '../../../core/models';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
@@ -43,6 +44,7 @@ import { twitterCxReportFailureMessage } from '../../../core/utils/twitter-cx-re
 export class ActionPlans implements OnInit, OnDestroy {
   private actionPlanService = inject(ActionPlanService);
   private twitterCxReportStore = inject(TwitterCxReportStore);
+  private analysisService = inject(AnalysisService);
   private refreshSub?: Subscription;
   private authService = inject(AuthService);
   private fb = inject(FormBuilder);
@@ -67,7 +69,20 @@ export class ActionPlans implements OnInit, OnDestroy {
     return total === 0 ? 0 : Math.ceil(total / this.pageSize);
   });
   displayedColumns: string[] = ['title', 'priority', 'status', 'dueDate', 'actions'];
-  reportPlanRows = signal<Array<{ priority: string; action: string; owner: string; impact: string; horizon: string }>>([]);
+  reportPlanRows = signal<
+    Array<{
+      priority: string;
+      action: string;
+      owner: string;
+      impact: string;
+      horizon: string;
+      referenceFeedbackIds?: number[];
+    }>
+  >([]);
+  drilldownOpen = signal(false);
+  drilldownLoading = signal(false);
+  drilldownTitle = signal('');
+  drilldownRows = signal<Array<{ id: number; content: string; author?: string; date: string }>>([]);
   showForm = signal(false);
   editingId = signal<number | null>(null);
   form: FormGroup;
@@ -113,6 +128,7 @@ export class ActionPlans implements OnInit, OnDestroy {
               owner: x.owner ?? '',
               impact: x.impact ?? '',
               horizon: x.horizon ?? '',
+              referenceFeedbackIds: Array.isArray(x.referenceFeedbackIds) ? x.referenceFeedbackIds : [],
             }))
           );
           const mapped = this.reportPlanRows().map((x, idx) => ({
@@ -144,6 +160,27 @@ export class ActionPlans implements OnInit, OnDestroy {
 
   goPrevPage(): void {
     this.page.update((p) => Math.max(1, p - 1));
+  }
+
+  openReferences(row: { action: string; referenceFeedbackIds?: number[] }): void {
+    const ids = row.referenceFeedbackIds ?? [];
+    if (!ids.length) return;
+    this.drilldownTitle.set(row.action.slice(0, 80));
+    this.drilldownOpen.set(true);
+    this.drilldownLoading.set(true);
+    const companyId = this.authService.currentUser()?.settings?.companyId ?? 1;
+    this.analysisService.getFeedbackByIds(companyId, ids).subscribe({
+      next: (res) => {
+        this.drilldownLoading.set(false);
+        if (res?.data?.list) this.drilldownRows.set(res.data.list);
+      },
+      error: () => this.drilldownLoading.set(false),
+    });
+  }
+
+  closeDrilldown(): void {
+    this.drilldownOpen.set(false);
+    this.drilldownRows.set([]);
   }
 
   goNextPage(): void {
