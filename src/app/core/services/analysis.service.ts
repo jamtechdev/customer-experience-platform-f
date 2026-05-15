@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams, HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Observable, of, timer, defer, EMPTY, throwError } from 'rxjs';
-import { catchError, filter, switchMap, take, timeout, expand, mergeMap, delay, retry } from 'rxjs/operators';
+import { catchError, filter, switchMap, take, expand, mergeMap, delay, retry } from 'rxjs/operators';
 import {
   SentimentAnalysisResult,
   RootCauseAnalysis,
@@ -17,9 +17,6 @@ import { environment } from '../../../environments/environment';
 export class AnalysisService {
   private readonly http = inject(HttpClient);
   private readonly baseUrl = environment.apiUrl ? `${environment.apiUrl.replace(/\/$/, '')}/analysis` : '/api/analysis';
-  /** Client wait for bundled Twitter CX report (align above typical gateway limits where possible). */
-  private readonly twitterCxReportTimeoutMs = 300_000;
-
   // Sentiment Analysis - matches backend /api/analysis/sentiment
   analyzeSentiment(feedbackId: number): Observable<ApiResponse<SentimentAnalysisResult>> {
     return this.http.post<ApiResponse<SentimentAnalysisResult>>(`${this.baseUrl}/sentiment`, { feedbackId });
@@ -151,36 +148,19 @@ export class AnalysisService {
                   data: st.data.report as TwitterCxReportDto,
                 } as ApiResponse<TwitterCxReportDto>);
               }),
-              timeout(this.twitterCxReportTimeoutMs),
-              catchError((err: unknown) => {
-                const isTimeout =
-                  err &&
-                  typeof err === 'object' &&
-                  'name' in err &&
-                  (err as { name?: string }).name === 'TimeoutError';
-                return of({
+              catchError(() =>
+                of({
                   success: false,
-                  message: isTimeout ? 'timeout' : 'snapshot_poll_failed',
+                  message: 'snapshot_poll_failed',
                   data: undefined as unknown as TwitterCxReportDto,
-                } as ApiResponse<TwitterCxReportDto>);
-              })
+                } as ApiResponse<TwitterCxReportDto>)
+              )
             );
           }
           return of(body as ApiResponse<TwitterCxReportDto>);
         }),
-        timeout(this.twitterCxReportTimeoutMs + 5000),
         catchError((err: unknown) => {
-          let message = 'network';
-          if (err instanceof HttpErrorResponse) {
-            message = `http_${err.status}`;
-          } else if (
-            err &&
-            typeof err === 'object' &&
-            'name' in err &&
-            (err as { name?: string }).name === 'TimeoutError'
-          ) {
-            message = 'timeout';
-          }
+          const message = err instanceof HttpErrorResponse ? `http_${err.status}` : 'network';
           return of({
             success: false,
             data: undefined as unknown as TwitterCxReportDto,
@@ -255,7 +235,6 @@ export class AnalysisService {
     if (startDate) params = params.set('startDate', startDate.toISOString());
     if (endDate) params = params.set('endDate', endDate.toISOString());
     return this.http.get<ApiResponse<any>>(`${this.baseUrl}/competitor`, { params }).pipe(
-      timeout(120_000),
       retry({
         count: 1,
         delay: (err: unknown) => {
