@@ -31,6 +31,7 @@
       <mat-form-field appearance="outline">
         <mat-label>Preset</mat-label>
         <mat-select [value]="selectedPresetId()" (selectionChange)="onPresetChange($event.value)">
+          <mat-option value="none">All data (no date filter)</mat-option>
           @for (p of presets(); track p.id) {
             <mat-option [value]="p.id">{{ p.label }}</mat-option>
           }

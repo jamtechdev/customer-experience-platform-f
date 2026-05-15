@@ -19,6 +19,8 @@ import { ReportService } from '../../../core/services/report.service';
 import {
   buildClientReportDatePresets,
   toIsoRangeFromYmd,
+  NO_DATE_FILTER_PRESET_ID,
+  resolveOptionalApiDateRange,
   type ReportDatePreset,
 } from '../../../core/utils/report-date-presets';
 import { formatApiDate, normalizeApiDateToIso } from '../../../core/utils/api-date';
@@ -88,9 +90,10 @@ export class SentimentAnalysis implements OnInit, OnDestroy {
   feedbackTotal = signal(0);
 
   presets = signal<ReportDatePreset[]>([]);
-  selectedPresetId = signal<string>('last_30_days');
+  selectedPresetId = signal<string>(NO_DATE_FILTER_PRESET_ID);
   startDate = signal<string | null>(null);
   endDate = signal<string | null>(null);
+  private filtersApplied = signal(false);
   page = signal(1);
   pageSize = signal(25);
   totalPages = computed(() => Math.max(1, Math.ceil(this.feedbackTotal() / this.pageSize())));
@@ -129,30 +132,12 @@ export class SentimentAnalysis implements OnInit, OnDestroy {
         const list =
           res.success && res.data?.presets?.length ? (res.data.presets as ReportDatePreset[]) : buildClientReportDatePresets();
         this.presets.set(list);
-        const user = this.authService.currentUser();
-        const preferred = 'last_30_days';
-        const def =
-          list.find((p) => p.id === preferred) ??
-          list.find((p) => p.id === 'all_time') ??
-          list.find((p) => p.id === 'last_30_days') ??
-          list[0];
-        if (def) this.applyPreset(def);
-        else this.setTodayRange();
-        this.reloadAll();
+        this.reloadAll(false);
       },
       error: () => {
         const list = buildClientReportDatePresets();
         this.presets.set(list);
-        const user = this.authService.currentUser();
-        const preferred = 'last_30_days';
-        const def =
-          list.find((p) => p.id === preferred) ??
-          list.find((p) => p.id === 'all_time') ??
-          list.find((p) => p.id === 'last_30_days') ??
-          list[0];
-        if (def) this.applyPreset(def);
-        else this.setTodayRange();
-        this.reloadAll();
+        this.reloadAll(false);
       },
     });
   }
@@ -164,6 +149,12 @@ export class SentimentAnalysis implements OnInit, OnDestroy {
   }
 
   onPresetChange(id: string): void {
+    if (id === NO_DATE_FILTER_PRESET_ID) {
+      this.selectedPresetId.set(NO_DATE_FILTER_PRESET_ID);
+      this.startDate.set(null);
+      this.endDate.set(null);
+      return;
+    }
     if (id === 'custom') {
       this.selectedPresetId.set('custom');
       return;
@@ -185,12 +176,19 @@ export class SentimentAnalysis implements OnInit, OnDestroy {
   }
 
   applyRangeAndReload(): void {
+    if (this.selectedPresetId() === NO_DATE_FILTER_PRESET_ID) {
+      this.filtersApplied.set(false);
+      this.page.set(1);
+      this.reloadAll(false);
+      return;
+    }
     if (!this.datesValid()) {
       this.snackBar.open('Select a valid date range', 'Close', { duration: 4000 });
       return;
     }
+    this.filtersApplied.set(true);
     this.page.set(1);
-    this.reloadAll();
+    this.reloadAll(true);
   }
 
   refreshData(): void {
@@ -214,7 +212,11 @@ export class SentimentAnalysis implements OnInit, OnDestroy {
       this.snackBar.open('Select a valid date range', 'Close', { duration: 4000 });
       return;
     }
-    const { start, end } = this.getDateRange();
+    const { start, end } = resolveOptionalApiDateRange(true, this.startDate(), this.endDate());
+    if (!start || !end) {
+      this.snackBar.open('Select a valid date range for export', 'Close', { duration: 4000 });
+      return;
+    }
     const companyId = this.getCompanyId();
     this.exportLoading.set(true);
     this.reportService
@@ -241,9 +243,9 @@ export class SentimentAnalysis implements OnInit, OnDestroy {
       });
   }
 
-  private reloadAll(): void {
-    this.loadSentimentStats();
-    this.loadFeedbackList();
+  private reloadAll(withFilters: boolean = this.filtersApplied()): void {
+    this.loadSentimentStats(withFilters);
+    this.loadFeedbackList(withFilters);
   }
 
   getCompanyId(): number {
@@ -258,25 +260,14 @@ export class SentimentAnalysis implements OnInit, OnDestroy {
     return user?.settings?.companyId ?? 1;
   }
 
-  getDateRange(): { start: Date; end: Date } {
-    if (!this.datesValid()) {
-      const end = new Date();
-      const start = new Date();
-      start.setMonth(start.getMonth() - 1);
-      return { start, end };
-    }
-    const { startDate: sd, endDate: ed } = toIsoRangeFromYmd(this.startDate()!, this.endDate()!);
-    return { start: new Date(sd), end: new Date(ed) };
-  }
-
-  loadSentimentStats(): void {
+  loadSentimentStats(withFilters: boolean = this.filtersApplied()): void {
     const showInitialLoader = !this.hasCompletedInitialLoad && !this.stats();
     if (showInitialLoader) {
       this.initialLoading.set(true);
     }
 
     const companyId = this.getCompanyId();
-    const { start, end } = this.getDateRange();
+    const { start, end } = resolveOptionalApiDateRange(withFilters, this.startDate(), this.endDate());
 
     this.analysisService.getSentimentStats(companyId, start, end).subscribe({
       next: (response) => {
@@ -305,9 +296,9 @@ export class SentimentAnalysis implements OnInit, OnDestroy {
     });
   }
 
-  loadFeedbackList(): void {
+  loadFeedbackList(withFilters: boolean = this.filtersApplied()): void {
     const companyId = this.getCompanyId();
-    const { start, end } = this.getDateRange();
+    const { start, end } = resolveOptionalApiDateRange(withFilters, this.startDate(), this.endDate());
 
     this.analysisService.getFeedbackWithSentiment(companyId, start, end, this.page(), this.pageSize()).subscribe({
       next: (response) => {

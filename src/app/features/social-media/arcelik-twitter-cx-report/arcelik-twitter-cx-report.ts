@@ -17,7 +17,12 @@ import { AuthService } from '../../../core/services/auth.service';
 import { ReportService } from '../../../core/services/report.service';
 import { AnalysisService } from '../../../core/services/analysis.service';
 import type { TwitterCxReportDto } from '../../../core/models/analysis.model';
-import { buildClientReportDatePresets, type ReportDatePreset } from '../../../core/utils/report-date-presets';
+import {
+  buildClientReportDatePresets,
+  toIsoRangeFromYmd,
+  NO_DATE_FILTER_PRESET_ID,
+  type ReportDatePreset,
+} from '../../../core/utils/report-date-presets';
 import { twitterCxReportFailureMessage } from '../../../core/utils/twitter-cx-report-load';
 
 type SortDir = 'asc' | 'desc';
@@ -104,7 +109,7 @@ export class ArcelikTwitterCxReport implements OnInit {
   >([]);
 
   presets = signal<ReportDatePreset[]>([]);
-  selectedPresetId = signal<string>('last_30_days');
+  selectedPresetId = signal<string>(NO_DATE_FILTER_PRESET_ID);
   startDate = signal<string | null>(null);
   endDate = signal<string | null>(null);
   private filtersApplied = signal(false);
@@ -261,19 +266,10 @@ export class ArcelikTwitterCxReport implements OnInit {
         const list =
           res.success && res.data?.presets?.length ? (res.data.presets as ReportDatePreset[]) : buildClientReportDatePresets();
         this.presets.set(list);
-        const role = this.authService.currentUser()?.role;
-        const defId = role === 'admin' ? 'all_time' : 'last_30_days';
-        const def = list.find((p) => p.id === defId) ?? list[0];
-        if (def) this.applyPreset(def);
         this.reload(false);
       },
       error: () => {
-        const list = buildClientReportDatePresets();
-        this.presets.set(list);
-        const role = this.authService.currentUser()?.role;
-        const defId = role === 'admin' ? 'all_time' : 'last_30_days';
-        const def = list.find((p) => p.id === defId) ?? list[0];
-        if (def) this.applyPreset(def);
+        this.presets.set(buildClientReportDatePresets());
         this.reload(false);
       },
     });
@@ -286,6 +282,12 @@ export class ArcelikTwitterCxReport implements OnInit {
   }
 
   onPresetChange(id: string): void {
+    if (id === NO_DATE_FILTER_PRESET_ID) {
+      this.selectedPresetId.set(NO_DATE_FILTER_PRESET_ID);
+      this.startDate.set(null);
+      this.endDate.set(null);
+      return;
+    }
     if (id === 'custom') {
       this.selectedPresetId.set('custom');
       return;
@@ -307,12 +309,17 @@ export class ArcelikTwitterCxReport implements OnInit {
   }
 
   applyRangeAndReload(): void {
+    if (this.selectedPresetId() === NO_DATE_FILTER_PRESET_ID) {
+      this.filtersApplied.set(false);
+      this.reload(false);
+      return;
+    }
     if (!this.datesValid()) {
       this.snackBar.open('Select a valid date range', 'Close', { duration: 4000 });
       return;
     }
     this.filtersApplied.set(true);
-    this.reload();
+    this.reload(true);
   }
 
   private sentimentCompanyId(): number | undefined {
@@ -321,11 +328,18 @@ export class ArcelikTwitterCxReport implements OnInit {
     return user?.settings?.companyId ?? 1;
   }
 
-  reload(_withFilters: boolean = this.filtersApplied()): void {
+  reload(withFilters: boolean = this.filtersApplied()): void {
     this.loading.set(true);
     this.loadingMessage.set('Checking for cached report…');
     this.loadError.set(null);
     const sentCo = this.sentimentCompanyId();
+    let startDate: Date | undefined;
+    let endDate: Date | undefined;
+    if (withFilters && this.datesValid()) {
+      const { startDate: sd, endDate: ed } = toIsoRangeFromYmd(this.startDate()!, this.endDate()!);
+      startDate = new Date(sd);
+      endDate = new Date(ed);
+    }
 
     // After 3 s switch message to let user know a longer build may be running
     const msgTimer = setTimeout(() => {
@@ -335,7 +349,7 @@ export class ArcelikTwitterCxReport implements OnInit {
     }, 3000);
 
     this.twitterCxReportStore
-      .loadTwitterCxReport(sentCo)
+      .loadTwitterCxReport(sentCo, undefined, startDate, endDate)
       .pipe(
         finalize(() => {
           clearTimeout(msgTimer);

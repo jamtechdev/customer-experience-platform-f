@@ -11,19 +11,29 @@ export class TwitterCxReportStore {
   private readonly inflight = new Map<string, Observable<ApiResponse<TwitterCxReportDto>>>();
   private readonly cache = new Map<string, ApiResponse<TwitterCxReportDto>>();
 
-  getCachedReport(companyId: number | undefined, csvImportId?: number): ApiResponse<TwitterCxReportDto> | undefined {
-    return this.cache.get([companyId ?? '', csvImportId ?? ''].join('|'));
+  getCachedReport(
+    companyId: number | undefined,
+    csvImportId?: number,
+    startDate?: Date,
+    endDate?: Date
+  ): ApiResponse<TwitterCxReportDto> | undefined {
+    return this.cache.get(this.cacheKey(companyId, csvImportId, startDate, endDate));
   }
 
-  loadTwitterCxReport(companyId: number | undefined, csvImportId?: number): Observable<ApiResponse<TwitterCxReportDto>> {
-    const key = [companyId ?? '', csvImportId ?? ''].join('|');
+  loadTwitterCxReport(
+    companyId: number | undefined,
+    csvImportId?: number,
+    startDate?: Date,
+    endDate?: Date
+  ): Observable<ApiResponse<TwitterCxReportDto>> {
+    const key = this.cacheKey(companyId, csvImportId, startDate, endDate);
     const cached = this.cache.get(key);
     if (cached?.success && cached.data) {
       return of(cached);
     }
     let obs = this.inflight.get(key);
     if (!obs) {
-      obs = this.analysis.getTwitterCxReport(companyId, csvImportId).pipe(
+      obs = this.analysis.getTwitterCxReport(companyId, csvImportId, startDate, endDate).pipe(
         tap((res) => {
           if (res.success && res.data) {
             this.cache.set(key, res);
@@ -40,13 +50,24 @@ export class TwitterCxReportStore {
   invalidate(companyId?: number, csvImportId?: number): void {
     if (companyId == null && csvImportId == null) {
       this.cache.clear();
+      this.inflight.clear();
       return;
     }
     const prefix = `${companyId ?? ''}|`;
-    for (const k of [...this.cache.keys()]) {
-      if (k.startsWith(prefix) || (csvImportId != null && k.endsWith(`|${csvImportId}`))) {
+    for (const k of [...this.cache.keys(), ...this.inflight.keys()]) {
+      if (k.startsWith(prefix) || (csvImportId != null && k.includes(`|${csvImportId}|`))) {
         this.cache.delete(k);
+        this.inflight.delete(k);
       }
     }
+  }
+
+  private cacheKey(
+    companyId: number | undefined,
+    csvImportId?: number,
+    startDate?: Date,
+    endDate?: Date
+  ): string {
+    return [companyId ?? '', csvImportId ?? '', startDate?.toISOString() ?? '', endDate?.toISOString() ?? ''].join('|');
   }
 }

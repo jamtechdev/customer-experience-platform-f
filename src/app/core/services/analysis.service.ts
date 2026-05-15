@@ -85,13 +85,19 @@ export class AnalysisService {
   }
 
   /**
-   * Bundled Twitter CX report. Does not send startDate/endDate — server uses the full imported
-   * date span from the database (matches snapshot cache key and avoids per-range recomputation).
+   * Bundled Twitter CX report. Omit startDate/endDate to use the full imported DB span on the server.
    */
-  getTwitterCxReport(companyId: number | undefined, csvImportId?: number): Observable<ApiResponse<TwitterCxReportDto>> {
+  getTwitterCxReport(
+    companyId: number | undefined,
+    csvImportId?: number,
+    startDate?: Date,
+    endDate?: Date
+  ): Observable<ApiResponse<TwitterCxReportDto>> {
     let params = new HttpParams();
     if (companyId != null) params = params.set('companyId', String(companyId));
     if (csvImportId != null) params = params.set('csvImportId', String(csvImportId));
+    if (startDate) params = params.set('startDate', startDate.toISOString());
+    if (endDate) params = params.set('endDate', endDate.toISOString());
     return this.http
       .get<ApiResponse<TwitterCxReportDto | { snapshotPending: boolean; snapshotId: number }>>(
         `${this.baseUrl}/twitter-cx-report`,

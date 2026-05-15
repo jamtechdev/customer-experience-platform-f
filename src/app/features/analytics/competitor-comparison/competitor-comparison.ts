@@ -18,6 +18,7 @@ import { TranslationService } from '../../../core/services/translation.service';
 import {
   buildClientReportDatePresets,
   toIsoRangeFromYmd,
+  NO_DATE_FILTER_PRESET_ID,
   type ReportDatePreset,
 } from '../../../core/utils/report-date-presets';
 import { CXWebSocketService, type CSVImportStatusEvent } from '../../../core/services/cx-websocket.service';
@@ -72,7 +73,7 @@ export class CompetitorComparison implements OnInit, OnDestroy {
   newCompetitorName = '';
 
   presets = signal<ReportDatePreset[]>([]);
-  selectedPresetId = signal<string>('ytd');
+  selectedPresetId = signal<string>(NO_DATE_FILTER_PRESET_ID);
   startDate = signal<string | null>(null);
   endDate = signal<string | null>(null);
   private filtersApplied = signal(false);
@@ -100,21 +101,10 @@ export class CompetitorComparison implements OnInit, OnDestroy {
         const list =
           res.success && res.data?.presets?.length ? (res.data.presets as ReportDatePreset[]) : buildClientReportDatePresets();
         this.presets.set(list);
-        const def =
-          list.find((p) => p.id === 'ytd') ??
-          list.find((p) => p.id === 'last_30_days') ??
-          list[0];
-        if (def) this.applyPreset(def);
         this.loadComparisonData(false);
       },
       error: () => {
-        const list = buildClientReportDatePresets();
-        this.presets.set(list);
-        const def =
-          list.find((p) => p.id === 'ytd') ??
-          list.find((p) => p.id === 'last_30_days') ??
-          list[0];
-        if (def) this.applyPreset(def);
+        this.presets.set(buildClientReportDatePresets());
         this.loadComparisonData(false);
       },
     });
@@ -127,6 +117,12 @@ export class CompetitorComparison implements OnInit, OnDestroy {
   }
 
   onPresetChange(id: string): void {
+    if (id === NO_DATE_FILTER_PRESET_ID) {
+      this.selectedPresetId.set(NO_DATE_FILTER_PRESET_ID);
+      this.startDate.set(null);
+      this.endDate.set(null);
+      return;
+    }
     if (id === 'custom') {
       this.selectedPresetId.set('custom');
       return;
@@ -148,12 +144,17 @@ export class CompetitorComparison implements OnInit, OnDestroy {
   }
 
   applyRangeAndReload(): void {
+    if (this.selectedPresetId() === NO_DATE_FILTER_PRESET_ID) {
+      this.filtersApplied.set(false);
+      this.loadComparisonData(false);
+      return;
+    }
     if (!this.datesValid()) {
       this.snackBar.open('Select a valid date range', 'Close', { duration: 4000 });
       return;
     }
     this.filtersApplied.set(true);
-    this.loadComparisonData();
+    this.loadComparisonData(true);
   }
 
   cleanupInvalidCompetitorNames(): void {
@@ -263,8 +264,14 @@ export class CompetitorComparison implements OnInit, OnDestroy {
         this.competitors.set([]);
         this.insightSummary.set('');
         this.noDataInSelectedRange.set(false);
-        // Only show error if it's not a 500 (server might not have data yet)
-        if (error.status !== 500) {
+        const status = error?.status ?? 0;
+        if (status === 504 || status === 503) {
+          this.snackBar.open(
+            'Competitor analysis timed out. Try a shorter date range with Apply, or retry in a moment.',
+            'Close',
+            { duration: 6000 }
+          );
+        } else if (status !== 500) {
           this.snackBar.open('Failed to load comparison data', 'Close', { duration: 3000 });
         }
       }

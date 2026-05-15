@@ -14,6 +14,7 @@ import { TranslationService } from '../../../core/services/translation.service';
 import {
   buildClientReportDatePresets,
   toIsoRangeFromYmd,
+  NO_DATE_FILTER_PRESET_ID,
   type ReportDatePreset,
 } from '../../../core/utils/report-date-presets';
 
@@ -59,7 +60,7 @@ export class ReportBuilder implements OnInit {
   startDate = signal<string | null>(null);
   endDate = signal<string | null>(null);
   presets = signal<ReportDatePreset[]>([]);
-  selectedPresetId = signal<string>('last_30_days');
+  selectedPresetId = signal<string>(NO_DATE_FILTER_PRESET_ID);
   createdReports = signal<CreatedReportRecord[]>([]);
 
   get companyId(): number {
@@ -72,18 +73,9 @@ export class ReportBuilder implements OnInit {
         const list =
           res.success && res.data?.presets?.length ? (res.data.presets as ReportDatePreset[]) : buildClientReportDatePresets();
         this.presets.set(list);
-        const role = this.authService.currentUser()?.role;
-        const defId = role === 'admin' ? 'all_time' : 'last_30_days';
-        const def = list.find((p) => p.id === defId) ?? list[0];
-        if (def) this.applyPreset(def);
       },
       error: () => {
-        const list = buildClientReportDatePresets();
-        this.presets.set(list);
-        const role = this.authService.currentUser()?.role;
-        const defId = role === 'admin' ? 'all_time' : 'last_30_days';
-        const def = list.find((p) => p.id === defId) ?? list[0];
-        if (def) this.applyPreset(def);
+        this.presets.set(buildClientReportDatePresets());
       },
     });
   }
@@ -95,6 +87,12 @@ export class ReportBuilder implements OnInit {
   }
 
   onPresetChange(id: string): void {
+    if (id === NO_DATE_FILTER_PRESET_ID) {
+      this.selectedPresetId.set(NO_DATE_FILTER_PRESET_ID);
+      this.startDate.set(null);
+      this.endDate.set(null);
+      return;
+    }
     if (id === 'custom') {
       this.selectedPresetId.set('custom');
       return;

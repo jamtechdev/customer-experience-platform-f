@@ -6,6 +6,26 @@ export interface ReportDatePreset {
   endDate: string;
 }
 
+/** Default UI state: do not send startDate/endDate to APIs until user clicks Apply with a period. */
+export const NO_DATE_FILTER_PRESET_ID = 'none';
+export const NO_DATE_FILTER_LABEL = 'All data (no date filter)';
+
+/** When filters are not applied, APIs receive no date query params (server uses full imported span). */
+export function resolveOptionalApiDateRange(
+  filtersApplied: boolean,
+  startYmd: string | null,
+  endYmd: string | null
+): { start?: Date; end?: Date } {
+  if (!filtersApplied) {
+    return {};
+  }
+  if (!startYmd || !endYmd || startYmd > endYmd) {
+    return {};
+  }
+  const { startDate, endDate } = toIsoRangeFromYmd(startYmd, endYmd);
+  return { start: new Date(startDate), end: new Date(endDate) };
+}
+
 export function buildClientReportDatePresets(now: Date = new Date()): ReportDatePreset[] {
   const endToday = new Date(now);
   endToday.setHours(23, 59, 59, 999);

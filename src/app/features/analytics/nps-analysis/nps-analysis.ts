@@ -17,6 +17,7 @@ import { TranslationService } from '../../../core/services/translation.service';
 import {
   buildClientReportDatePresets,
   toIsoRangeFromYmd,
+  NO_DATE_FILTER_PRESET_ID,
   type ReportDatePreset,
 } from '../../../core/utils/report-date-presets';
 import { CXWebSocketService, type CSVImportStatusEvent } from '../../../core/services/cx-websocket.service';
@@ -67,7 +68,7 @@ export class NpsAnalysis implements OnInit, OnDestroy {
   npsData = signal<NPSData | null>(null);
   npsInterpretation = signal<string>('');
   presets = signal<ReportDatePreset[]>([]);
-  selectedPresetId = signal<string>('last_30_days');
+  selectedPresetId = signal<string>(NO_DATE_FILTER_PRESET_ID);
   startDate = signal<string | null>(null);
   endDate = signal<string | null>(null);
   private filtersApplied = signal(false);
@@ -91,25 +92,10 @@ export class NpsAnalysis implements OnInit, OnDestroy {
         const list =
           res.success && res.data?.presets?.length ? (res.data.presets as ReportDatePreset[]) : buildClientReportDatePresets();
         this.presets.set(list);
-        const user = this.authService.currentUser();
-        const defaultId = user?.role === 'admin' ? 'all_time' : 'last_30_days';
-        const def =
-          list.find((p) => p.id === defaultId) ??
-          list.find((p) => p.id === 'last_30_days') ??
-          list[0];
-        if (def) this.applyPreset(def);
         this.loadNPSData(false);
       },
       error: () => {
-        const list = buildClientReportDatePresets();
-        this.presets.set(list);
-        const user = this.authService.currentUser();
-        const defaultId = user?.role === 'admin' ? 'all_time' : 'last_30_days';
-        const def =
-          list.find((p) => p.id === defaultId) ??
-          list.find((p) => p.id === 'last_30_days') ??
-          list[0];
-        if (def) this.applyPreset(def);
+        this.presets.set(buildClientReportDatePresets());
         this.loadNPSData(false);
       },
     });
@@ -122,6 +108,12 @@ export class NpsAnalysis implements OnInit, OnDestroy {
   }
 
   onPresetChange(id: string): void {
+    if (id === NO_DATE_FILTER_PRESET_ID) {
+      this.selectedPresetId.set(NO_DATE_FILTER_PRESET_ID);
+      this.startDate.set(null);
+      this.endDate.set(null);
+      return;
+    }
     if (id === 'custom') {
       this.selectedPresetId.set('custom');
       return;
@@ -143,12 +135,17 @@ export class NpsAnalysis implements OnInit, OnDestroy {
   }
 
   applyRangeAndReload(): void {
+    if (this.selectedPresetId() === NO_DATE_FILTER_PRESET_ID) {
+      this.filtersApplied.set(false);
+      this.loadNPSData(false);
+      return;
+    }
     if (!this.datesValid()) {
       this.snackBar.open('Select a valid date range', 'Close', { duration: 4000 });
       return;
     }
     this.filtersApplied.set(true);
-    this.loadNPSData();
+    this.loadNPSData(true);
   }
 
   loadNPSData(withFilters: boolean = this.filtersApplied()): void {

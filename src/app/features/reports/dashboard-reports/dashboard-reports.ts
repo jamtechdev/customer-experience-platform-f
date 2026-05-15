@@ -17,6 +17,7 @@ import {
   buildClientReportDatePresets,
   inclusiveDaysBetweenYmd,
   toIsoRangeFromYmd,
+  NO_DATE_FILTER_PRESET_ID,
   type ReportDatePreset,
 } from '../../../core/utils/report-date-presets';
 import { parseIsoDateOnlyLocal } from '../../../core/utils/api-date';
@@ -59,7 +60,7 @@ export class DashboardReports implements OnInit, OnDestroy {
   Math = Math;
 
   presets = signal<ReportDatePreset[]>([]);
-  selectedPresetId = signal<string>('last_30_days');
+  selectedPresetId = signal<string>(NO_DATE_FILTER_PRESET_ID);
   startDate = signal<string | null>(null);
   endDate = signal<string | null>(null);
   private filtersApplied = signal(false);
@@ -113,19 +114,10 @@ export class DashboardReports implements OnInit, OnDestroy {
         const list =
           res.success && res.data?.presets?.length ? (res.data.presets as ReportDatePreset[]) : buildClientReportDatePresets();
         this.presets.set(list);
-        const role = this.authService.currentUser()?.role;
-        const defId = role === 'admin' ? 'all_time' : 'last_30_days';
-        const def = list.find((p) => p.id === defId) ?? list[0];
-        if (def) this.applyPreset(def);
         this.reloadAll(false);
       },
       error: () => {
-        const list = buildClientReportDatePresets();
-        this.presets.set(list);
-        const role = this.authService.currentUser()?.role;
-        const defId = role === 'admin' ? 'all_time' : 'last_30_days';
-        const def = list.find((p) => p.id === defId) ?? list[0];
-        if (def) this.applyPreset(def);
+        this.presets.set(buildClientReportDatePresets());
         this.reloadAll(false);
       },
     });
@@ -144,6 +136,12 @@ export class DashboardReports implements OnInit, OnDestroy {
   }
 
   onPresetChange(id: string): void {
+    if (id === NO_DATE_FILTER_PRESET_ID) {
+      this.selectedPresetId.set(NO_DATE_FILTER_PRESET_ID);
+      this.startDate.set(null);
+      this.endDate.set(null);
+      return;
+    }
     if (id === 'custom') {
       this.selectedPresetId.set('custom');
       return;
@@ -165,11 +163,16 @@ export class DashboardReports implements OnInit, OnDestroy {
   }
 
   applyRangeAndReload(): void {
+    if (this.selectedPresetId() === NO_DATE_FILTER_PRESET_ID) {
+      this.filtersApplied.set(false);
+      this.reloadAll(false);
+      return;
+    }
     if (!this.datesValid()) return;
     this.filtersApplied.set(true);
     const days = inclusiveDaysBetweenYmd(this.startDate()!, this.endDate()!);
     this.days.set(Math.max(7, days));
-    this.reloadAll();
+    this.reloadAll(true);
   }
 
   private reloadAll(withFilters: boolean = this.filtersApplied()): void {
