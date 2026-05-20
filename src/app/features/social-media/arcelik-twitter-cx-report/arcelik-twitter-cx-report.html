@@ -4,8 +4,10 @@
     <p class="subtitle">{{ reportSubtitleDisplay() }}</p>
     @if (loading()) {
       <div class="loading-block" aria-busy="true">
-        <mat-progress-spinner diameter="36" mode="indeterminate"></mat-progress-spinner>
-        <span>{{ loadingMessage() }}</span>
+        <app-ollama-loader
+          title="Preparing Twitter CX report"
+          [subtitle]="loadingMessage()">
+        </app-ollama-loader>
       </div>
     }
     @if (loadError()) {

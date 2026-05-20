@@ -5,8 +5,10 @@
     </mat-card-header>
     <mat-card-content>
       <div *ngIf="loading()" class="loading-container">
-        <mat-progress-spinner mode="indeterminate" diameter="40"></mat-progress-spinner>
-        <p class="loading-caption">Loading dataset profile from saved CX report…</p>
+        <app-ollama-loader
+          title="Loading dataset profile"
+          subtitle="Reading cohort size, CX relevance, and import coverage from the saved AI report">
+        </app-ollama-loader>
       </div>
       <div *ngIf="!loading()" class="table-wrap">
         <table mat-table [dataSource]="rows()" class="report-table">

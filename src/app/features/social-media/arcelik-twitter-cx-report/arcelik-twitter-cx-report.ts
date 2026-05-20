@@ -24,6 +24,7 @@ import {
   type ReportDatePreset,
 } from '../../../core/utils/report-date-presets';
 import { twitterCxReportFailureMessage } from '../../../core/utils/twitter-cx-report-load';
+import { OllamaLoader } from '../../../core/components/ollama-loader/ollama-loader';
 
 type SortDir = 'asc' | 'desc';
 
@@ -85,6 +86,7 @@ interface ActionPlanRow {
     MatInputModule,
     MatProgressSpinnerModule,
     MatSnackBarModule,
+    OllamaLoader,
   ],
   templateUrl: './arcelik-twitter-cx-report.html',
   styleUrl: './arcelik-twitter-cx-report.css',
@@ -97,7 +99,7 @@ export class ArcelikTwitterCxReport implements OnInit {
   private snackBar = inject(MatSnackBar);
 
   loading = signal(false);
-  loadingMessage = signal<string>('Computing report…');
+  loadingMessage = signal<string>('Preparing the saved report.');
   loadError = signal<string | null>(null);
   reportBundle = signal<TwitterCxReportDto | null>(null);
 
@@ -330,7 +332,7 @@ export class ArcelikTwitterCxReport implements OnInit {
 
   reload(withFilters: boolean = this.filtersApplied()): void {
     this.loading.set(true);
-    this.loadingMessage.set('Checking for cached report…');
+    this.loadingMessage.set('Checking for a saved report in the database.');
     this.loadError.set(null);
     const sentCo = this.sentimentCompanyId();
     let startDate: Date | undefined;
@@ -344,7 +346,7 @@ export class ArcelikTwitterCxReport implements OnInit {
     // After 3 s switch message to let user know a longer build may be running
     const msgTimer = setTimeout(() => {
       if (this.loading()) {
-        this.loadingMessage.set('Building report in the background — this may take 30–60 s on first load…');
+        this.loadingMessage.set('Building the report in the background. First load can take 30-60 seconds.');
       }
     }, 3000);
 
@@ -354,7 +356,7 @@ export class ArcelikTwitterCxReport implements OnInit {
         finalize(() => {
           clearTimeout(msgTimer);
           this.loading.set(false);
-          this.loadingMessage.set('Computing report…');
+          this.loadingMessage.set('Preparing the saved report.');
         })
       )
       .subscribe({

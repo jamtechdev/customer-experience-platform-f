@@ -10,6 +10,7 @@ import { SocialMediaService } from '../../../core/services/social-media.service'
 import { AnalysisService } from '../../../core/services/analysis.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { OllamaLoader } from '../../../core/components/ollama-loader/ollama-loader';
 
 interface PlatformData {
   platform: string;
@@ -35,6 +36,7 @@ interface PlatformData {
     MatProgressSpinnerModule,
     MatChipsModule,
     MatSnackBarModule,
+    OllamaLoader,
   ],
   templateUrl: './social-analysis.html',
   styleUrl: './social-analysis.css',

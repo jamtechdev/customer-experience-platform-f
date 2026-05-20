@@ -6,8 +6,8 @@
     <mat-card-content>
       <div *ngIf="loading()" class="loading-container">
         <app-ollama-loader
-          [title]="'Ollama AI is drafting methodology notes'"
-          [subtitle]="'Compiling scope, cohort logic, and analysis method for the selected data window'">
+          [title]="'Loading scope and methodology'"
+          [subtitle]="'Reading saved cohort logic, filters, and analysis notes from the AI report'">
         </app-ollama-loader>
       </div>
       <ul *ngIf="!loading()" class="list">

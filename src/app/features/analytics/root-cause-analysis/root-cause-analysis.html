@@ -17,8 +17,8 @@
 
   <div *ngIf="loading()" class="loading-container">
     <app-ollama-loader
-      [title]="reanalyzing() ? 'Running root cause analysis' : 'Loading saved root causes'"
-      [subtitle]="reanalyzing() ? 'Batch analysis on negative feedback (runs on demand, not every page load)' : 'Reading pre-calculated themes from the database'">
+      [title]="reanalyzing() ? 'Running root cause analysis' : 'Loading root cause themes'"
+      [subtitle]="reanalyzing() ? 'Analyzing negative feedback and grouping recurring issues' : 'Reading saved themes, counts, and interpretations from the database'">
     </app-ollama-loader>
   </div>
 

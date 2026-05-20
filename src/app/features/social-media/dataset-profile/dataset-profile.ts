@@ -10,6 +10,7 @@ import { AuthService } from '../../../core/services/auth.service';
 import { AnalysisService } from '../../../core/services/analysis.service';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { twitterCxReportFailureMessage } from '../../../core/utils/twitter-cx-report-load';
+import { OllamaLoader } from '../../../core/components/ollama-loader/ollama-loader';
 
 interface DatasetProfileRow {
   metric: string;
@@ -20,7 +21,15 @@ interface DatasetProfileRow {
 @Component({
   selector: 'app-dataset-profile',
   standalone: true,
-  imports: [CommonModule, MatCardModule, MatTableModule, MatSnackBarModule, MatProgressSpinnerModule, MatButtonModule],
+  imports: [
+    CommonModule,
+    MatCardModule,
+    MatTableModule,
+    MatSnackBarModule,
+    MatProgressSpinnerModule,
+    MatButtonModule,
+    OllamaLoader,
+  ],
   templateUrl: './dataset-profile.html',
   styleUrl: './dataset-profile.css',
 })

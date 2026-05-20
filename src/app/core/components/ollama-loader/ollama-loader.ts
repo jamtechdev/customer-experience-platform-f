@@ -9,7 +9,7 @@ import { CommonModule } from '@angular/common';
   styleUrl: './ollama-loader.css',
 })
 export class OllamaLoader {
-  title = input<string>('Ollama AI is analyzing data');
-  subtitle = input<string>('Processing insights and preparing human-friendly output');
+  title = input<string>('AI is preparing your workspace');
+  subtitle = input<string>('Loading saved insights and preparing the page');
   loaderRings = Array.from({ length: 15 }, (_, idx) => idx + 1);
 }
