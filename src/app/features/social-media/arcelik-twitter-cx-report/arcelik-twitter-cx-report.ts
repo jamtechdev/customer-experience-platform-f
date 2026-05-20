@@ -1,7 +1,8 @@
-import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { Component, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { finalize } from 'rxjs/operators';
+import { Subscription } from 'rxjs';
 import { MatCardModule } from '@angular/material/card';
 import { MatTableModule } from '@angular/material/table';
 import { MatChipsModule } from '@angular/material/chips';
@@ -91,12 +92,13 @@ interface ActionPlanRow {
   templateUrl: './arcelik-twitter-cx-report.html',
   styleUrl: './arcelik-twitter-cx-report.css',
 })
-export class ArcelikTwitterCxReport implements OnInit {
+export class ArcelikTwitterCxReport implements OnInit, OnDestroy {
   private twitterCxReportStore = inject(TwitterCxReportStore);
   private authService = inject(AuthService);
   private reportService = inject(ReportService);
   private analysisService = inject(AnalysisService);
   private snackBar = inject(MatSnackBar);
+  private refreshSub?: Subscription;
 
   loading = signal(false);
   loadingMessage = signal<string>('Preparing the saved report.');
@@ -260,6 +262,11 @@ export class ArcelikTwitterCxReport implements OnInit {
 
   ngOnInit(): void {
     this.loadPresets();
+    this.refreshSub = this.twitterCxReportStore.onRefresh$.subscribe(() => this.reload());
+  }
+
+  ngOnDestroy(): void {
+    this.refreshSub?.unsubscribe();
   }
 
   private loadPresets(): void {
@@ -361,6 +368,9 @@ export class ArcelikTwitterCxReport implements OnInit {
       )
       .subscribe({
         next: (res) => {
+          if (res.message === 'stale_response') {
+            return;
+          }
           if (res.success && res.data) {
             this.reportBundle.set(res.data);
             this.loadError.set(null);

@@ -112,7 +112,7 @@ export class CXWebSocketService {
       };
       if (!ev.type) return;
       this.analyticsLifecycleSubject.next(ev);
-      if (ev.type === 'datasetDeleted' || ev.type === 'analysisCompleted') {
+      if (ev.type === 'analysisCompleted') {
         this.importStatusSubject.next({
           importId: ev.importId ?? -1,
           status: 'completed',
@@ -129,7 +129,7 @@ export class CXWebSocketService {
       }
       const companyId = ev.companyId ?? this.latestCompanyId ?? undefined;
       this.twitterCxReportStore.invalidate(companyId);
-      if (companyId != null && (ev.type === 'datasetDeleted' || ev.type === 'analysisCompleted')) {
+      if (companyId != null && ev.type === 'analysisCompleted') {
         this.analysisService.rebuildTwitterCxReport(companyId).subscribe({
           error: () => {
             /* best-effort */

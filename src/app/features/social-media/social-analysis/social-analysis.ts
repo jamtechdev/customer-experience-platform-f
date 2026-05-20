@@ -1,4 +1,5 @@
-import { Component, inject, OnInit, signal, computed } from '@angular/core';
+import { Component, inject, OnDestroy, OnInit, signal, computed } from '@angular/core';
+import { Subscription } from 'rxjs';
 import { CommonModule } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
 import { MatTableModule } from '@angular/material/table';
@@ -11,6 +12,7 @@ import { AnalysisService } from '../../../core/services/analysis.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { OllamaLoader } from '../../../core/components/ollama-loader/ollama-loader';
+import { CXWebSocketService } from '../../../core/services/cx-websocket.service';
 
 interface PlatformData {
   platform: string;
@@ -41,11 +43,13 @@ interface PlatformData {
   templateUrl: './social-analysis.html',
   styleUrl: './social-analysis.css',
 })
-export class SocialAnalysis implements OnInit {
+export class SocialAnalysis implements OnInit, OnDestroy {
   private socialMediaService = inject(SocialMediaService);
   private analysisService = inject(AnalysisService);
   private authService = inject(AuthService);
   private snackBar = inject(MatSnackBar);
+  private websocket = inject(CXWebSocketService);
+  private lifecycleSub?: Subscription;
 
   loading = signal(false);
   error = signal<string | null>(null);
@@ -71,6 +75,15 @@ export class SocialAnalysis implements OnInit {
 
   ngOnInit(): void {
     this.loadSocialMediaData();
+    this.lifecycleSub = this.websocket.onAnalyticsLifecycle().subscribe((event) => {
+      if (event.type === 'datasetDeleted' || event.type === 'analysisCompleted') {
+        this.loadSocialMediaData();
+      }
+    });
+  }
+
+  ngOnDestroy(): void {
+    this.lifecycleSub?.unsubscribe();
   }
 
   loadSocialMediaData(): void {

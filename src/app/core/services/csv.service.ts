@@ -137,7 +137,7 @@ export class CSVService {
     return this.http.get<ApiResponse<CSVFormat>>(`${this.baseUrl}/format`);
   }
 
-  uploadCSV(file: File, autoProcess = true): Observable<ApiResponse<CSVUploadResponse>> {
+  uploadCSV(file: File, autoProcess = false): Observable<ApiResponse<CSVUploadResponse>> {
     const formData = new FormData();
     formData.append('file', file);
     const params = new HttpParams().set('autoProcess', String(autoProcess));

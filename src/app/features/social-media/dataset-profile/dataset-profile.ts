@@ -64,6 +64,10 @@ export class DatasetProfile implements OnInit, OnDestroy {
     this.loading.set(true);
     this.twitterCxReportStore.loadTwitterCxReport(companyId).subscribe({
       next: (res) => {
+        if (res.message === 'stale_response') {
+          this.loading.set(false);
+          return;
+        }
         if (!res.success) {
           this.rows.set([]);
           this.snackBar.open(twitterCxReportFailureMessage(res.message), 'Close', { duration: 7000 });

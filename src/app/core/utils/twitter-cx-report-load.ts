@@ -21,6 +21,9 @@ export function twitterCxReportFailureMessage(apiMessage?: string): string {
   if (apiMessage === 'empty_response') {
     return 'The report service returned an empty response. Refresh the page and try again.';
   }
+  if (apiMessage === 'stale_response') {
+    return 'The report changed while this page was loading. Refreshing the latest data now.';
+  }
   return 'Could not load the CX report. Check that feedback has been imported, then try again.';
 }
 

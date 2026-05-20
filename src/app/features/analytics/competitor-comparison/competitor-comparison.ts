@@ -90,6 +90,13 @@ export class CompetitorComparison implements OnInit, OnDestroy {
         this.loadComparisonData();
       }
     });
+    this.importStatusSub.add(
+      this.websocket.onAnalyticsLifecycle().subscribe((event) => {
+        if (event.type === 'datasetDeleted' || event.type === 'analysisCompleted') {
+          this.loadComparisonData();
+        }
+      })
+    );
   }
 
   ngOnDestroy(): void {

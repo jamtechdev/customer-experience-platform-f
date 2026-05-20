@@ -1,4 +1,5 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { Component, inject, OnDestroy, OnInit, signal } from '@angular/core';
+import { Subscription } from 'rxjs';
 import { CommonModule } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
@@ -18,20 +19,34 @@ import { twitterCxReportFailureMessage } from '../../../core/utils/twitter-cx-re
   templateUrl: './methodology.html',
   styleUrl: './methodology.css',
 })
-export class Methodology implements OnInit {
+export class Methodology implements OnInit, OnDestroy {
   private twitterCxReportStore = inject(TwitterCxReportStore);
   private authService = inject(AuthService);
   private snackBar = inject(MatSnackBar);
+  private refreshSub?: Subscription;
 
   loading = signal(false);
   bullets = signal<string[]>([]);
 
   ngOnInit(): void {
+    this.loadMethodology();
+    this.refreshSub = this.twitterCxReportStore.onRefresh$.subscribe(() => this.loadMethodology());
+  }
+
+  ngOnDestroy(): void {
+    this.refreshSub?.unsubscribe();
+  }
+
+  private loadMethodology(): void {
     const user = this.authService.currentUser();
     const companyId = user?.role === 'admin' ? undefined : (user?.settings?.companyId ?? 1);
     this.loading.set(true);
     this.twitterCxReportStore.loadTwitterCxReport(companyId).subscribe({
       next: (res) => {
+        if (res.message === 'stale_response') {
+          this.loading.set(false);
+          return;
+        }
         if (!res.success) {
           this.bullets.set([]);
           this.snackBar.open(twitterCxReportFailureMessage(res.message), 'Close', { duration: 7000 });

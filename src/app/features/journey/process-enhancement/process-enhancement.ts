@@ -60,6 +60,10 @@ export class ProcessEnhancement implements OnInit, OnDestroy {
       .loadTwitterCxReport(companyId)
       .subscribe({
         next: (res) => {
+          if (res.message === 'stale_response') {
+            this.loading.set(false);
+            return;
+          }
           if (!res.success) {
             this.processImprovements.set([]);
             this.managementTakeaways.set([]);

@@ -112,6 +112,10 @@ export class ActionPlans implements OnInit, OnDestroy {
     const companyId = user?.role === 'admin' ? undefined : (user?.settings?.companyId ?? 1);
     this.twitterCxReportStore.loadTwitterCxReport(companyId).subscribe({
       next: (response) => {
+        if (response.message === 'stale_response') {
+          this.loading.set(false);
+          return;
+        }
         if (!response.success) {
           this.reportPlanRows.set([]);
           this.actionPlans.set([]);

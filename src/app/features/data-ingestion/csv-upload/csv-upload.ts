@@ -144,17 +144,14 @@ export class CsvUpload implements OnInit {
     this.processingStatus.set('uploading');
     this.processingMessage.set(this.t('app.loading') || 'Uploading file...');
 
-    this.csvService.uploadCSV(this.selectedFile, true).subscribe({
+    this.csvService.uploadCSV(this.selectedFile, false).subscribe({
       next: (response) => {
         if (response.success && response.data?.importId) {
           this.uploadProgress.set(100);
           this.importId.set(response.data.importId);
           this.processingStatus.set(response.data.status === 'processing' ? 'processing' : 'completed');
           const rows = response.data.rowCount;
-          const msg = response.data.status === 'processing'
-            ? `Upload completed: ${rows} row(s) from ${response.data.filename}. Ollama analysis started automatically.`
-            : ((this.t('dataSources.importDone') as string) ||
-              `Upload completed: ${rows} row(s) from ${response.data.filename}.`);
+          const msg = `Upload completed: ${rows} row(s) from ${response.data.filename}. Please map columns before starting import.`;
           this.processingMessage.set(msg);
           this.snackBar.open(msg, this.t('app.close'), { duration: 6000 });
           this.uploading.set(false);

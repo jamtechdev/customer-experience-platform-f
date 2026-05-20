@@ -175,6 +175,13 @@ export class SentimentAnalysis implements OnInit, OnDestroy {
         this.reloadAll();
       }
     });
+    this.importStatusSub.add(
+      this.websocket.onAnalyticsLifecycle().subscribe((event) => {
+        if (event.type === 'datasetDeleted' || event.type === 'analysisCompleted') {
+          this.reloadAll();
+        }
+      })
+    );
   }
 
   ngOnDestroy(): void {

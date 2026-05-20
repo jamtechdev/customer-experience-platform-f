@@ -104,6 +104,13 @@ export class RootCauseAnalysis implements OnInit, OnDestroy {
         );
       }
     });
+    this.importStatusSub.add(
+      this.websocket.onAnalyticsLifecycle().subscribe((event) => {
+        if (event.type === 'datasetDeleted' || event.type === 'analysisCompleted') {
+          this.loadRootCauses();
+        }
+      })
+    );
   }
 
   ngOnDestroy(): void {
@@ -198,6 +205,7 @@ export class RootCauseAnalysis implements OnInit, OnDestroy {
 
   viewCauseRecords(cause: RootCause): void {
     this.openRelatedRecords({
+      id: cause.id,
       cause: this.painPointTitle(cause),
       count: cause.frequency || 0,
       interpretation: this.painPointSummary(cause),
@@ -288,7 +296,7 @@ export class RootCauseAnalysis implements OnInit, OnDestroy {
           this.loadRootCauses();
           const data = res.data as unknown as { feedbackIds?: number[] };
           const ids = Array.isArray(data?.feedbackIds) ? data.feedbackIds : row.feedbackIds;
-          this.openRelatedRecords({ ...row, feedbackIds: ids });
+          this.openRelatedRecords({ ...row, feedbackIds: ids }, false);
         } else {
           this.snackBar.open(res.message || 'Re-link failed', 'Close', { duration: 4000 });
         }
@@ -297,9 +305,13 @@ export class RootCauseAnalysis implements OnInit, OnDestroy {
     });
   }
 
-  openRelatedRecords(row: RootCauseChartRow): void {
+  openRelatedRecords(row: RootCauseChartRow, allowRelink = true): void {
     if (!row.feedbackIds?.length) {
-      this.snackBar.open('No linked records. Try Re-link records.', 'Close', { duration: 3500 });
+      if (allowRelink && row.id) {
+        this.relinkRecords(row);
+      } else {
+        this.snackBar.open('No linked records available for this cause.', 'Close', { duration: 3500 });
+      }
       return;
     }
     this.drilldownTitle.set(row.cause);
@@ -312,6 +324,11 @@ export class RootCauseAnalysis implements OnInit, OnDestroy {
       next: (res) => {
         this.drilldownLoading.set(false);
         if (res.success && Array.isArray(res.data?.list)) {
+          if (!res.data.list.length && allowRelink && row.id) {
+            this.closeDrilldown();
+            this.relinkRecords(row);
+            return;
+          }
           this.drilldownRows.set(res.data.list);
         } else {
           this.snackBar.open(res.message || 'Could not load related records', 'Close', { duration: 5000 });

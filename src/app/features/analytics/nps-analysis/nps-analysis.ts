@@ -95,6 +95,13 @@ export class NpsAnalysis implements OnInit, OnDestroy {
         this.loadNPSData();
       }
     });
+    this.importStatusSub.add(
+      this.websocket.onAnalyticsLifecycle().subscribe((event) => {
+        if (event.type === 'datasetDeleted' || event.type === 'analysisCompleted') {
+          this.loadNPSData();
+        }
+      })
+    );
   }
 
   ngOnDestroy(): void {
