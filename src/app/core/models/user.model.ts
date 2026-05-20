@@ -56,8 +56,8 @@ export enum UserStatus {
 
 export interface AuthResponse {
   user: User;
-  accessToken: string;
-  refreshToken: string;
+  accessToken?: string;
+  refreshToken?: string;
   expiresIn: number;
 }
 

@@ -11,6 +11,7 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatInputModule } from '@angular/material/input';
 import { FormsModule } from '@angular/forms';
 import { DashboardService, DashboardStats, DashboardTrends } from '../../../core/services/dashboard.service';
+import { AnalysisService } from '../../../core/services/analysis.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { TranslationService } from '../../../core/services/translation.service';
 import { CXWebSocketService, type CSVImportStatusEvent } from '../../../core/services/cx-websocket.service';
@@ -64,6 +65,7 @@ interface SentimentCategoryBar {
 })
 export class MainDashboard implements OnInit, OnDestroy {
   private dashboardService = inject(DashboardService);
+  private analysisService = inject(AnalysisService);
   private authService = inject(AuthService);
   private translationService = inject(TranslationService);
   private http = inject(HttpClient);
@@ -75,6 +77,10 @@ export class MainDashboard implements OnInit, OnDestroy {
   dashboardData = signal<DashboardStats | null>(null);
   dashboardTrends = signal<DashboardTrends | null>(null);
   backendUnavailable = signal(false);
+  drilldownOpen = signal(false);
+  drilldownLoading = signal(false);
+  drilldownTitle = signal('');
+  drilldownRows = signal<Array<{ id: number; content: string; contentSummary?: string; referenceContent?: string; sentiment: string; source: string; date: string; relevanceReason?: string }>>([]);
   Math = Math; // Expose Math for template
   today = new Date();
 
@@ -473,5 +479,37 @@ export class MainDashboard implements OnInit, OnDestroy {
     const rounded = Number(value.toFixed(2));
     if (Object.is(rounded, -0)) return '0.00';
     return rounded.toFixed(2);
+  }
+
+  openDashboardDrilldown(title: string, sentiment?: 'positive' | 'neutral' | 'negative'): void {
+    const user = this.authService.currentUser();
+    const companyId = user?.role === 'admin' ? undefined : (user?.settings?.companyId || 1);
+    this.drilldownTitle.set(title);
+    this.drilldownOpen.set(true);
+    this.drilldownLoading.set(true);
+    this.drilldownRows.set([]);
+    this.analysisService
+      .getAnalyticsDrilldown({
+        companyId,
+        sentiment,
+        startDate: this.dateRangeStart() ?? undefined,
+        endDate: this.dateRangeEnd() ?? undefined,
+      })
+      .subscribe({
+        next: (res) => {
+          this.drilldownLoading.set(false);
+          this.drilldownRows.set(res?.data?.list || []);
+        },
+        error: () => {
+          this.drilldownLoading.set(false);
+          this.drilldownRows.set([]);
+        },
+      });
+  }
+
+  closeDrilldown(): void {
+    this.drilldownOpen.set(false);
+    this.drilldownLoading.set(false);
+    this.drilldownRows.set([]);
   }
 }

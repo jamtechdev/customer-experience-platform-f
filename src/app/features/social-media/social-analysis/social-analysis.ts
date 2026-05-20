@@ -7,6 +7,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatChipsModule } from '@angular/material/chips';
 import { SocialMediaService } from '../../../core/services/social-media.service';
+import { AnalysisService } from '../../../core/services/analysis.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 
@@ -17,6 +18,10 @@ interface PlatformData {
   negative: number;
   neutral: number;
   sentimentScore: number;
+  feedbackIds: number[];
+  positiveFeedbackIds: number[];
+  negativeFeedbackIds: number[];
+  neutralFeedbackIds: number[];
 }
 
 @Component({
@@ -36,6 +41,7 @@ interface PlatformData {
 })
 export class SocialAnalysis implements OnInit {
   private socialMediaService = inject(SocialMediaService);
+  private analysisService = inject(AnalysisService);
   private authService = inject(AuthService);
   private snackBar = inject(MatSnackBar);
 
@@ -44,6 +50,10 @@ export class SocialAnalysis implements OnInit {
   platformData = signal<PlatformData[]>([]);
   volumeNarrative = signal<string | null>(null);
   sentimentNarrative = signal<string | null>(null);
+  drilldownOpen = signal(false);
+  drilldownLoading = signal(false);
+  drilldownTitle = signal('');
+  drilldownRows = signal<Array<{ id: number; content: string; contentSummary?: string; sentiment: string; date: string }>>([]);
   displayedColumns: string[] = ['platform', 'volume', 'sentiment', 'positive', 'negative', 'neutral'];
 
   totalVolume = computed(() => {
@@ -87,6 +97,13 @@ export class SocialAnalysis implements OnInit {
             platforms.forEach(platform => {
               const vol = volume?.mentionsPerPlatform?.[platform] ?? 0;
               const ch = dist?.channelComparison?.[platform] ?? { positive: 0, negative: 0, neutral: 0 };
+              const ids = volume?.feedbackIdsPerPlatform?.[platform] ?? dist?.channelFeedbackIds?.[platform]?.all ?? [];
+              const sentimentIds = dist?.channelFeedbackIds?.[platform] ?? {
+                positive: [],
+                negative: [],
+                neutral: [],
+                all: ids,
+              };
               const total = ch.positive + ch.negative + ch.neutral || 1;
               const sentimentScore = total > 0 ? (ch.positive - ch.negative) / total : 0;
               const normalized = (sentimentScore + 1) / 2;
@@ -96,7 +113,11 @@ export class SocialAnalysis implements OnInit {
                 positive: ch.positive,
                 negative: ch.negative,
                 neutral: ch.neutral,
-                sentimentScore: normalized
+                sentimentScore: normalized,
+                feedbackIds: ids,
+                positiveFeedbackIds: sentimentIds.positive || [],
+                negativeFeedbackIds: sentimentIds.negative || [],
+                neutralFeedbackIds: sentimentIds.neutral || [],
               });
             });
             rows.sort((a, b) => b.volume - a.volume);
@@ -120,5 +141,35 @@ export class SocialAnalysis implements OnInit {
         this.snackBar.open('Failed to load volume data', 'Close', { duration: 3000 });
       }
     });
+  }
+
+  totalFeedbackIds(): number[] {
+    return [...new Set(this.platformData().flatMap((row) => row.feedbackIds || []))];
+  }
+
+  openRelated(title: string, ids: number[]): void {
+    const unique = [...new Set((ids || []).filter((id) => Number.isFinite(id) && id > 0))];
+    if (!unique.length) return;
+    this.drilldownTitle.set(title);
+    this.drilldownOpen.set(true);
+    this.drilldownLoading.set(true);
+    this.drilldownRows.set([]);
+    const user = this.authService.currentUser();
+    const companyId = user?.role === 'admin' ? undefined : (user?.settings?.companyId ?? 1);
+    this.analysisService.getAnalyticsDrilldown({ companyId, ids: unique }).subscribe({
+      next: (res) => {
+        this.drilldownLoading.set(false);
+        this.drilldownRows.set(res?.data?.list || []);
+      },
+      error: () => {
+        this.drilldownLoading.set(false);
+        this.drilldownRows.set([]);
+      },
+    });
+  }
+
+  closeDrilldown(): void {
+    this.drilldownOpen.set(false);
+    this.drilldownRows.set([]);
   }
 }

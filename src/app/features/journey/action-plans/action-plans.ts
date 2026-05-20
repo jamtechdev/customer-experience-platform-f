@@ -82,7 +82,7 @@ export class ActionPlans implements OnInit, OnDestroy {
   drilldownOpen = signal(false);
   drilldownLoading = signal(false);
   drilldownTitle = signal('');
-  drilldownRows = signal<Array<{ id: number; content: string; author?: string; date: string }>>([]);
+  drilldownRows = signal<Array<{ id: number; content: string; contentSummary?: string; relevanceReason?: string; author?: string; date: string; sentiment?: string; source?: string }>>([]);
   showForm = signal(false);
   editingId = signal<number | null>(null);
   form: FormGroup;
@@ -168,8 +168,9 @@ export class ActionPlans implements OnInit, OnDestroy {
     this.drilldownTitle.set(row.action.slice(0, 80));
     this.drilldownOpen.set(true);
     this.drilldownLoading.set(true);
-    const companyId = this.authService.currentUser()?.settings?.companyId ?? 1;
-    this.analysisService.getFeedbackByIds(companyId, ids).subscribe({
+    const user = this.authService.currentUser();
+    const companyId = user?.role === 'admin' ? undefined : (user?.settings?.companyId ?? 1);
+    this.analysisService.getAnalyticsDrilldown({ companyId, ids }).subscribe({
       next: (res) => {
         this.drilldownLoading.set(false);
         if (res?.data?.list) this.drilldownRows.set(res.data.list);

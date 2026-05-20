@@ -75,6 +75,16 @@
   color: #111827;
 }
 
+.link-value {
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.link-value:hover {
+  text-decoration: underline;
+}
+
 .platform-table {
   width: 100%;
 }
@@ -110,4 +120,36 @@
 
 .platform-table {
   min-width: 700px; 
+}
+
+.reference-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background: rgba(15, 23, 42, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.reference-modal {
+  width: min(760px, 96vw);
+  max-height: 86vh;
+  overflow: auto;
+  background: #fff;
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: 0 20px 45px rgba(15, 23, 42, 0.25);
+}
+
+.drilldown-list {
+  list-style: none;
+  padding: 0;
+  margin: 12px 0;
+}
+
+.drilldown-list li {
+  border-bottom: 1px solid #e5e7eb;
+  padding: 10px 0;
 }

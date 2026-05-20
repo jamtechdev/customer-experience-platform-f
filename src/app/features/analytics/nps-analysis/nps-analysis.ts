@@ -67,6 +67,21 @@ export class NpsAnalysis implements OnInit, OnDestroy {
   loading = signal(false);
   npsData = signal<NPSData | null>(null);
   npsInterpretation = signal<string>('');
+  drilldownOpen = signal(false);
+  drilldownLoading = signal(false);
+  drilldownTitle = signal('');
+  drilldownRows = signal<
+    Array<{
+      id: number;
+      content: string;
+      referenceContent?: string;
+      source: string;
+      date: string;
+      sentiment: string;
+      journeyStage?: string;
+      relevanceReason?: string;
+    }>
+  >([]);
   presets = signal<ReportDatePreset[]>([]);
   selectedPresetId = signal<string>(NO_DATE_FILTER_PRESET_ID);
   startDate = signal<string | null>(null);
@@ -303,5 +318,60 @@ export class NpsAnalysis implements OnInit, OnDestroy {
   formatPct(value: number): string {
     const rounded = Number(value.toFixed(1));
     return Number.isInteger(rounded) ? String(rounded) : rounded.toFixed(1);
+  }
+
+  openNpsBucket(bucket: 'promoters' | 'passives' | 'detractors'): void {
+    const data = this.npsData();
+    if (!data) return;
+    const sentiment = bucket === 'promoters' ? 'positive' : bucket === 'detractors' ? 'negative' : 'neutral';
+    const count = bucket === 'promoters' ? data.promoters : bucket === 'detractors' ? data.detractors : data.passives;
+    if (!count) return;
+
+    let start: Date | undefined;
+    let end: Date | undefined;
+    if (this.filtersApplied() && this.datesValid()) {
+      const range = toIsoRangeFromYmd(this.startDate()!, this.endDate()!);
+      start = new Date(range.startDate);
+      end = new Date(range.endDate);
+    }
+
+    const user = this.authService.currentUser();
+    const companyId = user?.role === 'admin' ? undefined : (user?.settings?.companyId || 1);
+    this.drilldownTitle.set(`${bucket} (${count})`);
+    this.drilldownOpen.set(true);
+    this.drilldownLoading.set(true);
+    this.drilldownRows.set([]);
+
+    this.analysisService
+      .getFeedbackWithSentiment(companyId, start, end, 1, 100, {
+        sentiment,
+        includeIrrelevant: false,
+      })
+      .subscribe({
+        next: (res) => {
+          this.drilldownLoading.set(false);
+          this.drilldownRows.set(
+            (res?.data?.list || []).map((row: any) => ({
+              ...row,
+              content: String(row.contentSummary || row.content || ''),
+            }))
+          );
+        },
+        error: () => {
+          this.drilldownLoading.set(false);
+          this.drilldownRows.set([]);
+        },
+      });
+  }
+
+  closeDrilldown(): void {
+    this.drilldownOpen.set(false);
+    this.drilldownLoading.set(false);
+    this.drilldownRows.set([]);
+  }
+
+  formatDate(value: string): string {
+    const date = new Date(value);
+    return Number.isNaN(date.getTime()) ? value : date.toLocaleString();
   }
 }

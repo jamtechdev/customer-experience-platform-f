@@ -53,7 +53,11 @@
               </ng-container>
               <ng-container matColumnDef="volume">
                 <th mat-header-cell *matHeaderCellDef>Volume</th>
-                <td mat-cell *matCellDef="let row">{{ row.volume }}</td>
+                <td mat-cell *matCellDef="let row">
+                  <button mat-button color="primary" type="button" (click)="openRelatedTouchpoint(row)" [disabled]="!row.feedbackIds?.length">
+                    {{ row.volume }}
+                  </button>
+                </td>
               </ng-container>
               <ng-container matColumnDef="observation">
                 <th mat-header-cell *matHeaderCellDef>Key observation</th>
@@ -67,4 +71,22 @@
       </mat-card>
     </div>
   }
+
+  <div class="reference-overlay" *ngIf="drilldownOpen()" (click)="closeDrilldown()" role="dialog" aria-modal="true">
+    <div class="reference-modal" (click)="$event.stopPropagation()">
+      <h3>Related content · {{ drilldownTitle() }}</h3>
+      <div *ngIf="drilldownLoading()" class="drilldown-loading">
+        <mat-progress-spinner mode="indeterminate" diameter="36"></mat-progress-spinner>
+      </div>
+      <p *ngIf="!drilldownLoading() && drilldownRows().length === 0">No related rows returned.</p>
+      <ul class="drilldown-list" *ngIf="!drilldownLoading() && drilldownRows().length">
+        <li *ngFor="let row of drilldownRows()">
+          <strong>#{{ row.id }} · {{ row.sentiment }}</strong>
+          <p *ngIf="row.contentSummary">{{ row.contentSummary }}</p>
+          <p>{{ row.content }}</p>
+        </li>
+      </ul>
+      <button mat-raised-button color="primary" type="button" (click)="closeDrilldown()">Close</button>
+    </div>
+  </div>
 </div>

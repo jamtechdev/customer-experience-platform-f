@@ -144,20 +144,25 @@ export class CsvUpload implements OnInit {
     this.processingStatus.set('uploading');
     this.processingMessage.set(this.t('app.loading') || 'Uploading file...');
 
-    this.csvService.uploadCSV(this.selectedFile).subscribe({
+    this.csvService.uploadCSV(this.selectedFile, true).subscribe({
       next: (response) => {
         if (response.success && response.data?.importId) {
           this.uploadProgress.set(100);
           this.importId.set(response.data.importId);
-          this.processingStatus.set('completed');
+          this.processingStatus.set(response.data.status === 'processing' ? 'processing' : 'completed');
           const rows = response.data.rowCount;
-          const msg =
-            (this.t('dataSources.importDone') as string) ||
-            `Upload completed: ${rows} row(s) from ${response.data.filename}. Please map columns to continue.`;
+          const msg = response.data.status === 'processing'
+            ? `Upload completed: ${rows} row(s) from ${response.data.filename}. Ollama analysis started automatically.`
+            : ((this.t('dataSources.importDone') as string) ||
+              `Upload completed: ${rows} row(s) from ${response.data.filename}.`);
           this.processingMessage.set(msg);
           this.snackBar.open(msg, this.t('app.close'), { duration: 6000 });
           this.uploading.set(false);
-          this.router.navigate(['/app/data-sources/csv-mapping', response.data.importId]);
+          this.router.navigate(
+            response.data.status === 'processing'
+              ? ['/app/data-sources/import-history']
+              : ['/app/data-sources/csv-mapping', response.data.importId]
+          );
         }
       },
       error: (error) => {

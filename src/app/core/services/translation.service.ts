@@ -1,6 +1,7 @@
 import { Injectable, signal, computed, effect, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
+import { SettingsService } from './settings.service';
 
 export type Language = 'en' | 'tr' | 'ar';
 
@@ -13,6 +14,7 @@ export interface Translations {
 })
 export class TranslationService {
   private http = inject(HttpClient);
+  private settingsService = inject(SettingsService);
   private currentLanguage = signal<Language>('en');
   private translations: Record<Language, Translations> = {} as Record<Language, Translations>;
   private translationsLoaded = signal<boolean>(false);
@@ -30,15 +32,12 @@ export class TranslationService {
       ar: {}
     };
 
-    // Load saved language preference
-    if (typeof window !== 'undefined') {
-      const savedPreferred = localStorage.getItem('preferredLanguage') as Language;
-      const savedLegacy = localStorage.getItem('language') as Language;
-      const savedLang = (savedPreferred || savedLegacy) as Language;
-      if (savedLang && (savedLang === 'en' || savedLang === 'tr' || savedLang === 'ar')) {
-        this.currentLanguage.set(savedLang);
+    this.settingsService.settings$.subscribe((settings) => {
+      const lang = settings.language as Language;
+      if (lang === 'en' || lang === 'tr' || lang === 'ar') {
+        this.currentLanguage.set(lang);
       }
-    }
+    });
 
     // Load translations on initialization
     this.loadTranslations();
@@ -93,10 +92,11 @@ export class TranslationService {
    */
   setLanguage(lang: Language): void {
     this.currentLanguage.set(lang);
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('preferredLanguage', lang);
-      localStorage.setItem('language', lang);
-    }
+    this.settingsService.updateSettings({ language: lang }).subscribe({
+      error: () => {
+        /* Keep the in-memory language for the current session; DB remains authoritative after refresh. */
+      },
+    });
   }
 
   /**

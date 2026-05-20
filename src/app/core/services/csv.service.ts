@@ -31,7 +31,7 @@ export interface CSVImport {
     omittedCount?: number;
     omittedExamplesTruncated?: boolean;
     omittedRowsFileName?: string;
-    statusLabel?: 'processing' | 'completed_with_omissions' | 'completed' | 'failed';
+    statusLabel?: 'processing' | 'processing_ai' | 'completed_with_omissions' | 'completed' | 'failed' | 'failed_timeout';
     progress?: boolean;
     totalRows?: number;
     processedCount?: number;
@@ -122,7 +122,7 @@ export interface CSVUploadResponse {
   importId: number;
   filename: string;
   rowCount: number;
-  status: 'pending' | 'completed' | 'failed';
+  status: 'pending' | 'processing' | 'completed' | 'failed';
   errorMessage?: string;
 }
 
@@ -137,10 +137,11 @@ export class CSVService {
     return this.http.get<ApiResponse<CSVFormat>>(`${this.baseUrl}/format`);
   }
 
-  uploadCSV(file: File): Observable<ApiResponse<CSVUploadResponse>> {
+  uploadCSV(file: File, autoProcess = true): Observable<ApiResponse<CSVUploadResponse>> {
     const formData = new FormData();
     formData.append('file', file);
-    return this.http.post<ApiResponse<CSVUploadResponse>>(`${this.baseUrl}/upload`, formData);
+    const params = new HttpParams().set('autoProcess', String(autoProcess));
+    return this.http.post<ApiResponse<CSVUploadResponse>>(`${this.baseUrl}/upload`, formData, { params });
   }
 
   getImports(): Observable<ApiResponse<CSVImport[]>> {

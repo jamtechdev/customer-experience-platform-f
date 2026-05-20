@@ -25,6 +25,8 @@ export interface Methodology {
 export interface VolumeAnalysis {
   totalMentions: number;
   mentionsPerPlatform: Record<string, number>;
+  feedbackIdsPerPlatform?: Record<string, number[]>;
+  feedbackIds?: number[];
   trends: Array<{ date: string; count: number }>;
   aiNarrative?: string;
 }
@@ -35,6 +37,7 @@ export interface SentimentDistribution {
   neutral: number;
   sentimentIndex: number;
   channelComparison: Record<string, { positive: number; negative: number; neutral: number }>;
+  channelFeedbackIds?: Record<string, { positive: number[]; negative: number[]; neutral: number[]; all: number[] }>;
   aiNarrative?: string;
 }
 

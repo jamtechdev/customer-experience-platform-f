@@ -4,6 +4,7 @@ import { Observable, BehaviorSubject } from 'rxjs';
 import { tap } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
 import { ApiResponse } from '../models';
+import { AuthService } from './auth.service';
 
 export interface AlertThresholds {
   sentimentDropThreshold: number;
@@ -56,13 +57,20 @@ export interface AppSettings {
 })
 export class SettingsService {
   private readonly http = inject(HttpClient);
+  private readonly authService = inject(AuthService);
   private readonly baseUrl = environment.apiUrl ? `${environment.apiUrl.replace(/\/$/, '')}/settings` : '/api/settings';
   
   private settingsSubject = new BehaviorSubject<AppSettings>(this.getDefaultSettings());
   public settings$ = this.settingsSubject.asObservable();
 
   constructor() {
-    this.loadSettings();
+    this.authService.currentUser$.subscribe((user) => {
+      if (user) {
+        this.loadSettings();
+      } else {
+        this.settingsSubject.next(this.getDefaultSettings());
+      }
+    });
   }
 
   private getDefaultSettings(): AppSettings {
@@ -101,29 +109,10 @@ export class SettingsService {
   }
 
   loadSettings(): void {
-    // Try to load from localStorage first (only in browser)
-    if (typeof window !== 'undefined' && window.localStorage) {
-      try {
-        const saved = localStorage.getItem('app_settings');
-        if (saved) {
-          try {
-            const settings = JSON.parse(saved);
-            this.settingsSubject.next({ ...this.getDefaultSettings(), ...settings });
-          } catch (e) {
-            console.error('Failed to parse saved settings', e);
-          }
-        }
-      } catch (e) {
-        // localStorage not available, skip
-      }
-    }
-
-    // Then try to load from server
     this.http.get<ApiResponse<AppSettings>>(this.baseUrl).subscribe({
       next: (response) => {
         if (response.success && response.data) {
           this.settingsSubject.next({ ...this.getDefaultSettings(), ...response.data });
-          this.saveToLocalStorage(response.data);
         }
       },
       error: () => {
@@ -140,30 +129,15 @@ export class SettingsService {
         next: (response) => {
           if (response.success) {
             this.settingsSubject.next(response.data);
-            this.saveToLocalStorage(response.data);
           }
           observer.next(response);
           observer.complete();
         },
         error: (error) => {
-          // Save to localStorage even if server update fails
-          this.settingsSubject.next(updated);
-          this.saveToLocalStorage(updated);
           observer.error(error);
         }
       });
     });
-  }
-
-  private saveToLocalStorage(settings: AppSettings): void {
-    // Only save in browser environment
-    if (typeof window !== 'undefined' && window.localStorage) {
-      try {
-        localStorage.setItem('app_settings', JSON.stringify(settings));
-      } catch (e) {
-        // localStorage not available or quota exceeded
-      }
-    }
   }
 
   deleteSettings(): Observable<ApiResponse<void>> {
@@ -171,15 +145,11 @@ export class SettingsService {
       tap(() => {
         const defaults = this.getDefaultSettings();
         this.settingsSubject.next(defaults);
-        this.saveToLocalStorage(defaults);
       })
     );
   }
 
   resetSettings(): void {
-    const defaults = this.getDefaultSettings();
-    this.settingsSubject.next(defaults);
-    this.saveToLocalStorage(defaults);
     this.deleteSettings().subscribe();
   }
 

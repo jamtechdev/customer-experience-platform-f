@@ -15,6 +15,15 @@ export type CSVImportStatusEvent = {
   errorDetails?: any;
 };
 
+export type AnalyticsLifecycleEvent = {
+  type: 'datasetUploaded' | 'datasetDeleted' | 'analysisStarted' | 'analysisCompleted' | 'analysisFailed';
+  importId?: number;
+  companyId?: number;
+  status?: string;
+  message?: string;
+  details?: any;
+};
+
 @Injectable({
   providedIn: 'root',
 })
@@ -29,9 +38,14 @@ export class CXWebSocketService {
   private latestCompanyId: number | null = null;
 
   private importStatusSubject = new Subject<CSVImportStatusEvent>();
+  private analyticsLifecycleSubject = new Subject<AnalyticsLifecycleEvent>();
 
   onCSVImportStatus(): Observable<CSVImportStatusEvent> {
     return this.importStatusSubject.asObservable();
+  }
+
+  onAnalyticsLifecycle(): Observable<AnalyticsLifecycleEvent> {
+    return this.analyticsLifecycleSubject.asObservable();
   }
 
   start(): void {
@@ -86,6 +100,46 @@ export class CXWebSocketService {
         });
       }
     });
+
+    const handleLifecycle = (payload: any) => {
+      const ev: AnalyticsLifecycleEvent = {
+        type: payload?.type,
+        importId: payload?.importId,
+        companyId: payload?.companyId,
+        status: payload?.status,
+        message: payload?.message,
+        details: payload?.details,
+      };
+      if (!ev.type) return;
+      this.analyticsLifecycleSubject.next(ev);
+      if (ev.type === 'datasetDeleted' || ev.type === 'analysisCompleted') {
+        this.importStatusSubject.next({
+          importId: ev.importId ?? -1,
+          status: 'completed',
+          errorMessage: ev.message,
+          errorDetails: ev.details,
+        });
+      } else if (ev.type === 'analysisStarted' || ev.type === 'datasetUploaded') {
+        this.importStatusSubject.next({
+          importId: ev.importId ?? -1,
+          status: 'processing',
+          errorMessage: ev.message,
+          errorDetails: ev.details,
+        });
+      }
+      const companyId = ev.companyId ?? this.latestCompanyId ?? undefined;
+      this.twitterCxReportStore.invalidate(companyId);
+      if (companyId != null && (ev.type === 'datasetDeleted' || ev.type === 'analysisCompleted')) {
+        this.analysisService.rebuildTwitterCxReport(companyId).subscribe({
+          error: () => {
+            /* best-effort */
+          },
+        });
+      }
+    };
+
+    this.socket.on('analytics:lifecycle', handleLifecycle);
+    this.socket.on('dashboard:update', handleLifecycle);
 
     // Keep company room in sync with auth changes
     this.authService.currentUser$.subscribe((u) => {

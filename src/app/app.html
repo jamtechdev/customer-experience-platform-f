@@ -1,1 +1,10 @@
+@if (routeLoading()) {
+  <div class="global-ai-loader" role="status" aria-live="polite">
+    <app-ollama-loader
+      title="Ollama AI is loading this page"
+      subtitle="Preparing the latest database-backed experience">
+    </app-ollama-loader>
+  </div>
+}
+
 <router-outlet />

@@ -118,6 +118,22 @@ export class SentimentAnalysis implements OnInit, OnDestroy {
     relevanceReason?: string;
     isRelevant?: boolean;
   } | null>(null);
+  drilldownOpen = signal(false);
+  drilldownLoading = signal(false);
+  drilldownTitle = signal('');
+  drilldownRows = signal<
+    Array<{
+      id: number;
+      content: string;
+      referenceContent?: string;
+      source: string;
+      date: string;
+      sentiment: string;
+      journeyStage?: string;
+      relevanceReason?: string;
+      isRelevant?: boolean;
+    }>
+  >([]);
 
   presets = signal<ReportDatePreset[]>([]);
   selectedPresetId = signal<string>(NO_DATE_FILTER_PRESET_ID);
@@ -128,7 +144,6 @@ export class SentimentAnalysis implements OnInit, OnDestroy {
   pageSize = signal(25);
   totalPages = computed(() => Math.max(1, Math.ceil(this.feedbackTotal() / this.pageSize())));
   hoveredBar = signal<SentimentChartBar | null>(null);
-  private readonly cacheKey = 'sentiment-analysis-cache-v1';
 
   displayedColumns: string[] = ['sentiment', 'count', 'percentage', 'bar'];
   patternCols: string[] = ['sentiment', 'patterns'];
@@ -154,7 +169,6 @@ export class SentimentAnalysis implements OnInit, OnDestroy {
   ];
 
   ngOnInit(): void {
-    this.restoreCache();
     this.loadPresets();
     this.importStatusSub = this.websocket.onCSVImportStatus().subscribe((payload: CSVImportStatusEvent) => {
       if (payload?.status === 'completed') {
@@ -362,6 +376,50 @@ export class SentimentAnalysis implements OnInit, OnDestroy {
     this.referenceRow.set(null);
   }
 
+  openSentimentDrilldown(bar: SentimentChartBar): void {
+    if (!bar.count) return;
+    this.drilldownTitle.set(`${bar.label} feedback (${bar.count})`);
+    this.drilldownOpen.set(true);
+    this.drilldownLoading.set(true);
+    this.drilldownRows.set([]);
+
+    const companyId = this.getCompanyId();
+    const { start, end } = resolveOptionalApiDateRange(this.filtersApplied(), this.startDate(), this.endDate());
+    const rel = this.filterIsRelevant();
+    const isRelevant = rel === 'true' ? true : rel === 'false' ? false : undefined;
+    this.analysisService
+      .getFeedbackWithSentiment(companyId, start, end, 1, 100, {
+        sentiment: bar.key,
+        journeyStage: this.filterJourneyStage() || undefined,
+        isRelevant,
+        includeIrrelevant: rel === 'all',
+        search: this.filterSearch().trim() || undefined,
+      })
+      .subscribe({
+        next: (response) => {
+          this.drilldownLoading.set(false);
+          const list = response?.data?.list || [];
+          this.drilldownRows.set(
+            list.map((row: any) => ({
+              ...row,
+              content: this.humanizeFeedbackText(row.contentSummary || row.content || ''),
+              date: normalizeApiDateToIso(row.date),
+            }))
+          );
+        },
+        error: () => {
+          this.drilldownLoading.set(false);
+          this.drilldownRows.set([]);
+        },
+      });
+  }
+
+  closeDrilldown(): void {
+    this.drilldownOpen.set(false);
+    this.drilldownLoading.set(false);
+    this.drilldownRows.set([]);
+  }
+
   getCompanyId(): number {
     const user = this.authService.currentUser();
     return user?.settings?.companyId ?? 1;
@@ -397,7 +455,6 @@ export class SentimentAnalysis implements OnInit, OnDestroy {
         this.sentimentInterpretation.set(
           typeof data.interpretation === 'string' ? data.interpretation.trim() : ''
         );
-        this.persistCache();
         this.hasCompletedInitialLoad = true;
         this.initialLoading.set(false);
       },
@@ -435,7 +492,6 @@ export class SentimentAnalysis implements OnInit, OnDestroy {
           }));
           this.feedbackList.set(list);
           this.feedbackTotal.set(response.data.total ?? list.length);
-          this.persistCache();
         } else {
           this.feedbackList.set([]);
           this.feedbackTotal.set(0);
@@ -634,53 +690,4 @@ export class SentimentAnalysis implements OnInit, OnDestroy {
     });
   }
 
-  private persistCache(): void {
-    if (typeof localStorage === 'undefined') return;
-    try {
-      localStorage.setItem(
-        this.cacheKey,
-        JSON.stringify({
-          stats: this.stats(),
-          feedbackList: this.feedbackList(),
-          feedbackTotal: this.feedbackTotal(),
-          page: this.page(),
-          pageSize: this.pageSize(),
-        })
-      );
-    } catch {
-      // Ignore cache failures.
-    }
-  }
-
-  private restoreCache(): void {
-    if (typeof localStorage === 'undefined') return;
-    try {
-      const raw = localStorage.getItem(this.cacheKey);
-      if (!raw) return;
-      const parsed = JSON.parse(raw) as {
-        stats?: SentimentStats | null;
-        feedbackList?: Array<{ id: number; content: string; source: string; date: string; author?: string; sentiment: string; score: number }>;
-        feedbackTotal?: number;
-        page?: number;
-        pageSize?: number;
-      };
-      if (parsed.stats) {
-        this.stats.set(parsed.stats);
-        this.hasCompletedInitialLoad = true;
-      }
-      if (Array.isArray(parsed.feedbackList)) {
-        this.feedbackList.set(
-          parsed.feedbackList.map((row) => ({
-            ...row,
-            content: this.humanizeFeedbackText(row.content),
-          }))
-        );
-      }
-      if (typeof parsed.feedbackTotal === 'number') this.feedbackTotal.set(parsed.feedbackTotal);
-      if (typeof parsed.page === 'number' && parsed.page > 0) this.page.set(parsed.page);
-      if (typeof parsed.pageSize === 'number' && parsed.pageSize > 0) this.pageSize.set(parsed.pageSize);
-    } catch {
-      // Ignore invalid cache.
-    }
-  }
 }

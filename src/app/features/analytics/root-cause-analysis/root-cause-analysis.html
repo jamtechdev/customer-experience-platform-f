@@ -172,7 +172,9 @@
               <span class="dr-sent">{{ r.sentiment }}</span>
               <span class="dr-date">{{ formatFeedbackDate(r.date) }}</span>
             </div>
-            <p class="dr-content">{{ r.content }}</p>
+            <p *ngIf="r.relevanceReason" class="dr-content"><strong>Why:</strong> {{ r.relevanceReason }}</p>
+            <p class="dr-content"><strong>AI summary:</strong> {{ r.contentSummary || r.content }}</p>
+            <pre class="dr-content">{{ r.content }}</pre>
           </li>
         </ul>
       </div>

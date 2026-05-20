@@ -1,8 +1,8 @@
-import { Injectable, inject, signal, computed, PLATFORM_ID, effect } from '@angular/core';
+import { Injectable, inject, signal, computed, PLATFORM_ID } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
-import { Router, NavigationEnd } from '@angular/router';
-import { Observable, tap, catchError, throwError, BehaviorSubject, of, filter, take } from 'rxjs';
+import { Router } from '@angular/router';
+import { Observable, tap, catchError, throwError, BehaviorSubject, of, map, finalize } from 'rxjs';
 import { User, AuthResponse, LoginRequest, ApiResponse, UserRole } from '../models';
 import { environment } from '../../../environments/environment';
 
@@ -13,10 +13,6 @@ export class AuthService {
   private readonly http = inject(HttpClient);
   private readonly router = inject(Router);
   private readonly platformId = inject(PLATFORM_ID);
-  
-  private readonly TOKEN_KEY = 'access_token';
-  private readonly REFRESH_TOKEN_KEY = 'refresh_token';
-  private readonly USER_KEY = 'current_user';
 
   private currentUserSubject = new BehaviorSubject<User | null>(null);
   
@@ -27,17 +23,9 @@ export class AuthService {
   private _isHydratingProfile = signal<boolean>(false);
 
   readonly isAuthenticated = computed(() => {
-    const hasToken = this.getToken() !== null;
     const hasUser = !!this.currentUser();
     const isHydratingProfile = this._isHydratingProfile();
-
-    // Keep route stable on hard refresh while profile is still loading.
-    // Invalid tokens are still handled by getProfile()->logout().
-    if (hasToken && (hasUser || isHydratingProfile)) {
-      return true;
-    }
-
-    return hasToken && hasUser;
+    return hasUser || isHydratingProfile;
   });
 
   // Observable that emits when auth state is ready (initialized)
@@ -48,63 +36,36 @@ export class AuthService {
   readonly isViewer = computed(() => this.currentUser()?.role === UserRole.VIEWER);
 
   constructor() {
-    if (isPlatformBrowser(this.platformId)) {
-      this.initializeAuth();
-    } else {
-      // For SSR, mark as ready immediately
-      this._isInitialized.set(true);
-      this.authReady$.next(true);
-    }
+    // Session validation is intentionally guard-driven. Public pages such as
+    // login must not call /auth/profile because no cookie yet means a normal 401.
+    this._isInitialized.set(true);
+    this.authReady$.next(true);
   }
 
-  private initializeAuth(): void {
-    if (this._isInitializing) return;
+  ensureSession(): Observable<boolean> {
+    if (this.currentUser()) return of(true);
+    if (!isPlatformBrowser(this.platformId)) return of(false);
     this._isInitializing = true;
+    this._isHydratingProfile.set(true);
 
-    const token = this.getToken();
-    const storedUser = this.getStoredUser();
-
-    if (token && storedUser) {
-      // Both token and user exist, initialize immediately
-      this.currentUser.set(storedUser);
-      this.currentUserSubject.next(storedUser);
-      this._isInitialized.set(true);
-      this._isInitializing = false;
-      this.authReady$.next(true);
-    } else if (token && !storedUser) {
-      // Token exists but user data is missing, try to get profile
-      // Set ready immediately to prevent navigation blocking
-      // This allows guards to check and allow access while profile loads
-      this._isHydratingProfile.set(true);
-      this._isInitialized.set(true);
-      this._isInitializing = false;
-      this.authReady$.next(true);
-      
-      // Load profile in background
-      this.getProfile().subscribe({
-        next: () => {
-          // Profile loaded successfully
-          this._isHydratingProfile.set(false);
-        },
-        error: () => {
-          // If profile fetch fails, clear invalid token
-          this._isHydratingProfile.set(false);
-          this.logout();
-        }
-      });
-    } else {
-      // No token, clear any stale user data and initialize immediately
-      this.currentUser.set(null);
-      this.currentUserSubject.next(null);
-      this._isHydratingProfile.set(false);
-      this._isInitialized.set(true);
-      this._isInitializing = false;
-      this.authReady$.next(true);
-    }
+    return this.getProfile().pipe(
+      map(() => true),
+      catchError(() => {
+        this.clearSessionState();
+        return of(false);
+      }),
+      finalize(() => {
+        this._isHydratingProfile.set(false);
+        this._isInitializing = false;
+        this.authReady$.next(true);
+      })
+    );
   }
 
-  private get isBrowser(): boolean {
-    return isPlatformBrowser(this.platformId);
+  private clearSessionState(): void {
+    this.currentUser.set(null);
+    this.currentUserSubject.next(null);
+    this._isHydratingProfile.set(false);
   }
 
   private get apiBase(): string {
@@ -128,7 +89,7 @@ export class AuthService {
   login(credentials: LoginRequest): Observable<ApiResponse<AuthResponse>> {
     return this.http.post<ApiResponse<AuthResponse>>(`${this.apiBase}/auth/login`, credentials).pipe(
       tap(response => {
-        if (response.success && response.data?.accessToken) {
+        if (response.success && response.data?.user) {
           this.setSession(response.data);
         }
       }),
@@ -140,23 +101,20 @@ export class AuthService {
   }
 
   logout(): void {
-    if (this.isBrowser) {
-      localStorage.removeItem(this.TOKEN_KEY);
-      localStorage.removeItem(this.REFRESH_TOKEN_KEY);
-      localStorage.removeItem(this.USER_KEY);
-    }
-    this.currentUser.set(null);
-    this.currentUserSubject.next(null);
-    this._isHydratingProfile.set(false);
+    this.http.post<ApiResponse<null>>(`${this.apiBase}/auth/logout`, {}).subscribe({
+      error: () => {
+        /* Clear local state even if the server session is already gone. */
+      },
+    });
+    this.clearSessionState();
     // Redirect to landing page after logout
     this.router.navigate(['/'], { replaceUrl: true });
   }
 
   refreshToken(): Observable<ApiResponse<AuthResponse>> {
-    const refreshToken = this.isBrowser ? localStorage.getItem(this.REFRESH_TOKEN_KEY) : null;
-    return this.http.post<ApiResponse<AuthResponse>>(`${this.apiBase}/auth/refresh`, { refreshToken }).pipe(
+    return this.http.post<ApiResponse<AuthResponse>>(`${this.apiBase}/auth/refresh`, {}).pipe(
       tap(response => {
-        if (response.success) {
+        if (response.success && response.data?.user) {
           this.setSession(response.data);
         }
       })
@@ -164,8 +122,7 @@ export class AuthService {
   }
 
   getToken(): string | null {
-    const token = this.isBrowser ? localStorage.getItem(this.TOKEN_KEY) : null;
-    return token;
+    return null;
   }
 
   hasPermission(permission: string): boolean {
@@ -184,12 +141,6 @@ export class AuthService {
   }
 
   setSession(authResult: AuthResponse): void {
-    if (!authResult?.accessToken) return;
-    if (this.isBrowser) {
-      localStorage.setItem(this.TOKEN_KEY, authResult.accessToken);
-      localStorage.setItem(this.REFRESH_TOKEN_KEY, authResult.refreshToken ?? '');
-      localStorage.setItem(this.USER_KEY, JSON.stringify(authResult.user ?? {}));
-    }
     this.currentUser.set(authResult.user ?? null);
     this.currentUserSubject.next(authResult.user ?? null);
     this._isHydratingProfile.set(false);
@@ -219,32 +170,16 @@ export class AuthService {
         if (response.success && response.data) {
           this.currentUser.set(response.data);
           this.currentUserSubject.next(response.data);
-          if (this.isBrowser) {
-            localStorage.setItem(this.USER_KEY, JSON.stringify(response.data));
-          }
         }
       }),
       catchError(error => {
-        console.error('Get profile error:', error);
-        // If profile fetch fails (invalid token), clear session
         if (error.status === 401 || error.status === 403) {
-          this.logout();
+          this.clearSessionState();
+        } else {
+          console.error('Get profile error:', error);
         }
         return throwError(() => error);
       })
     );
-  }
-
-  private getStoredUser(): User | null {
-    if (!this.isBrowser) return null;
-    const userStr = localStorage.getItem(this.USER_KEY);
-    if (userStr) {
-      try {
-        return JSON.parse(userStr);
-      } catch {
-        return null;
-      }
-    }
-    return null;
   }
 }

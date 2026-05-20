@@ -56,9 +56,6 @@ export class AdminLogin implements OnInit {
     this.authService.login({ email: this.email, password: this.password }).subscribe({
       next: (response) => {
         if (response.success) {
-          if (this.rememberMe) {
-            localStorage.setItem('rememberMe', 'true');
-          }
           this.router.navigate(['/app/dashboard'], { replaceUrl: true });
         } else {
           this.errorMessage.set(this.t('loginError'));

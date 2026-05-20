@@ -74,7 +74,17 @@ export class RootCauseAnalysis implements OnInit, OnDestroy {
   drilldownLoading = signal(false);
   drilldownTitle = signal('');
   drilldownRows = signal<
-    Array<{ id: number; content: string; source: string; date: string; author?: string; sentiment: string; score: number }>
+    Array<{
+      id: number;
+      content: string;
+      contentSummary?: string;
+      relevanceReason?: string;
+      source: string;
+      date: string;
+      author?: string;
+      sentiment: string;
+      score: number;
+    }>
   >([]);
   displayedColumns: string[] = ['title', 'category', 'priority', 'frequency', 'severity', 'actions'];
   pageSize = 10;

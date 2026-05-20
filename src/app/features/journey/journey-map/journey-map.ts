@@ -50,7 +50,7 @@ export class JourneyMap implements OnInit, OnDestroy {
   drilldownOpen = signal(false);
   drilldownLoading = signal(false);
   drilldownTitle = signal('');
-  drilldownRows = signal<Array<{ id: number; content: string; author?: string; date: string }>>([]);
+  drilldownRows = signal<Array<{ id: number; content: string; contentSummary?: string; relevanceReason?: string; author?: string; date: string }>>([]);
   private refreshSub?: Subscription;
 
   loading = signal(false);

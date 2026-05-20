@@ -61,9 +61,6 @@ export class Login implements OnInit {
           const okMsg =
             (typeof response.message === 'string' && response.message) || 'Login successful';
           this.snackBar.open(okMsg, 'Close', { duration: 3000 });
-          if (this.rememberMe) {
-            localStorage.setItem('rememberMe', 'true');
-          }
           this.router.navigate(['/app/dashboard'], { replaceUrl: true });
         } else {
           const msg =

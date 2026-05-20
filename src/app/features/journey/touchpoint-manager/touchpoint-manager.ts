@@ -12,6 +12,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { TouchpointService, Touchpoint } from '../../../core/services/touchpoint.service';
 import { TwitterCxReportStore } from '../../../core/services/twitter-cx-report.store';
+import { AnalysisService } from '../../../core/services/analysis.service';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { AuthService } from '../../../core/services/auth.service';
 import { OllamaLoader } from '../../../core/components/ollama-loader/ollama-loader';
@@ -39,6 +40,7 @@ import { twitterCxReportFailureMessage } from '../../../core/utils/twitter-cx-re
 export class TouchpointManager implements OnInit, OnDestroy {
   private touchpointService = inject(TouchpointService);
   private twitterCxReportStore = inject(TwitterCxReportStore);
+  private analysisService = inject(AnalysisService);
   private refreshSub?: Subscription;
   private authService = inject(AuthService);
   private fb = inject(FormBuilder);
@@ -65,7 +67,11 @@ export class TouchpointManager implements OnInit, OnDestroy {
     return total === 0 ? 0 : Math.ceil(total / this.pageSize);
   });
   displayedColumns: string[] = ['order', 'name', 'description', 'category', 'actions'];
-  reportTouchpoints = signal<Array<{ name: string; volume: number; observation: string }>>([]);
+  reportTouchpoints = signal<Array<{ name: string; volume: number; observation: string; feedbackIds: number[] }>>([]);
+  drilldownOpen = signal(false);
+  drilldownLoading = signal(false);
+  drilldownTitle = signal('');
+  drilldownRows = signal<Array<{ id: number; content: string; contentSummary?: string; sentiment: string; date: string }>>([]);
   /** Snapshot rows use synthetic ids; CRUD applies to Admin touchpoint config only. */
   snapshotViewOnly = signal(true);
   showForm = signal(false);
@@ -122,6 +128,7 @@ export class TouchpointManager implements OnInit, OnDestroy {
               name: t.name ?? '',
               volume: Number(t.volume ?? 0),
               observation: t.observation ?? '',
+              feedbackIds: Array.isArray(t.feedbackIds) ? t.feedbackIds : [],
             }))
           );
           this.page.set(1);
@@ -166,6 +173,32 @@ export class TouchpointManager implements OnInit, OnDestroy {
     if (total === 0) return;
     const maxPage = Math.ceil(total / this.pageSize);
     this.page.update((p) => Math.min(maxPage, p + 1));
+  }
+
+  openRelatedTouchpoint(row: { name: string; feedbackIds: number[] }): void {
+    const ids = [...new Set((row.feedbackIds || []).filter((id) => Number.isFinite(id) && id > 0))];
+    if (!ids.length) return;
+    this.drilldownTitle.set(row.name);
+    this.drilldownOpen.set(true);
+    this.drilldownLoading.set(true);
+    this.drilldownRows.set([]);
+    const user = this.authService.currentUser();
+    const companyId = user?.role === 'admin' ? undefined : (user?.settings?.companyId ?? 1);
+    this.analysisService.getAnalyticsDrilldown({ companyId, ids }).subscribe({
+      next: (res) => {
+        this.drilldownLoading.set(false);
+        this.drilldownRows.set(res?.data?.list || []);
+      },
+      error: () => {
+        this.drilldownLoading.set(false);
+        this.drilldownRows.set([]);
+      },
+    });
+  }
+
+  closeDrilldown(): void {
+    this.drilldownOpen.set(false);
+    this.drilldownRows.set([]);
   }
 
   openCreate(): void {

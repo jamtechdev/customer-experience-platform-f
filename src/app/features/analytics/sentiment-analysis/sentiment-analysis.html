@@ -105,7 +105,13 @@
                   <div class="chart-bar-track">
                     <div class="chart-bar-fill" [class]="bar.key" [style.height.%]="bar.height" [attr.aria-label]="bar.label + ' ' + bar.count"></div>
                   </div>
-                  <div class="chart-bar-value">{{ bar.count }}</div>
+                  <button
+                    class="chart-bar-value count-link"
+                    type="button"
+                    (click)="openSentimentDrilldown(bar)"
+                    [disabled]="bar.count === 0">
+                    {{ bar.count }}
+                  </button>
                   <div class="chart-bar-label">{{ bar.label | lowercase }}</div>
                 </div>
               }
@@ -248,6 +254,31 @@
       <p><strong>Source tweet:</strong></p>
       <pre class="reference-text">{{ referenceRow()?.referenceContent || referenceRow()?.content }}</pre>
       <button mat-stroked-button type="button" (click)="closeReference()">Close</button>
+    </div>
+  </div>
+
+  <div
+    class="reference-overlay"
+    *ngIf="drilldownOpen()"
+    (click)="closeDrilldown()"
+    role="dialog"
+    aria-modal="true">
+    <div class="reference-modal" (click)="$event.stopPropagation()">
+      <h3>Related content · {{ drilldownTitle() }}</h3>
+      <div *ngIf="drilldownLoading()" class="drilldown-loading">
+        <mat-progress-spinner mode="indeterminate" diameter="36"></mat-progress-spinner>
+      </div>
+      <p *ngIf="!drilldownLoading() && drilldownRows().length === 0">No related rows returned.</p>
+      <ul class="drilldown-list" *ngIf="!drilldownLoading() && drilldownRows().length">
+        <li *ngFor="let row of drilldownRows()">
+          <strong>#{{ row.id }} · {{ row.sentiment }} · {{ formatDate(row.date) }}</strong>
+          <p *ngIf="row.journeyStage"><strong>Journey stage:</strong> {{ row.journeyStage }}</p>
+          <p *ngIf="row.relevanceReason"><strong>Why:</strong> {{ row.relevanceReason }}</p>
+          <p><strong>AI summary:</strong> {{ row.content }}</p>
+          <pre class="reference-text">{{ row.referenceContent || row.content }}</pre>
+        </li>
+      </ul>
+      <button mat-stroked-button type="button" (click)="closeDrilldown()">Close</button>
     </div>
   </div>
 </div>

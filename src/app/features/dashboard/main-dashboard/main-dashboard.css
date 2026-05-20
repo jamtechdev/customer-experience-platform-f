@@ -167,6 +167,24 @@
   box-shadow: 0 14px 30px rgba(15, 23, 42, 0.14);
 }
 
+.clickable-card {
+  cursor: pointer;
+}
+
+.metric-link {
+  border: 0;
+  background: transparent;
+  color: #2563eb;
+  cursor: pointer;
+  padding: 0;
+  font: inherit;
+}
+
+.metric-link:disabled {
+  color: inherit;
+  cursor: default;
+}
+
 .kpi-card::before {
   content: "";
   position: absolute;
@@ -176,6 +194,46 @@
   height: 100%;
   background: linear-gradient(180deg, #10b981, #059669);
   border-radius: 14px 0 0 14px;
+}
+
+.reference-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background: rgba(15, 23, 42, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+
+.reference-modal {
+  width: min(820px, 96vw);
+  max-height: 86vh;
+  overflow: auto;
+  background: #fff;
+  border-radius: 10px;
+  padding: 18px;
+  box-shadow: 0 20px 45px rgba(15, 23, 42, 0.25);
+}
+
+.drilldown-list {
+  list-style: none;
+  margin: 12px 0;
+  padding: 0;
+}
+
+.drilldown-list li {
+  border-bottom: 1px solid #e5e7eb;
+  padding: 10px 0;
+}
+
+.drilldown-list pre {
+  white-space: pre-wrap;
+  word-break: break-word;
+  background: #f9fafb;
+  border-radius: 6px;
+  padding: 10px;
 }
 
 .kpi-card.kpi-critical {

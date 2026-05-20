@@ -65,8 +65,18 @@
       <mat-card-content>
         <p class="body-text">Because tweets do not contain direct NPS scores, promoters/passives/detractors are inferred from tweet sentiment.</p>
         <p class="body-text">
-          Promoters: {{ formatPct(npsData()!.promoterPercentage) }}% | Passives: {{ formatPct(passivesPercentage()) }}% | Detractors:
-          {{ formatPct(npsData()!.detractorPercentage) }}%
+          Promoters:
+          <button mat-button color="primary" type="button" (click)="openNpsBucket('promoters')" [disabled]="npsData()!.promoters === 0">
+            {{ formatPct(npsData()!.promoterPercentage) }}%
+          </button>
+          | Passives:
+          <button mat-button color="primary" type="button" (click)="openNpsBucket('passives')" [disabled]="npsData()!.passives === 0">
+            {{ formatPct(passivesPercentage()) }}%
+          </button>
+          | Detractors:
+          <button mat-button color="primary" type="button" (click)="openNpsBucket('detractors')" [disabled]="npsData()!.detractors === 0">
+            {{ formatPct(npsData()!.detractorPercentage) }}%
+          </button>
         </p>
         <p class="body-text">
           Social NPS proxy: {{ npsData()!.score.toFixed(1) }} ({{ getNPSCategory(npsData()!.score) }}).
@@ -95,9 +105,19 @@
                   <span>0</span><span>20</span><span>40</span><span>60</span><span>80</span><span>100</span>
                 </div>
                 <p class="mpl-nps-summary">
-                  Promoters <strong>{{ formatPct(npsData()!.promoterPercentage) }}%</strong> · Passives
-                  <strong>{{ formatPct(passivesPercentage()) }}%</strong> · Detractors
-                  <strong>{{ formatPct(npsData()!.detractorPercentage) }}%</strong> ({{ npsData()!.total }} items).
+                  Promoters
+                  <button mat-button color="primary" type="button" (click)="openNpsBucket('promoters')" [disabled]="npsData()!.promoters === 0">
+                    {{ formatPct(npsData()!.promoterPercentage) }}%
+                  </button>
+                  · Passives
+                  <button mat-button color="primary" type="button" (click)="openNpsBucket('passives')" [disabled]="npsData()!.passives === 0">
+                    {{ formatPct(passivesPercentage()) }}%
+                  </button>
+                  · Detractors
+                  <button mat-button color="primary" type="button" (click)="openNpsBucket('detractors')" [disabled]="npsData()!.detractors === 0">
+                    {{ formatPct(npsData()!.detractorPercentage) }}%
+                  </button>
+                  ({{ npsData()!.total }} items).
                 </p>
               </div>
             </div>
@@ -114,5 +134,25 @@
         </mat-card>
       </mat-card-content>
     </mat-card>
+  </div>
+
+  <div class="reference-overlay" *ngIf="drilldownOpen()" (click)="closeDrilldown()" role="dialog" aria-modal="true">
+    <div class="reference-modal" (click)="$event.stopPropagation()">
+      <h3>Related content · {{ drilldownTitle() }}</h3>
+      <div *ngIf="drilldownLoading()" class="drilldown-loading">
+        <mat-progress-spinner mode="indeterminate" diameter="36"></mat-progress-spinner>
+      </div>
+      <p *ngIf="!drilldownLoading() && drilldownRows().length === 0">No related rows returned.</p>
+      <ul class="drilldown-list" *ngIf="!drilldownLoading() && drilldownRows().length">
+        <li *ngFor="let row of drilldownRows()">
+          <strong>#{{ row.id }} · {{ row.sentiment }} · {{ formatDate(row.date) }}</strong>
+          <p *ngIf="row.journeyStage"><strong>Journey stage:</strong> {{ row.journeyStage }}</p>
+          <p *ngIf="row.relevanceReason"><strong>Why:</strong> {{ row.relevanceReason }}</p>
+          <p><strong>AI summary:</strong> {{ row.content }}</p>
+          <pre class="reference-text">{{ row.referenceContent || row.content }}</pre>
+        </li>
+      </ul>
+      <button mat-stroked-button type="button" (click)="closeDrilldown()">Close</button>
+    </div>
   </div>
 </div>

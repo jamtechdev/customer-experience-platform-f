@@ -16,6 +16,7 @@ import { AuthService } from '../../../core/services/auth.service';
 import { Subscription, firstValueFrom } from 'rxjs';
 import { CXWebSocketService, type CSVImportStatusEvent } from '../../../core/services/cx-websocket.service';
 import { formatApiDate } from '../../../core/utils/api-date';
+import { TwitterCxReportStore } from '../../../core/services/twitter-cx-report.store';
 
 @Component({
   selector: 'app-import-history',
@@ -41,6 +42,7 @@ export class ImportHistory implements OnInit {
   private csvService = inject(CSVService);
   private authService = inject(AuthService);
   private websocket = inject(CXWebSocketService);
+  private twitterCxReportStore = inject(TwitterCxReportStore);
   private snackBar = inject(MatSnackBar);
   private router = inject(Router);
   private importStatusSub?: Subscription;
@@ -97,7 +99,7 @@ export class ImportHistory implements OnInit {
   }
 
   private syncRefreshTimer(): void {
-    const hasActive = this.imports().some((r) => r.status === 'pending' || this.isProcessing(r));
+    const hasActive = this.imports().some((r) => r.status === 'pending' || this.isProcessing(r) || this.isAiFinalizing(r));
     if (hasActive && !this.refreshTimer) {
       // Fallback: in case websocket is delayed/missed, keep DB in sync.
       this.refreshTimer = setInterval(() => this.loadImports(), 3000);
@@ -194,6 +196,7 @@ export class ImportHistory implements OnInit {
         await firstValueFrom(this.csvService.deleteImport(id, true));
       }
       this.selectedImportIds.set(new Set());
+      this.twitterCxReportStore.invalidate(this.authService.currentUser()?.settings?.companyId);
       this.snackBar.open(`Deleted ${ids.length} imports`, 'Close', { duration: 5000 });
       this.loadImports();
     } catch (e: any) {
@@ -208,12 +211,14 @@ export class ImportHistory implements OnInit {
   }
 
   getStatusColor(row: CSVImport): 'primary' | 'accent' | 'warn' | undefined {
+    if (this.isAiFinalizing(row)) return 'accent';
     if (this.isEffectivelyCompleted(row)) return 'primary';
     if (row.status === 'failed') return 'warn';
     return undefined;
   }
 
   getStatusLabel(row: CSVImport): string {
+    if (this.isAiFinalizing(row)) return 'AI analyzing';
     if (this.isEffectivelyCompleted(row)) {
       if (row.errorDetails?.importOmissions) return 'Completed (with omissions)';
       return 'Completed';
@@ -233,17 +238,22 @@ export class ImportHistory implements OnInit {
     if (typeof details.completionPct === 'number') return details.completionPct;
     const total = details.totalRows ?? row.rowCount ?? 0;
     if (!total) return null;
-    const processed = details.processedCount ?? 0;
+    const processed = this.getProcessedCount(row);
     return Math.round((processed / total) * 100);
   }
 
   isProcessing(row: CSVImport): boolean {
-    return row.status === 'processing' && !this.isEffectivelyCompleted(row);
+    return row.status === 'processing' && !this.isAiFinalizing(row) && !this.isEffectivelyCompleted(row);
+  }
+
+  isAiFinalizing(row: CSVImport): boolean {
+    return row.status === 'processing' && row.errorDetails?.statusLabel === 'processing_ai';
   }
 
   isEffectivelyCompleted(row: CSVImport): boolean {
     if (row.status === 'completed') return true;
     if (row.status !== 'processing') return false;
+    if (this.isAiFinalizing(row)) return false;
     const details = row.errorDetails;
     if (!details) return false;
     const pct = Number(details.completionPct ?? 0);
@@ -254,6 +264,16 @@ export class ImportHistory implements OnInit {
     if (total > 0 && processed >= total) return true;
     if (imported > 0 && processed >= imported && total === 0) return true;
     return false;
+  }
+
+  getProcessedCount(row: CSVImport): number {
+    const details = row.errorDetails;
+    const total = Number(details?.totalRows ?? row.rowCount ?? 0);
+    const processed = Number(details?.processedCount ?? 0);
+    const imported = Number(details?.importedCount ?? 0);
+    const omitted = Number(details?.omittedCount ?? 0);
+    const accounted = Math.max(processed, imported + omitted);
+    return total > 0 ? Math.min(total, accounted) : accounted;
   }
 
   getLoopingProgress(row: CSVImport): number {
@@ -286,6 +306,7 @@ export class ImportHistory implements OnInit {
         this.deletingId.set(null);
         if (res.success) {
           this.imports.update((list) => list.filter((r) => r.id !== row.id));
+          this.twitterCxReportStore.invalidate(this.authService.currentUser()?.settings?.companyId, row.id);
           this.snackBar.open('Import and related feedback deleted.', 'Close', { duration: 5000 });
           this.syncRefreshTimer();
         } else {

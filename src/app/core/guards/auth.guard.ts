@@ -1,35 +1,17 @@
-import { inject, PLATFORM_ID } from '@angular/core';
+import { inject } from '@angular/core';
 import { Router, CanActivateFn } from '@angular/router';
+import { map } from 'rxjs';
 import { AuthService } from '../services/auth.service';
 
 export const authGuard: CanActivateFn = (route, state) => {
   const authService = inject(AuthService);
   const router = inject(Router);
-  const hasToken = authService.getToken() !== null;
 
-  if (hasToken) {
-    return true;
-  }
-
-  router.navigate(['/login'], { replaceUrl: true });
-  return false;
+  return authService.ensureSession().pipe(map((ok) => (ok ? true : router.createUrlTree(['/login']))));
 };
 
 export const guestGuard: CanActivateFn = (route, state) => {
-  const authService = inject(AuthService);
-  const router = inject(Router);
-  const platformId = inject(PLATFORM_ID);
-
-  const hasToken = authService.getToken() !== null;
-
-  // Guest routes: allow only if NOT logged in
-  if (!hasToken) {
-    return true;
-  }
-
-  // If token exists, always send user to main dashboard
-  router.navigate(['/app/dashboard'], { replaceUrl: true });
-  return false;
+  return true;
 };
 
 export const roleGuard: CanActivateFn = (route, state) => {
@@ -50,15 +32,7 @@ export const checkerGuard: CanActivateFn = (route, state) => {
 export const adminGuard: CanActivateFn = (route, state) => {
   const authService = inject(AuthService);
   const router = inject(Router);
-  // Keep route stable on hard refresh while profile is still hydrating.
-  // AuthService marks token-based sessions as authenticated during init.
-  const isAuthenticated = authService.isAuthenticated();
-  if (isAuthenticated) {
-    return true;
-  }
-
-  router.navigate(['/login'], { replaceUrl: true });
-  return false;
+  return authService.ensureSession().pipe(map((ok) => (ok ? true : router.createUrlTree(['/login']))));
 };
 
 /** Allows Admin and CX Manager (analyst). Redirects Executive (viewer) to dashboard. Client §13. */

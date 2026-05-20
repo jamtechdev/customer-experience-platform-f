@@ -58,7 +58,12 @@
 
   <div *ngIf="!loading() && dashboardData()" class="dashboard-content">
     <div class="kpi-grid">
-      <mat-card *ngFor="let kpi of kpiCards()" class="kpi-card" [class.kpi-critical]="kpi.severity === 'critical'" [class.kpi-warning]="kpi.severity === 'warning'">
+      <mat-card
+        *ngFor="let kpi of kpiCards()"
+        class="kpi-card clickable-card"
+        [class.kpi-critical]="kpi.severity === 'critical'"
+        [class.kpi-warning]="kpi.severity === 'warning'"
+        (click)="openDashboardDrilldown(kpi.title, kpi.icon === 'warning' ? 'negative' : undefined)">
         <mat-card-content>
           <div class="kpi-header">
             <mat-icon [class]="'kpi-icon ' + kpi.color">{{ kpi.icon }}</mat-icon>
@@ -91,7 +96,13 @@
               <div class="sentiment-friendly-row" *ngFor="let b of sentimentCategoryBars()">
                 <div class="sentiment-row-head">
                   <span class="sentiment-pill" [class]="b.cssClass">{{ b.label }}</span>
-                  <strong>{{ b.value }}</strong>
+                  <button
+                    type="button"
+                    class="metric-link"
+                    (click)="openDashboardDrilldown(b.label + ' feedback', b.cssClass === 'positive' ? 'positive' : b.cssClass === 'negative' ? 'negative' : 'neutral')"
+                    [disabled]="b.value === 0">
+                    <strong>{{ b.value }}</strong>
+                  </button>
                 </div>
                 <div class="sentiment-progress">
                   <div class="sentiment-progress-fill" [class]="b.cssClass" [style.width.%]="b.height"></div>
@@ -121,13 +132,19 @@
             </div>
             <div class="nps-breakdown">
               <div class="nps-item">
-                <span>{{ t('dashboard.positive') }}: {{ dashboardData()!.nps.promoters }} ({{ npsPercentages().positive.toFixed(1) }}%)</span>
+                <button type="button" class="metric-link" (click)="openDashboardDrilldown('NPS promoters', 'positive')" [disabled]="dashboardData()!.nps.promoters === 0">
+                  {{ t('dashboard.positive') }}: {{ dashboardData()!.nps.promoters }} ({{ npsPercentages().positive.toFixed(1) }}%)
+                </button>
               </div>
               <div class="nps-item">
-                <span>{{ t('dashboard.neutral') }}: {{ dashboardData()!.nps.passives }} ({{ npsPercentages().neutral.toFixed(1) }}%)</span>
+                <button type="button" class="metric-link" (click)="openDashboardDrilldown('NPS passives', 'neutral')" [disabled]="dashboardData()!.nps.passives === 0">
+                  {{ t('dashboard.neutral') }}: {{ dashboardData()!.nps.passives }} ({{ npsPercentages().neutral.toFixed(1) }}%)
+                </button>
               </div>
               <div class="nps-item">
-                <span>{{ t('dashboard.negative') }}: {{ dashboardData()!.nps.detractors }} ({{ npsPercentages().negative.toFixed(1) }}%)</span>
+                <button type="button" class="metric-link" (click)="openDashboardDrilldown('NPS detractors', 'negative')" [disabled]="dashboardData()!.nps.detractors === 0">
+                  {{ t('dashboard.negative') }}: {{ dashboardData()!.nps.detractors }} ({{ npsPercentages().negative.toFixed(1) }}%)
+                </button>
               </div>
             </div>
           </div>
@@ -201,6 +218,25 @@
       </mat-card>
     </div>
 
+  </div>
+</div>
+
+<div class="reference-overlay" *ngIf="drilldownOpen()" (click)="closeDrilldown()" role="dialog" aria-modal="true">
+  <div class="reference-modal" (click)="$event.stopPropagation()">
+    <h3>Related content · {{ drilldownTitle() }}</h3>
+    <div *ngIf="drilldownLoading()" class="drilldown-loading">
+      <mat-spinner diameter="36"></mat-spinner>
+    </div>
+    <p *ngIf="!drilldownLoading() && drilldownRows().length === 0">No related rows returned.</p>
+    <ul class="drilldown-list" *ngIf="!drilldownLoading() && drilldownRows().length">
+      <li *ngFor="let row of drilldownRows()">
+        <strong>#{{ row.id }} · {{ row.sentiment }} · {{ row.source }} · {{ row.date | date:'short' }}</strong>
+        <p *ngIf="row.relevanceReason"><strong>Why:</strong> {{ row.relevanceReason }}</p>
+        <p><strong>AI summary:</strong> {{ row.contentSummary || row.content }}</p>
+        <pre>{{ row.referenceContent || row.content }}</pre>
+      </li>
+    </ul>
+    <button mat-stroked-button type="button" (click)="closeDrilldown()">Close</button>
   </div>
 </div>
 

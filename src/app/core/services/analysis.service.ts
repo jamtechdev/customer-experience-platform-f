@@ -81,6 +81,33 @@ export class AnalysisService {
     );
   }
 
+  getAnalyticsDrilldown(options: {
+    companyId?: number;
+    ids?: number[];
+    rootCauseId?: number;
+    sentiment?: string;
+    source?: string;
+    journeyStage?: string;
+    startDate?: Date;
+    endDate?: Date;
+    includeIrrelevant?: boolean;
+  }): Observable<ApiResponse<{ list: any[]; requested: number; returned: number }>> {
+    let params = new HttpParams();
+    if (options.companyId != null) params = params.set('companyId', String(options.companyId));
+    if (options.ids?.length) params = params.set('ids', [...new Set(options.ids)].join(','));
+    if (options.rootCauseId != null) params = params.set('rootCauseId', String(options.rootCauseId));
+    if (options.sentiment) params = params.set('sentiment', options.sentiment);
+    if (options.source) params = params.set('source', options.source);
+    if (options.journeyStage) params = params.set('journeyStage', options.journeyStage);
+    if (options.startDate) params = params.set('startDate', options.startDate.toISOString());
+    if (options.endDate) params = params.set('endDate', options.endDate.toISOString());
+    if (options.includeIrrelevant) params = params.set('includeIrrelevant', 'true');
+    return this.http.get<ApiResponse<{ list: any[]; requested: number; returned: number }>>(
+      `${this.baseUrl}/drilldown`,
+      { params }
+    );
+  }
+
   /**
    * Bundled Twitter CX report. Omit startDate/endDate to use the full imported DB span on the server.
    */
@@ -215,6 +242,7 @@ export class AnalysisService {
     limit: number = 50,
     filters?: {
       journeyStage?: string;
+      sentiment?: string;
       isRelevant?: boolean;
       includeIrrelevant?: boolean;
       search?: string;
@@ -243,6 +271,7 @@ export class AnalysisService {
     if (startDate) params = params.set('startDate', startDate.toISOString());
     if (endDate) params = params.set('endDate', endDate.toISOString());
     if (filters?.journeyStage) params = params.set('journeyStage', filters.journeyStage);
+    if (filters?.sentiment) params = params.set('sentiment', filters.sentiment);
     if (filters?.isRelevant === true) params = params.set('isRelevant', 'true');
     if (filters?.isRelevant === false) params = params.set('isRelevant', 'false');
     if (filters?.includeIrrelevant) params = params.set('includeIrrelevant', 'true');

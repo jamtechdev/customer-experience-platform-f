@@ -66,14 +66,50 @@
           <ng-container matColumnDef="errorMessage">
             <th mat-header-cell *matHeaderCellDef>Reason / details</th>
             <td mat-cell *matCellDef="let row" class="error-cell">
-              @if (row.status === 'pending' || isProcessing(row)) {
+              @if (row.status === 'pending' || isProcessing(row) || isAiFinalizing(row)) {
                 @if (row.status === 'pending') {
                   <span class="muted">Awaiting mapping. Start import from CSV Mapping page.</span>
+                } @else if (isAiFinalizing(row)) {
+                  <div class="error-structured">
+                    <div class="error-line ok-line">
+                      <mat-icon class="inline-icon">check_circle</mat-icon>
+                      <strong>Data import saved</strong> —
+                      processed {{ getProcessedCount(row) }} / {{ row.errorDetails?.totalRows ?? row.rowCount ?? '—' }},
+                      imported {{ row.errorDetails?.importedCount ?? 0 }},
+                      omitted {{ row.errorDetails?.omittedCount ?? 0 }}.
+                    </div>
+                    <div class="error-line">
+                      Completion: <strong>100%</strong>
+                    </div>
+                    <div class="progress-wrap">
+                      <mat-progress-bar class="chunk-progress completed-progress" mode="determinate" [value]="100"></mat-progress-bar>
+                    </div>
+                    <div class="error-line ai-loader-line">
+                      <mat-spinner diameter="16"></mat-spinner>
+                      <span>
+                        <strong>Ollama AI</strong>
+                        analyzing feedback
+                        @if (row.errorDetails?.aiSummary?.attempted) {
+                          —
+                          {{ (row.errorDetails?.aiSummary?.succeeded ?? 0) + (row.errorDetails?.aiSummary?.failed ?? 0) }}
+                          / {{ row.errorDetails?.aiSummary?.attempted }}
+                        }
+                      </span>
+                    </div>
+                    @if (row.errorDetails?.aiSummary?.enabled) {
+                      <div class="error-line">
+                        <strong>Ollama:</strong>
+                        attempted {{ row.errorDetails?.aiSummary?.attempted ?? 0 }},
+                        success {{ row.errorDetails?.aiSummary?.succeeded ?? 0 }},
+                        failed {{ row.errorDetails?.aiSummary?.failed ?? 0 }}.
+                      </div>
+                    }
+                  </div>
                 } @else {
                   <div class="error-structured">
                     <div class="error-line">
                       <strong>Import in progress</strong> —
-                      processed {{ row.errorDetails?.processedCount ?? 0 }} / {{ row.errorDetails?.totalRows ?? row.rowCount ?? '—' }},
+                      processed {{ getProcessedCount(row) }} / {{ row.errorDetails?.totalRows ?? row.rowCount ?? '—' }},
                       imported {{ row.errorDetails?.importedCount ?? 0 }},
                       omitted {{ row.errorDetails?.omittedCount ?? 0 }}.
                     </div>

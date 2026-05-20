@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
-import { Observable, of, Subject } from 'rxjs';
-import { finalize, shareReplay, tap } from 'rxjs/operators';
+import { Observable, Subject } from 'rxjs';
+import { finalize, shareReplay } from 'rxjs/operators';
 import { AnalysisService } from './analysis.service';
 import { ApiResponse, TwitterCxReportDto } from '../models';
 
@@ -9,7 +9,6 @@ import { ApiResponse, TwitterCxReportDto } from '../models';
 export class TwitterCxReportStore {
   private readonly analysis = inject(AnalysisService);
   private readonly inflight = new Map<string, Observable<ApiResponse<TwitterCxReportDto>>>();
-  private readonly cache = new Map<string, ApiResponse<TwitterCxReportDto>>();
   private readonly refreshSubject = new Subject<number | undefined>();
 
   /** Emits companyId when snapshot cache was cleared (e.g. after CSV import). */
@@ -21,7 +20,7 @@ export class TwitterCxReportStore {
     startDate?: Date,
     endDate?: Date
   ): ApiResponse<TwitterCxReportDto> | undefined {
-    return this.cache.get(this.cacheKey(companyId, csvImportId, startDate, endDate));
+    return undefined;
   }
 
   loadTwitterCxReport(
@@ -31,18 +30,9 @@ export class TwitterCxReportStore {
     endDate?: Date
   ): Observable<ApiResponse<TwitterCxReportDto>> {
     const key = this.cacheKey(companyId, csvImportId, startDate, endDate);
-    const cached = this.cache.get(key);
-    if (cached?.success && cached.data) {
-      return of(cached);
-    }
     let obs = this.inflight.get(key);
     if (!obs) {
       obs = this.analysis.getTwitterCxReport(companyId, csvImportId, startDate, endDate).pipe(
-        tap((res) => {
-          if (res.success && res.data) {
-            this.cache.set(key, res);
-          }
-        }),
         finalize(() => this.inflight.delete(key)),
         shareReplay({ bufferSize: 1, refCount: true })
       );
@@ -53,15 +43,13 @@ export class TwitterCxReportStore {
 
   invalidate(companyId?: number, csvImportId?: number): void {
     if (companyId == null && csvImportId == null) {
-      this.cache.clear();
       this.inflight.clear();
       this.refreshSubject.next(undefined);
       return;
     }
     const prefix = `${companyId ?? ''}|`;
-    for (const k of [...this.cache.keys(), ...this.inflight.keys()]) {
+    for (const k of [...this.inflight.keys()]) {
       if (k.startsWith(prefix) || (csvImportId != null && k.includes(`|${csvImportId}|`))) {
-        this.cache.delete(k);
         this.inflight.delete(k);
       }
     }

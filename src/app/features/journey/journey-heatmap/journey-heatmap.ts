@@ -6,6 +6,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { TwitterCxReportStore } from '../../../core/services/twitter-cx-report.store';
+import { AnalysisService } from '../../../core/services/analysis.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { OllamaLoader } from '../../../core/components/ollama-loader/ollama-loader';
 import { twitterCxReportFailureMessage } from '../../../core/utils/twitter-cx-report-load';
@@ -15,6 +16,10 @@ interface StageRow {
   satisfactionScore: number;
   dissatisfactionScore: number;
   feedbackCount: number;
+  feedbackIds: number[];
+  positiveFeedbackIds: number[];
+  neutralFeedbackIds: number[];
+  negativeFeedbackIds: number[];
   painPoints: string[];
   satisfactionPoints: string[];
 }
@@ -35,12 +40,17 @@ interface StageRow {
 })
 export class JourneyHeatmap implements OnInit, OnDestroy {
   private twitterCxReportStore = inject(TwitterCxReportStore);
+  private analysisService = inject(AnalysisService);
   private authService = inject(AuthService);
   private snackBar = inject(MatSnackBar);
   private refreshSub?: Subscription;
   loading = signal(false);
   stages = signal<StageRow[]>([]);
   error = signal<string | null>(null);
+  drilldownOpen = signal(false);
+  drilldownLoading = signal(false);
+  drilldownTitle = signal('');
+  drilldownRows = signal<Array<{ id: number; content: string; contentSummary?: string; source: string; date: string; sentiment: string }>>([]);
   Math = Math;
 
   readonly pageSize = 20;
@@ -92,6 +102,10 @@ export class JourneyHeatmap implements OnInit, OnDestroy {
               satisfactionScore: Number(r.positive ?? 0) / 100,
               dissatisfactionScore: Number(r.negative ?? 0) / 100,
               feedbackCount: Number(r.total ?? 0),
+              feedbackIds: Array.isArray(r.feedbackIds) ? r.feedbackIds : [],
+              positiveFeedbackIds: Array.isArray(r.positiveFeedbackIds) ? r.positiveFeedbackIds : [],
+              neutralFeedbackIds: Array.isArray(r.neutralFeedbackIds) ? r.neutralFeedbackIds : [],
+              negativeFeedbackIds: Array.isArray(r.negativeFeedbackIds) ? r.negativeFeedbackIds : [],
               painPoints: [],
               satisfactionPoints: [],
             }))
@@ -137,5 +151,31 @@ export class JourneyHeatmap implements OnInit, OnDestroy {
     if (total === 0) return;
     const maxPage = Math.ceil(total / this.pageSize);
     this.page.update((p) => Math.min(maxPage, p + 1));
+  }
+
+  openRelated(stage: StageRow, label: string, ids: number[]): void {
+    const unique = [...new Set((ids || []).filter((id) => Number.isFinite(id) && id > 0))];
+    if (!unique.length) return;
+    this.drilldownTitle.set(`${stage.stageName} · ${label}`);
+    this.drilldownOpen.set(true);
+    this.drilldownLoading.set(true);
+    this.drilldownRows.set([]);
+    const user = this.authService.currentUser();
+    const companyId = user?.role === 'admin' ? undefined : (user?.settings?.companyId ?? 1);
+    this.analysisService.getAnalyticsDrilldown({ companyId, ids: unique }).subscribe({
+      next: (res) => {
+        this.drilldownLoading.set(false);
+        this.drilldownRows.set(res?.data?.list || []);
+      },
+      error: () => {
+        this.drilldownLoading.set(false);
+        this.drilldownRows.set([]);
+      },
+    });
+  }
+
+  closeDrilldown(): void {
+    this.drilldownOpen.set(false);
+    this.drilldownRows.set([]);
   }
 }

@@ -1,4 +1,4 @@
-import { inject, PLATFORM_ID } from '@angular/core';
+import { Injector, inject, PLATFORM_ID } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { HttpRequest, HttpErrorResponse, HttpHandlerFn, HttpEvent } from '@angular/common/http';
 import { Observable, throwError } from 'rxjs';
@@ -32,6 +32,10 @@ function isAuthFormEndpoint(url: string): boolean {
   return AUTH_FORM_PATH_RE.test(getRequestPath(url));
 }
 
+function isAuthProfileEndpoint(url: string): boolean {
+  return /(^|\/)auth\/profile(\/|\?|$)/i.test(getRequestPath(url));
+}
+
 function shouldSuppressErrorToast(req: HttpRequest<unknown>): boolean {
   if (!isBackendApiRequest(req)) return true;
   // In local/dev, show auth endpoint failures so debugging is visible immediately.
@@ -51,6 +55,10 @@ function extractBodyMessage(error: HttpErrorResponse): string {
       errorMessage = isHtmlErrorBody(error.error) ? '' : error.error;
     } else if ((error.error as { message?: string }).message) {
       errorMessage = (error.error as { message: string }).message;
+      const debugMessage = (error.error as { debug?: { message?: string } }).debug?.message;
+      if (!environment.production && debugMessage) {
+        errorMessage = debugMessage;
+      }
     } else if ((error.error as { error?: string }).error) {
       errorMessage = (error.error as { error: string }).error;
     }
@@ -85,6 +93,7 @@ function normalizeHttpErrorMessage(error: HttpErrorResponse, req: HttpRequest<un
   }
 
   if (error.status === 500) {
+    console.error(`Server error: ${req.method} ${logUrl} - ${errorMessage || 'Internal Server Error'}`);
     console.error('Server error:', {
       url: logUrl,
       method: req.method,
@@ -151,22 +160,14 @@ export function authInterceptor(
   req: HttpRequest<unknown>,
   next: HttpHandlerFn
 ): Observable<HttpEvent<unknown>> {
-  const authService = inject(AuthService);
-  const token = authService.getToken();
-
   // Don't add token to external requests
-  const isApiRequest = req.url.startsWith('/api') || req.url.startsWith(environment.apiUrl);
+  const base = environment.apiUrl || '';
+  const isApiRequest = req.url.startsWith('/api') || (base !== '' && req.url.startsWith(base));
   if (!isApiRequest) {
     return next(req);
   }
 
-  if (token) {
-    req = req.clone({
-      setHeaders: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
-  }
+  req = req.clone({ withCredentials: true });
 
   return next(req);
 }
@@ -197,7 +198,7 @@ export function errorInterceptor(
   req: HttpRequest<unknown>,
   next: HttpHandlerFn
 ): Observable<HttpEvent<unknown>> {
-  const authService = inject(AuthService);
+  const injector = inject(Injector);
   const snackBar = inject(MatSnackBar);
   const platformId = inject(PLATFORM_ID);
 
@@ -206,6 +207,7 @@ export function errorInterceptor(
       if (error.status === 401) {
         const isRefreshRequest = req.url.includes('/auth/refresh');
         if (isRefreshRequest) {
+          const authService = injector.get(AuthService);
           const errorMessage = normalizeHttpErrorMessage(error, req);
           authService.logout();
           notifyHttpError(snackBar, platformId, errorMessage, req);
@@ -232,14 +234,13 @@ export function errorInterceptor(
           notifyHttpError(snackBar, platformId, errorMessage, req);
           return throwError(() => enhancedError);
         }
+        if (isAuthProfileEndpoint(req.url)) {
+          return throwError(() => error);
+        }
+        const authService = injector.get(AuthService);
         return authService.refreshToken().pipe(
           switchMap(() => {
-            const token = authService.getToken();
-            const newReq = req.clone({
-              setHeaders: {
-                Authorization: `Bearer ${token}`,
-              },
-            });
+            const newReq = req.clone({ withCredentials: true });
             return next(newReq);
           }),
           catchError((refreshError: HttpErrorResponse) => {
@@ -324,17 +325,10 @@ export function languageInterceptor(
   req: HttpRequest<unknown>,
   next: HttpHandlerFn
 ): Observable<HttpEvent<unknown>> {
-  let language = 'en';
-  if (typeof window !== 'undefined' && window.localStorage) {
-    try {
-      language =
-        localStorage.getItem('preferredLanguage') ||
-        localStorage.getItem('language') ||
-        'en';
-    } catch {
-      language = 'en';
-    }
-  }
+  let language =
+    typeof document !== 'undefined'
+      ? document.documentElement.getAttribute('lang') || 'en'
+      : 'en';
 
   // Normalize and whitelist language to avoid invalid headers
   // from legacy/localized values (e.g. "Türkçe", "tr-TR", etc.).

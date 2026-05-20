@@ -1,4 +1,4 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { MatCardModule } from '@angular/material/card';
@@ -12,6 +12,7 @@ import { MatTableModule } from '@angular/material/table';
 import { FormsModule } from '@angular/forms';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { OllamaLoader } from '../../../core/components/ollama-loader/ollama-loader';
+import { SourceExtractionService } from '../../../core/services/source-extraction.service';
 
 interface ExtractedRecord {
   id: string;
@@ -22,8 +23,6 @@ interface ExtractedRecord {
   date: string;
   rating: string;
 }
-
-const STORAGE_KEY = 'source_extraction_records_v1';
 
 @Component({
   selector: 'app-source-extraction',
@@ -45,8 +44,9 @@ const STORAGE_KEY = 'source_extraction_records_v1';
   templateUrl: './source-extraction.html',
   styleUrl: './source-extraction.css',
 })
-export class SourceExtraction {
+export class SourceExtraction implements OnInit {
   private snackBar = inject(MatSnackBar);
+  private sourceExtractionService = inject(SourceExtractionService);
 
   readonly sources = ['Instagram', 'Twitter/X', 'YouTube', 'Google Reviews', 'App Store', 'Play Store', 'Sikayetvar'];
   readonly displayedColumns = ['source', 'company', 'competitor', 'content', 'date', 'actions'];
@@ -59,7 +59,7 @@ export class SourceExtraction {
   rating = '';
   sourceFilter = '';
 
-  records = signal<ExtractedRecord[]>(this.loadRecords());
+  records = signal<ExtractedRecord[]>([]);
   processing = signal(false);
   filteredRecords = computed(() => {
     const filter = this.sourceFilter.trim().toLowerCase();
@@ -67,13 +67,16 @@ export class SourceExtraction {
     return this.records().filter((r) => r.source.toLowerCase() === filter);
   });
 
+  ngOnInit(): void {
+    this.loadRecords();
+  }
+
   addRecord(): void {
     if (!this.content.trim() || !this.company.trim() || !this.date) {
       this.snackBar.open('Company, date and content are required.', 'Close', { duration: 2500 });
       return;
     }
-    const next: ExtractedRecord = {
-      id: crypto.randomUUID(),
+    const next = {
       source: this.source,
       company: this.company.trim(),
       competitor: this.competitor.trim(),
@@ -81,21 +84,34 @@ export class SourceExtraction {
       date: this.date,
       rating: this.rating.trim(),
     };
-    const updated = [next, ...this.records()];
-    this.records.set(updated);
-    this.persist(updated);
-    this.resetForm();
+    this.processing.set(true);
+    this.sourceExtractionService.createRecord(next).subscribe({
+      next: (res) => {
+        this.processing.set(false);
+        if (res.success && res.data) {
+          this.records.update((rows) => [this.normalizeRecord(res.data), ...rows]);
+          this.resetForm();
+        }
+      },
+      error: () => {
+        this.processing.set(false);
+        this.snackBar.open('Could not save record.', 'Close', { duration: 2500 });
+      },
+    });
   }
 
   removeRecord(id: string): void {
-    const updated = this.records().filter((r) => r.id !== id);
-    this.records.set(updated);
-    this.persist(updated);
+    this.sourceExtractionService.deleteRecord(id).subscribe({
+      next: () => this.records.update((rows) => rows.filter((r) => r.id !== id)),
+      error: () => this.snackBar.open('Could not delete record.', 'Close', { duration: 2500 }),
+    });
   }
 
   clearAll(): void {
-    this.records.set([]);
-    this.persist([]);
+    this.sourceExtractionService.clearRecords().subscribe({
+      next: () => this.records.set([]),
+      error: () => this.snackBar.open('Could not clear records.', 'Close', { duration: 2500 }),
+    });
   }
 
   onCsvSelected(event: Event): void {
@@ -112,12 +128,19 @@ export class SourceExtraction {
         this.snackBar.open('No valid rows found in CSV.', 'Close', { duration: 2500 });
         return;
       }
-      const updated = [...parsed, ...this.records()];
-      this.records.set(updated);
-      this.persist(updated);
-      this.processing.set(false);
-      this.snackBar.open(`${parsed.length} rows imported.`, 'Close', { duration: 2500 });
-      input.value = '';
+      this.sourceExtractionService.createRecords(parsed.map(({ id, ...row }) => row)).subscribe({
+        next: (res) => {
+          this.processing.set(false);
+          const saved = Array.isArray(res.data) ? res.data.map((row) => this.normalizeRecord(row)) : [];
+          this.records.update((rows) => [...saved, ...rows]);
+          this.snackBar.open(`${saved.length} rows imported.`, 'Close', { duration: 2500 });
+          input.value = '';
+        },
+        error: () => {
+          this.processing.set(false);
+          this.snackBar.open('CSV import failed. Please try again.', 'Close', { duration: 2500 });
+        },
+      });
     };
     reader.onerror = () => {
       this.processing.set(false);
@@ -147,7 +170,7 @@ export class SourceExtraction {
       const source = cols[idx.source] || '';
       if (!content || !date || !source) continue;
       rows.push({
-        id: crypto.randomUUID(),
+        id: '',
         source,
         company: idx.company >= 0 ? cols[idx.company] || '' : '',
         competitor: idx.competitor >= 0 ? cols[idx.competitor] || '' : '',
@@ -159,19 +182,30 @@ export class SourceExtraction {
     return rows;
   }
 
-  private loadRecords(): ExtractedRecord[] {
-    if (typeof window === 'undefined' || !window.localStorage) return [];
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      return raw ? (JSON.parse(raw) as ExtractedRecord[]) : [];
-    } catch {
-      return [];
-    }
+  private loadRecords(): void {
+    this.processing.set(true);
+    this.sourceExtractionService.getRecords().subscribe({
+      next: (res) => {
+        this.processing.set(false);
+        this.records.set(Array.isArray(res.data) ? res.data.map((row) => this.normalizeRecord(row)) : []);
+      },
+      error: () => {
+        this.processing.set(false);
+        this.records.set([]);
+      },
+    });
   }
 
-  private persist(records: ExtractedRecord[]): void {
-    if (typeof window === 'undefined' || !window.localStorage) return;
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(records));
+  private normalizeRecord(record: any): ExtractedRecord {
+    return {
+      id: String(record.id || ''),
+      source: String(record.source || ''),
+      company: String(record.company || ''),
+      competitor: String(record.competitor || ''),
+      content: String(record.content || ''),
+      date: String(record.date || '').slice(0, 10),
+      rating: String(record.rating || ''),
+    };
   }
 
   private resetForm(): void {

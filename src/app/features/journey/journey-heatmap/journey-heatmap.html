@@ -44,9 +44,15 @@
             <div class="heatmap-pct-hdr">negative</div>
             @for (row of pagedStages(); track row.stageName) {
               <div class="heatmap-pct-stage">{{ row.stageName }}</div>
-              <div class="heatmap-pct-cell">{{ (row.satisfactionScore * 100).toFixed(0) }}</div>
-              <div class="heatmap-pct-cell">{{ Math.max(0, 100 - ((row.satisfactionScore + row.dissatisfactionScore) * 100)).toFixed(0) }}</div>
-              <div class="heatmap-pct-cell">{{ (row.dissatisfactionScore * 100).toFixed(0) }}</div>
+              <button class="heatmap-pct-cell count-link" type="button" (click)="openRelated(row, 'positive', row.positiveFeedbackIds)">
+                {{ (row.satisfactionScore * 100).toFixed(0) }}
+              </button>
+              <button class="heatmap-pct-cell count-link" type="button" (click)="openRelated(row, 'neutral', row.neutralFeedbackIds)">
+                {{ Math.max(0, 100 - ((row.satisfactionScore + row.dissatisfactionScore) * 100)).toFixed(0) }}
+              </button>
+              <button class="heatmap-pct-cell count-link" type="button" (click)="openRelated(row, 'negative', row.negativeFeedbackIds)">
+                {{ (row.dissatisfactionScore * 100).toFixed(0) }}
+              </button>
             }
           </div>
           <div class="heatmap-legend-scale">
@@ -68,4 +74,22 @@
       </mat-card-content>
     </mat-card>
   }
+
+  <div class="reference-overlay" *ngIf="drilldownOpen()" (click)="closeDrilldown()" role="dialog" aria-modal="true">
+    <div class="reference-modal" (click)="$event.stopPropagation()">
+      <h3>Related content · {{ drilldownTitle() }}</h3>
+      <div *ngIf="drilldownLoading()" class="drilldown-loading">
+        <mat-progress-spinner mode="indeterminate" diameter="36"></mat-progress-spinner>
+      </div>
+      <p *ngIf="!drilldownLoading() && drilldownRows().length === 0">No related rows returned.</p>
+      <ul class="drilldown-list" *ngIf="!drilldownLoading() && drilldownRows().length">
+        <li *ngFor="let row of drilldownRows()">
+          <strong>#{{ row.id }} · {{ row.sentiment }}</strong>
+          <p *ngIf="row.contentSummary">{{ row.contentSummary }}</p>
+          <p>{{ row.content }}</p>
+        </li>
+      </ul>
+      <button mat-raised-button color="primary" type="button" (click)="closeDrilldown()">Close</button>
+    </div>
+  </div>
 </div>

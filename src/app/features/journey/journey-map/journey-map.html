@@ -74,7 +74,9 @@
     <ul *ngIf="!drilldownLoading() && drilldownRows().length">
       <li *ngFor="let r of drilldownRows()">
         <small>#{{ r.id }} · {{ r.author || 'unknown' }} · {{ r.date }}</small>
-        <p>{{ r.content }}</p>
+        <p *ngIf="r.relevanceReason"><strong>Why:</strong> {{ r.relevanceReason }}</p>
+        <p><strong>AI summary:</strong> {{ r.contentSummary || r.content }}</p>
+        <pre class="reference-text">{{ r.content }}</pre>
       </li>
     </ul>
     <button mat-stroked-button type="button" (click)="closeDrilldown()">Close</button>

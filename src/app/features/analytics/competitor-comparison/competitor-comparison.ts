@@ -31,6 +31,7 @@ interface CompetitorData {
   sentimentScore: number;
   npsScore: number;
   feedbackCount: number;
+  feedbackIds?: number[];
 }
 
 @Component({
@@ -69,6 +70,10 @@ export class CompetitorComparison implements OnInit, OnDestroy {
   competitors = signal<CompetitorData[]>([]);
   insightSummary = signal<string>('');
   noDataInSelectedRange = signal(false);
+  drilldownOpen = signal(false);
+  drilldownLoading = signal(false);
+  drilldownTitle = signal('');
+  drilldownRows = signal<Array<{ id: number; content: string; contentSummary?: string; sentiment: string; date: string }>>([]);
   displayedColumns: string[] = ['name', 'sentimentScore', 'npsScore', 'feedbackCount', 'gap', 'actions'];
   newCompetitorName = '';
 
@@ -232,7 +237,8 @@ export class CompetitorComparison implements OnInit, OnDestroy {
               name: data.company.name,
               sentimentScore: data.company.sentimentScore || 0,
               npsScore: data.company.npsScore || 0,
-              feedbackCount: companyFeedbackCount
+              feedbackCount: companyFeedbackCount,
+              feedbackIds: Array.isArray(data.company.feedbackIds) ? data.company.feedbackIds : [],
             });
           } else {
             this.companyData.set(null);
@@ -243,7 +249,8 @@ export class CompetitorComparison implements OnInit, OnDestroy {
               name: c.name || 'Unknown',
               sentimentScore: c.sentimentScore || 0,
               npsScore: c.npsScore || 0,
-              feedbackCount: c.feedbackCount || 0
+              feedbackCount: c.feedbackCount || 0,
+              feedbackIds: Array.isArray(c.feedbackIds) ? c.feedbackIds : [],
             })));
           } else {
             this.competitors.set([]);
@@ -288,6 +295,31 @@ export class CompetitorComparison implements OnInit, OnDestroy {
     const company = this.companyData();
     if (!company) return 0;
     return row.sentimentScore - company.sentimentScore;
+  }
+
+  openRelated(row: CompetitorData): void {
+    const ids = [...new Set((row.feedbackIds || []).filter((id) => Number.isFinite(id) && id > 0))];
+    if (!ids.length) return;
+    this.drilldownTitle.set(row.name);
+    this.drilldownOpen.set(true);
+    this.drilldownLoading.set(true);
+    this.drilldownRows.set([]);
+    const companyId = this.authService.currentUser()?.settings?.companyId ?? 1;
+    this.analysisService.getFeedbackByIds(companyId, ids).subscribe({
+      next: (res) => {
+        this.drilldownLoading.set(false);
+        this.drilldownRows.set(res?.data?.list || []);
+      },
+      error: () => {
+        this.drilldownLoading.set(false);
+        this.drilldownRows.set([]);
+      },
+    });
+  }
+
+  closeDrilldown(): void {
+    this.drilldownOpen.set(false);
+    this.drilldownRows.set([]);
   }
 
   hasValidCompetitors(): boolean {

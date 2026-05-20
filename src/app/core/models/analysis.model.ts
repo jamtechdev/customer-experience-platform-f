@@ -260,9 +260,19 @@ export interface TwitterCxReportDto {
   section4Intro: string;
   section4Bullets: string[];
   sentimentPatternRows: Array<{ sentiment: string; patterns: string }>;
-  heatmapPct: Array<{ stage: string; positive: number; neutral: number; negative: number; total: number }>;
+  heatmapPct: Array<{
+    stage: string;
+    positive: number;
+    neutral: number;
+    negative: number;
+    total: number;
+    feedbackIds?: number[];
+    positiveFeedbackIds?: number[];
+    neutralFeedbackIds?: number[];
+    negativeFeedbackIds?: number[];
+  }>;
   heatmapFigureCaption: string;
-  touchpoints: Array<{ name: string; volume: number; observation: string }>;
+  touchpoints: Array<{ name: string; volume: number; observation: string; feedbackIds?: number[] }>;
   rootCauses: Array<{ cause: string; count: number; interpretation: string; feedbackIds?: number[] }>;
   journeyRows: Array<{
     stage: string;
