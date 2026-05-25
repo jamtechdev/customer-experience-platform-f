@@ -339,7 +339,7 @@ export class ArcelikTwitterCxReport implements OnInit, OnDestroy {
 
   reload(withFilters: boolean = this.filtersApplied()): void {
     this.loading.set(true);
-    this.loadingMessage.set('Checking for a saved report in the database.');
+    this.loadingMessage.set('Fetching live data from DB and Ollama.');
     this.loadError.set(null);
     const sentCo = this.sentimentCompanyId();
     let startDate: Date | undefined;
@@ -350,10 +350,10 @@ export class ArcelikTwitterCxReport implements OnInit, OnDestroy {
       endDate = new Date(ed);
     }
 
-    // After 3 s switch message to let user know a longer build may be running
+    // After 3 s switch message to let user know Ollama may still be generating live analysis.
     const msgTimer = setTimeout(() => {
       if (this.loading()) {
-        this.loadingMessage.set('Building the report in the background. First load can take 30-60 seconds.');
+        this.loadingMessage.set('Ollama is generating the latest report from uploaded CSV records.');
       }
     }, 3000);
 
@@ -363,7 +363,7 @@ export class ArcelikTwitterCxReport implements OnInit, OnDestroy {
         finalize(() => {
           clearTimeout(msgTimer);
           this.loading.set(false);
-          this.loadingMessage.set('Preparing the saved report.');
+          this.loadingMessage.set('Fetching live data from DB and Ollama.');
         })
       )
       .subscribe({

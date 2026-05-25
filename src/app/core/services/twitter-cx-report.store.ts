@@ -28,13 +28,14 @@ export class TwitterCxReportStore {
     companyId: number | undefined,
     csvImportId?: number,
     startDate?: Date,
-    endDate?: Date
+    endDate?: Date,
+    forceLive: boolean = true
   ): Observable<ApiResponse<TwitterCxReportDto>> {
-    const key = this.cacheKey(companyId, csvImportId, startDate, endDate);
+    const key = this.cacheKey(companyId, csvImportId, startDate, endDate, forceLive);
     let obs = this.inflight.get(key);
     if (!obs) {
       const generationAtStart = this.generation;
-      obs = this.analysis.getTwitterCxReport(companyId, csvImportId, startDate, endDate).pipe(
+      obs = this.analysis.getTwitterCxReport(companyId, csvImportId, startDate, endDate, forceLive).pipe(
         map((res) =>
           generationAtStart === this.generation
             ? res
@@ -72,8 +73,15 @@ export class TwitterCxReportStore {
     companyId: number | undefined,
     csvImportId?: number,
     startDate?: Date,
-    endDate?: Date
+    endDate?: Date,
+    forceLive: boolean = true
   ): string {
-    return [companyId ?? '', csvImportId ?? '', startDate?.toISOString() ?? '', endDate?.toISOString() ?? ''].join('|');
+    return [
+      companyId ?? '',
+      csvImportId ?? '',
+      startDate?.toISOString() ?? '',
+      endDate?.toISOString() ?? '',
+      forceLive ? 'live' : 'snapshot',
+    ].join('|');
   }
 }

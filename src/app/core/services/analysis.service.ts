@@ -17,6 +17,11 @@ import { environment } from '../../../environments/environment';
 export class AnalysisService {
   private readonly http = inject(HttpClient);
   private readonly baseUrl = environment.apiUrl ? `${environment.apiUrl.replace(/\/$/, '')}/analysis` : '/api/analysis';
+
+  private realtimeParams(params: HttpParams = new HttpParams()): HttpParams {
+    return params.set('_t', Date.now().toString());
+  }
+
   // Sentiment Analysis - matches backend /api/analysis/sentiment
   analyzeSentiment(feedbackId: number): Observable<ApiResponse<SentimentAnalysisResult>> {
     return this.http.post<ApiResponse<SentimentAnalysisResult>>(`${this.baseUrl}/sentiment`, { feedbackId });
@@ -27,6 +32,7 @@ export class AnalysisService {
     if (companyId) params = params.set('companyId', companyId.toString());
     if (startDate) params = params.set('startDate', startDate.toISOString());
     if (endDate) params = params.set('endDate', endDate.toISOString());
+    params = this.realtimeParams(params);
     return this.http.get<ApiResponse<any>>(`${this.baseUrl}/sentiment`, { params });
   }
 
@@ -37,7 +43,7 @@ export class AnalysisService {
       errorMessage?: string | null;
     }>
   > {
-    const params = new HttpParams().set('companyId', String(companyId));
+    const params = this.realtimeParams(new HttpParams().set('companyId', String(companyId)));
     return this.http.get<
       ApiResponse<{
         status: 'none' | 'pending' | 'ready' | 'failed';
@@ -58,7 +64,7 @@ export class AnalysisService {
       report?: TwitterCxReportDto;
     }>
   > {
-    const params = new HttpParams().set('snapshotId', String(snapshotId));
+    const params = this.realtimeParams(new HttpParams().set('snapshotId', String(snapshotId)));
     return this.http.get<
       ApiResponse<{
         status: 'pending' | 'ready' | 'failed';
@@ -75,6 +81,7 @@ export class AnalysisService {
     const capped = [...new Set(ids.filter((n) => Number.isFinite(n) && n > 0))].slice(0, 200);
     let params = new HttpParams().set('ids', capped.join(','));
     if (companyId != null) params = params.set('companyId', String(companyId));
+    params = this.realtimeParams(params);
     return this.http.get<ApiResponse<{ list: any[]; requested: number; returned: number }>>(
       `${this.baseUrl}/feedback-by-ids`,
       { params }
@@ -102,6 +109,7 @@ export class AnalysisService {
     if (options.startDate) params = params.set('startDate', options.startDate.toISOString());
     if (options.endDate) params = params.set('endDate', options.endDate.toISOString());
     if (options.includeIrrelevant) params = params.set('includeIrrelevant', 'true');
+    params = this.realtimeParams(params);
     return this.http.get<ApiResponse<{ list: any[]; requested: number; returned: number }>>(
       `${this.baseUrl}/drilldown`,
       { params }
@@ -115,13 +123,16 @@ export class AnalysisService {
     companyId: number | undefined,
     csvImportId?: number,
     startDate?: Date,
-    endDate?: Date
+    endDate?: Date,
+    forceLive: boolean = true
   ): Observable<ApiResponse<TwitterCxReportDto>> {
     let params = new HttpParams();
     if (companyId != null) params = params.set('companyId', String(companyId));
     if (csvImportId != null) params = params.set('csvImportId', String(csvImportId));
     if (startDate) params = params.set('startDate', startDate.toISOString());
     if (endDate) params = params.set('endDate', endDate.toISOString());
+    if (forceLive) params = params.set('forceLive', '1');
+    params = this.realtimeParams(params);
     return this.http
       .get<ApiResponse<TwitterCxReportDto | { snapshotPending: boolean; snapshotId: number }>>(
         `${this.baseUrl}/twitter-cx-report`,
@@ -213,6 +224,7 @@ export class AnalysisService {
     if (companyId) params = params.set('companyId', companyId.toString());
     if (startDate) params = params.set('startDate', startDate.toISOString());
     if (endDate) params = params.set('endDate', endDate.toISOString());
+    params = this.realtimeParams(params);
     return this.http.get<ApiResponse<{ patterns: Array<{ sentiment: string; patterns: string }> }>>(
       `${this.baseUrl}/sentiment/patterns`,
       { params }
@@ -276,6 +288,7 @@ export class AnalysisService {
     if (filters?.isRelevant === false) params = params.set('isRelevant', 'false');
     if (filters?.includeIrrelevant) params = params.set('includeIrrelevant', 'true');
     if (filters?.search) params = params.set('search', filters.search);
+    params = this.realtimeParams(params);
     return this.http.get<ApiResponse<{ list: any[]; total: number }>>(`${this.baseUrl}/sentiment/list`, { params });
   }
 
@@ -299,6 +312,7 @@ export class AnalysisService {
   getRootCauses(companyId?: number): Observable<ApiResponse<RootCauseAnalysis[]>> {
     let params = new HttpParams();
     if (companyId) params = params.set('companyId', companyId.toString());
+    params = this.realtimeParams(params);
     return this.http.get<ApiResponse<RootCauseAnalysis[]>>(`${this.baseUrl}/root-cause`, { params });
   }
 
@@ -321,7 +335,7 @@ export class AnalysisService {
     const params = new HttpParams()
       .set('companyId', companyId.toString())
       .set('period', period);
-    return this.http.get<ApiResponse<any>>(`${this.baseUrl}/nps`, { params });
+    return this.http.get<ApiResponse<any>>(`${this.baseUrl}/nps`, { params: this.realtimeParams(params) });
   }
 
   // Competitor Analysis - matches backend /api/analysis/competitor
@@ -329,6 +343,7 @@ export class AnalysisService {
     let params = new HttpParams().set('companyId', companyId.toString());
     if (startDate) params = params.set('startDate', startDate.toISOString());
     if (endDate) params = params.set('endDate', endDate.toISOString());
+    params = this.realtimeParams(params);
     return this.http.get<ApiResponse<any>>(`${this.baseUrl}/competitor`, { params }).pipe(
       retry({
         count: 1,
@@ -358,7 +373,8 @@ export class AnalysisService {
 
   getOllamaStatus(): Observable<ApiResponse<{ enabled: boolean; reachable: boolean; model: string }>> {
     return this.http.get<ApiResponse<{ enabled: boolean; reachable: boolean; model: string }>>(
-      `${this.baseUrl}/ollama-status`
+      `${this.baseUrl}/ollama-status`,
+      { params: this.realtimeParams() }
     );
   }
 }
