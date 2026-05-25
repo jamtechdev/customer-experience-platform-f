@@ -18,6 +18,26 @@ import { AuthService } from '../../../core/services/auth.service';
 import { OllamaLoader } from '../../../core/components/ollama-loader/ollama-loader';
 import { twitterCxReportFailureMessage } from '../../../core/utils/twitter-cx-report-load';
 
+const SOURCE_CHANNEL_NAMES = new Set([
+  'twitter',
+  'x',
+  'instagram',
+  'facebook',
+  'youtube',
+  'google_reviews',
+  'sikayetvar',
+  'sikayetvar_com',
+  'app_store',
+  'play_store',
+  'csv_import',
+  'social_media',
+  'other',
+]);
+
+function isSourceChannelName(value: string): boolean {
+  return SOURCE_CHANNEL_NAMES.has((value || '').trim().toLowerCase().replace(/\s+/g, '_'));
+}
+
 @Component({
   selector: 'app-touchpoint-manager',
   imports: [
@@ -100,7 +120,7 @@ export class TouchpointManager implements OnInit, OnDestroy {
     this.loading.set(true);
     const user = this.authService.currentUser();
     const companyId = user?.role === 'admin' ? undefined : (user?.settings?.companyId ?? 1);
-    this.twitterCxReportStore.loadTwitterCxReport(companyId).subscribe({
+    this.twitterCxReportStore.loadTwitterCxReport(companyId, undefined, undefined, undefined, false).subscribe({
       next: (response) => {
         if (response.message === 'stale_response') {
           this.loading.set(false);
@@ -115,7 +135,8 @@ export class TouchpointManager implements OnInit, OnDestroy {
           return;
         }
         if (response.success && Array.isArray(response.data?.touchpoints)) {
-          const rows = response.data.touchpoints.map((t: any, idx: number) => ({
+          const touchpoints = response.data.touchpoints.filter((t: any) => !isSourceChannelName(t?.name ?? ''));
+          const rows = touchpoints.map((t: any, idx: number) => ({
             id: idx + 1,
             name: t.name ?? '',
             description: t.observation ?? '',
@@ -128,7 +149,7 @@ export class TouchpointManager implements OnInit, OnDestroy {
           }));
           this.touchpoints.set(rows);
           this.reportTouchpoints.set(
-            response.data.touchpoints.map((t: any) => ({
+            touchpoints.map((t: any) => ({
               name: t.name ?? '',
               volume: Number(t.volume ?? 0),
               observation: t.observation ?? '',

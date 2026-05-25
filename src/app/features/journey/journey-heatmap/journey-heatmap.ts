@@ -24,6 +24,8 @@ interface StageRow {
   satisfactionPoints: string[];
 }
 
+type HeatmapSentiment = 'positive' | 'neutral' | 'negative';
+
 @Component({
   selector: 'app-journey-heatmap',
   standalone: true,
@@ -83,7 +85,7 @@ export class JourneyHeatmap implements OnInit, OnDestroy {
     const companyId = user?.role === 'admin' ? undefined : (user?.settings?.companyId ?? 1);
     this.loading.set(true);
     this.error.set(null);
-    this.twitterCxReportStore.loadTwitterCxReport(companyId).subscribe({
+    this.twitterCxReportStore.loadTwitterCxReport(companyId, undefined, undefined, undefined, false).subscribe({
       next: (res) => {
         if (res.message === 'stale_response') {
           this.loading.set(false);
@@ -106,10 +108,10 @@ export class JourneyHeatmap implements OnInit, OnDestroy {
               satisfactionScore: Number(r.positive ?? 0) / 100,
               dissatisfactionScore: Number(r.negative ?? 0) / 100,
               feedbackCount: Number(r.total ?? 0),
-              feedbackIds: Array.isArray(r.feedbackIds) ? r.feedbackIds : [],
-              positiveFeedbackIds: Array.isArray(r.positiveFeedbackIds) ? r.positiveFeedbackIds : [],
-              neutralFeedbackIds: Array.isArray(r.neutralFeedbackIds) ? r.neutralFeedbackIds : [],
-              negativeFeedbackIds: Array.isArray(r.negativeFeedbackIds) ? r.negativeFeedbackIds : [],
+              feedbackIds: this.toFeedbackIds(r.feedbackIds),
+              positiveFeedbackIds: this.toFeedbackIds(r.positiveFeedbackIds),
+              neutralFeedbackIds: this.toFeedbackIds(r.neutralFeedbackIds),
+              negativeFeedbackIds: this.toFeedbackIds(r.negativeFeedbackIds),
               painPoints: [],
               satisfactionPoints: [],
             }))
@@ -157,16 +159,22 @@ export class JourneyHeatmap implements OnInit, OnDestroy {
     this.page.update((p) => Math.min(maxPage, p + 1));
   }
 
-  openRelated(stage: StageRow, label: string, ids: number[]): void {
-    const unique = [...new Set((ids || []).filter((id) => Number.isFinite(id) && id > 0))];
-    if (!unique.length) return;
+  openRelated(stage: StageRow, label: HeatmapSentiment, ids: number[]): void {
+    const unique = [...new Set((ids || []).map((id) => Number(id)).filter((id) => Number.isFinite(id) && id > 0))];
+    if (!unique.length && stage.feedbackCount <= 0) return;
     this.drilldownTitle.set(`${stage.stageName} · ${label}`);
     this.drilldownOpen.set(true);
     this.drilldownLoading.set(true);
     this.drilldownRows.set([]);
     const user = this.authService.currentUser();
     const companyId = user?.role === 'admin' ? undefined : (user?.settings?.companyId ?? 1);
-    this.analysisService.getAnalyticsDrilldown({ companyId, ids: unique }).subscribe({
+    this.analysisService.getAnalyticsDrilldown({
+      companyId,
+      ids: unique,
+      sentiment: label,
+      journeyStage: stage.stageName,
+      includeIrrelevant: true,
+    }).subscribe({
       next: (res) => {
         this.drilldownLoading.set(false);
         this.drilldownRows.set(res?.data?.list || []);
@@ -176,6 +184,11 @@ export class JourneyHeatmap implements OnInit, OnDestroy {
         this.drilldownRows.set([]);
       },
     });
+  }
+
+  private toFeedbackIds(value: unknown): number[] {
+    if (!Array.isArray(value)) return [];
+    return value.map((id) => Number(id)).filter((id) => Number.isFinite(id) && id > 0);
   }
 
   closeDrilldown(): void {

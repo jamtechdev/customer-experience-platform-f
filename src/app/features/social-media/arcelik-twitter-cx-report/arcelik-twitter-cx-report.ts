@@ -63,6 +63,26 @@ interface TouchRow {
   observation: string;
 }
 
+const SOURCE_CHANNEL_NAMES = new Set([
+  'twitter',
+  'x',
+  'instagram',
+  'facebook',
+  'youtube',
+  'google_reviews',
+  'sikayetvar',
+  'sikayetvar_com',
+  'app_store',
+  'play_store',
+  'csv_import',
+  'social_media',
+  'other',
+]);
+
+function isSourceChannelName(value: string): boolean {
+  return SOURCE_CHANNEL_NAMES.has((value || '').trim().toLowerCase().replace(/\s+/g, '_'));
+}
+
 interface ActionPlanRow {
   priority: string;
   action: string;
@@ -190,7 +210,9 @@ export class ArcelikTwitterCxReport implements OnInit, OnDestroy {
 
   heatmapPctMatrix = computed((): HeatmapPctRow[] => this.reportBundle()?.heatmapPct ?? []);
 
-  touchpointsEffective = computed((): TouchRow[] => this.reportBundle()?.touchpoints ?? []);
+  touchpointsEffective = computed((): TouchRow[] =>
+    (this.reportBundle()?.touchpoints ?? []).filter((row) => !isSourceChannelName(row.name))
+  );
 
   rootCausesEffective = computed((): RootCauseRow[] =>
     (this.reportBundle()?.rootCauses ?? []).map((r) => ({
