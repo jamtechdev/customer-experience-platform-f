@@ -119,8 +119,7 @@ export class RootCauseAnalysis implements OnInit, OnDestroy {
 
   /** Re-runs server-side extraction on negative feedback (creates additional rows; refreshes list). */
   runRootCauseAnalysis(): void {
-    const user = this.authService.currentUser();
-    const companyId = user?.settings?.companyId || 1;
+    const companyId = this.currentCompanyId();
     this.reanalyzing.set(true);
     this.analysisService.analyzeRootCauses(companyId, 50).subscribe({
       next: (res) => {
@@ -141,8 +140,7 @@ export class RootCauseAnalysis implements OnInit, OnDestroy {
 
   loadRootCauses(): void {
     this.loading.set(true);
-    const user = this.authService.currentUser();
-    const companyId = user?.role === 'admin' ? undefined : (user?.settings?.companyId || 1);
+    const companyId = this.currentCompanyId();
     this.analysisService.getRootCauses(companyId).subscribe({
       next: (response) => {
         if (response.success && Array.isArray(response.data)) {
@@ -282,8 +280,7 @@ export class RootCauseAnalysis implements OnInit, OnDestroy {
   }
 
   relinkRecords(row: RootCauseChartRow, causeId?: number): void {
-    const user = this.authService.currentUser();
-    const companyId = user?.settings?.companyId || 1;
+    const companyId = this.currentCompanyId();
     const id = causeId ?? row.id ?? this.rootCauses().find((c) => this.painPointTitle(c) === row.cause)?.id;
     if (!id) {
       this.snackBar.open('Cannot re-link: root cause id missing.', 'Close', { duration: 4000 });
@@ -318,8 +315,7 @@ export class RootCauseAnalysis implements OnInit, OnDestroy {
     this.drilldownOpen.set(true);
     this.drilldownLoading.set(true);
     this.drilldownRows.set([]);
-    const user = this.authService.currentUser();
-    const companyId = user?.role === 'admin' ? undefined : (user?.settings?.companyId || 1);
+    const companyId = this.currentCompanyId();
     this.analysisService.getFeedbackByIds(companyId, row.feedbackIds).subscribe({
       next: (res) => {
         this.drilldownLoading.set(false);
@@ -356,5 +352,9 @@ export class RootCauseAnalysis implements OnInit, OnDestroy {
       .trim();
     if (t.length <= max) return t;
     return t.slice(0, max).replace(/\s+\S*$/, '') + '…';
+  }
+
+  private currentCompanyId(): number {
+    return this.authService.currentUser()?.settings?.companyId || 1;
   }
 }
