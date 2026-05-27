@@ -76,11 +76,13 @@ export class AnalysisService {
 
   getFeedbackByIds(
     companyId: number | undefined,
-    ids: number[]
+    ids: number[],
+    options?: { rootCauseId?: number }
   ): Observable<ApiResponse<{ list: any[]; requested: number; returned: number }>> {
     const capped = [...new Set(ids.filter((n) => Number.isFinite(n) && n > 0))].slice(0, 200);
     let params = new HttpParams().set('ids', capped.join(','));
     if (companyId != null) params = params.set('companyId', String(companyId));
+    if (options?.rootCauseId != null) params = params.set('rootCauseId', String(options.rootCauseId));
     params = this.realtimeParams(params);
     return this.http.get<ApiResponse<{ list: any[]; requested: number; returned: number }>>(
       `${this.baseUrl}/feedback-by-ids`,

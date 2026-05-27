@@ -316,7 +316,7 @@ export class RootCauseAnalysis implements OnInit, OnDestroy {
     this.drilldownLoading.set(true);
     this.drilldownRows.set([]);
     const companyId = this.currentCompanyId();
-    this.analysisService.getFeedbackByIds(companyId, row.feedbackIds).subscribe({
+    this.analysisService.getFeedbackByIds(companyId, row.feedbackIds, { rootCauseId: row.id }).subscribe({
       next: (res) => {
         this.drilldownLoading.set(false);
         if (res.success && Array.isArray(res.data?.list)) {
