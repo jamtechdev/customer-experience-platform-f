@@ -43,6 +43,14 @@ interface RootCauseRow {
   feedbackIds: number[];
 }
 
+interface EmotionRow {
+  emotion: string;
+  label: string;
+  count: number;
+  pct: number;
+  feedbackIds: number[];
+}
+
 interface JourneyRow {
   stage: string;
   satisfaction: string;
@@ -163,6 +171,7 @@ export class ArcelikTwitterCxReport implements OnInit, OnDestroy {
   );
 
   readonly patternCols = ['sentiment', 'patterns'];
+  readonly emotionCols = ['emotion', 'count', 'pct'];
 
   executiveSummaryBullets = computed(() => this.reportBundle()?.executiveSummaryBullets ?? []);
 
@@ -173,6 +182,18 @@ export class ArcelikTwitterCxReport implements OnInit, OnDestroy {
   section4Bullets = computed(() => this.reportBundle()?.section4Bullets ?? []);
 
   sentimentPatternRows = computed(() => this.reportBundle()?.sentimentPatternRows ?? []);
+
+  emotionRows = computed((): EmotionRow[] =>
+    (this.reportBundle()?.emotionRows ?? []).map((r) => ({
+      emotion: typeof r.emotion === 'string' ? r.emotion : '',
+      label: typeof r.label === 'string' ? r.label : typeof r.emotion === 'string' ? r.emotion : '',
+      count: typeof r.count === 'number' ? r.count : 0,
+      pct: typeof r.pct === 'number' ? r.pct : 0,
+      feedbackIds: Array.isArray(r.feedbackIds)
+        ? (r.feedbackIds as unknown[]).map((x) => Number(x)).filter((n) => Number.isFinite(n) && n > 0)
+        : [],
+    }))
+  );
 
   npsInterpretation = computed(() => this.reportBundle()?.npsInterpretation ?? '');
 
@@ -463,17 +484,21 @@ export class ArcelikTwitterCxReport implements OnInit, OnDestroy {
   }
 
   openRelatedRecords(row: RootCauseRow): void {
-    if (!row.feedbackIds?.length) {
-      this.snackBar.open('No linked feedback records for this theme.', 'Close', { duration: 3500 });
+    this.openRelated(row.cause, row.feedbackIds);
+  }
+
+  openRelated(title: string, feedbackIds: number[]): void {
+    if (!feedbackIds?.length) {
+      this.snackBar.open('No linked feedback records for this selection.', 'Close', { duration: 3500 });
       return;
     }
-    this.drilldownTitle.set(row.cause);
+    this.drilldownTitle.set(title);
     this.drilldownOpen.set(true);
     this.drilldownLoading.set(true);
     this.drilldownRows.set([]);
     const user = this.authService.currentUser();
     const companyId = user?.role === 'admin' ? undefined : (user?.settings?.companyId ?? 1);
-    this.analysisService.getFeedbackByIds(companyId, row.feedbackIds).subscribe({
+    this.analysisService.getFeedbackByIds(companyId, feedbackIds).subscribe({
       next: (res) => {
         this.drilldownLoading.set(false);
         if (res.success && Array.isArray(res.data?.list)) {

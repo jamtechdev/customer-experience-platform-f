@@ -191,6 +191,36 @@
           <tr mat-row *matRowDef="let row; columns: patternCols"></tr>
         </table>
       </div>
+      @if (emotionRows().length) {
+        <div class="mini-table-wrap">
+          <h3 class="subsection-heading">Dominant emotion tags</h3>
+          <table mat-table [dataSource]="emotionRows()" class="dense-table report-mat-table">
+            <ng-container matColumnDef="emotion">
+              <th mat-header-cell *matHeaderCellDef>Emotion</th>
+              <td mat-cell *matCellDef="let row">{{ row.label }}</td>
+            </ng-container>
+            <ng-container matColumnDef="count">
+              <th mat-header-cell *matHeaderCellDef>Tagged tweets</th>
+              <td mat-cell *matCellDef="let row">
+                <button
+                  type="button"
+                  mat-button
+                  color="primary"
+                  (click)="openRelated('Emotion: ' + row.label, row.feedbackIds)"
+                  [disabled]="row.feedbackIds.length === 0">
+                  <strong>{{ row.count }}</strong>
+                </button>
+              </td>
+            </ng-container>
+            <ng-container matColumnDef="pct">
+              <th mat-header-cell *matHeaderCellDef>Share of tagged</th>
+              <td mat-cell *matCellDef="let row">{{ row.pct | number : '1.0-1' }}%</td>
+            </ng-container>
+            <tr mat-header-row *matHeaderRowDef="emotionCols"></tr>
+            <tr mat-row *matRowDef="let row; columns: emotionCols"></tr>
+          </table>
+        </div>
+      }
     </mat-card-content>
   </mat-card>
 

@@ -260,6 +260,7 @@ export interface TwitterCxReportDto {
   section4Intro: string;
   section4Bullets: string[];
   sentimentPatternRows: Array<{ sentiment: string; patterns: string }>;
+  emotionRows?: Array<{ emotion: string; label: string; count: number; pct: number; feedbackIds?: number[] }>;
   heatmapPct: Array<{
     stage: string;
     positive: number;
