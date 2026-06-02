@@ -86,6 +86,7 @@ export class SentimentAnalysis implements OnInit, OnDestroy {
   /** Full-page loader — shown at most once per session when no cached stats exist. */
   initialLoading = signal(false);
   exportLoading = signal(false);
+  tableExportLoading = signal(false);
   reanalyzing = signal(false);
   stats = signal<SentimentStats | null>(null);
   sentimentInterpretation = signal<string>('');
@@ -335,6 +336,42 @@ export class SentimentAnalysis implements OnInit, OnDestroy {
         error: () => {
           this.exportLoading.set(false);
           this.snackBar.open('Export failed', 'Close', { duration: 3000 });
+        },
+      });
+  }
+
+  downloadFeedbackTable(): void {
+    const total = this.feedbackTotal();
+    if (!total) {
+      this.snackBar.open('No feedback rows to download', 'Close', { duration: 3000 });
+      return;
+    }
+
+    const companyId = this.getCompanyId();
+    const { start, end } = resolveOptionalApiDateRange(this.filtersApplied(), this.startDate(), this.endDate());
+    const rel = this.filterIsRelevant();
+    const isRelevant = rel === 'true' ? true : rel === 'false' ? false : undefined;
+    const limit = Math.min(Math.max(total, this.pageSize()), 50000);
+
+    this.tableExportLoading.set(true);
+    this.analysisService
+      .getFeedbackWithSentiment(companyId, start, end, 1, limit, {
+        journeyStage: this.filterJourneyStage() || undefined,
+        isRelevant,
+        includeIrrelevant: rel === 'all',
+        search: this.filterSearch().trim() || undefined,
+      })
+      .subscribe({
+        next: (response) => {
+          const rows = response?.data?.list || [];
+          const csv = this.buildFeedbackTableCsv(rows);
+          this.downloadTextFile(csv, this.feedbackTableFileName());
+          this.tableExportLoading.set(false);
+          this.snackBar.open(`Downloaded ${rows.length} feedback rows`, 'Close', { duration: 3000 });
+        },
+        error: () => {
+          this.tableExportLoading.set(false);
+          this.snackBar.open('Table download failed', 'Close', { duration: 3000 });
         },
       });
   }
@@ -661,6 +698,56 @@ export class SentimentAnalysis implements OnInit, OnDestroy {
     }
 
     return cleaned;
+  }
+
+  private buildFeedbackTableCsv(rows: any[]): string {
+    const header = [
+      'ID',
+      'Summary',
+      'Source tweet',
+      'Journey stage',
+      'Relevant',
+      'Why',
+      'Source',
+      'Date',
+      'Sentiment',
+      'Score',
+    ];
+    const body = rows.map((row) => [
+      row.id,
+      this.humanizeFeedbackText(row.contentSummary || row.content || ''),
+      row.referenceContent || row.content || '',
+      row.journeyStage || '',
+      row.isRelevant === false ? 'No' : 'Yes',
+      row.relevanceReason || '',
+      row.source || '',
+      this.formatDate(normalizeApiDateToIso(row.date)),
+      row.sentiment || '',
+      typeof row.score === 'number' ? row.score.toFixed(2) : row.score ?? '',
+    ]);
+
+    return [header, ...body].map((line) => line.map((cell) => this.csvCell(cell)).join(',')).join('\r\n');
+  }
+
+  private csvCell(value: unknown): string {
+    const text = String(value ?? '').replace(/\r?\n|\r/g, ' ');
+    return `"${text.replace(/"/g, '""')}"`;
+  }
+
+  private downloadTextFile(content: string, fileName: string): void {
+    const blob = new Blob([`\uFEFF${content}`], { type: 'text/csv;charset=utf-8' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = fileName;
+    a.click();
+    window.URL.revokeObjectURL(url);
+  }
+
+  private feedbackTableFileName(): string {
+    const from = this.filtersApplied() && this.startDate() ? this.startDate() : 'all';
+    const to = this.filtersApplied() && this.endDate() ? this.endDate() : 'data';
+    return `sentiment-feedback-table-${from}-${to}.csv`;
   }
 
   deleteRecord(row: { id: number; content: string }): void {

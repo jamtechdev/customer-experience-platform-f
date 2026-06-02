@@ -144,8 +144,21 @@
 
     <mat-card class="list-card">
       <mat-card-header>
-        <mat-card-title>All feedback (from CSV upload &amp; other sources)</mat-card-title>
-        <mat-card-subtitle>Total: {{ feedbackTotal() }} feedback items in this period</mat-card-subtitle>
+        <div class="list-card-header">
+          <div>
+            <mat-card-title>All feedback (from CSV upload &amp; other sources)</mat-card-title>
+            <mat-card-subtitle>Total: {{ feedbackTotal() }} feedback items in this period</mat-card-subtitle>
+          </div>
+          <button
+            mat-stroked-button
+            color="primary"
+            type="button"
+            (click)="downloadFeedbackTable()"
+            [disabled]="tableExportLoading() || feedbackTotal() === 0">
+            <mat-icon>download</mat-icon>
+            {{ tableExportLoading() ? 'Preparing…' : 'Download table' }}
+          </button>
+        </div>
       </mat-card-header>
       <mat-card-content>
         <div class="filters filters-row list-filters">
