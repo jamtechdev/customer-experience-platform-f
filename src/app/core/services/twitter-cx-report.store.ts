@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
-import { Observable, Subject } from 'rxjs';
-import { finalize, map, shareReplay } from 'rxjs/operators';
+import { Observable, Subject, of } from 'rxjs';
+import { finalize, map, shareReplay, tap } from 'rxjs/operators';
 import { AnalysisService } from './analysis.service';
 import { ApiResponse, TwitterCxReportDto } from '../models';
 
@@ -9,6 +9,7 @@ import { ApiResponse, TwitterCxReportDto } from '../models';
 export class TwitterCxReportStore {
   private readonly analysis = inject(AnalysisService);
   private readonly inflight = new Map<string, Observable<ApiResponse<TwitterCxReportDto>>>();
+  private readonly cache = new Map<string, ApiResponse<TwitterCxReportDto>>();
   private readonly refreshSubject = new Subject<number | undefined>();
   private generation = 0;
 
@@ -21,7 +22,7 @@ export class TwitterCxReportStore {
     startDate?: Date,
     endDate?: Date
   ): ApiResponse<TwitterCxReportDto> | undefined {
-    return undefined;
+    return this.cache.get(this.cacheKey(companyId, csvImportId, startDate, endDate, false));
   }
 
   loadTwitterCxReport(
@@ -29,9 +30,12 @@ export class TwitterCxReportStore {
     csvImportId?: number,
     startDate?: Date,
     endDate?: Date,
-    forceLive: boolean = true
+    forceLive: boolean = false
   ): Observable<ApiResponse<TwitterCxReportDto>> {
     const key = this.cacheKey(companyId, csvImportId, startDate, endDate, forceLive);
+    const cached = !forceLive ? this.cache.get(key) : undefined;
+    if (cached) return of(cached);
+
     let obs = this.inflight.get(key);
     if (!obs) {
       const generationAtStart = this.generation;
@@ -45,6 +49,11 @@ export class TwitterCxReportStore {
                 data: undefined as unknown as TwitterCxReportDto,
               } as ApiResponse<TwitterCxReportDto>)
         ),
+        tap((res) => {
+          if (!forceLive && res.success && res.data) {
+            this.cache.set(key, res);
+          }
+        }),
         finalize(() => this.inflight.delete(key)),
         shareReplay({ bufferSize: 1, refCount: true })
       );
@@ -57,6 +66,7 @@ export class TwitterCxReportStore {
     this.generation++;
     if (companyId == null && csvImportId == null) {
       this.inflight.clear();
+      this.cache.clear();
       this.refreshSubject.next(undefined);
       return;
     }
@@ -64,6 +74,11 @@ export class TwitterCxReportStore {
     for (const k of [...this.inflight.keys()]) {
       if (k.startsWith(prefix) || (csvImportId != null && k.includes(`|${csvImportId}|`))) {
         this.inflight.delete(k);
+      }
+    }
+    for (const k of [...this.cache.keys()]) {
+      if (k.startsWith(prefix) || (csvImportId != null && k.includes(`|${csvImportId}|`))) {
+        this.cache.delete(k);
       }
     }
     this.refreshSubject.next(companyId);
@@ -74,7 +89,7 @@ export class TwitterCxReportStore {
     csvImportId?: number,
     startDate?: Date,
     endDate?: Date,
-    forceLive: boolean = true
+    forceLive: boolean = false
   ): string {
     return [
       companyId ?? '',

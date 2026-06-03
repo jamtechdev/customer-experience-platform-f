@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams, HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { Observable, of, timer, defer, EMPTY, throwError } from 'rxjs';
-import { catchError, filter, switchMap, take, expand, mergeMap, delay, retry } from 'rxjs/operators';
+import { Observable, of, timer, throwError } from 'rxjs';
+import { catchError, switchMap, delay, retry } from 'rxjs/operators';
 import {
   SentimentAnalysisResult,
   RootCauseAnalysis,
@@ -126,7 +126,7 @@ export class AnalysisService {
     csvImportId?: number,
     startDate?: Date,
     endDate?: Date,
-    forceLive: boolean = true
+    forceLive: boolean = false
   ): Observable<ApiResponse<TwitterCxReportDto>> {
     let params = new HttpParams();
     if (companyId != null) params = params.set('companyId', String(companyId));
@@ -151,58 +151,11 @@ export class AnalysisService {
             } as ApiResponse<TwitterCxReportDto>);
           }
           if (httpResp.status === 202 && body.data?.snapshotPending && body.data?.snapshotId != null) {
-            const sid = Number(body.data.snapshotId);
-            // Exponential back-off: 2s → 4s → 6s → 8s → capped at 10s per poll.
-            // This avoids hammering the server while a long Ollama build runs.
-            const INTERVALS = [2000, 4000, 6000, 8000, 10000];
-            const MAX_POLL_ATTEMPTS = 36;
-            const getDelay = (attempt: number) => INTERVALS[Math.min(attempt, INTERVALS.length - 1)];
-            let attempt = 0;
-
-            const poll$ = defer(() => this.getTwitterCxReportSnapshotStatus(sid)).pipe(
-              expand((st) => {
-                if (st?.data?.status === 'ready' || st?.data?.status === 'failed') {
-                  return EMPTY;
-                }
-                if (attempt >= MAX_POLL_ATTEMPTS) {
-                  return EMPTY;
-                }
-                const wait = getDelay(attempt++);
-                return timer(wait).pipe(mergeMap(() => this.getTwitterCxReportSnapshotStatus(sid)));
-              }),
-              filter((st) => !!st?.data && (st.data.status === 'ready' || st.data.status === 'failed')),
-              take(1)
-            );
-
-            return timer(2000).pipe(
-              switchMap(() => poll$),
-              switchMap((st) => {
-                if (!st.success || st.data?.status !== 'ready' || !st.data?.report) {
-                  const errMsg =
-                    st.data?.status === 'pending' || attempt >= MAX_POLL_ATTEMPTS
-                      ? 'snapshot_still_building'
-                      : st.data?.errorMessage || 'snapshot_failed';
-                  return of({
-                    success: false,
-                    message: errMsg,
-                    data: undefined as unknown as TwitterCxReportDto,
-                  } as ApiResponse<TwitterCxReportDto>);
-                }
-                return of({
-                  success: true,
-                  code: 200,
-                  message: 'Twitter CX report (snapshot)',
-                  data: st.data.report as TwitterCxReportDto,
-                } as ApiResponse<TwitterCxReportDto>);
-              }),
-              catchError(() =>
-                of({
-                  success: false,
-                  message: 'snapshot_poll_failed',
-                  data: undefined as unknown as TwitterCxReportDto,
-                } as ApiResponse<TwitterCxReportDto>)
-              )
-            );
+            return of({
+              success: false,
+              message: 'snapshot_still_building',
+              data: undefined as unknown as TwitterCxReportDto,
+            } as ApiResponse<TwitterCxReportDto>);
           }
           return of(body as ApiResponse<TwitterCxReportDto>);
         }),
