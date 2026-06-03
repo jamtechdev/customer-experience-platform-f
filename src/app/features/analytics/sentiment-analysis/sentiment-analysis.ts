@@ -26,7 +26,7 @@ import {
 } from '../../../core/utils/report-date-presets';
 import { formatApiDate, normalizeApiDateToIso } from '../../../core/utils/api-date';
 import { CXWebSocketService, type CSVImportStatusEvent } from '../../../core/services/cx-websocket.service';
-import { Subscription } from 'rxjs';
+import { forkJoin, Subscription } from 'rxjs';
 import { OllamaLoader } from '../../../core/components/ollama-loader/ollama-loader';
 
 interface SentimentStats {
@@ -351,11 +351,13 @@ export class SentimentAnalysis implements OnInit, OnDestroy {
     const { start, end } = resolveOptionalApiDateRange(this.filtersApplied(), this.startDate(), this.endDate());
     const rel = this.filterIsRelevant();
     const isRelevant = rel === 'true' ? true : rel === 'false' ? false : undefined;
-    const limit = Math.min(Math.max(total, this.pageSize()), 50000);
+    const exportLimit = 100;
+    const maxExportRows = 50000;
+    const rowsToFetch = Math.min(total, maxExportRows);
 
     this.tableExportLoading.set(true);
     this.analysisService
-      .getFeedbackWithSentiment(companyId, start, end, 1, limit, {
+      .getFeedbackWithSentiment(companyId, start, end, 1, exportLimit, {
         journeyStage: this.filterJourneyStage() || undefined,
         isRelevant,
         includeIrrelevant: rel === 'all',
@@ -363,17 +365,54 @@ export class SentimentAnalysis implements OnInit, OnDestroy {
       })
       .subscribe({
         next: (response) => {
-          const rows = response?.data?.list || [];
-          const csv = this.buildFeedbackTableCsv(rows);
-          this.downloadTextFile(csv, this.feedbackTableFileName());
-          this.tableExportLoading.set(false);
-          this.snackBar.open(`Downloaded ${rows.length} feedback rows`, 'Close', { duration: 3000 });
+          const firstRows = response?.data?.list || [];
+          const apiTotal = Number(response?.data?.total ?? 0);
+          const actualTotal = Math.min(Math.max(rowsToFetch, apiTotal), maxExportRows);
+          const totalPages = Math.max(1, Math.ceil(actualTotal / exportLimit));
+          const filters = {
+            journeyStage: this.filterJourneyStage() || undefined,
+            isRelevant,
+            includeIrrelevant: rel === 'all',
+            search: this.filterSearch().trim() || undefined,
+          };
+
+          if (totalPages <= 1) {
+            this.finishFeedbackTableDownload(firstRows, total, maxExportRows);
+            return;
+          }
+
+          const pageRequests = Array.from({ length: totalPages - 1 }, (_, idx) =>
+            this.analysisService.getFeedbackWithSentiment(companyId, start, end, idx + 2, exportLimit, filters)
+          );
+
+          forkJoin(pageRequests).subscribe({
+            next: (responses) => {
+              const rows = [
+                ...firstRows,
+                ...responses.flatMap((pageResponse) => pageResponse?.data?.list || []),
+              ].slice(0, actualTotal);
+              this.finishFeedbackTableDownload(rows, total, maxExportRows);
+            },
+            error: () => {
+              this.tableExportLoading.set(false);
+              this.snackBar.open('Table download failed while loading all pages', 'Close', { duration: 4000 });
+            },
+          });
         },
         error: () => {
           this.tableExportLoading.set(false);
           this.snackBar.open('Table download failed', 'Close', { duration: 3000 });
         },
       });
+  }
+
+  private finishFeedbackTableDownload(rows: any[], total: number, maxExportRows: number): void {
+    const csv = this.buildFeedbackTableCsv(rows);
+    this.downloadTextFile(csv, this.feedbackTableFileName());
+    this.tableExportLoading.set(false);
+    const capped = total > maxExportRows;
+    const suffix = capped ? ` (limited to first ${maxExportRows})` : '';
+    this.snackBar.open(`Downloaded ${rows.length} feedback rows${suffix}`, 'Close', { duration: 3000 });
   }
 
   private reloadAll(withFilters: boolean = this.filtersApplied()): void {
