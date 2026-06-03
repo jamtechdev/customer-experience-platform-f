@@ -65,6 +65,9 @@ export class RootCauseAnalysis implements OnInit, OnDestroy {
   private translationService = inject(TranslationService);
   private websocket = inject(CXWebSocketService);
   private importStatusSub?: Subscription;
+  private autoRefreshTimer: ReturnType<typeof setInterval> | null = null;
+  private autoRefreshAttempts = 0;
+  private readonly maxAutoRefreshAttempts = 20;
 
   loading = signal(false);
   reanalyzing = signal(false);
@@ -96,18 +99,22 @@ export class RootCauseAnalysis implements OnInit, OnDestroy {
     this.loadRootCauses();
     this.importStatusSub = this.websocket.onCSVImportStatus().subscribe((payload: CSVImportStatusEvent) => {
       if (payload?.status === 'completed') {
-        this.loadRootCauses();
-        this.snackBar.open(
-          'Import finished. Root causes are updated in the background—click Re-run analysis if the list is still empty.',
-          'Close',
-          { duration: 6000 }
-        );
+        this.startAutoRefreshRootCauses();
+      } else if (payload?.status === 'processing') {
+        this.startAutoRefreshRootCauses();
       }
     });
     this.importStatusSub.add(
       this.websocket.onAnalyticsLifecycle().subscribe((event) => {
-        if (event.type === 'datasetDeleted' || event.type === 'analysisCompleted') {
+        if (event.type === 'datasetDeleted') {
+          this.stopAutoRefreshRootCauses();
           this.loadRootCauses();
+        } else if (
+          event.type === 'datasetUploaded' ||
+          event.type === 'analysisStarted' ||
+          event.type === 'analysisCompleted'
+        ) {
+          this.startAutoRefreshRootCauses();
         }
       })
     );
@@ -115,6 +122,7 @@ export class RootCauseAnalysis implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.importStatusSub?.unsubscribe();
+    this.stopAutoRefreshRootCauses();
   }
 
   /** Re-runs server-side extraction on negative feedback (creates additional rows; refreshes list). */
@@ -138,8 +146,8 @@ export class RootCauseAnalysis implements OnInit, OnDestroy {
     });
   }
 
-  loadRootCauses(): void {
-    this.loading.set(true);
+  loadRootCauses(showLoading = true): void {
+    if (showLoading) this.loading.set(true);
     const companyId = this.currentCompanyId();
     this.analysisService.getRootCauses(companyId).subscribe({
       next: (response) => {
@@ -166,13 +174,16 @@ export class RootCauseAnalysis implements OnInit, OnDestroy {
           this.totalItems = mapped.length;
           this.emptyHint.set(
             mapped.length === 0
-              ? 'No root causes yet. They are created after CSV import (batch). Use Re-run analysis to refresh.'
+              ? 'No root causes yet. They are created after CSV import and will appear here automatically.'
               : null
           );
+          if (mapped.length > 0) {
+            this.stopAutoRefreshRootCauses();
+          }
         } else {
           this.rootCauses.set([]);
           this.totalItems = 0;
-          this.emptyHint.set('No root causes yet. Run analysis after importing feedback, or click Re-run analysis.');
+          this.emptyHint.set('No root causes yet. They will appear automatically after analysis finishes.');
         }
         this.loading.set(false);
       },
@@ -186,6 +197,28 @@ export class RootCauseAnalysis implements OnInit, OnDestroy {
         }
       }
     });
+  }
+
+  private startAutoRefreshRootCauses(): void {
+    this.loadRootCauses(false);
+    if (this.autoRefreshTimer) return;
+    this.autoRefreshAttempts = 0;
+    this.emptyHint.set('Root causes are being prepared. This page will update automatically.');
+    this.autoRefreshTimer = setInterval(() => {
+      this.autoRefreshAttempts++;
+      if (this.autoRefreshAttempts > this.maxAutoRefreshAttempts) {
+        this.stopAutoRefreshRootCauses();
+        return;
+      }
+      this.loadRootCauses(false);
+    }, 3000);
+  }
+
+  private stopAutoRefreshRootCauses(): void {
+    if (!this.autoRefreshTimer) return;
+    clearInterval(this.autoRefreshTimer);
+    this.autoRefreshTimer = null;
+    this.autoRefreshAttempts = 0;
   }
 
   getPriorityColor(priority: string): string {

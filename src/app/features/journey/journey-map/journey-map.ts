@@ -86,7 +86,7 @@ export class JourneyMap implements OnInit, OnDestroy {
     this.loading.set(true);
     const user = this.authService.currentUser();
     const companyId = user?.role === 'admin' ? undefined : (user?.settings?.companyId ?? 1);
-    this.twitterCxReportStore.loadTwitterCxReport(companyId).subscribe({
+    this.twitterCxReportStore.loadTwitterCxReport(companyId, undefined, undefined, undefined, false).subscribe({
       next: (response) => {
         if (response.message === 'stale_response') {
           this.loading.set(false);
