@@ -26,11 +26,15 @@
   display: flex;
   gap: 16px;
   flex-wrap: wrap;
-  align-items: center;
+  align-items: flex-start;
 }
 
 .filter-card mat-form-field {
   min-width: 200px;
+}
+
+.filters button {
+  min-height: 48px;
 }
 
 .loading-container {
@@ -399,6 +403,7 @@
 
 .feedback-table {
   width: 100%;
+  min-width: 920px;
 }
 
 .feedback-table .content-cell {
@@ -406,6 +411,30 @@
   overflow: visible;
   text-overflow: clip;
   white-space: normal;
+}
+
+.feedback-table .mat-column-reference {
+  width: 132px;
+  min-width: 132px;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.feedback-table .mat-column-score {
+  width: 84px;
+  min-width: 84px;
+  text-align: center;
+}
+
+.feedback-table .mat-column-sentiment,
+.feedback-table .mat-column-relevant {
+  width: 116px;
+  min-width: 116px;
+}
+
+.view-tweet-button {
+  min-width: 104px;
+  line-height: 32px;
 }
 
 .sentiment-table {

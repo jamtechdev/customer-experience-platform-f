@@ -6,7 +6,7 @@
   <span class="toolbar-title">{{ t('app.title') }}</span>
   <span class="ollama-status-badge" [class.connected]="ollamaConnected()" [class.disconnected]="!ollamaConnected()">
     <span class="status-dot"></span>
-    {{ ollamaConnected() ? 'Ollama Connected' : 'Ollama Disconnected' }}
+    {{ ollamaConnected() ? t('header.ollamaConnected') : t('header.ollamaDisconnected') }}
   </span>
 
   <span class="spacer"></span>
@@ -18,12 +18,28 @@
     [attr.aria-label]="t('header.notificationsAria')">
     <mat-icon>notifications</mat-icon>
     <span class="alert-dot" [class.red]="alertIndicator() === 'red'" [class.green]="alertIndicator() === 'green'"></span>
+    <span class="alert-count" *ngIf="alertCount() > 0">{{ alertCount() > 99 ? '99+' : alertCount() }}</span>
   </button>
 
   <mat-menu #notificationsMenu="matMenu">
     <div class="notification-menu">
       <div class="notification-header">{{ t('header.notifications') }}</div>
-      <div class="notification-empty">{{ t('header.noNotifications') }}</div>
+      <div *ngIf="alerts().length === 0" class="notification-empty">{{ t('header.noNotifications') }}</div>
+      <div *ngIf="alerts().length > 0" class="notification-list">
+        <button
+          mat-menu-item
+          type="button"
+          class="notification-item"
+          *ngFor="let alert of alerts()"
+          (click)="onNotifications()">
+          <span class="notification-priority" [ngClass]="alert.priority"></span>
+          <span class="notification-copy">
+            <span class="notification-title">{{ alert.title }}</span>
+            <span class="notification-message">{{ alert.message }}</span>
+            <span class="notification-date">{{ alert.createdAt | date:'short' }}</span>
+          </span>
+        </button>
+      </div>
     </div>
   </mat-menu>
 

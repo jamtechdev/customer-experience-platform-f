@@ -33,8 +33,8 @@ export class TranslationService {
     };
 
     this.settingsService.settings$.subscribe((settings) => {
-      const lang = settings.language as Language;
-      if (lang === 'en' || lang === 'tr' || lang === 'ar') {
+      const lang = this.normalizeLanguage(settings.language);
+      if (lang) {
         this.currentLanguage.set(lang);
       }
     });
@@ -91,8 +91,9 @@ export class TranslationService {
    * Set the current language
    */
   setLanguage(lang: Language): void {
-    this.currentLanguage.set(lang);
-    this.settingsService.updateSettings({ language: lang }).subscribe({
+    const normalized = this.normalizeLanguage(lang) ?? 'en';
+    this.currentLanguage.set(normalized);
+    this.settingsService.updateSettings({ language: normalized }).subscribe({
       error: () => {
         /* Keep the in-memory language for the current session; DB remains authoritative after refresh. */
       },
@@ -120,9 +121,9 @@ export class TranslationService {
   /**
    * Translate a key with optional parameters
    * Supports nested keys (e.g., 'app.name', 'nav.dashboard')
-   * Fallback order: current language → English → Turkish → key itself
+   * Fallback order: current language → English → key itself
    */
-  translate(key: string, params?: Record<string, string>): string {
+  translate(key: string, params?: Record<string, string | number>): string {
     // Read so templates re-run after async JSON load (SSR/hydration + first paint).
     this.translationsLoaded();
     const lang = this.currentLanguage();
@@ -135,11 +136,6 @@ export class TranslationService {
     if (value === undefined && lang !== 'en') {
       value = this.getNestedValue(this.translations['en'], keys);
     }
-
-    // Fallback to Turkish if still not found
-    if (value === undefined && lang !== 'tr') {
-      value = this.getNestedValue(this.translations['tr'], keys);
-    }
     
     // If still not found, return the key
     if (value === undefined || typeof value !== 'string') {
@@ -149,7 +145,7 @@ export class TranslationService {
     // Replace parameters
     if (params) {
       return value.replace(/\{\{(\w+)\}\}/g, (match, paramKey) => {
-        return params[paramKey] || match;
+        return params[paramKey] != null ? String(params[paramKey]) : match;
       });
     }
 
@@ -172,6 +168,20 @@ export class TranslationService {
     }
     
     return typeof current === 'string' ? current : undefined;
+  }
+
+  private normalizeLanguage(value: unknown): Language | null {
+    const normalized = String(value ?? '').trim().toLowerCase().replace('_', '-');
+    if (normalized.startsWith('tr') || normalized.includes('turkish') || normalized.includes('türkçe')) {
+      return 'tr';
+    }
+    if (normalized.startsWith('ar') || normalized.includes('arabic') || normalized.includes('العربية')) {
+      return 'ar';
+    }
+    if (normalized.startsWith('en') || normalized.includes('english')) {
+      return 'en';
+    }
+    return null;
   }
 
   /**

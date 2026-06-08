@@ -1,47 +1,47 @@
 <div class="heatmap-container">
   <div class="header-section">
-    <h1>Journey Satisfaction Heatmap</h1>
-    <p class="subtitle">Satisfaction and dissatisfaction by journey stage. Green = satisfaction, red = pain areas.</p>
+    <h1>{{ t('heatmap.title') }}</h1>
+    <p class="subtitle">{{ t('heatmap.subtitle') }}</p>
     <button mat-raised-button color="primary" (click)="loadHeatmap()" [disabled]="loading()">
-      {{ loading() ? 'Loading...' : 'Load Heatmap' }}
+      {{ loading() ? t('app.loading') : t('heatmap.load') }}
     </button>
   </div>
 
   @if (loading()) {
     <div class="loading-container">
       <app-ollama-loader
-        title="Loading journey satisfaction heatmap"
-        subtitle="Reading saved stage-level positive, neutral, and negative sentiment from the AI report">
+        [title]="t('heatmap.loadingTitle')"
+        [subtitle]="t('heatmap.loadingSubtitle')">
       </app-ollama-loader>
     </div>
   } @else if (error()) {
     <mat-card class="error-card">
       <mat-card-content>
         <p>{{ error() }}</p>
-        <button mat-raised-button (click)="loadHeatmap()">Retry</button>
+        <button mat-raised-button (click)="loadHeatmap()">{{ t('app.retry') }}</button>
       </mat-card-content>
     </mat-card>
   } @else if (stages().length === 0) {
     <mat-card class="empty-card">
       <mat-card-content>
-        <p>No journey stages with data. Configure journey stages in Admin, upload feedback, run analysis, then click "Load Heatmap".</p>
-        <button mat-raised-button color="primary" (click)="loadHeatmap()">Load Heatmap</button>
+        <p>{{ t('heatmap.noStages') }}</p>
+        <button mat-raised-button color="primary" (click)="loadHeatmap()">{{ t('heatmap.load') }}</button>
       </mat-card-content>
     </mat-card>
   } @else {
     <mat-card class="section-card">
       <mat-card-header>
-        <mat-card-title>Journey satisfaction heatmap</mat-card-title>
-        <mat-card-subtitle>Stage-level sentiment heatmap (%).</mat-card-subtitle>
+        <mat-card-title>{{ t('heatmap.sectionTitle') }}</mat-card-title>
+        <mat-card-subtitle>{{ t('heatmap.sectionSubtitle') }}</mat-card-subtitle>
       </mat-card-header>
       <mat-card-content>
-        <p class="subtitle">The experience is most conversation-heavy in Usage and Purchase, with Delivery showing the weakest satisfaction balance.</p>
+        <p class="subtitle">{{ t('heatmap.insight') }}</p>
         <div class="heatmap-pct-wrap">
           <div class="heatmap-pct-grid" role="grid" aria-label="Journey satisfaction heatmap percent">
             <div class="heatmap-pct-corner"></div>
-            <div class="heatmap-pct-hdr">positive</div>
-            <div class="heatmap-pct-hdr">neutral</div>
-            <div class="heatmap-pct-hdr">negative</div>
+            <div class="heatmap-pct-hdr">{{ t('dashboard.positive') }}</div>
+            <div class="heatmap-pct-hdr">{{ t('dashboard.neutral') }}</div>
+            <div class="heatmap-pct-hdr">{{ t('dashboard.negative') }}</div>
             @for (row of pagedStages(); track row.stageName) {
               <div class="heatmap-pct-stage">{{ row.stageName }}</div>
               <button class="heatmap-pct-cell count-link" type="button" (click)="openRelated(row, 'positive', row.positiveFeedbackIds)">
@@ -59,16 +59,16 @@
             <span>0</span>
             <div class="heatmap-legend-bar"></div>
             <span>80</span>
-            <span class="heatmap-legend-cap">(% intensity)</span>
+            <span class="heatmap-legend-cap">{{ t('heatmap.intensity') }}</span>
           </div>
         </div>
         <div *ngIf="totalPages() > 1" class="pagination">
           <button mat-button type="button" (click)="goPrevPage()" [disabled]="page() <= 1">
-            Prev
+            {{ t('app.previous') }}
           </button>
-          <span class="pagination-label">Page {{ page() }} of {{ totalPages() }}</span>
+          <span class="pagination-label">{{ t('sentiment.pageOf', { page: page(), total: totalPages() }) }}</span>
           <button mat-button type="button" (click)="goNextPage()" [disabled]="page() >= totalPages()">
-            Next
+            {{ t('app.next') }}
           </button>
         </div>
       </mat-card-content>
@@ -77,11 +77,11 @@
 
   <div class="reference-overlay" *ngIf="drilldownOpen()" (click)="closeDrilldown()" role="dialog" aria-modal="true">
     <div class="reference-modal" (click)="$event.stopPropagation()">
-      <h3>Related content · {{ drilldownTitle() }}</h3>
+      <h3>{{ t('sentiment.relatedContent') }} · {{ drilldownTitle() }}</h3>
       <div *ngIf="drilldownLoading()" class="drilldown-loading">
         <mat-progress-spinner mode="indeterminate" diameter="36"></mat-progress-spinner>
       </div>
-      <p *ngIf="!drilldownLoading() && drilldownRows().length === 0">No related rows returned.</p>
+      <p *ngIf="!drilldownLoading() && drilldownRows().length === 0">{{ t('sentiment.noRelatedRows') }}</p>
       <ul class="drilldown-list" *ngIf="!drilldownLoading() && drilldownRows().length">
         <li *ngFor="let row of drilldownRows()">
           <strong>#{{ row.id }} · {{ row.sentiment }}</strong>
@@ -89,7 +89,7 @@
           <p>{{ row.content }}</p>
         </li>
       </ul>
-      <button mat-raised-button color="primary" type="button" (click)="closeDrilldown()">Close</button>
+      <button mat-raised-button color="primary" type="button" (click)="closeDrilldown()">{{ t('app.close') }}</button>
     </div>
   </div>
 </div>

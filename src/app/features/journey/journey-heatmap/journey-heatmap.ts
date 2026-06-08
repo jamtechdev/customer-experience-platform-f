@@ -10,6 +10,7 @@ import { AnalysisService } from '../../../core/services/analysis.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { OllamaLoader } from '../../../core/components/ollama-loader/ollama-loader';
 import { twitterCxReportFailureMessage } from '../../../core/utils/twitter-cx-report-load';
+import { TranslationService } from '../../../core/services/translation.service';
 
 interface StageRow {
   stageName: string;
@@ -45,6 +46,7 @@ export class JourneyHeatmap implements OnInit, OnDestroy {
   private analysisService = inject(AnalysisService);
   private authService = inject(AuthService);
   private snackBar = inject(MatSnackBar);
+  private translationService = inject(TranslationService);
   private refreshSub?: Subscription;
   loading = signal(false);
   stages = signal<StageRow[]>([]);
@@ -54,6 +56,8 @@ export class JourneyHeatmap implements OnInit, OnDestroy {
   drilldownTitle = signal('');
   drilldownRows = signal<Array<{ id: number; content: string; contentSummary?: string; source: string; date: string; sentiment: string }>>([]);
   Math = Math;
+  readonly t = (key: string, params?: Record<string, string | number>): string =>
+    this.translationService.translate(key, params);
 
   readonly pageSize = 20;
   page = signal(1);
@@ -72,20 +76,20 @@ export class JourneyHeatmap implements OnInit, OnDestroy {
   });
 
   ngOnInit(): void {
-    this.loadHeatmap();
-    this.refreshSub = this.twitterCxReportStore.onRefresh$.subscribe(() => this.loadHeatmap());
+    this.loadHeatmap(false);
+    this.refreshSub = this.twitterCxReportStore.onRefresh$.subscribe(() => this.loadHeatmap(true));
   }
 
   ngOnDestroy(): void {
     this.refreshSub?.unsubscribe();
   }
 
-  loadHeatmap(): void {
+  loadHeatmap(forceLive: boolean = true): void {
     const user = this.authService.currentUser();
     const companyId = user?.role === 'admin' ? undefined : (user?.settings?.companyId ?? 1);
     this.loading.set(true);
     this.error.set(null);
-    this.twitterCxReportStore.loadTwitterCxReport(companyId, undefined, undefined, undefined, false).subscribe({
+    this.twitterCxReportStore.loadTwitterCxReport(companyId, undefined, undefined, undefined, forceLive).subscribe({
       next: (res) => {
         if (res.message === 'stale_response') {
           this.loading.set(false);
@@ -96,7 +100,7 @@ export class JourneyHeatmap implements OnInit, OnDestroy {
           this.page.set(1);
           const hint = twitterCxReportFailureMessage(res.message);
           this.error.set(hint);
-          this.snackBar.open(hint, 'Close', { duration: 7000 });
+          this.snackBar.open(hint, this.t('app.close'), { duration: 7000 });
           this.loading.set(false);
           return;
         }
@@ -126,7 +130,7 @@ export class JourneyHeatmap implements OnInit, OnDestroy {
       error: () => {
         const hint = twitterCxReportFailureMessage();
         this.error.set(hint);
-        this.snackBar.open(hint, 'Close', { duration: 6000 });
+        this.snackBar.open(hint, this.t('app.close'), { duration: 6000 });
         this.stages.set([]);
         this.page.set(1);
         this.loading.set(false);

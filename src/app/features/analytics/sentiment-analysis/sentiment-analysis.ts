@@ -28,6 +28,7 @@ import { formatApiDate, normalizeApiDateToIso } from '../../../core/utils/api-da
 import { CXWebSocketService, type CSVImportStatusEvent } from '../../../core/services/cx-websocket.service';
 import { forkJoin, Subscription } from 'rxjs';
 import { OllamaLoader } from '../../../core/components/ollama-loader/ollama-loader';
+import { TranslationService } from '../../../core/services/translation.service';
 
 interface SentimentStats {
   positive: number;
@@ -79,6 +80,7 @@ export class SentimentAnalysis implements OnInit, OnDestroy {
   private snackBar = inject(MatSnackBar);
   private reportService = inject(ReportService);
   private websocket = inject(CXWebSocketService);
+  private translationService = inject(TranslationService);
   private importStatusSub?: Subscription;
   /** After first successful stats load, never show the full-page loader again this session. */
   private hasCompletedInitialLoad = false;
@@ -109,7 +111,7 @@ export class SentimentAnalysis implements OnInit, OnDestroy {
   feedbackTotal = signal(0);
   serverPatterns = signal<SentimentReferenceRow[]>([]);
   filterJourneyStage = signal<string>('');
-  filterIsRelevant = signal<string>('');
+  filterIsRelevant = signal<string>('true');
   filterSearch = signal<string>('');
   referenceOpen = signal(false);
   referenceRow = signal<{
@@ -145,6 +147,8 @@ export class SentimentAnalysis implements OnInit, OnDestroy {
   pageSize = signal(25);
   totalPages = computed(() => Math.max(1, Math.ceil(this.feedbackTotal() / this.pageSize())));
   hoveredBar = signal<SentimentChartBar | null>(null);
+  readonly t = (key: string, params?: Record<string, string | number>): string =>
+    this.translationService.translate(key, params);
 
   displayedColumns: string[] = ['sentiment', 'count', 'percentage', 'bar'];
   patternCols: string[] = ['sentiment', 'patterns'];
@@ -236,6 +240,17 @@ export class SentimentAnalysis implements OnInit, OnDestroy {
     }
   }
 
+  presetLabel(p: ReportDatePreset): string {
+    const labels: Record<string, string> = {
+      all_time: 'reports.allTime',
+      last_7_days: 'reports.last7Days',
+      last_30_days: 'reports.last30Days',
+      last_calendar_month: 'reports.lastCalendarMonth',
+      ytd: 'reports.yearToDate',
+    };
+    return labels[p.id] ? this.t(labels[p.id]) : p.label;
+  }
+
   onManualDate(): void {
     this.selectedPresetId.set('custom');
   }
@@ -254,7 +269,7 @@ export class SentimentAnalysis implements OnInit, OnDestroy {
       return;
     }
     if (!this.datesValid()) {
-      this.snackBar.open('Select a valid date range', 'Close', { duration: 4000 });
+      this.snackBar.open(this.t('reports.selectValidRange'), this.t('app.close'), { duration: 4000 });
       return;
     }
     this.filtersApplied.set(true);
@@ -270,7 +285,7 @@ export class SentimentAnalysis implements OnInit, OnDestroy {
     const companyId = this.getCompanyId();
     const { start, end } = resolveOptionalApiDateRange(this.filtersApplied(), this.startDate(), this.endDate());
     const ok = window.confirm(
-      'Re-run Ollama enrichment for all feedback in range? This updates sentiment, journey stage, and relevance (may take several minutes). After it finishes, rebuild the CX report from Import history.'
+      this.t('sentiment.reRunConfirm')
     );
     if (!ok) return;
 
@@ -280,14 +295,18 @@ export class SentimentAnalysis implements OnInit, OnDestroy {
         this.reanalyzing.set(false);
         const d = res?.data;
         const msg = d
-          ? `Enrichment complete: ${d.succeeded ?? 0} succeeded, ${d.failed ?? 0} failed of ${d.total ?? 0}.`
-          : 'Enrichment finished.';
-        this.snackBar.open(msg, 'Close', { duration: 8000 });
+          ? this.t('sentiment.enrichmentComplete', {
+              succeeded: d.succeeded ?? 0,
+              failed: d.failed ?? 0,
+              total: d.total ?? 0,
+            })
+          : this.t('sentiment.enrichmentFinished');
+        this.snackBar.open(msg, this.t('app.close'), { duration: 8000 });
         this.reloadAll();
       },
       error: () => {
         this.reanalyzing.set(false);
-        this.snackBar.open('AI enrichment failed. Check Ollama is running.', 'Close', { duration: 6000 });
+        this.snackBar.open(this.t('sentiment.enrichmentFailed'), this.t('app.close'), { duration: 6000 });
       },
     });
   }
@@ -306,12 +325,12 @@ export class SentimentAnalysis implements OnInit, OnDestroy {
 
   exportSentimentRecords(): void {
     if (!this.datesValid()) {
-      this.snackBar.open('Select a valid date range', 'Close', { duration: 4000 });
+      this.snackBar.open(this.t('reports.selectValidRange'), this.t('app.close'), { duration: 4000 });
       return;
     }
     const { start, end } = resolveOptionalApiDateRange(true, this.startDate(), this.endDate());
     if (!start || !end) {
-      this.snackBar.open('Select a valid date range for export', 'Close', { duration: 4000 });
+      this.snackBar.open(this.t('sentiment.selectRangeForExport'), this.t('app.close'), { duration: 4000 });
       return;
     }
     const companyId = this.getCompanyId();
@@ -331,11 +350,11 @@ export class SentimentAnalysis implements OnInit, OnDestroy {
           a.click();
           window.URL.revokeObjectURL(url);
           this.exportLoading.set(false);
-          this.snackBar.open('Export downloaded', 'Close', { duration: 3000 });
+          this.snackBar.open(this.t('sentiment.exportDownloaded'), this.t('app.close'), { duration: 3000 });
         },
         error: () => {
           this.exportLoading.set(false);
-          this.snackBar.open('Export failed', 'Close', { duration: 3000 });
+          this.snackBar.open(this.t('reports.exportFailed'), this.t('app.close'), { duration: 3000 });
         },
       });
   }
@@ -343,7 +362,7 @@ export class SentimentAnalysis implements OnInit, OnDestroy {
   downloadFeedbackTable(): void {
     const total = this.feedbackTotal();
     if (!total) {
-      this.snackBar.open('No feedback rows to download', 'Close', { duration: 3000 });
+      this.snackBar.open(this.t('sentiment.noRowsToDownload'), this.t('app.close'), { duration: 3000 });
       return;
     }
 
@@ -395,13 +414,13 @@ export class SentimentAnalysis implements OnInit, OnDestroy {
             },
             error: () => {
               this.tableExportLoading.set(false);
-              this.snackBar.open('Table download failed while loading all pages', 'Close', { duration: 4000 });
+              this.snackBar.open(this.t('sentiment.tableDownloadFailedPages'), this.t('app.close'), { duration: 4000 });
             },
           });
         },
         error: () => {
           this.tableExportLoading.set(false);
-          this.snackBar.open('Table download failed', 'Close', { duration: 3000 });
+          this.snackBar.open(this.t('sentiment.tableDownloadFailed'), this.t('app.close'), { duration: 3000 });
         },
       });
   }
@@ -411,8 +430,14 @@ export class SentimentAnalysis implements OnInit, OnDestroy {
     this.downloadTextFile(csv, this.feedbackTableFileName());
     this.tableExportLoading.set(false);
     const capped = total > maxExportRows;
-    const suffix = capped ? ` (limited to first ${maxExportRows})` : '';
-    this.snackBar.open(`Downloaded ${rows.length} feedback rows${suffix}`, 'Close', { duration: 3000 });
+    this.snackBar.open(
+      this.t(capped ? 'sentiment.downloadedRowsLimited' : 'sentiment.downloadedRows', {
+        count: rows.length,
+        max: maxExportRows,
+      }),
+      this.t('app.close'),
+      { duration: 3000 }
+    );
   }
 
   private reloadAll(withFilters: boolean = this.filtersApplied()): void {
@@ -593,15 +618,23 @@ export class SentimentAnalysis implements OnInit, OnDestroy {
     const total = stats.total || 0;
     const pct = (n: number) => (total === 0 ? '0.0' : ((n / total) * 100).toFixed(1));
     return [
-      { sentiment: 'Positive', count: stats.positive, percentage: pct(stats.positive) },
-      { sentiment: 'Neutral', count: stats.neutral, percentage: pct(stats.neutral) },
-      { sentiment: 'Negative', count: stats.negative, percentage: pct(stats.negative) }
+      { sentiment: this.t('dashboard.positive'), count: stats.positive, percentage: pct(stats.positive) },
+      { sentiment: this.t('dashboard.neutral'), count: stats.neutral, percentage: pct(stats.neutral) },
+      { sentiment: this.t('dashboard.negative'), count: stats.negative, percentage: pct(stats.negative) }
     ];
   }
 
   sentimentRows(): Array<{ sentiment: string; count: number; percentage: string; css: string }> {
     const rows = this.getSentimentData();
     return rows.map((r) => ({ ...r, css: r.sentiment.toLowerCase() }));
+  }
+
+  sentimentLabel(value: string | null | undefined): string {
+    const normalized = String(value ?? '').trim().toLowerCase();
+    if (normalized === 'positive') return this.t('dashboard.positive');
+    if (normalized === 'neutral') return this.t('dashboard.neutral');
+    if (normalized === 'negative') return this.t('dashboard.negative');
+    return value || '—';
   }
 
   chartBars = computed<SentimentChartBar[]>(() => {
@@ -617,9 +650,9 @@ export class SentimentAnalysis implements OnInit, OnDestroy {
       height: Math.max(8, (count / maxCount) * 100),
     });
     return [
-      mk('positive', 'Positive', s.positive),
-      mk('neutral', 'Neutral', s.neutral),
-      mk('negative', 'Negative', s.negative),
+      mk('positive', this.t('dashboard.positive'), s.positive),
+      mk('neutral', this.t('dashboard.neutral'), s.neutral),
+      mk('negative', this.t('dashboard.negative'), s.negative),
     ];
   });
 
@@ -718,7 +751,7 @@ export class SentimentAnalysis implements OnInit, OnDestroy {
 
   private humanizeFeedbackText(value: unknown): string {
     const raw = String(value || '').trim();
-    if (!raw) return 'No clear customer feedback text available.';
+    if (!raw) return this.t('sentiment.noClearFeedback');
 
     const cleaned = raw
       .replace(/^RT\s+@\w+:\s*/i, '')
@@ -728,12 +761,12 @@ export class SentimentAnalysis implements OnInit, OnDestroy {
       .replace(/\s+/g, ' ')
       .trim();
 
-    if (!cleaned) return 'No clear customer feedback text available.';
+    if (!cleaned) return this.t('sentiment.noClearFeedback');
     if (/^\d{1,2}[./-]\d{1,2}[./-]\d{2,4}(?:\s+\d{1,2}:\d{2}(?::\d{2})?)?$/.test(cleaned)) {
-      return 'Timestamp-only row detected in uploaded data.';
+      return this.t('sentiment.timestampOnlyRow');
     }
     if (/^[^()]{1,120}\s+\(@[A-Za-z0-9_]{1,30}\)$/.test(cleaned)) {
-      return 'Profile-label row detected in uploaded data.';
+      return this.t('sentiment.profileLabelRow');
     }
 
     return cleaned;
@@ -790,16 +823,16 @@ export class SentimentAnalysis implements OnInit, OnDestroy {
   }
 
   deleteRecord(row: { id: number; content: string }): void {
-    const ok = window.confirm('Delete this feedback record? This action cannot be undone.');
+    const ok = window.confirm(this.t('sentiment.deleteRecordConfirm'));
     if (!ok) return;
     const companyId = this.effectiveCompanyIdForMutations();
     this.analysisService.deleteFeedbackRecord(row.id, companyId).subscribe({
       next: () => {
-        this.snackBar.open('Feedback record deleted', 'Close', { duration: 3000 });
+        this.snackBar.open(this.t('sentiment.recordDeleted'), this.t('app.close'), { duration: 3000 });
         this.reloadAll();
       },
       error: () => {
-        this.snackBar.open('Failed to delete feedback record', 'Close', { duration: 3000 });
+        this.snackBar.open(this.t('sentiment.recordDeleteFailed'), this.t('app.close'), { duration: 3000 });
       }
     });
   }
@@ -807,18 +840,18 @@ export class SentimentAnalysis implements OnInit, OnDestroy {
   deleteAllRecords(): void {
     const total = this.feedbackTotal();
     const ok = window.confirm(
-      `Delete all feedback records in current scope? (${total} items). This action cannot be undone.`
+      this.t('sentiment.deleteAllConfirm', { total })
     );
     if (!ok) return;
     const companyId = this.effectiveCompanyIdForMutations();
     this.analysisService.deleteAllFeedbackRecords(companyId).subscribe({
       next: (res) => {
         const n = res?.data?.deletedFeedback ?? 0;
-        this.snackBar.open(`Deleted ${n} feedback records`, 'Close', { duration: 3500 });
+        this.snackBar.open(this.t('sentiment.deletedRecords', { count: n }), this.t('app.close'), { duration: 3500 });
         this.reloadAll();
       },
       error: () => {
-        this.snackBar.open('Failed to delete all feedback records', 'Close', { duration: 3000 });
+        this.snackBar.open(this.t('sentiment.deleteAllFailed'), this.t('app.close'), { duration: 3000 });
       }
     });
   }

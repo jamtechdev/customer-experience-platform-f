@@ -44,7 +44,8 @@ export class ExecutiveSummary implements OnInit {
   private snackBar = inject(MatSnackBar);
   private translationService = inject(TranslationService);
 
-  readonly t = (key: string, params?: Record<string, string>): string => this.translationService.translate(key, params);
+  readonly t = (key: string, params?: Record<string, string | number>): string =>
+    this.translationService.translate(key, params);
 
   loading = signal(true);
   exporting = signal(false);
@@ -103,6 +104,17 @@ export class ExecutiveSummary implements OnInit {
     }
   }
 
+  presetLabel(p: ReportDatePreset): string {
+    const labels: Record<string, string> = {
+      all_time: 'reports.allTime',
+      last_7_days: 'reports.last7Days',
+      last_30_days: 'reports.last30Days',
+      last_calendar_month: 'reports.lastCalendarMonth',
+      ytd: 'reports.yearToDate',
+    };
+    return labels[p.id] ? this.t(labels[p.id]) : p.label;
+  }
+
   onManualDate(): void {
     this.selectedPresetId.set('custom');
   }
@@ -111,6 +123,10 @@ export class ExecutiveSummary implements OnInit {
     const s = this.startDate();
     const e = this.endDate();
     return !!(s && e && s <= e);
+  }
+
+  canUseSelectedRange(): boolean {
+    return this.selectedPresetId() === NO_DATE_FILTER_PRESET_ID || this.datesValid();
   }
 
   applyRangeAndReload(): void {
@@ -156,13 +172,16 @@ export class ExecutiveSummary implements OnInit {
   }
 
   exportPdf(): void {
-    if (!this.datesValid()) {
+    if (!this.canUseSelectedRange()) {
       this.snackBar.open(this.t('reports.selectValidRange'), this.t('app.close'), { duration: 5000 });
       return;
     }
     this.exporting.set(true);
     const companyId = this.authService.currentUser()?.settings?.companyId ?? 1;
-    const { startDate: sd, endDate: ed } = toIsoRangeFromYmd(this.startDate()!, this.endDate()!);
+    const { startDate: sd, endDate: ed } =
+      this.selectedPresetId() === NO_DATE_FILTER_PRESET_ID
+        ? this.exportAllDataRange()
+        : toIsoRangeFromYmd(this.startDate()!, this.endDate()!);
     this.reportService.exportDashboardToPdf({ companyId, startDate: sd, endDate: ed }).subscribe({
       next: (blob) => {
         const url = URL.createObjectURL(blob);
@@ -179,6 +198,19 @@ export class ExecutiveSummary implements OnInit {
         this.snackBar.open(this.t('reports.exportFailed'), this.t('app.close'), { duration: 4000 });
       },
     });
+  }
+
+  private exportAllDataRange(): { startDate: string; endDate: string } {
+    const allTime = this.presets().find((p) => p.id === 'all_time');
+    if (allTime) {
+      return { startDate: allTime.startDate, endDate: allTime.endDate };
+    }
+    const fallbackEnd = new Date();
+    fallbackEnd.setHours(23, 59, 59, 999);
+    return {
+      startDate: new Date('1970-01-01T00:00:00.000Z').toISOString(),
+      endDate: fallbackEnd.toISOString(),
+    };
   }
 
   totalTweetVolume(): number {
@@ -205,5 +237,14 @@ export class ExecutiveSummary implements OnInit {
     const total = (s?.positive ?? 0) + (s?.neutral ?? 0) + (s?.negative ?? 0);
     if (!total || !s) return 0;
     return (s[kind] / total) * 100;
+  }
+
+  executiveSentimentNarrative(): string {
+    return this.t('reports.executiveNarrativeSentiment', {
+      positive: this.sentimentPct('positive').toFixed(1),
+      neutral: this.sentimentPct('neutral').toFixed(1),
+      negative: this.sentimentPct('negative').toFixed(1),
+      nps: Number(this.data()?.nps.score ?? 0).toFixed(1),
+    });
   }
 }

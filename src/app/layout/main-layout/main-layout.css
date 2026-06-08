@@ -28,8 +28,9 @@
   flex: 1;
   min-height: 0;
   overflow: auto;
-  padding: 24px;
+  padding: 24px 24px 36px;
   -webkit-overflow-scrolling: touch;
+  box-sizing: border-box;
 }
 
 .main-content app-footer {

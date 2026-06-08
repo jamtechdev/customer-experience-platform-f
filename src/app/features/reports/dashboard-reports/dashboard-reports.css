@@ -31,7 +31,12 @@
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
   gap: 12px;
-  align-items: center;
+  align-items: start;
+}
+
+.filters-row button,
+.filters-row a {
+  min-height: 48px;
 }
 
 .section {

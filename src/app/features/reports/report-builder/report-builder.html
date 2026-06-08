@@ -28,9 +28,9 @@
         <mat-form-field appearance="outline" class="full-width">
           <mat-label>{{ t('reports.fixedPeriod') }}</mat-label>
           <mat-select [value]="selectedPresetId()" (selectionChange)="onPresetChange($event.value)">
-            <mat-option value="none">All data (no date filter)</mat-option>
+            <mat-option value="none">{{ t('reports.allData') }}</mat-option>
             @for (p of presets(); track p.id) {
-              <mat-option [value]="p.id">{{ p.label }}</mat-option>
+              <mat-option [value]="p.id">{{ presetLabel(p) }}</mat-option>
             }
             <mat-option value="custom">{{ t('reports.customRange') }}</mat-option>
           </mat-select>
@@ -61,20 +61,20 @@
             color="primary"
             type="button"
             (click)="createReport()"
-            [disabled]="exporting() || !datesValid()">
+            [disabled]="exporting() || !canCreateReport()">
             <mat-icon>add_circle</mat-icon>
-            {{ exporting() ? t('reports.exporting') : 'Create report' }}
+            {{ exporting() ? t('reports.exporting') : t('reports.create') }}
           </button>
         </div>
       </div>
       <mat-card class="created-reports-card">
         <mat-card-header>
-          <mat-card-title>Created reports ({{ createdReports().length }})</mat-card-title>
-          <mat-card-subtitle>Shows how many times you created report in this session.</mat-card-subtitle>
+          <mat-card-title>{{ t('reports.createdReports') }} ({{ createdReports().length }})</mat-card-title>
+          <mat-card-subtitle>{{ t('reports.createdReportsSubtitle') }}</mat-card-subtitle>
         </mat-card-header>
         <mat-card-content>
           @if (createdReports().length === 0) {
-            <p class="hint">No report created yet.</p>
+            <p class="hint">{{ t('reports.noReportCreated') }}</p>
           } @else {
             <div class="created-list">
               @for (r of createdReports(); track r.id) {

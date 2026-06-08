@@ -6,7 +6,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { MatMenuModule } from '@angular/material/menu';
 import { AuthService } from '../../core/services/auth.service';
-import { AlertService, normalizeAlertsPayload } from '../../core/services/alert.service';
+import { Alert, AlertService, normalizeAlertsPayload } from '../../core/services/alert.service';
 import { AnalysisService } from '../../core/services/analysis.service';
 import { LanguageSwitcher } from '../../core/components/language-switcher/language-switcher';
 import { TranslationService } from '../../core/services/translation.service';
@@ -37,6 +37,7 @@ export class Header implements OnInit, OnDestroy {
   // Controls the small green/red dot near the notifications bell.
   alertIndicator = signal<'green' | 'red'>('green');
   alertCount = signal<number>(0);
+  alerts = signal<Alert[]>([]);
   ollamaConnected = signal<boolean>(false);
   ollamaModel = signal<string>('qwen2.5:3b-instruct');
 
@@ -76,11 +77,13 @@ export class Header implements OnInit, OnDestroy {
         const { alerts } = normalizeAlertsPayload(res?.data as any);
         const hasAlerts = alerts.length > 0;
         const hasCritical = alerts.some((a) => a.priority === 'critical' || a.priority === 'high');
+        this.alerts.set(alerts);
         this.alertCount.set(alerts.length);
         this.alertIndicator.set(hasCritical || hasAlerts ? 'red' : 'green');
       },
       error: () => {
         // If alerts endpoint fails, keep indicator green.
+        this.alerts.set([]);
         this.alertIndicator.set('green');
         this.alertCount.set(0);
       },
@@ -106,6 +109,10 @@ export class Header implements OnInit, OnDestroy {
 
   onProfile(): void {
     this.router.navigate(['/app/profile']);
+  }
+
+  onNotifications(): void {
+    this.router.navigate(['/app/alerts/alert-dashboard']);
   }
 
   private refreshOllamaStatus(): void {

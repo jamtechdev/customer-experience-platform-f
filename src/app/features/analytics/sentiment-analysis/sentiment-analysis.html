@@ -1,8 +1,8 @@
 <div class="sentiment-container">
   <div class="header-section header-with-action">
     <div>
-      <h1>Sentiment Analysis</h1>
-      <p class="subtitle">Brand-relevant feedback with journey stage, relevance, and reference tweets</p>
+      <h1>{{ t('nav.sentimentAnalysis') }}</h1>
+      <p class="subtitle">{{ t('sentiment.subtitle') }}</p>
     </div>
     <button
       mat-stroked-button
@@ -11,7 +11,7 @@
       (click)="reRunAiEnrichment()"
       [disabled]="reanalyzing() || initialLoading()">
       <mat-icon>psychology</mat-icon>
-      {{ reanalyzing() ? 'Re-running AI…' : 'Re-run AI enrichment' }}
+      {{ reanalyzing() ? t('sentiment.reRunningAi') : t('sentiment.reRunAi') }}
     </button>
   </div>
 
@@ -20,32 +20,32 @@
       <mat-card-content>
         <div class="filters filters-row">
           <mat-form-field appearance="outline">
-            <mat-label>Period</mat-label>
+            <mat-label>{{ t('dashboard.period') }}</mat-label>
             <mat-select [value]="selectedPresetId()" (selectionChange)="onPresetChange($event.value)">
-              <mat-option value="none">All data (no date filter)</mat-option>
+              <mat-option value="none">{{ t('reports.allData') }}</mat-option>
               @for (p of presets(); track p.id) {
-                <mat-option [value]="p.id">{{ p.label }}</mat-option>
+                <mat-option [value]="p.id">{{ presetLabel(p) }}</mat-option>
               }
-              <mat-option value="custom">Custom range</mat-option>
+              <mat-option value="custom">{{ t('reports.customRange') }}</mat-option>
             </mat-select>
           </mat-form-field>
 
           <mat-form-field appearance="outline">
-            <mat-label>From</mat-label>
+            <mat-label>{{ t('reports.fromDate') }}</mat-label>
             <input matInput type="date" [ngModel]="startDate()" (ngModelChange)="startDate.set($event); onManualDate()" name="sentStart" />
           </mat-form-field>
 
           <mat-form-field appearance="outline">
-            <mat-label>To</mat-label>
+            <mat-label>{{ t('reports.toDate') }}</mat-label>
             <input matInput type="date" [ngModel]="endDate()" (ngModelChange)="endDate.set($event); onManualDate()" name="sentEnd" />
           </mat-form-field>
 
           <button mat-stroked-button color="primary" type="button" (click)="applyRangeAndReload()" [disabled]="initialLoading()">
-            Apply
+            {{ t('app.apply') }}
           </button>
           <button mat-stroked-button color="primary" type="button" (click)="refreshData()" [disabled]="initialLoading()">
             <mat-icon>refresh</mat-icon>
-            Refresh
+            {{ t('app.refresh') }}
           </button>
           <button
             mat-stroked-button
@@ -53,7 +53,7 @@
             (click)="exportSentimentRecords()"
             [disabled]="exportLoading() || !datesValid()">
             <mat-icon>download</mat-icon>
-            Export to Excel
+            {{ t('sentiment.exportToExcel') }}
           </button>
         </div>
       </mat-card-content>
@@ -65,8 +65,8 @@
 
   <div *ngIf="initialLoading()" class="loading-container">
     <app-ollama-loader
-      [title]="'Loading sentiment statistics'"
-      [subtitle]="'Reading saved positive, neutral, and negative feedback totals for the selected range'">
+      [title]="t('sentiment.loadingStatsTitle')"
+      [subtitle]="t('sentiment.loadingStatsSubtitle')">
     </app-ollama-loader>
   </div>
 
@@ -76,25 +76,25 @@
 
 
   <div *ngIf="stats()" class="stats-section">
-    <p *ngIf="(stats()?.total ?? 0) === 0" class="empty-hint">No sentiment data yet for this date range. Please check Import history, confirm your CSV import is completed, then click Refresh.</p>
+    <p *ngIf="(stats()?.total ?? 0) === 0" class="empty-hint">{{ t('sentiment.noSentimentData') }}</p>
     <mat-card class="section-card" *ngIf="stats()">
       <mat-card-header>
-        <mat-card-title>Tweet-level sentiment analysis</mat-card-title>
-        <mat-card-subtitle>Sentiment distribution for original customer-originated CX tweets.</mat-card-subtitle>
+        <mat-card-title>{{ t('sentiment.tweetLevelTitle') }}</mat-card-title>
+        <mat-card-subtitle>{{ t('sentiment.tweetLevelSubtitle') }}</mat-card-subtitle>
       </mat-card-header>
       <mat-card-content>
         <div class="ai-insight-box" *ngIf="sentimentInterpretation().length > 0">
-          <strong>AI summary</strong>
+          <strong>{{ t('sentiment.aiSummary') }}</strong>
           <pre>{{ sentimentInterpretation() }}</pre>
         </div>
-        <p class="body-text">A sentiment label is calculated from your uploaded CSV rows and shown below for the selected date range.</p>
+        <p class="body-text">{{ t('sentiment.sentimentLabelHelp') }}</p>
         <ul class="bullet-list" *ngIf="sentimentReferenceRows().length > 0">
-          <li><strong>Positive:</strong> {{ representativePatterns('positive') }}</li>
-          <li><strong>Neutral:</strong> {{ representativePatterns('neutral') }}</li>
-          <li><strong>Negative:</strong> {{ representativePatterns('negative') }}</li>
+          <li><strong>{{ t('dashboard.positive') }}:</strong> {{ representativePatterns('positive') }}</li>
+          <li><strong>{{ t('dashboard.neutral') }}:</strong> {{ representativePatterns('neutral') }}</li>
+          <li><strong>{{ t('dashboard.negative') }}:</strong> {{ representativePatterns('negative') }}</li>
         </ul>
         <figure class="mpl-figure" aria-label="Sentiment bar chart">
-          <figcaption class="mpl-figure-title">Customer-Originated CX Tweets - Sentiment Distribution</figcaption>
+          <figcaption class="mpl-figure-title">{{ t('sentiment.chartTitle') }}</figcaption>
           <div class="interactive-chart">
             <div class="chart-grid-lines">
               <span></span><span></span><span></span><span></span>
@@ -119,8 +119,8 @@
             @if (hoveredBar(); as h) {
               <div class="chart-hover-card">
                 <strong>{{ h.label }}</strong>
-                <span>Count: {{ h.count }}</span>
-                <span>Share: {{ h.percentage | number:'1.1-1' }}%</span>
+                <span>{{ t('sentiment.count') }}: {{ h.count }}</span>
+                <span>{{ t('sentiment.share') }}: {{ h.percentage | number:'1.1-1' }}%</span>
               </div>
             }
           </div>
@@ -128,11 +128,11 @@
         <div class="mini-table-wrap" *ngIf="sentimentReferenceRows().length > 0">
           <table mat-table [dataSource]="sentimentReferenceRows()" class="dense-table report-mat-table">
             <ng-container matColumnDef="sentiment">
-              <th mat-header-cell *matHeaderCellDef>Sentiment</th>
-              <td mat-cell *matCellDef="let row">{{ row.sentiment }}</td>
+              <th mat-header-cell *matHeaderCellDef>{{ t('feedback.sentiment') }}</th>
+              <td mat-cell *matCellDef="let row">{{ sentimentLabel(row.sentiment) }}</td>
             </ng-container>
             <ng-container matColumnDef="patterns">
-              <th mat-header-cell *matHeaderCellDef>Representative patterns observed</th>
+              <th mat-header-cell *matHeaderCellDef>{{ t('sentiment.representativePatterns') }}</th>
               <td mat-cell *matCellDef="let row">{{ row.patterns }}</td>
             </ng-container>
             <tr mat-header-row *matHeaderRowDef="patternCols"></tr>
@@ -146,8 +146,8 @@
       <mat-card-header>
         <div class="list-card-header">
           <div>
-            <mat-card-title>All feedback (from CSV upload &amp; other sources)</mat-card-title>
-            <mat-card-subtitle>Total: {{ feedbackTotal() }} feedback items in this period</mat-card-subtitle>
+            <mat-card-title>{{ t('sentiment.allFeedbackTitle') }}</mat-card-title>
+            <mat-card-subtitle>{{ t('sentiment.feedbackTotalLine', { total: feedbackTotal() }) }}</mat-card-subtitle>
           </div>
           <button
             mat-stroked-button
@@ -156,16 +156,16 @@
             (click)="downloadFeedbackTable()"
             [disabled]="tableExportLoading() || feedbackTotal() === 0">
             <mat-icon>download</mat-icon>
-            {{ tableExportLoading() ? 'Preparing…' : 'Download table' }}
+            {{ tableExportLoading() ? t('sentiment.preparing') : t('sentiment.downloadTable') }}
           </button>
         </div>
       </mat-card-header>
       <mat-card-content>
         <div class="filters filters-row list-filters">
           <mat-form-field appearance="outline">
-            <mat-label>Journey stage</mat-label>
+            <mat-label>{{ t('sentiment.journeyStage') }}</mat-label>
             <mat-select [value]="filterJourneyStage()" (selectionChange)="filterJourneyStage.set($event.value); applyListFilters()">
-              <mat-option value="">All stages</mat-option>
+              <mat-option value="">{{ t('sentiment.allStages') }}</mat-option>
               @for (s of journeyStageOptions; track s) {
                 @if (s) {
                   <mat-option [value]="s">{{ s }}</mat-option>
@@ -174,67 +174,66 @@
             </mat-select>
           </mat-form-field>
           <mat-form-field appearance="outline">
-            <mat-label>Relevance</mat-label>
+            <mat-label>{{ t('sentiment.relevance') }}</mat-label>
             <mat-select [value]="filterIsRelevant()" (selectionChange)="filterIsRelevant.set($event.value); applyListFilters()">
-              <mat-option value="">Relevant only</mat-option>
-              <mat-option value="true">Relevant</mat-option>
-              <mat-option value="false">Not relevant</mat-option>
-              <mat-option value="all">Include all</mat-option>
+              <mat-option value="true">{{ t('sentiment.relevantOnly') }}</mat-option>
+              <mat-option value="false">{{ t('sentiment.notRelevant') }}</mat-option>
+              <mat-option value="all">{{ t('sentiment.includeAll') }}</mat-option>
             </mat-select>
           </mat-form-field>
           <mat-form-field appearance="outline" class="search-field">
-            <mat-label>Search content</mat-label>
+            <mat-label>{{ t('sentiment.searchContent') }}</mat-label>
             <input matInput [ngModel]="filterSearch()" (ngModelChange)="filterSearch.set($event)" (keyup.enter)="applyListFilters()" />
           </mat-form-field>
-          <button mat-stroked-button type="button" (click)="applyListFilters()">Apply filters</button>
+          <button mat-stroked-button type="button" (click)="applyListFilters()">{{ t('sentiment.applyFilters') }}</button>
         </div>
-        <p *ngIf="feedbackList().length === 0" class="empty-hint">No feedback in this period.</p>
+        <p *ngIf="feedbackList().length === 0" class="empty-hint">{{ t('sentiment.noFeedbackPeriod') }}</p>
         <div *ngIf="feedbackList().length > 0" class="table-responsive">
           <table mat-table [dataSource]="feedbackList()" class="feedback-table">
             <ng-container matColumnDef="content">
-              <th mat-header-cell *matHeaderCellDef>Summary</th>
+              <th mat-header-cell *matHeaderCellDef>{{ t('sentiment.summary') }}</th>
               <td mat-cell *matCellDef="let row" class="content-cell">{{ row.content }}</td>
             </ng-container>
             <ng-container matColumnDef="journeyStage">
-              <th mat-header-cell *matHeaderCellDef>Journey stage</th>
+              <th mat-header-cell *matHeaderCellDef>{{ t('sentiment.journeyStage') }}</th>
               <td mat-cell *matCellDef="let row">{{ row.journeyStage || '—' }}</td>
             </ng-container>
             <ng-container matColumnDef="relevant">
-              <th mat-header-cell *matHeaderCellDef>Relevant</th>
+              <th mat-header-cell *matHeaderCellDef>{{ t('sentiment.relevant') }}</th>
               <td mat-cell *matCellDef="let row">
                 <mat-chip-set>
                   <mat-chip [class]="row.isRelevant === false ? 'sentiment-chip negative' : 'sentiment-chip positive'">
-                    {{ row.isRelevant === false ? 'No' : 'Yes' }}
+                    {{ row.isRelevant === false ? t('app.no') : t('app.yes') }}
                   </mat-chip>
                 </mat-chip-set>
               </td>
             </ng-container>
             <ng-container matColumnDef="source">
-              <th mat-header-cell *matHeaderCellDef>Source</th>
+              <th mat-header-cell *matHeaderCellDef>{{ t('feedback.source') }}</th>
               <td mat-cell *matCellDef="let row">{{ row.source }}</td>
             </ng-container>
             <ng-container matColumnDef="date">
-              <th mat-header-cell *matHeaderCellDef>Date</th>
+              <th mat-header-cell *matHeaderCellDef>{{ t('app.date') }}</th>
               <td mat-cell *matCellDef="let row">{{ formatDate(row.date) }}</td>
             </ng-container>
             <ng-container matColumnDef="sentiment">
-              <th mat-header-cell *matHeaderCellDef>Sentiment</th>
+              <th mat-header-cell *matHeaderCellDef>{{ t('feedback.sentiment') }}</th>
               <td mat-cell *matCellDef="let row">
                 <mat-chip-set>
-                  <mat-chip [class]="'sentiment-chip ' + row.sentiment.toLowerCase()">{{ row.sentiment || '—' }}</mat-chip>
+                  <mat-chip [class]="'sentiment-chip ' + (row.sentiment || '').toLowerCase()">{{ sentimentLabel(row.sentiment) }}</mat-chip>
                 </mat-chip-set>
               </td>
             </ng-container>
             <ng-container matColumnDef="score">
-              <th mat-header-cell *matHeaderCellDef>Score</th>
+              <th mat-header-cell *matHeaderCellDef>{{ t('sentiment.score') }}</th>
               <td mat-cell *matCellDef="let row">
                 {{ (row.sentiment || '').toLowerCase().includes('processing') ? '—' : row.score.toFixed(2) }}
               </td>
             </ng-container>
             <ng-container matColumnDef="reference">
-              <th mat-header-cell *matHeaderCellDef>Reference</th>
+              <th mat-header-cell *matHeaderCellDef>{{ t('sentiment.reference') }}</th>
               <td mat-cell *matCellDef="let row">
-                <button mat-button type="button" (click)="openReference(row)">View tweet</button>
+                <button mat-stroked-button class="view-tweet-button" type="button" (click)="openReference(row)">{{ t('sentiment.viewTweet') }}</button>
               </td>
             </ng-container>
             <tr mat-header-row *matHeaderRowDef="feedbackColumns"></tr>
@@ -243,9 +242,9 @@
         </div>
 
         <div class="pagination-row" *ngIf="feedbackTotal() > pageSize()">
-          <button mat-stroked-button type="button" (click)="prevPage()" [disabled]="page() <= 1">Prev</button>
-          <span>Page {{ page() }} / {{ totalPages() }}</span>
-          <button mat-stroked-button type="button" (click)="nextPage()" [disabled]="page() >= totalPages()">Next</button>
+          <button mat-stroked-button type="button" (click)="prevPage()" [disabled]="page() <= 1">{{ t('app.previous') }}</button>
+          <span>{{ t('sentiment.pageOf', { page: page(), total: totalPages() }) }}</span>
+          <button mat-stroked-button type="button" (click)="nextPage()" [disabled]="page() >= totalPages()">{{ t('app.next') }}</button>
         </div>
       </mat-card-content>
     </mat-card>
@@ -259,14 +258,14 @@
     role="dialog"
     aria-modal="true">
     <div class="reference-modal" (click)="$event.stopPropagation()">
-      <h3>Reference data</h3>
-      <p *ngIf="referenceRow()?.journeyStage"><strong>Journey stage:</strong> {{ referenceRow()?.journeyStage }}</p>
-      <p *ngIf="referenceRow()?.isRelevant !== undefined"><strong>Brand-relevant:</strong> {{ referenceRow()?.isRelevant === false ? 'No' : 'Yes' }}</p>
-      <p *ngIf="referenceRow()?.relevanceReason"><strong>Why:</strong> {{ referenceRow()?.relevanceReason }}</p>
-      <p><strong>AI summary:</strong> {{ referenceRow()?.content }}</p>
-      <p><strong>Source tweet:</strong></p>
+      <h3>{{ t('sentiment.referenceData') }}</h3>
+      <p *ngIf="referenceRow()?.journeyStage"><strong>{{ t('sentiment.journeyStage') }}:</strong> {{ referenceRow()?.journeyStage }}</p>
+      <p *ngIf="referenceRow()?.isRelevant !== undefined"><strong>{{ t('sentiment.brandRelevant') }}:</strong> {{ referenceRow()?.isRelevant === false ? t('app.no') : t('app.yes') }}</p>
+      <p *ngIf="referenceRow()?.relevanceReason"><strong>{{ t('sentiment.why') }}:</strong> {{ referenceRow()?.relevanceReason }}</p>
+      <p><strong>{{ t('sentiment.aiSummary') }}:</strong> {{ referenceRow()?.content }}</p>
+      <p><strong>{{ t('sentiment.sourceTweet') }}:</strong></p>
       <pre class="reference-text">{{ referenceRow()?.referenceContent || referenceRow()?.content }}</pre>
-      <button mat-stroked-button type="button" (click)="closeReference()">Close</button>
+      <button mat-stroked-button type="button" (click)="closeReference()">{{ t('app.close') }}</button>
     </div>
   </div>
 
@@ -277,21 +276,21 @@
     role="dialog"
     aria-modal="true">
     <div class="reference-modal" (click)="$event.stopPropagation()">
-      <h3>Related content · {{ drilldownTitle() }}</h3>
+      <h3>{{ t('sentiment.relatedContent') }} · {{ drilldownTitle() }}</h3>
       <div *ngIf="drilldownLoading()" class="drilldown-loading">
         <mat-progress-spinner mode="indeterminate" diameter="36"></mat-progress-spinner>
       </div>
-      <p *ngIf="!drilldownLoading() && drilldownRows().length === 0">No related rows returned.</p>
+      <p *ngIf="!drilldownLoading() && drilldownRows().length === 0">{{ t('sentiment.noRelatedRows') }}</p>
       <ul class="drilldown-list" *ngIf="!drilldownLoading() && drilldownRows().length">
         <li *ngFor="let row of drilldownRows()">
-          <strong>#{{ row.id }} · {{ row.sentiment }} · {{ formatDate(row.date) }}</strong>
-          <p *ngIf="row.journeyStage"><strong>Journey stage:</strong> {{ row.journeyStage }}</p>
-          <p *ngIf="row.relevanceReason"><strong>Why:</strong> {{ row.relevanceReason }}</p>
-          <p><strong>AI summary:</strong> {{ row.content }}</p>
+          <strong>#{{ row.id }} · {{ sentimentLabel(row.sentiment) }} · {{ formatDate(row.date) }}</strong>
+          <p *ngIf="row.journeyStage"><strong>{{ t('sentiment.journeyStage') }}:</strong> {{ row.journeyStage }}</p>
+          <p *ngIf="row.relevanceReason"><strong>{{ t('sentiment.why') }}:</strong> {{ row.relevanceReason }}</p>
+          <p><strong>{{ t('sentiment.aiSummary') }}:</strong> {{ row.content }}</p>
           <pre class="reference-text">{{ row.referenceContent || row.content }}</pre>
         </li>
       </ul>
-      <button mat-stroked-button type="button" (click)="closeDrilldown()">Close</button>
+      <button mat-stroked-button type="button" (click)="closeDrilldown()">{{ t('app.close') }}</button>
     </div>
   </div>
 </div>

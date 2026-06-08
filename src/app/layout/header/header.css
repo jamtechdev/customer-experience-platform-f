@@ -3,6 +3,11 @@
   top: 0;
   z-index: 1000;
   flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  flex-wrap: nowrap;
+  gap: 4px;
+  min-height: 56px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   background: linear-gradient(135deg, var(--primary-color, #059669), var(--primary-dark, #047857));
   width: 100%;
@@ -16,6 +21,9 @@
 .toolbar-title {
   font-size: 1.125rem;
   font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .ollama-status-badge {
@@ -29,6 +37,7 @@
   padding: 4px 10px;
   background: rgba(255, 255, 255, 0.15);
   color: #f8fafc;
+  white-space: nowrap;
 }
 
 .ollama-status-badge .status-dot {
@@ -72,6 +81,23 @@
 
 .alert-dot.green {
   background: #22c55e; /* green */
+}
+
+.alert-count {
+  position: absolute;
+  top: -5px;
+  right: -6px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: #ef4444;
+  color: #fff;
+  font-size: 0.65rem;
+  line-height: 18px;
+  text-align: center;
+  font-weight: 700;
+  box-shadow: 0 0 0 2px rgba(5, 150, 105, 0.95);
 }
 
 .user-and-role {
@@ -121,8 +147,10 @@
 
 .notification-menu {
   min-width: 300px;
-  max-height: 400px;
+  max-width: 360px;
+  max-height: 420px;
   padding: 0;
+  overflow: hidden;
 }
 
 .notification-header {
@@ -135,6 +163,66 @@
   padding: 32px 16px;
   text-align: center;
   color: #6b7280;
+}
+
+.notification-list {
+  max-height: 340px;
+  overflow-y: auto;
+}
+
+.notification-item {
+  min-height: 72px;
+  height: auto !important;
+  align-items: flex-start !important;
+  padding: 10px 14px !important;
+}
+
+.notification-priority {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  margin-top: 7px;
+  margin-right: 10px;
+  flex: 0 0 auto;
+  background: #60a5fa;
+}
+
+.notification-priority.critical,
+.notification-priority.high {
+  background: #ef4444;
+}
+
+.notification-priority.medium {
+  background: #f59e0b;
+}
+
+.notification-priority.low {
+  background: #22c55e;
+}
+
+.notification-copy {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 2px;
+  white-space: normal;
+  line-height: 1.25;
+}
+
+.notification-title {
+  font-weight: 700;
+  color: #111827;
+  font-size: 0.86rem;
+}
+
+.notification-message {
+  color: #4b5563;
+  font-size: 0.78rem;
+}
+
+.notification-date {
+  color: #9ca3af;
+  font-size: 0.72rem;
 }
 
 .user-menu-header {

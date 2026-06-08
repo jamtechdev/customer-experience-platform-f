@@ -1,8 +1,8 @@
 <div class="dashboard-reports-container">
   <section class="hero">
     <div class="hero-copy">
-      <h1>Dashboard Reports</h1>
-      <p>Track performance, sentiment shifts, and NPS movement in a modern analytics view.</p>
+      <h1>{{ t('reports.dashboardReportsTitle') }}</h1>
+      <p>{{ t('reports.dashboardReportsSubtitle') }}</p>
     </div>
     @if (!(loading() || loadingTrends())) {
     <mat-card class="filter-card">
@@ -11,9 +11,9 @@
           <mat-form-field appearance="outline">
             <mat-label>{{ t('reports.fixedPeriod') }}</mat-label>
             <mat-select [value]="selectedPresetId()" (selectionChange)="onPresetChange($event.value)">
-              <mat-option value="none">All data (no date filter)</mat-option>
+              <mat-option value="none">{{ t('reports.allData') }}</mat-option>
               @for (p of presets(); track p.id) {
-                <mat-option [value]="p.id">{{ p.label }}</mat-option>
+                <mat-option [value]="p.id">{{ presetLabel(p) }}</mat-option>
               }
               <mat-option value="custom">{{ t('reports.customRange') }}</mat-option>
             </mat-select>
@@ -43,7 +43,7 @@
           </button>
           <a mat-stroked-button color="primary" routerLink="/app/data-sources/csv-upload">
             <mat-icon>upload_file</mat-icon>
-            Upload CSV
+            {{ t('nav.csvUpload') }}
           </a>
         </div>
       </mat-card-content>
@@ -55,83 +55,83 @@
     <section class="section">
       <div class="loading-container">
         <app-ollama-loader
-          [title]="'Ollama AI is analyzing dashboard KPIs'"
-          [subtitle]="'Processing sentiment, NPS, alerts, trends, and business priorities'">
+          [title]="t('reports.dashboardLoaderTitle')"
+          [subtitle]="t('reports.dashboardLoaderSubtitle')">
         </app-ollama-loader>
       </div>
     </section>
   } @else {
   <section class="section">
-    <h2 class="section-title">Current Status</h2>
+    <h2 class="section-title">{{ t('reports.currentStatus') }}</h2>
     @if (currentStats()) {
       <div class="status-grid">
         <mat-card class="status-card kpi">
           <mat-card-content>
             <mat-icon>forum</mat-icon>
-            <div class="status-label">Total Feedback</div>
+            <div class="status-label">{{ t('dashboard.totalFeedback') }}</div>
             <div class="status-value">{{ currentStats()!.sentiment.total | number }}</div>
           </mat-card-content>
         </mat-card>
         <mat-card class="status-card kpi">
           <mat-card-content>
             <mat-icon>trending_up</mat-icon>
-            <div class="status-label">NPS Score</div>
+            <div class="status-label">{{ t('dashboard.npsScore') }}</div>
             <div class="status-value">{{ hasNpsBaseData() ? Math.round(currentStats()!.nps.score) : '—' }}</div>
             <p class="muted small" *ngIf="hasNpsBaseData()">
-              Promoters {{ currentStats()!.nps.promoters }} · Passives {{ currentStats()!.nps.passives }} · Detractors {{ currentStats()!.nps.detractors }}
+              {{ t('reports.npsBreakdownLine', { promoters: currentStats()!.nps.promoters, passives: currentStats()!.nps.passives, detractors: currentStats()!.nps.detractors }) }}
             </p>
-            <p class="muted small" *ngIf="!hasNpsBaseData()">No NPS records in selected range.</p>
+            <p class="muted small" *ngIf="!hasNpsBaseData()">{{ t('reports.noNpsRecords') }}</p>
           </mat-card-content>
         </mat-card>
         <mat-card class="status-card positive">
           <mat-card-content>
             <mat-icon>sentiment_very_satisfied</mat-icon>
-            <div class="status-label">Positive Sentiment</div>
+            <div class="status-label">{{ t('reports.positiveSentiment') }}</div>
             <div class="status-value">{{ currentStats()!.sentiment.total > 0 ? (currentStats()!.sentiment.positive / currentStats()!.sentiment.total * 100 | number:'1.1-1') : 0 }}%</div>
           </mat-card-content>
         </mat-card>
         <mat-card class="status-card neutral">
           <mat-card-content>
             <mat-icon>sentiment_neutral</mat-icon>
-            <div class="status-label">Neutral Sentiment</div>
+            <div class="status-label">{{ t('reports.neutralSentiment') }}</div>
             <div class="status-value">{{ currentStats()!.sentiment.total > 0 ? (currentStats()!.sentiment.neutral / currentStats()!.sentiment.total * 100 | number:'1.1-1') : 0 }}%</div>
           </mat-card-content>
         </mat-card>
         <mat-card class="status-card negative">
           <mat-card-content>
             <mat-icon>sentiment_dissatisfied</mat-icon>
-            <div class="status-label">Negative Sentiment</div>
+            <div class="status-label">{{ t('reports.negativeSentiment') }}</div>
             <div class="status-value">{{ currentStats()!.sentiment.total > 0 ? (currentStats()!.sentiment.negative / currentStats()!.sentiment.total * 100 | number:'1.1-1') : 0 }}%</div>
           </mat-card-content>
         </mat-card>
         <mat-card class="status-card kpi">
           <mat-card-content>
             <mat-icon>notifications_active</mat-icon>
-            <div class="status-label">Active Alerts</div>
+            <div class="status-label">{{ t('dashboard.activeAlarms') }}</div>
             <div class="status-value">{{ currentStats()!.alerts.total }}</div>
           </mat-card-content>
         </mat-card>
       </div>
     } @else {
-      <div class="empty-hint">No current data available.</div>
+      <div class="empty-hint">{{ t('reports.noCurrentData') }}</div>
     }
   </section>
 
   <section class="section">
     <div class="section-head">
-      <h2 class="section-title">History &amp; Periodic Changes</h2>
+      <h2 class="section-title">{{ t('reports.historyPeriodicChanges') }}</h2>
       <div class="period-controls">
         <mat-form-field appearance="outline" class="period-select">
-          <mat-label>Period</mat-label>
+          <mat-label>{{ t('dashboard.period') }}</mat-label>
           <mat-select [ngModel]="period()" (ngModelChange)="period.set($event); onPeriodChange()">
-            <mat-option value="day">Daily</mat-option>
-            <mat-option value="week">Weekly</mat-option>
-            <mat-option value="month">Monthly</mat-option>
+            <mat-option value="day">{{ t('reports.daily') }}</mat-option>
+            <mat-option value="week">{{ t('reports.weekly') }}</mat-option>
+            <mat-option value="month">{{ t('reports.monthly') }}</mat-option>
           </mat-select>
         </mat-form-field>
         <button mat-stroked-button type="button" (click)="loadTrends()" [disabled]="loadingTrends()">
           <mat-icon>refresh</mat-icon>
-          Refresh
+          {{ t('app.refresh') }}
         </button>
       </div>
     </div>
@@ -140,12 +140,12 @@
       <div class="trends-content">
         <mat-card class="trend-card">
           <mat-card-header>
-            <mat-card-title>Sentiment Over Time</mat-card-title>
-            <mat-card-subtitle>Feedback volume and sentiment mix by period</mat-card-subtitle>
+            <mat-card-title>{{ t('reports.sentimentOverTime') }}</mat-card-title>
+            <mat-card-subtitle>{{ t('reports.sentimentOverTimeSubtitle') }}</mat-card-subtitle>
           </mat-card-header>
           <mat-card-content>
             @if (sentimentTrends().length === 0) {
-              <div class="chart-empty">No sentiment trend data for the selected period.</div>
+              <div class="chart-empty">{{ t('reports.noSentimentTrendData') }}</div>
             } @else {
               <div class="trend-chart">
                 <div *ngFor="let point of sentimentTrends()" class="trend-row">
@@ -154,13 +154,13 @@
                     <div class="bar-track full">
                       <div class="bar-fill total" [style.width.%]="(point.total / maxSentimentTotal()) * 100"></div>
                     </div>
-                    <span class="trend-value">{{ point.total }} total</span>
+                    <span class="trend-value">{{ t('reports.totalCount', { count: point.total }) }}</span>
                   </div>
                   <div class="trend-breakdown">
                     <span class="breakdown positive">+{{ point.positive }}</span>
                     <span class="breakdown neutral">~{{ point.neutral }}</span>
                     <span class="breakdown negative">-{{ point.negative }}</span>
-                    <span class="breakdown avg">avg {{ point.averageScore | number:'1.2-2' }}</span>
+                    <span class="breakdown avg">{{ t('reports.averageShort') }} {{ point.averageScore | number:'1.2-2' }}</span>
                   </div>
                 </div>
               </div>
@@ -170,12 +170,12 @@
 
         <mat-card class="trend-card">
           <mat-card-header>
-            <mat-card-title>NPS Score Over Time</mat-card-title>
-            <mat-card-subtitle>Net Promoter Score progression by period</mat-card-subtitle>
+            <mat-card-title>{{ t('reports.npsOverTime') }}</mat-card-title>
+            <mat-card-subtitle>{{ t('reports.npsOverTimeSubtitle') }}</mat-card-subtitle>
           </mat-card-header>
           <mat-card-content>
             @if (visibleNpsTrends().length === 0) {
-              <div class="chart-empty">No NPS trend data for the selected period.</div>
+              <div class="chart-empty">{{ t('reports.noNpsTrendData') }}</div>
             } @else {
               <div class="trend-chart nps-chart">
                 <div *ngFor="let point of visibleNpsTrends()" class="trend-row">
@@ -198,12 +198,12 @@
 
         <mat-card class="trend-card">
           <mat-card-header>
-            <mat-card-title>Feedback Volume Over Time</mat-card-title>
-            <mat-card-subtitle>Total feedback count by period</mat-card-subtitle>
+            <mat-card-title>{{ t('reports.feedbackVolumeOverTime') }}</mat-card-title>
+            <mat-card-subtitle>{{ t('reports.feedbackVolumeSubtitle') }}</mat-card-subtitle>
           </mat-card-header>
           <mat-card-content>
             @if (sentimentTrends().length === 0) {
-              <div class="chart-empty">No volume data for the selected period.</div>
+              <div class="chart-empty">{{ t('reports.noVolumeData') }}</div>
             } @else {
               <div class="volume-chart">
                 <div *ngFor="let point of sentimentTrends()" class="volume-bar-row">
@@ -220,7 +220,7 @@
       </div>
     } @else {
       <div class="loading-container">
-        <p class="muted">No trend response received yet. Try refresh after CSV processing completes.</p>
+        <p class="muted">{{ t('reports.noTrendResponse') }}</p>
       </div>
     }
   </section>

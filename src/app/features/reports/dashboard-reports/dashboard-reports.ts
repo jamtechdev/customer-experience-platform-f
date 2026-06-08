@@ -66,7 +66,8 @@ export class DashboardReports implements OnInit, OnDestroy {
   private filtersApplied = signal(false);
   private manualReloadTimer: ReturnType<typeof setTimeout> | null = null;
 
-  t = (key: string): string => this.translationService.translate(key);
+  t = (key: string, params?: Record<string, string | number>): string =>
+    this.translationService.translate(key, params);
 
   sentimentTrends = computed(() => this.trends()?.sentimentTrends ?? []);
   npsTrends = computed(() => this.trends()?.npsTrends ?? []);
@@ -150,6 +151,17 @@ export class DashboardReports implements OnInit, OnDestroy {
     if (p) {
       this.applyPreset(p);
     }
+  }
+
+  presetLabel(p: ReportDatePreset): string {
+    const labels: Record<string, string> = {
+      all_time: 'reports.allTime',
+      last_7_days: 'reports.last7Days',
+      last_30_days: 'reports.last30Days',
+      last_calendar_month: 'reports.lastCalendarMonth',
+      ytd: 'reports.yearToDate',
+    };
+    return labels[p.id] ? this.t(labels[p.id]) : p.label;
   }
 
   onManualDate(): void {

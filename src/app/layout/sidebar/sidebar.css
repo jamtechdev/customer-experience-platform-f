@@ -39,20 +39,33 @@
   border-radius: 10px !important;
   height: 44px !important;
   min-height: 44px !important;
+  cursor: pointer;
+  transition: background-color 160ms ease, color 160ms ease, box-shadow 160ms ease;
 }
 
 .menu-item:hover {
   background-color: #f3f4f6;
   color: #111827;
+  box-shadow: inset 3px 0 0 #10b981;
 }
 
 .menu-item.active {
-  background-color: #0595682e;
+  background-color: #d1fae5 !important;
+  color: #065f46;
   font-weight: 500;
+  box-shadow: inset 4px 0 0 #059568;
 }
 
 .menu-item.active mat-icon {
   color: #059568;
+}
+
+:host-context([dir='rtl']) .menu-item:hover {
+  box-shadow: inset -3px 0 0 #10b981;
+}
+
+:host-context([dir='rtl']) .menu-item.active {
+  box-shadow: inset -4px 0 0 #059568;
 }
 
 .menu-item mat-icon[matListItemIcon] {

@@ -53,7 +53,7 @@ export class Sidebar implements OnInit, OnDestroy {
 
   /** App menu (CX) – shown only when URL is under /app */
   private appMenuItems: SidebarMenuItem[] = [
-    { labelKey: 'nav.dashboard', icon: 'dashboard', route: '/app/dashboard' },
+    { labelKey: 'nav.dashboard', icon: 'dashboard', route: '/app/reports/dashboard-reports' },
     {
       labelKey: 'nav.reports',
       icon: 'description',
