@@ -4,7 +4,8 @@
   background: linear-gradient(135deg, var(--primary-color, #059669), var(--primary-dark, #047857));
   width: 100%;
   height: auto;
-  padding: 8px 16px;
+  min-height: 52px;
+  padding: 6px 16px;
 }
 
 .footer-content {
@@ -14,18 +15,20 @@
   justify-content: center;
   align-items: center;
   gap: 4px;
-  font-size: 0.875rem;
+  font-size: 0.78rem;
   color: #fff;
+  line-height: 1.35;
 }
 
 .footer-version {
-  font-size: 0.75rem;
+  font-size: 0.68rem;
   color: rgba(255, 255, 255, 0.75);
 }
 
 @media (max-width: 600px) {
   .footer-toolbar {
-    height: 56px;
+    min-height: 48px;
+    padding: 6px 10px;
   }
 
   .footer-content {
