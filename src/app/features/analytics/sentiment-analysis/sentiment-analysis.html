@@ -93,7 +93,7 @@
           <li><strong>{{ t('dashboard.neutral') }}:</strong> {{ representativePatterns('neutral') }}</li>
           <li><strong>{{ t('dashboard.negative') }}:</strong> {{ representativePatterns('negative') }}</li>
         </ul>
-        <figure class="mpl-figure" aria-label="Sentiment bar chart">
+        <figure class="mpl-figure" [attr.aria-label]="t('sentiment.chartTitle')">
           <figcaption class="mpl-figure-title">{{ t('sentiment.chartTitle') }}</figcaption>
           <div class="interactive-chart">
             <div class="chart-grid-lines">
@@ -192,11 +192,13 @@
           <table mat-table [dataSource]="feedbackList()" class="feedback-table">
             <ng-container matColumnDef="content">
               <th mat-header-cell *matHeaderCellDef>{{ t('sentiment.summary') }}</th>
-              <td mat-cell *matCellDef="let row" class="content-cell">{{ row.content }}</td>
+              <td mat-cell *matCellDef="let row" class="content-cell">
+                <span class="summary-text">{{ row.content }}</span>
+              </td>
             </ng-container>
             <ng-container matColumnDef="journeyStage">
               <th mat-header-cell *matHeaderCellDef>{{ t('sentiment.journeyStage') }}</th>
-              <td mat-cell *matCellDef="let row">{{ row.journeyStage || '—' }}</td>
+              <td mat-cell *matCellDef="let row" class="stage-cell">{{ row.journeyStage || '—' }}</td>
             </ng-container>
             <ng-container matColumnDef="relevant">
               <th mat-header-cell *matHeaderCellDef>{{ t('sentiment.relevant') }}</th>
@@ -210,7 +212,7 @@
             </ng-container>
             <ng-container matColumnDef="source">
               <th mat-header-cell *matHeaderCellDef>{{ t('feedback.source') }}</th>
-              <td mat-cell *matCellDef="let row">{{ row.source }}</td>
+              <td mat-cell *matCellDef="let row" class="source-cell">{{ row.source }}</td>
             </ng-container>
             <ng-container matColumnDef="date">
               <th mat-header-cell *matHeaderCellDef>{{ t('app.date') }}</th>

@@ -1,7 +1,7 @@
 <div class="nps-container">
   <div class="header-section">
-    <h1>NPS Analysis</h1>
-    <p class="subtitle">Net Promoter Score analysis and trends</p>
+    <h1>{{ t('nav.npsAnalysis') }}</h1>
+    <p class="subtitle">{{ t('npsPage.subtitle') }}</p>
   </div>
 
   <div class="filters-section">
@@ -9,28 +9,28 @@
       <mat-card-content>
         <div class="filters-row">
           <mat-form-field appearance="outline">
-            <mat-label>Period</mat-label>
+            <mat-label>{{ t('dashboard.period') }}</mat-label>
             <mat-select [value]="selectedPresetId()" (selectionChange)="onPresetChange($event.value)">
-              <mat-option value="none">All data (no date filter)</mat-option>
+              <mat-option value="none">{{ t('reports.allData') }}</mat-option>
               @for (p of presets(); track p.id) {
-                <mat-option [value]="p.id">{{ p.label }}</mat-option>
+                <mat-option [value]="p.id">{{ presetLabel(p) }}</mat-option>
               }
-              <mat-option value="custom">Custom range</mat-option>
+              <mat-option value="custom">{{ t('reports.customRange') }}</mat-option>
             </mat-select>
           </mat-form-field>
 
           <mat-form-field appearance="outline">
-            <mat-label>From</mat-label>
+            <mat-label>{{ t('reports.fromDate') }}</mat-label>
             <input matInput type="date" [ngModel]="startDate()" (ngModelChange)="startDate.set($event); onManualDate()" name="npsStart" />
           </mat-form-field>
 
           <mat-form-field appearance="outline">
-            <mat-label>To</mat-label>
+            <mat-label>{{ t('reports.toDate') }}</mat-label>
             <input matInput type="date" [ngModel]="endDate()" (ngModelChange)="endDate.set($event); onManualDate()" name="npsEnd" />
           </mat-form-field>
 
           <button mat-stroked-button color="primary" type="button" (click)="applyRangeAndReload()" [disabled]="loading()">
-            Apply
+            {{ t('app.apply') }}
           </button>
         </div>
       </mat-card-content>
@@ -39,8 +39,8 @@
 
   <div *ngIf="loading()" class="loading-container">
     <app-ollama-loader
-      [title]="'Loading NPS signals'"
-      [subtitle]="'Reading promoters, passives, detractors, and trend interpretation for the selected range'">
+      [title]="t('npsPage.loadingTitle')"
+      [subtitle]="t('npsPage.loadingSubtitle')">
     </app-ollama-loader>
   </div>
 
@@ -49,8 +49,8 @@
       <mat-card-content>
         <div class="empty-state-content">
           <mat-icon>info</mat-icon>
-          <h3>No NPS Data Available</h3>
-          <p>Upload CSV files with NPS survey data to see analysis results.</p>
+          <h3>{{ t('npsPage.noDataTitle') }}</h3>
+          <p>{{ t('npsPage.noDataHint') }}</p>
         </div>
       </mat-card-content>
     </mat-card>
@@ -59,43 +59,43 @@
   <div *ngIf="!loading() && npsData()" class="nps-content">
     <mat-card class="section-card">
       <mat-card-header>
-        <mat-card-title>NPS analysis</mat-card-title>
-        <mat-card-subtitle>Social NPS proxy based on original customer-originated CX tweets.</mat-card-subtitle>
+        <mat-card-title>{{ t('nav.npsAnalysis') }}</mat-card-title>
+        <mat-card-subtitle>{{ t('npsPage.cardSubtitle') }}</mat-card-subtitle>
       </mat-card-header>
       <mat-card-content>
-        <p class="body-text">Because tweets do not contain direct NPS scores, promoters/passives/detractors are inferred from tweet sentiment.</p>
+        <p class="body-text">{{ t('npsPage.proxyExplanation') }}</p>
         <p class="body-text">
-          Promoters:
+          {{ t('reports.promoters') }}:
           <button mat-button color="primary" type="button" (click)="openNpsBucket('promoters')" [disabled]="npsData()!.promoters === 0">
             {{ formatPct(npsData()!.promoterPercentage) }}%
           </button>
-          | Passives:
+          | {{ t('reports.passives') }}:
           <button mat-button color="primary" type="button" (click)="openNpsBucket('passives')" [disabled]="npsData()!.passives === 0">
             {{ formatPct(passivesPercentage()) }}%
           </button>
-          | Detractors:
+          | {{ t('reports.detractors') }}:
           <button mat-button color="primary" type="button" (click)="openNpsBucket('detractors')" [disabled]="npsData()!.detractors === 0">
             {{ formatPct(npsData()!.detractorPercentage) }}%
           </button>
         </p>
         <p class="body-text">
-          Social NPS proxy: {{ npsData()!.score.toFixed(1) }} ({{ getNPSCategory(npsData()!.score) }}).
+          {{ t('npsPage.socialProxy') }}: {{ npsData()!.score.toFixed(1) }} ({{ getNPSCategory(npsData()!.score) }}).
         </p>
         <p class="body-text" *ngIf="npsInterpretation()">
           {{ npsInterpretation() }}
         </p>
-        <figure class="mpl-figure mpl-figure-nps" aria-label="Social NPS stacked bar">
-          <figcaption class="mpl-figure-title mpl-figure-title-nps">Social NPS proxy = {{ npsData()!.score.toFixed(1) }}</figcaption>
+        <figure class="mpl-figure mpl-figure-nps" [attr.aria-label]="t('npsPage.stackedBarLabel')">
+          <figcaption class="mpl-figure-title mpl-figure-title-nps">{{ t('npsPage.socialProxy') }} = {{ npsData()!.score.toFixed(1) }}</figcaption>
           <div class="mpl-chart mpl-chart-mplframe mpl-nps-stack">
             <div class="mpl-nps-legend mpl-nps-legend-mpl">
-              <span><i class="lgd lgd-promoter"></i> Promoters</span>
-              <span><i class="lgd lgd-passive"></i> Passives</span>
-              <span><i class="lgd lgd-detractor"></i> Detractors</span>
+              <span><i class="lgd lgd-promoter"></i> {{ t('reports.promoters') }}</span>
+              <span><i class="lgd lgd-passive"></i> {{ t('reports.passives') }}</span>
+              <span><i class="lgd lgd-detractor"></i> {{ t('reports.detractors') }}</span>
             </div>
             <div class="mpl-nps-axes-row">
-              <div class="mpl-stack-y-axis mpl-stack-y-axis-mpl" aria-hidden="true">Social NPS proxy</div>
+              <div class="mpl-stack-y-axis mpl-stack-y-axis-mpl" aria-hidden="true">{{ t('npsPage.socialProxy') }}</div>
               <div class="mpl-nps-plot-box">
-                <div class="mpl-nps-x mpl-nps-x-mpl">% of original customer CX tweets</div>
+                <div class="mpl-nps-x mpl-nps-x-mpl">{{ t('npsPage.originalTweetsPercent') }}</div>
                 <div class="mpl-stack-bar mpl-stack-bar-mpl">
                   <div class="stk stk-promoter" [style.width.%]="npsData()!.promoterPercentage"></div>
                   <div class="stk stk-passive" [style.width.%]="passivesPercentage()"></div>
@@ -105,19 +105,19 @@
                   <span>0</span><span>20</span><span>40</span><span>60</span><span>80</span><span>100</span>
                 </div>
                 <p class="mpl-nps-summary">
-                  Promoters
+                  {{ t('reports.promoters') }}
                   <button mat-button color="primary" type="button" (click)="openNpsBucket('promoters')" [disabled]="npsData()!.promoters === 0">
                     {{ formatPct(npsData()!.promoterPercentage) }}%
                   </button>
-                  · Passives
+                  · {{ t('reports.passives') }}
                   <button mat-button color="primary" type="button" (click)="openNpsBucket('passives')" [disabled]="npsData()!.passives === 0">
                     {{ formatPct(passivesPercentage()) }}%
                   </button>
-                  · Detractors
+                  · {{ t('reports.detractors') }}
                   <button mat-button color="primary" type="button" (click)="openNpsBucket('detractors')" [disabled]="npsData()!.detractors === 0">
                     {{ formatPct(npsData()!.detractorPercentage) }}%
                   </button>
-                  ({{ npsData()!.total }} items).
+                  ({{ t('reports.totalCount', { count: npsData()!.total }) }}).
                 </p>
               </div>
             </div>
@@ -126,7 +126,7 @@
         <mat-card class="nested-note">
           <mat-card-content>
             <p>
-              <strong>NPS = % Promoters − % Detractors</strong> →
+              <strong>{{ t('npsPage.formulaLabel') }}</strong> →
               {{ formatPct(npsData()!.promoterPercentage) }}% − {{ formatPct(npsData()!.detractorPercentage) }}% =
               {{ npsData()!.score.toFixed(1) }}
             </p>
@@ -138,21 +138,21 @@
 
   <div class="reference-overlay" *ngIf="drilldownOpen()" (click)="closeDrilldown()" role="dialog" aria-modal="true">
     <div class="reference-modal" (click)="$event.stopPropagation()">
-      <h3>Related content · {{ drilldownTitle() }}</h3>
+      <h3>{{ t('sentiment.relatedContent') }} · {{ drilldownTitle() }}</h3>
       <div *ngIf="drilldownLoading()" class="drilldown-loading">
         <mat-progress-spinner mode="indeterminate" diameter="36"></mat-progress-spinner>
       </div>
-      <p *ngIf="!drilldownLoading() && drilldownRows().length === 0">No related rows returned.</p>
+      <p *ngIf="!drilldownLoading() && drilldownRows().length === 0">{{ t('sentiment.noRelatedRows') }}</p>
       <ul class="drilldown-list" *ngIf="!drilldownLoading() && drilldownRows().length">
         <li *ngFor="let row of drilldownRows()">
           <strong>#{{ row.id }} · {{ row.sentiment }} · {{ formatDate(row.date) }}</strong>
-          <p *ngIf="row.journeyStage"><strong>Journey stage:</strong> {{ row.journeyStage }}</p>
-          <p *ngIf="row.relevanceReason"><strong>Why:</strong> {{ row.relevanceReason }}</p>
-          <p><strong>AI summary:</strong> {{ row.content }}</p>
+          <p *ngIf="row.journeyStage"><strong>{{ t('sentiment.journeyStage') }}:</strong> {{ row.journeyStage }}</p>
+          <p *ngIf="row.relevanceReason"><strong>{{ t('sentiment.why') }}:</strong> {{ row.relevanceReason }}</p>
+          <p><strong>{{ t('sentiment.aiSummary') }}:</strong> {{ row.content }}</p>
           <pre class="reference-text">{{ row.referenceContent || row.content }}</pre>
         </li>
       </ul>
-      <button mat-stroked-button type="button" (click)="closeDrilldown()">Close</button>
+      <button mat-stroked-button type="button" (click)="closeDrilldown()">{{ t('app.close') }}</button>
     </div>
   </div>
 </div>

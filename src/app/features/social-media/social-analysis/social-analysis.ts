@@ -62,6 +62,8 @@ export class SocialAnalysis implements OnInit, OnDestroy {
   drilldownLoading = signal(false);
   drilldownTitle = signal('');
   drilldownRows = signal<Array<{ id: number; content: string; contentSummary?: string; sentiment: string; date: string }>>([]);
+  drilldownRequestedCount = signal(0);
+  drilldownRequestedLimit = this.analysisService.drilldownIdLimit;
   displayedColumns: string[] = ['platform', 'volume', 'sentiment', 'positive', 'negative', 'neutral'];
   readonly t = (key: string, params?: Record<string, string | number>): string =>
     this.translationService.translate(key, params);
@@ -169,13 +171,15 @@ export class SocialAnalysis implements OnInit, OnDestroy {
   openRelated(title: string, ids: number[]): void {
     const unique = [...new Set((ids || []).filter((id) => Number.isFinite(id) && id > 0))];
     if (!unique.length) return;
+    const safeIds = unique.slice(0, this.drilldownRequestedLimit);
     this.drilldownTitle.set(title);
+    this.drilldownRequestedCount.set(unique.length);
     this.drilldownOpen.set(true);
     this.drilldownLoading.set(true);
     this.drilldownRows.set([]);
     const user = this.authService.currentUser();
     const companyId = user?.role === 'admin' ? undefined : (user?.settings?.companyId ?? 1);
-    this.analysisService.getAnalyticsDrilldown({ companyId, ids: unique }).subscribe({
+    this.analysisService.getAnalyticsDrilldown({ companyId, ids: safeIds }).subscribe({
       next: (res) => {
         this.drilldownLoading.set(false);
         this.drilldownRows.set(res?.data?.list || []);
@@ -190,5 +194,6 @@ export class SocialAnalysis implements OnInit, OnDestroy {
   closeDrilldown(): void {
     this.drilldownOpen.set(false);
     this.drilldownRows.set([]);
+    this.drilldownRequestedCount.set(0);
   }
 }

@@ -259,8 +259,8 @@ export class RootCauseAnalysis implements OnInit, OnDestroy {
     return this.rootCauses().slice(start, end);
   }
 
-  t(key: string): string {
-    return this.translationService.translate(key);
+  t(key: string, params?: Record<string, string | number>): string {
+    return this.translationService.translate(key, params);
   }
 
   rootCauseRows(): RootCauseChartRow[] {

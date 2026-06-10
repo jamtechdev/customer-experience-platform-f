@@ -119,6 +119,9 @@
   <div class="reference-overlay" *ngIf="drilldownOpen()" (click)="closeDrilldown()" role="dialog" aria-modal="true">
     <div class="reference-modal" (click)="$event.stopPropagation()">
       <h3>{{ t('socialMediaPage.relatedContent') }} · {{ drilldownTitle() }}</h3>
+      <p *ngIf="drilldownRequestedCount() > drilldownRequestedLimit" class="drilldown-note">
+        {{ t('socialMediaPage.showingSample', { shown: drilldownRequestedLimit, total: drilldownRequestedCount() }) }}
+      </p>
       <div *ngIf="drilldownLoading()" class="drilldown-loading">
         <mat-progress-spinner mode="indeterminate" diameter="36"></mat-progress-spinner>
       </div>

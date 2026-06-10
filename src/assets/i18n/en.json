@@ -517,6 +517,30 @@
       "notesBody": "NPS is not an average of scores. It is sensitive to sample size; interpret together with response counts. If ratings are imported on a different scale, they may be normalized or excluded—check import validation messages."
     }
   },
+  "npsPage": {
+    "subtitle": "Net Promoter Score analysis and trends",
+    "loadingTitle": "Loading NPS signals",
+    "loadingSubtitle": "Reading promoters, passives, detractors, and trend interpretation for the selected range",
+    "noDataTitle": "No NPS Data Available",
+    "noDataHint": "Upload CSV files with NPS survey data to see analysis results.",
+    "cardSubtitle": "Social NPS proxy based on original customer-originated CX tweets.",
+    "proxyExplanation": "Because tweets do not contain direct NPS scores, promoters/passives/detractors are inferred from tweet sentiment.",
+    "socialProxy": "Social NPS proxy",
+    "stackedBarLabel": "Social NPS stacked bar",
+    "originalTweetsPercent": "% of original customer CX tweets",
+    "formulaLabel": "NPS = % Promoters - % Detractors",
+    "proxyUnavailable": "NPS proxy could not be computed for this range yet. Upload more CSV feedback or widen the date range so Ollama can infer promoter, passive, and detractor mix.",
+    "temporarilyUnavailable": "NPS analysis is temporarily unavailable. Please retry after a moment; Ollama-based inference will populate this section once data is reachable.",
+    "loadFailed": "Failed to load NPS data",
+    "noUsableResponses": "No usable responses were found in this date range. Add or reprocess CSV feedback so Ollama can infer an NPS-style distribution.",
+    "healthyAdvocacy": "Customer advocacy is healthy in this window: promoters ({{promoters}}%) clearly outnumber detractors ({{detractors}}%). Focus on scaling what customers already appreciate.",
+    "fragileAdvocacy": "Sentiment is slightly positive but fragile. Promoters ({{promoters}}%) are only marginally ahead of detractors ({{detractors}}%), so targeted fixes in recurring complaint themes can lift loyalty quickly.",
+    "negativeAdvocacy": "Advocacy is currently negative: detractors ({{detractors}}%) are outweighing promoters ({{promoters}}%). Prioritize top pain points and service recovery actions to reverse the trend.",
+    "excellent": "Excellent",
+    "good": "Good",
+    "needsImprovement": "Needs Improvement",
+    "poor": "Poor"
+  },
   "tasks": {
     "title": "Tasks & Alarms",
     "taskList": "Task List",
@@ -653,6 +677,7 @@
     "volume": "Volume",
     "sentimentScore": "Sentiment score",
     "noPlatformData": "No platform data. Upload CSV feedback with source/platform column to see volume and sentiment by channel.",
+    "showingSample": "Showing the first {{shown}} related rows from {{total}} matches to keep the request fast and reliable.",
     "sentimentLoadFailed": "Failed to load sentiment distribution",
     "volumeLoadFailed": "Failed to load volume data"
   },
@@ -735,7 +760,20 @@
     "severity": "Severity",
     "painPoint": "Pain point",
     "summary": "Summary",
-    "examples": "Examples"
+    "examples": "Examples",
+    "runningTitle": "Running root cause analysis",
+    "runningSubtitle": "Analyzing negative feedback and grouping recurring issues",
+    "loadingThemesTitle": "Loading root cause themes",
+    "loadingThemesSubtitle": "Reading saved themes, counts, and interpretations from the database",
+    "distributionSubtitle": "Root-cause distribution across negative original customer tweets.",
+    "chartLabel": "Root cause bar chart",
+    "viewRecords": "View records",
+    "relinkRecords": "Re-link records",
+    "negativeTweetCount": "Negative tweet count",
+    "viewRecordCount": "View {{count}} records",
+    "interpretation": "Interpretation",
+    "viewRelatedTweets": "View all related tweets",
+    "relatedFeedback": "Related feedback"
   },
   "competitorPage": {
     "title": "Competitor Comparison",

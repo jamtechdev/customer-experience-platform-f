@@ -10,7 +10,8 @@
       [routerLink]="item.route"
       routerLinkActive="active"
       [routerLinkActiveOptions]="getLinkActiveOptions(item.route)"
-      (click)="onNavigate()"
+      (mousedown)="$event.preventDefault()"
+      (click)="onNavigate($event)"
       class="menu-item">
       <mat-icon matListItemIcon>{{ item.icon }}</mat-icon>
       <span matListItemTitle>{{ item.label }}</span>

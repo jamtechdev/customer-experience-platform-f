@@ -1,21 +1,26 @@
 .action-plans-container {
-  padding: 24px;
+  padding: 24px 28px 96px;
+  max-width: 1280px;
+  margin: 0 auto;
+  width: 100%;
 }
 
 .header-section {
-  margin-bottom: 24px;
+  margin-bottom: 20px;
 }
 
 .header-section h1 {
-  font-size: 2rem;
-  font-weight: 600;
-  margin-bottom: 8px;
+  font-size: clamp(1.65rem, 2vw, 2rem);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  margin: 0 0 8px;
   color: #111827;
 }
 
 .subtitle {
   color: #6b7280;
   font-size: 1rem;
+  margin: 0;
 }
 
 .actions-section {
@@ -153,7 +158,7 @@
 
 @media (max-width: 768px) {
   .action-plans-container {
-    padding: 16px;
+    padding: 16px 16px 96px;
   }
 
   .action-plans-table {
@@ -191,13 +196,71 @@
   overflow: hidden;
 }
 
+.section-card .mat-mdc-card-header {
+  padding: 20px 24px 10px;
+}
+
+.section-card .mat-mdc-card-content {
+  padding: 16px 24px 24px;
+}
+
+.action-filter-row {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 14px;
+}
+
+.action-filter-row mat-form-field {
+  width: min(260px, 100%);
+}
+
 .table-wrap {
   overflow-x: auto;
+  border: 1px solid #e5e7eb;
+  border-radius: 16px;
+  background: #fff;
 }
 
 .action-table {
   width: 100%;
-  min-width: 760px;
+  min-width: 960px;
+  table-layout: fixed;
+}
+
+.action-table .mat-column-priority {
+  width: 110px;
+}
+
+.action-table .mat-column-action {
+  width: 31%;
+}
+
+.action-table .mat-column-owner {
+  width: 160px;
+}
+
+.action-table .mat-column-impact {
+  width: 31%;
+}
+
+.action-table .mat-column-horizon {
+  width: 140px;
+}
+
+.action-table .mat-column-sources {
+  width: 120px;
+}
+
+.wrap-cell {
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: normal;
+  line-height: 1.45;
+}
+
+.owner-cell {
+  color: #374151;
+  font-weight: 600;
 }
 
 .pri-chip.p1 {
@@ -216,13 +279,21 @@
 }
 
 :host ::ng-deep .report-mat-table .mat-mdc-header-cell {
-  background: #b8d4f2 !important;
+  background: #f8fafc !important;
   color: #0f172a !important;
-  font-weight: 600 !important;
+  font-weight: 800 !important;
+  border-bottom: 1px solid #dbe3ef;
 }
 
 :host ::ng-deep .report-mat-table .mat-mdc-cell {
   border-bottom: 1px solid #e2e8f0;
+  color: #1f2937;
+  vertical-align: top;
+}
+
+:host ::ng-deep .report-mat-table .mat-mdc-cell,
+:host ::ng-deep .report-mat-table .mat-mdc-header-cell {
+  padding: 12px 14px;
 }
 
 .reference-overlay {

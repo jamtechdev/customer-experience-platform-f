@@ -246,7 +246,13 @@ export class ArcelikTwitterCxReport implements OnInit, OnDestroy {
     }))
   );
 
-  actionPlanDisplay = computed((): ActionPlanRow[] => this.reportBundle()?.actionPlan ?? []);
+  actionPriorityFilter = signal<'all' | 'p1' | 'p2' | 'p3'>('all');
+  actionPlanDisplay = computed((): ActionPlanRow[] => {
+    const rows = this.reportBundle()?.actionPlan ?? [];
+    const filter = this.actionPriorityFilter();
+    if (filter === 'all') return rows;
+    return rows.filter((row) => (row.priority || '').trim().toLowerCase() === filter);
+  });
 
   processImprovementsDisplay = computed(() => this.reportBundle()?.processImprovements ?? []);
 

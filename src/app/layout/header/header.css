@@ -194,7 +194,7 @@
 .notification-menu {
   min-width: 300px;
   max-width: 360px;
-  max-height: 420px;
+  max-height: min(420px, calc(100vh - 96px));
   padding: 0;
   overflow: hidden;
 }
@@ -212,8 +212,10 @@
 }
 
 .notification-list {
-  max-height: 340px;
+  max-height: min(340px, calc(100vh - 170px));
   overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
 }
 
 .notification-item {
@@ -323,4 +325,16 @@
   .role-badge {
     display: none;
   }
+}
+
+::ng-deep .notification-menu-panel.mat-mdc-menu-panel {
+  max-height: min(420px, calc(100vh - 96px)) !important;
+  overflow: hidden !important;
+  border-radius: 14px !important;
+}
+
+::ng-deep .notification-menu-panel .mat-mdc-menu-content {
+  padding: 0 !important;
+  max-height: inherit;
+  overflow: hidden;
 }

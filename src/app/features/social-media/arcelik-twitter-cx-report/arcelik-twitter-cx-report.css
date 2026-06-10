@@ -63,6 +63,16 @@
   min-width: 160px;
 }
 
+.action-filter-row {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 12px;
+}
+
+.action-filter-row mat-form-field {
+  width: min(260px, 100%);
+}
+
 .hint-below {
   margin-top: 12px;
   margin-bottom: 0;

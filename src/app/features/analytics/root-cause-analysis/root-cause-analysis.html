@@ -17,16 +17,16 @@
 
   <div *ngIf="loading()" class="loading-container">
     <app-ollama-loader
-      [title]="reanalyzing() ? 'Running root cause analysis' : 'Loading root cause themes'"
-      [subtitle]="reanalyzing() ? 'Analyzing negative feedback and grouping recurring issues' : 'Reading saved themes, counts, and interpretations from the database'">
+      [title]="reanalyzing() ? t('rootCausePage.runningTitle') : t('rootCausePage.loadingThemesTitle')"
+      [subtitle]="reanalyzing() ? t('rootCausePage.runningSubtitle') : t('rootCausePage.loadingThemesSubtitle')">
     </app-ollama-loader>
   </div>
 
   <div *ngIf="!loading()" class="content-section">
     <mat-card class="section-card">
       <mat-card-header>
-        <mat-card-title>Root cause analysis</mat-card-title>
-        <mat-card-subtitle>Root-cause distribution across negative original customer tweets.</mat-card-subtitle>
+        <mat-card-title>{{ t('rootCausePage.title') }}</mat-card-title>
+        <mat-card-subtitle>{{ t('rootCausePage.distributionSubtitle') }}</mat-card-subtitle>
       </mat-card-header>
       <mat-card-content>
         <div *ngIf="rootCauseRows().length === 0" class="empty-state">
@@ -36,11 +36,11 @@
             <p>{{ emptyHint() || t('rootCausePage.noRootCausesHint') }}</p>
           </div>
         </div>
-        <figure *ngIf="rootCauseRows().length > 0" class="mpl-figure" aria-label="Root cause bar chart">
-          <figcaption class="mpl-figure-title">Root-cause distribution across negative original customer tweets.</figcaption>
+        <figure *ngIf="rootCauseRows().length > 0" class="mpl-figure" [attr.aria-label]="t('rootCausePage.chartLabel')">
+          <figcaption class="mpl-figure-title">{{ t('rootCausePage.distributionSubtitle') }}</figcaption>
           <div class="mpl-chart mpl-chart-mplframe mpl-bar-root">
             <div class="mpl-axes-frame">
-              <div class="mpl-y-label-outer" aria-hidden="true">Count</div>
+              <div class="mpl-y-label-outer" aria-hidden="true">{{ t('sentiment.count') }}</div>
               <div class="mpl-y-axis mpl-y-axis-mpl">
                 <span>{{ rootCauseMaxEffective() }}</span>
                 <span>{{ (rootCauseMaxEffective() * 3) / 4 | number : '1.0-0' }}</span>
@@ -59,7 +59,7 @@
                         type="button"
                         class="bar-count-link"
                         (click)="row.feedbackIds.length ? openRelatedRecords(row) : relinkRecords(row)"
-                        [attr.aria-label]="row.feedbackIds.length ? 'View records' : 'Re-link records'">
+                        [attr.aria-label]="row.feedbackIds.length ? t('rootCausePage.viewRecords') : t('rootCausePage.relinkRecords')">
                         {{ row.count }}
                       </button>
                     </div>
@@ -74,11 +74,11 @@
         <div class="table-wrapper" *ngIf="rootCauseRows().length > 0">
           <table mat-table [dataSource]="rootCauseRows()" class="dense-table report-mat-table">
             <ng-container matColumnDef="cause">
-              <th mat-header-cell *matHeaderCellDef>Root cause</th>
+              <th mat-header-cell *matHeaderCellDef>{{ t('rootCausePage.rootCause') }}</th>
               <td mat-cell *matCellDef="let row">{{ row.cause }}</td>
             </ng-container>
             <ng-container matColumnDef="count">
-              <th mat-header-cell *matHeaderCellDef>Negative tweet count</th>
+              <th mat-header-cell *matHeaderCellDef>{{ t('rootCausePage.negativeTweetCount') }}</th>
               <td mat-cell *matCellDef="let row">
                 <button
                   type="button"
@@ -86,12 +86,12 @@
                   mat-button
                   color="primary"
                   (click)="row.feedbackIds.length ? openRelatedRecords(row) : relinkRecords(row)">
-                  <strong>View {{ row.count }} records</strong>
+                  <strong>{{ t('rootCausePage.viewRecordCount', { count: row.count }) }}</strong>
                 </button>
               </td>
             </ng-container>
             <ng-container matColumnDef="interpretation">
-              <th mat-header-cell *matHeaderCellDef>Interpretation</th>
+              <th mat-header-cell *matHeaderCellDef>{{ t('rootCausePage.interpretation') }}</th>
               <td mat-cell *matCellDef="let row">{{ row.interpretation }}</td>
             </ng-container>
             <tr mat-header-row *matHeaderRowDef="['cause', 'count', 'interpretation']"></tr>
@@ -112,7 +112,7 @@
     <div class="root-cause-modal" (click)="$event.stopPropagation()">
       <div class="root-cause-modal-header">
         <h2 id="root-cause-modal-title">{{ cause.title }}</h2>
-        <button mat-icon-button type="button" aria-label="Close details" (click)="closeRootCauseModal()">
+        <button mat-icon-button type="button" [attr.aria-label]="t('app.close')" (click)="closeRootCauseModal()">
           <mat-icon>close</mat-icon>
         </button>
       </div>
@@ -138,7 +138,7 @@
       </div>
 
       <div class="root-cause-modal-actions">
-        <button mat-stroked-button type="button" (click)="viewCauseRecords(cause)">View all related tweets</button>
+        <button mat-stroked-button type="button" (click)="viewCauseRecords(cause)">{{ t('rootCausePage.viewRelatedTweets') }}</button>
         <button mat-raised-button color="primary" type="button" (click)="closeRootCauseModal()">{{ t('app.close') }}</button>
       </div>
     </div>
@@ -153,8 +153,8 @@
     (click)="closeDrilldown()">
     <div class="root-cause-modal drilldown-modal" (click)="$event.stopPropagation()">
       <div class="root-cause-modal-header">
-        <h2 id="drilldown-title">Related feedback · {{ drilldownTitle() }}</h2>
-        <button mat-icon-button type="button" aria-label="Close drilldown" (click)="closeDrilldown()">
+        <h2 id="drilldown-title">{{ t('rootCausePage.relatedFeedback') }} · {{ drilldownTitle() }}</h2>
+        <button mat-icon-button type="button" [attr.aria-label]="t('app.close')" (click)="closeDrilldown()">
           <mat-icon>close</mat-icon>
         </button>
       </div>
@@ -163,7 +163,7 @@
           <mat-progress-spinner mode="indeterminate" diameter="36"></mat-progress-spinner>
         </div>
         <div *ngIf="!drilldownLoading() && drilldownRows().length === 0" class="empty-state">
-          <p>No rows returned.</p>
+          <p>{{ t('sentiment.noRelatedRows') }}</p>
         </div>
         <ul class="drilldown-list" *ngIf="!drilldownLoading() && drilldownRows().length">
           <li *ngFor="let r of drilldownRows()">
@@ -172,8 +172,8 @@
               <span class="dr-sent">{{ r.sentiment }}</span>
               <span class="dr-date">{{ formatFeedbackDate(r.date) }}</span>
             </div>
-            <p *ngIf="r.relevanceReason" class="dr-content"><strong>Why:</strong> {{ r.relevanceReason }}</p>
-            <p class="dr-content"><strong>AI summary:</strong> {{ r.contentSummary || r.content }}</p>
+            <p *ngIf="r.relevanceReason" class="dr-content"><strong>{{ t('sentiment.why') }}:</strong> {{ r.relevanceReason }}</p>
+            <p class="dr-content"><strong>{{ t('sentiment.aiSummary') }}:</strong> {{ r.contentSummary || r.content }}</p>
             <pre class="dr-content">{{ r.content }}</pre>
           </li>
         </ul>

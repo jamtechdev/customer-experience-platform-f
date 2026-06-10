@@ -17,6 +17,7 @@ import { environment } from '../../../environments/environment';
 export class AnalysisService {
   private readonly http = inject(HttpClient);
   private readonly baseUrl = environment.apiUrl ? `${environment.apiUrl.replace(/\/$/, '')}/analysis` : '/api/analysis';
+  readonly drilldownIdLimit = 200;
 
   private realtimeParams(params: HttpParams = new HttpParams()): HttpParams {
     return params.set('_t', Date.now().toString());
@@ -103,7 +104,11 @@ export class AnalysisService {
   }): Observable<ApiResponse<{ list: any[]; requested: number; returned: number }>> {
     let params = new HttpParams();
     if (options.companyId != null) params = params.set('companyId', String(options.companyId));
-    if (options.ids?.length) params = params.set('ids', [...new Set(options.ids)].join(','));
+    if (options.ids?.length) {
+      const ids = [...new Set(options.ids.filter((id) => Number.isFinite(id) && id > 0))]
+        .slice(0, this.drilldownIdLimit);
+      if (ids.length) params = params.set('ids', ids.join(','));
+    }
     if (options.rootCauseId != null) params = params.set('rootCauseId', String(options.rootCauseId));
     if (options.sentiment) params = params.set('sentiment', options.sentiment);
     if (options.source) params = params.set('source', options.source);

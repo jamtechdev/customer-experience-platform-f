@@ -62,7 +62,8 @@ export class NpsAnalysis implements OnInit, OnDestroy {
   private websocket = inject(CXWebSocketService);
   private importStatusSub?: Subscription;
 
-  readonly t = (key: string): string => this.translationService.translate(key);
+  readonly t = (key: string, params?: Record<string, string | number>): string =>
+    this.translationService.translate(key, params);
 
   loading = signal(false);
   npsData = signal<NPSData | null>(null);
@@ -146,6 +147,17 @@ export class NpsAnalysis implements OnInit, OnDestroy {
     }
   }
 
+  presetLabel(p: ReportDatePreset): string {
+    const labels: Record<string, string> = {
+      all_time: 'reports.allTime',
+      last_7_days: 'reports.last7Days',
+      last_30_days: 'reports.last30Days',
+      last_calendar_month: 'reports.lastCalendarMonth',
+      ytd: 'reports.yearToDate',
+    };
+    return labels[p.id] ? this.t(labels[p.id]) : p.label;
+  }
+
   onManualDate(): void {
     this.selectedPresetId.set('custom');
   }
@@ -163,7 +175,7 @@ export class NpsAnalysis implements OnInit, OnDestroy {
       return;
     }
     if (!this.datesValid()) {
-      this.snackBar.open('Select a valid date range', 'Close', { duration: 4000 });
+      this.snackBar.open(this.t('reports.selectValidRange'), this.t('app.close'), { duration: 4000 });
       return;
     }
     this.filtersApplied.set(true);
@@ -261,7 +273,7 @@ export class NpsAnalysis implements OnInit, OnDestroy {
           };
           this.npsData.set(empty);
           this.npsInterpretation.set(
-            'NPS proxy could not be computed for this range yet. Upload more CSV feedback or widen the date range so Ollama can infer promoter, passive, and detractor mix.'
+            this.t('npsPage.proxyUnavailable')
           );
         }
         this.loading.set(false);
@@ -279,10 +291,10 @@ export class NpsAnalysis implements OnInit, OnDestroy {
           detractorPercentage: 0
         });
         this.npsInterpretation.set(
-          'NPS analysis is temporarily unavailable. Please retry after a moment; Ollama-based inference will populate this section once data is reachable.'
+          this.t('npsPage.temporarilyUnavailable')
         );
         if (error.status !== 500) {
-          this.snackBar.open('Failed to load NPS data', 'Close', { duration: 3000 });
+          this.snackBar.open(this.t('npsPage.loadFailed'), this.t('app.close'), { duration: 3000 });
         }
       }
     });
@@ -290,23 +302,32 @@ export class NpsAnalysis implements OnInit, OnDestroy {
 
   private localNpsInterpretation(data: NPSData): string {
     if (!data.total) {
-      return 'No usable responses were found in this date range. Add or reprocess CSV feedback so Ollama can infer an NPS-style distribution.';
+      return this.t('npsPage.noUsableResponses');
     }
     const score = Number(data.score.toFixed(1));
     if (score >= 30) {
-      return `Customer advocacy is healthy in this window: promoters (${this.formatPct(data.promoterPercentage)}%) clearly outnumber detractors (${this.formatPct(data.detractorPercentage)}%). Focus on scaling what customers already appreciate.`;
+      return this.t('npsPage.healthyAdvocacy', {
+        promoters: this.formatPct(data.promoterPercentage),
+        detractors: this.formatPct(data.detractorPercentage),
+      });
     }
     if (score >= 0) {
-      return `Sentiment is slightly positive but fragile. Promoters (${this.formatPct(data.promoterPercentage)}%) are only marginally ahead of detractors (${this.formatPct(data.detractorPercentage)}%), so targeted fixes in recurring complaint themes can lift loyalty quickly.`;
+      return this.t('npsPage.fragileAdvocacy', {
+        promoters: this.formatPct(data.promoterPercentage),
+        detractors: this.formatPct(data.detractorPercentage),
+      });
     }
-    return `Advocacy is currently negative: detractors (${this.formatPct(data.detractorPercentage)}%) are outweighing promoters (${this.formatPct(data.promoterPercentage)}%). Prioritize top pain points and service recovery actions to reverse the trend.`;
+    return this.t('npsPage.negativeAdvocacy', {
+      promoters: this.formatPct(data.promoterPercentage),
+      detractors: this.formatPct(data.detractorPercentage),
+    });
   }
 
   getNPSCategory(score: number): string {
-    if (score >= 50) return 'Excellent';
-    if (score >= 0) return 'Good';
-    if (score >= -50) return 'Needs Improvement';
-    return 'Poor';
+    if (score >= 50) return this.t('npsPage.excellent');
+    if (score >= 0) return this.t('npsPage.good');
+    if (score >= -50) return this.t('npsPage.needsImprovement');
+    return this.t('npsPage.poor');
   }
 
   getNPSColor(score: number): string {

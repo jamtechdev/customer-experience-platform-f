@@ -516,6 +516,30 @@
       "notesBody": "NPS, skorların ortalaması değildir. Örneklem büyüklüğüne duyarlıdır; yorumlarken yanıt sayısıyla birlikte değerlendirin. Farklı ölçekten aktarılan puanlar normalize edilebilir veya dışlanabilir — içe aktarma doğrulama mesajlarını kontrol edin."
     }
   },
+  "npsPage": {
+    "subtitle": "Net Promoter Score analizi ve trendler",
+    "loadingTitle": "NPS sinyalleri yükleniyor",
+    "loadingSubtitle": "Seçilen aralık için destekleyenler, kararsızlar, eleştirenler ve trend yorumu okunuyor",
+    "noDataTitle": "NPS verisi yok",
+    "noDataHint": "Analiz sonuçlarını görmek için NPS anket verisi içeren CSV dosyaları yükleyin.",
+    "cardSubtitle": "Orijinal müşteri kaynaklı CX tweetlerine dayalı sosyal NPS vekil skoru.",
+    "proxyExplanation": "Tweetler doğrudan NPS skoru içermediği için destekleyen/kararsız/eleştiren dağılımı tweet duygusundan çıkarılır.",
+    "socialProxy": "Sosyal NPS vekil skoru",
+    "stackedBarLabel": "Sosyal NPS yığılmış çubuk",
+    "originalTweetsPercent": "Orijinal müşteri CX tweetlerinin yüzdesi",
+    "formulaLabel": "NPS = % Destekleyenler - % Eleştirenler",
+    "proxyUnavailable": "Bu aralık için NPS vekil skoru henüz hesaplanamadı. Daha fazla CSV geri bildirimi yükleyin veya tarih aralığını genişletin.",
+    "temporarilyUnavailable": "NPS analizi geçici olarak kullanılamıyor. Lütfen biraz sonra tekrar deneyin; veri erişilebilir olduğunda Ollama tabanlı çıkarım bu bölümü doldurur.",
+    "loadFailed": "NPS verisi yüklenemedi",
+    "noUsableResponses": "Bu tarih aralığında kullanılabilir yanıt bulunamadı. Ollama'nın NPS tarzı dağılım çıkarabilmesi için CSV geri bildirimini ekleyin veya yeniden işleyin.",
+    "healthyAdvocacy": "Bu dönemde müşteri savunuculuğu sağlıklı: destekleyenler (%{{promoters}}), eleştirenlerden (%{{detractors}}) belirgin şekilde fazla. Müşterilerin değer verdiği güçlü alanları ölçeklendirmeye odaklanın.",
+    "fragileAdvocacy": "Duygu hafif pozitif ama kırılgan. Destekleyenler (%{{promoters}}), eleştirenlerin (%{{detractors}}) sadece biraz önünde; tekrarlayan şikayet temalarındaki hedefli düzeltmeler sadakati hızlı artırabilir.",
+    "negativeAdvocacy": "Savunuculuk şu anda negatif: eleştirenler (%{{detractors}}), destekleyenlerden (%{{promoters}}) fazla. Trendi tersine çevirmek için ana ağrı noktalarına ve hizmet toparlama aksiyonlarına öncelik verin.",
+    "excellent": "Mükemmel",
+    "good": "İyi",
+    "needsImprovement": "İyileştirme gerekli",
+    "poor": "Zayıf"
+  },
   "tasks": {
     "title": "Görevler & Alarmlar",
     "taskList": "Görev Listesi",
@@ -652,6 +676,7 @@
     "volume": "Hacim",
     "sentimentScore": "Duygu skoru",
     "noPlatformData": "Platform verisi yok. Kanal bazında hacim ve duygu görmek için source/platform sütunu içeren CSV geri bildirimi yükleyin.",
+    "showingSample": "İsteğin hızlı ve güvenilir kalması için {{total}} eşleşmeden ilk {{shown}} ilgili satır gösteriliyor.",
     "sentimentLoadFailed": "Duygu dağılımı yüklenemedi",
     "volumeLoadFailed": "Hacim verisi yüklenemedi"
   },
@@ -734,7 +759,20 @@
     "severity": "Şiddet",
     "painPoint": "Ağrı noktası",
     "summary": "Özet",
-    "examples": "Örnekler"
+    "examples": "Örnekler",
+    "runningTitle": "Kök neden analizi çalışıyor",
+    "runningSubtitle": "Negatif geri bildirim analiz ediliyor ve tekrarlayan sorunlar gruplanıyor",
+    "loadingThemesTitle": "Kök neden temaları yükleniyor",
+    "loadingThemesSubtitle": "Kaydedilmiş temalar, sayılar ve yorumlar veritabanından okunuyor",
+    "distributionSubtitle": "Negatif orijinal müşteri tweetlerinde kök neden dağılımı.",
+    "chartLabel": "Kök neden çubuk grafiği",
+    "viewRecords": "Kayıtları görüntüle",
+    "relinkRecords": "Kayıtları yeniden bağla",
+    "negativeTweetCount": "Negatif tweet sayısı",
+    "viewRecordCount": "{{count}} kaydı görüntüle",
+    "interpretation": "Yorum",
+    "viewRelatedTweets": "Tüm ilgili tweetleri görüntüle",
+    "relatedFeedback": "İlgili geri bildirim"
   },
   "competitorPage": {
     "title": "Rakip Karşılaştırması",

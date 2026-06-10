@@ -55,6 +55,7 @@ export class ActionPlans implements OnInit, OnDestroy {
   actionPlans = signal<ActionPlanItem[]>([]);
   readonly pageSize = 20;
   page = signal(1);
+  actionPriorityFilter = signal<'all' | 'p1' | 'p2' | 'p3'>('all');
   pagedActionPlans = computed(() => {
     const all = this.actionPlans();
     const total = all.length;
@@ -65,7 +66,7 @@ export class ActionPlans implements OnInit, OnDestroy {
     return all.slice(start, start + this.pageSize);
   });
   totalPages = computed(() => {
-    const total = this.actionPlans().length;
+    const total = this.filteredReportPlanRows().length;
     return total === 0 ? 0 : Math.ceil(total / this.pageSize);
   });
   displayedColumns: string[] = ['title', 'priority', 'status', 'dueDate', 'actions'];
@@ -79,6 +80,20 @@ export class ActionPlans implements OnInit, OnDestroy {
       referenceFeedbackIds?: number[];
     }>
   >([]);
+  filteredReportPlanRows = computed(() => {
+    const filter = this.actionPriorityFilter();
+    const rows = this.reportPlanRows();
+    if (filter === 'all') return rows;
+    return rows.filter((row) => (row.priority || '').trim().toLowerCase() === filter);
+  });
+  pagedReportPlanRows = computed(() => {
+    const rows = this.filteredReportPlanRows();
+    if (rows.length === 0) return [];
+    const maxPage = Math.max(1, Math.ceil(rows.length / this.pageSize));
+    const p = Math.min(Math.max(1, this.page()), maxPage);
+    const start = (p - 1) * this.pageSize;
+    return rows.slice(start, start + this.pageSize);
+  });
   drilldownOpen = signal(false);
   drilldownLoading = signal(false);
   drilldownTitle = signal('');
@@ -166,6 +181,11 @@ export class ActionPlans implements OnInit, OnDestroy {
     this.page.update((p) => Math.max(1, p - 1));
   }
 
+  setActionPriorityFilter(value: 'all' | 'p1' | 'p2' | 'p3'): void {
+    this.actionPriorityFilter.set(value);
+    this.page.set(1);
+  }
+
   openReferences(row: { action: string; referenceFeedbackIds?: number[] }): void {
     const ids = row.referenceFeedbackIds ?? [];
     if (!ids.length) return;
@@ -189,9 +209,8 @@ export class ActionPlans implements OnInit, OnDestroy {
   }
 
   goNextPage(): void {
-    const total = this.actionPlans().length;
-    if (total === 0) return;
-    const maxPage = Math.ceil(total / this.pageSize);
+    const maxPage = this.totalPages();
+    if (maxPage === 0) return;
     this.page.update((p) => Math.min(maxPage, p + 1));
   }
 

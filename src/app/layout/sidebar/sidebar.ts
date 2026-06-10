@@ -174,7 +174,8 @@ export class Sidebar implements OnInit, OnDestroy {
     this.routerSub?.unsubscribe();
   }
 
-  onNavigate(): void {
+  onNavigate(event?: MouseEvent): void {
+    (event?.currentTarget as HTMLElement | null)?.blur();
     this.navigate.emit();
   }
 }

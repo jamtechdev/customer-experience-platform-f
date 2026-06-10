@@ -1,9 +1,12 @@
 .root-cause-container {
-  padding: 24px;
+  padding: 24px 28px 96px;
+  max-width: 1280px;
+  margin: 0 auto;
+  width: 100%;
 }
 
 .header-section {
-  margin-bottom: 24px;
+  margin-bottom: 20px;
 }
 
 .header-with-action {
@@ -23,15 +26,17 @@
 }
 
 .header-section h1 {
-  font-size: 2rem;
-  font-weight: 600;
-  margin-bottom: 8px;
+  font-size: clamp(1.65rem, 2vw, 2rem);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  margin: 0 0 8px;
   color: #111827;
 }
 
 .subtitle {
   color: #6b7280;
   font-size: 1rem;
+  margin: 0;
 }
 
 .loading-container {
@@ -104,15 +109,58 @@
   width: 100%;
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
+  border: 1px solid #e5e7eb;
+  border-radius: 16px;
+  background: #ffffff;
 }
 
 .section-card {
   margin-bottom: 20px;
+  border: 1px solid #e5e7eb;
+  border-radius: 18px;
+  box-shadow: 0 10px 28px rgba(15, 23, 42, 0.05);
+  overflow: hidden;
+}
+
+.section-card .mat-mdc-card-header {
+  padding: 20px 24px 10px;
+}
+
+.section-card .mat-mdc-card-content {
+  padding: 16px 24px 24px;
 }
 
 .dense-table {
   width: 100%;
-  min-width: 520px;
+  min-width: 760px;
+  table-layout: fixed;
+}
+
+.dense-table .mat-column-cause {
+  width: 28%;
+}
+
+.dense-table .mat-column-count {
+  width: 190px;
+}
+
+:host ::ng-deep .dense-table .mat-mdc-header-cell {
+  background: #f8fafc !important;
+  color: #0f172a !important;
+  font-weight: 800 !important;
+  border-bottom: 1px solid #dbe3ef;
+}
+
+:host ::ng-deep .dense-table .mat-mdc-cell {
+  color: #1f2937;
+  border-bottom: 1px solid #e5e7eb;
+  vertical-align: top;
+  line-height: 1.45;
+}
+
+:host ::ng-deep .dense-table .mat-mdc-cell,
+:host ::ng-deep .dense-table .mat-mdc-header-cell {
+  padding: 12px 14px;
 }
 
 /* Matplotlib-style figure used in report section 6 */
@@ -407,4 +455,18 @@
   white-space: pre-wrap;
   line-height: 1.45;
   color: #374151;
+}
+
+@media (max-width: 768px) {
+  .root-cause-container {
+    padding: 16px 16px 96px;
+  }
+
+  .section-card .mat-mdc-card-header {
+    padding: 18px 16px 8px;
+  }
+
+  .section-card .mat-mdc-card-content {
+    padding: 14px 16px 18px;
+  }
 }

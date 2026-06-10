@@ -22,11 +22,11 @@
     <span class="alert-count" *ngIf="alertCount() > 0">{{ alertCount() > 99 ? '99+' : alertCount() }}</span>
   </button>
 
-  <mat-menu #notificationsMenu="matMenu">
+  <mat-menu #notificationsMenu="matMenu" panelClass="notification-menu-panel">
     <div class="notification-menu">
       <div class="notification-header">{{ t('header.notifications') }}</div>
       <div *ngIf="alerts().length === 0" class="notification-empty">{{ t('header.noNotifications') }}</div>
-      <div *ngIf="alerts().length > 0" class="notification-list">
+      <div *ngIf="alerts().length > 0" class="notification-list" (wheel)="$event.stopPropagation()" (touchmove)="$event.stopPropagation()">
         <button
           mat-menu-item
           type="button"
