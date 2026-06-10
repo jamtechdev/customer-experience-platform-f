@@ -1,5 +1,8 @@
 /** User-facing copy when bundled Twitter CX report HTTP/stream fails (no .env required). */
 export function twitterCxReportFailureMessage(apiMessage?: string): string {
+  if (apiMessage === 'http_0' || apiMessage === 'network') {
+    return 'Could not reach the API server. Wait a moment and retry; if it repeats, check that the backend service is running.';
+  }
   if (apiMessage === 'http_504' || apiMessage === 'http_502') {
     return 'The CX report build is taking longer than the server allows. Try again in a moment, or use a smaller date range.';
   }

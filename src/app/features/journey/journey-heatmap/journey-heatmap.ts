@@ -77,14 +77,14 @@ export class JourneyHeatmap implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.loadHeatmap(false);
-    this.refreshSub = this.twitterCxReportStore.onRefresh$.subscribe(() => this.loadHeatmap(true));
+    this.refreshSub = this.twitterCxReportStore.onRefresh$.subscribe(() => this.loadHeatmap(false));
   }
 
   ngOnDestroy(): void {
     this.refreshSub?.unsubscribe();
   }
 
-  loadHeatmap(forceLive: boolean = true): void {
+  loadHeatmap(forceLive: boolean = false): void {
     const user = this.authService.currentUser();
     const companyId = user?.role === 'admin' ? undefined : (user?.settings?.companyId ?? 1);
     this.loading.set(true);
