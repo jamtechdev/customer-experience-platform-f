@@ -10,6 +10,7 @@
   border: 1px solid rgba(255,255,255,0.22) !important;
   color: #fff !important;
   min-width: unset !important;
+  flex: 0 0 auto !important;
   font-size: 0.78rem !important;
   font-weight: 700 !important;
   letter-spacing: 0.05em !important;
@@ -24,13 +25,22 @@
   width: 20px;
   height: 15px;
   border-radius: 2px;
-  /* flex-shrink: 0; */
+  flex-shrink: 0;
   object-fit: cover;
   box-shadow: 0 0 0 1px rgba(0,0,0,0.12);
   margin-right: 3px;
   margin-left: 3px;
 }
 .lang-code { font-size: 0.72rem; font-weight: 700; letter-spacing: 0.07em; }
+
+:host-context([dir='rtl']) .lang-trigger {
+  direction: rtl;
+}
+
+:host-context([dir='rtl']) .lang-flag {
+  margin-right: 3px;
+  margin-left: 3px;
+}
 
 .lang-chevron {
   font-size: 15px !important;

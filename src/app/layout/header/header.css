@@ -6,8 +6,9 @@
   display: flex;
   align-items: center;
   flex-wrap: nowrap;
-  gap: 4px;
-  min-height: 56px;
+  gap: 8px;
+  min-height: 64px;
+  padding: 0 18px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   background: linear-gradient(135deg, var(--primary-color, #059669), var(--primary-dark, #047857));
   width: 100%;
@@ -15,7 +16,8 @@
 }
 
 .menu-button {
-  margin-right: 8px;
+  flex: 0 0 auto;
+  margin-right: 4px;
 }
 
 .toolbar-title {
@@ -24,13 +26,15 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  max-width: clamp(180px, 32vw, 420px);
 }
 
 .ollama-status-badge {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  margin-left: 12px;
+  flex: 0 0 auto;
+  margin-left: 4px;
   font-size: 0.75rem;
   font-weight: 600;
   border-radius: 999px;
@@ -60,7 +64,8 @@
 }
 
 .icon-button {
-  margin-right: 8px;
+  flex: 0 0 auto;
+  margin-right: 0;
   position: relative;
 }
 
@@ -104,7 +109,8 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  margin-left: 8px;
+  flex: 0 0 auto;
+  margin-left: 0;
 }
 .role-badge {
   font-size: 0.75rem;
@@ -143,6 +149,46 @@
   color: white;
   font-weight: 600;
   font-size: 0.875rem;
+}
+
+:host {
+  display: block;
+  width: 100%;
+}
+
+:host-context([dir='rtl']) .header-toolbar {
+  direction: rtl;
+}
+
+:host-context([dir='rtl']) .menu-button,
+:host-context([dir='rtl']) .ollama-status-badge,
+:host-context([dir='rtl']) .icon-button,
+:host-context([dir='rtl']) .user-and-role {
+  margin-left: 0;
+  margin-right: 0;
+}
+
+:host-context([dir='rtl']) .spacer {
+  order: 0;
+}
+
+:host-context([dir='rtl']) .toolbar-title {
+  text-align: right;
+}
+
+:host-context([dir='rtl']) .alert-dot {
+  right: auto;
+  left: 0;
+}
+
+:host-context([dir='rtl']) .alert-count {
+  right: auto;
+  left: -6px;
+}
+
+:host-context([dir='rtl']) .notification-priority {
+  margin-right: 0;
+  margin-left: 10px;
 }
 
 .notification-menu {
@@ -253,6 +299,12 @@
 }
 
 @media (max-width: 600px) {
+  .header-toolbar {
+    min-height: 56px;
+    padding: 0 10px;
+    gap: 4px;
+  }
+
   .toolbar-title {
     font-size: 1rem;
     display: none;
@@ -265,7 +317,7 @@
   }
 
   .spacer {
-    flex: 0.5;
+    flex: 1 1 auto;
   }
 
   .role-badge {

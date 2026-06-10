@@ -1,5 +1,6 @@
 .competitor-container {
   padding: 24px;
+  width: 100%;
 }
 
 .header-section {
@@ -25,6 +26,58 @@
   justify-content: center;
   padding: 64px;
   gap: 18px;
+}
+
+.filter-card {
+  border: 1px solid #e5e7eb;
+  border-radius: 16px;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.05);
+  margin-bottom: 20px;
+}
+
+.filter-card .mat-mdc-card-content {
+  padding: 16px;
+}
+
+.filters-row {
+  display: grid;
+  grid-template-columns: minmax(220px, 1.25fr) repeat(2, minmax(180px, 1fr)) auto auto;
+  align-items: start;
+  gap: 14px;
+}
+
+.filters-row mat-form-field {
+  width: 100%;
+  min-width: 0;
+}
+
+.filters-row button {
+  min-height: 48px;
+  height: 48px;
+  align-self: start;
+  white-space: nowrap;
+  border-radius: 10px;
+  padding: 0 16px;
+}
+
+:host ::ng-deep .filters-row .mat-mdc-form-field-subscript-wrapper {
+  display: none;
+}
+
+:host ::ng-deep .filters-row .mat-mdc-text-field-wrapper {
+  background: #ffffff;
+}
+
+:host ::ng-deep .filters-row .mat-mdc-form-field-infix {
+  min-height: 48px;
+  padding-top: 14px;
+  padding-bottom: 10px;
+}
+
+:host ::ng-deep .filters-row .mat-mdc-select-value,
+:host ::ng-deep .filters-row input.mat-mdc-input-element {
+  color: #111827;
+  font-weight: 500;
 }
 
 .comparison-table {
@@ -149,5 +202,13 @@
 @media (max-width: 768px) {
   .competitor-container {
     padding: 16px;
+  }
+
+  .filters-row {
+    grid-template-columns: 1fr;
+  }
+
+  .filters-row button {
+    width: 100%;
   }
 }

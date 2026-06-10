@@ -134,6 +134,7 @@ body {
   line-height: 1.5;
   color: var(--text-primary);
   background-color: var(--bg-secondary);
+  min-width: 320px;
 }
 
 /* Typography */
@@ -179,6 +180,22 @@ textarea {
   font-family: inherit;
   font-size: inherit;
   line-height: inherit;
+}
+
+input[type="date"] {
+  color: var(--text-primary);
+  min-width: 0;
+}
+
+.mat-mdc-form-field {
+  --mdc-outlined-text-field-input-text-color: var(--text-primary);
+  --mdc-outlined-text-field-label-text-color: var(--text-secondary);
+  --mdc-outlined-text-field-hover-label-text-color: var(--text-primary);
+  --mdc-outlined-text-field-focus-label-text-color: var(--primary-color);
+}
+
+.mat-mdc-select-value {
+  color: var(--text-primary);
 }
 
 input:focus,
@@ -786,9 +803,9 @@ button:disabled,
     left: auto;
   }
 
-  /* Toolbar spacing */
-  .spacer {
-    order: -1;
+  input[type="date"] {
+    direction: ltr;
+    text-align: start;
   }
 }
 

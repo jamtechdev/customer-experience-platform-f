@@ -1,5 +1,6 @@
 .sentiment-container {
   padding: 24px;
+  width: 100%;
 }
 
 .header-section {
@@ -23,18 +24,54 @@
 }
 
 .filters {
-  display: flex;
-  gap: 16px;
-  flex-wrap: wrap;
-  align-items: flex-start;
+  display: grid;
+  grid-template-columns: minmax(220px, 1.25fr) repeat(2, minmax(180px, 1fr)) repeat(3, auto);
+  gap: 14px;
+  align-items: start;
 }
 
 .filter-card mat-form-field {
-  min-width: 200px;
+  width: 100%;
+  min-width: 0;
 }
 
 .filters button {
   min-height: 48px;
+  height: 48px;
+  align-self: start;
+  white-space: nowrap;
+  border-radius: 10px;
+  padding: 0 16px;
+}
+
+.filter-card {
+  border: 1px solid #e5e7eb;
+  border-radius: 16px;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.05);
+}
+
+.filter-card .mat-mdc-card-content {
+  padding: 16px;
+}
+
+:host ::ng-deep .filters .mat-mdc-form-field-subscript-wrapper {
+  display: none;
+}
+
+:host ::ng-deep .filters .mat-mdc-text-field-wrapper {
+  background: #ffffff;
+}
+
+:host ::ng-deep .filters .mat-mdc-form-field-infix {
+  min-height: 48px;
+  padding-top: 14px;
+  padding-bottom: 10px;
+}
+
+:host ::ng-deep .filters .mat-mdc-select-value,
+:host ::ng-deep .filters input.mat-mdc-input-element {
+  color: #111827;
+  font-weight: 500;
 }
 
 .loading-container {
@@ -576,10 +613,14 @@
   }
 
   .filters {
-    flex-direction: column;
+    grid-template-columns: 1fr;
   }
 
   .filter-card mat-form-field {
+    width: 100%;
+  }
+
+  .filters button {
     width: 100%;
   }
   .date-field{

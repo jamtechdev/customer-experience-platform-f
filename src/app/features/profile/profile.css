@@ -102,6 +102,22 @@
   align-items: center;
 }
 
+:host ::ng-deep .setting-control .lang-trigger {
+  background: #ffffff !important;
+  border: 1px solid #d1d5db !important;
+  color: #111827 !important;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06);
+}
+
+:host ::ng-deep .setting-control .lang-trigger:hover {
+  background: #f3f4f6 !important;
+  border-color: #9ca3af !important;
+}
+
+:host ::ng-deep .setting-control .lang-chevron {
+  color: #4b5563 !important;
+}
+
 .setting-description {
   font-size: 0.875rem;
   color: #6b7280;
