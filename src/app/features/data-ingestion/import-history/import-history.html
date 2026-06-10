@@ -1,11 +1,11 @@
-<div class="import-history-container">
+<div class="import-history-container" [class.embedded]="embedded">
   <div class="header-section">
     <div>
-      <h1>Import History</h1>
-      <p class="subtitle">View past CSV uploads and their status</p>
+      <h1>{{ embedded ? 'Recent import history' : 'Import History' }}</h1>
+      <p class="subtitle">{{ embedded ? 'Track uploaded files, mapping status, AI processing, and validation results.' : 'View past CSV uploads and their status' }}</p>
     </div>
     <div class="header-actions">
-      <button mat-stroked-button (click)="goToUpload()">
+      <button mat-stroked-button (click)="goToUpload()" *ngIf="!embedded">
         <mat-icon>upload_file</mat-icon>
         Upload CSV
       </button>

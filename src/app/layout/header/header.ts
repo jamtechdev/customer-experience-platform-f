@@ -75,11 +75,8 @@ export class Header implements OnInit, OnDestroy {
     this.alertService.getAlerts(false).subscribe({
       next: (res) => {
         const { alerts } = normalizeAlertsPayload(res?.data as any);
-        const hasAlerts = alerts.length > 0;
-        const hasCritical = alerts.some((a) => a.priority === 'critical' || a.priority === 'high');
         this.alerts.set(alerts);
-        this.alertCount.set(alerts.length);
-        this.alertIndicator.set(hasCritical || hasAlerts ? 'red' : 'green');
+        this.refreshNotificationBadge(alerts);
       },
       error: () => {
         // If alerts endpoint fails, keep indicator green.
@@ -112,7 +109,66 @@ export class Header implements OnInit, OnDestroy {
   }
 
   onNotifications(): void {
+    this.markNotificationsSeen();
     this.router.navigate(['/app/alerts/alert-dashboard']);
+  }
+
+  onNotificationsMenuOpened(): void {
+    this.markNotificationsSeen();
+  }
+
+  private refreshNotificationBadge(alerts: Alert[] = this.alerts()): void {
+    const seenIds = this.readSeenAlertIds();
+    const unseenAlerts = alerts.filter((alert) => !seenIds.has(Number(alert.id)));
+    this.alertCount.set(unseenAlerts.length);
+    this.alertIndicator.set(unseenAlerts.length > 0 ? 'red' : 'green');
+  }
+
+  private markNotificationsSeen(alerts: Alert[] = this.alerts()): void {
+    if (!alerts.length) {
+      this.alertCount.set(0);
+      this.alertIndicator.set('green');
+      return;
+    }
+
+    const seenIds = this.readSeenAlertIds();
+    alerts.forEach((alert) => {
+      if (Number.isFinite(Number(alert.id))) {
+        seenIds.add(Number(alert.id));
+      }
+    });
+    this.writeSeenAlertIds(seenIds);
+    this.alertCount.set(0);
+    this.alertIndicator.set('green');
+  }
+
+  private seenStorageKey(): string {
+    const user = this.currentUser as { id?: number | string; email?: string } | null;
+    const userKey = user?.id ?? user?.email ?? 'anonymous';
+    return `sentimenter.seenAlertNotifications.${userKey}`;
+  }
+
+  private readSeenAlertIds(): Set<number> {
+    if (typeof localStorage === 'undefined') return new Set<number>();
+    try {
+      const raw = localStorage.getItem(this.seenStorageKey());
+      const ids = raw ? JSON.parse(raw) : [];
+      if (!Array.isArray(ids)) return new Set<number>();
+      return new Set(ids.map((id) => Number(id)).filter((id) => Number.isFinite(id)));
+    } catch {
+      return new Set<number>();
+    }
+  }
+
+  private writeSeenAlertIds(ids: Set<number>): void {
+    if (typeof localStorage === 'undefined') return;
+    try {
+      // Keep storage bounded; alert IDs are enough to suppress old badge counts.
+      const serialized = JSON.stringify([...ids].slice(-500));
+      localStorage.setItem(this.seenStorageKey(), serialized);
+    } catch {
+      // Ignore storage failures; the notification count will still clear for this session.
+    }
   }
 
   private refreshOllamaStatus(): void {

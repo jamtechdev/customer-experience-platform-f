@@ -11,6 +11,7 @@ import { AnalysisService } from '../../../core/services/analysis.service';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { twitterCxReportFailureMessage } from '../../../core/utils/twitter-cx-report-load';
 import { OllamaLoader } from '../../../core/components/ollama-loader/ollama-loader';
+import { TranslationService } from '../../../core/services/translation.service';
 
 interface DatasetProfileRow {
   metric: string;
@@ -38,9 +39,12 @@ export class DatasetProfile implements OnInit, OnDestroy {
   private authService = inject(AuthService);
   private analysisService = inject(AnalysisService);
   private snackBar = inject(MatSnackBar);
+  private translationService = inject(TranslationService);
   private refreshSub?: Subscription;
 
   readonly displayedColumns = ['metric', 'value', 'comment'];
+  readonly t = (key: string, params?: Record<string, string | number>): string =>
+    this.translationService.translate(key, params);
   loading = signal(false);
   drilldownOpen = signal(false);
   drilldownLoading = signal(false);
@@ -70,7 +74,7 @@ export class DatasetProfile implements OnInit, OnDestroy {
         }
         if (!res.success) {
           this.rows.set([]);
-          this.snackBar.open(twitterCxReportFailureMessage(res.message), 'Close', { duration: 7000 });
+          this.snackBar.open(twitterCxReportFailureMessage(res.message), this.t('app.close'), { duration: 7000 });
         } else {
           this.rows.set(res.data?.datasetProfileRows ? res.data.datasetProfileRows : []);
         }
@@ -79,7 +83,7 @@ export class DatasetProfile implements OnInit, OnDestroy {
       error: () => {
         this.rows.set([]);
         this.loading.set(false);
-        this.snackBar.open(twitterCxReportFailureMessage(), 'Close', { duration: 6000 });
+        this.snackBar.open(twitterCxReportFailureMessage(), this.t('app.close'), { duration: 6000 });
       },
     });
   }

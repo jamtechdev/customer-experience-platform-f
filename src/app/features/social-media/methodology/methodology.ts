@@ -7,6 +7,7 @@ import { TwitterCxReportStore } from '../../../core/services/twitter-cx-report.s
 import { AuthService } from '../../../core/services/auth.service';
 import { OllamaLoader } from '../../../core/components/ollama-loader/ollama-loader';
 import { twitterCxReportFailureMessage } from '../../../core/utils/twitter-cx-report-load';
+import { TranslationService } from '../../../core/services/translation.service';
 
 @Component({
   selector: 'app-methodology',
@@ -23,10 +24,13 @@ export class Methodology implements OnInit, OnDestroy {
   private twitterCxReportStore = inject(TwitterCxReportStore);
   private authService = inject(AuthService);
   private snackBar = inject(MatSnackBar);
+  private translationService = inject(TranslationService);
   private refreshSub?: Subscription;
 
   loading = signal(false);
   bullets = signal<string[]>([]);
+  readonly t = (key: string, params?: Record<string, string | number>): string =>
+    this.translationService.translate(key, params);
 
   ngOnInit(): void {
     this.loadMethodology();
@@ -49,7 +53,7 @@ export class Methodology implements OnInit, OnDestroy {
         }
         if (!res.success) {
           this.bullets.set([]);
-          this.snackBar.open(twitterCxReportFailureMessage(res.message), 'Close', { duration: 7000 });
+          this.snackBar.open(twitterCxReportFailureMessage(res.message), this.t('app.close'), { duration: 7000 });
         } else {
           this.bullets.set(res.data?.scopeAndMethodBullets ? res.data.scopeAndMethodBullets : []);
         }
@@ -58,7 +62,7 @@ export class Methodology implements OnInit, OnDestroy {
       error: () => {
         this.bullets.set([]);
         this.loading.set(false);
-        this.snackBar.open(twitterCxReportFailureMessage(), 'Close', { duration: 6000 });
+        this.snackBar.open(twitterCxReportFailureMessage(), this.t('app.close'), { duration: 6000 });
       },
     });
   }

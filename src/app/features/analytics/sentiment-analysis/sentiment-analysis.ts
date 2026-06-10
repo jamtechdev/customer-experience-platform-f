@@ -144,7 +144,7 @@ export class SentimentAnalysis implements OnInit, OnDestroy {
   endDate = signal<string | null>(null);
   private filtersApplied = signal(false);
   page = signal(1);
-  pageSize = signal(25);
+  pageSize = signal(20);
   totalPages = computed(() => Math.max(1, Math.ceil(this.feedbackTotal() / this.pageSize())));
   hoveredBar = signal<SentimentChartBar | null>(null);
   readonly t = (key: string, params?: Record<string, string | number>): string =>

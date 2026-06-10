@@ -13,6 +13,7 @@ import { FormsModule } from '@angular/forms';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { OllamaLoader } from '../../../core/components/ollama-loader/ollama-loader';
 import { SourceExtractionService } from '../../../core/services/source-extraction.service';
+import { TranslationService } from '../../../core/services/translation.service';
 
 interface ExtractedRecord {
   id: string;
@@ -47,6 +48,7 @@ interface ExtractedRecord {
 export class SourceExtraction implements OnInit {
   private snackBar = inject(MatSnackBar);
   private sourceExtractionService = inject(SourceExtractionService);
+  private translationService = inject(TranslationService);
 
   readonly sources = ['Instagram', 'Twitter/X', 'YouTube', 'Google Reviews', 'App Store', 'Play Store', 'Sikayetvar'];
   readonly displayedColumns = ['source', 'company', 'competitor', 'content', 'date', 'actions'];
@@ -61,6 +63,8 @@ export class SourceExtraction implements OnInit {
 
   records = signal<ExtractedRecord[]>([]);
   processing = signal(false);
+  readonly t = (key: string, params?: Record<string, string | number>): string =>
+    this.translationService.translate(key, params);
   filteredRecords = computed(() => {
     const filter = this.sourceFilter.trim().toLowerCase();
     if (!filter) return this.records();
@@ -73,7 +77,7 @@ export class SourceExtraction implements OnInit {
 
   addRecord(): void {
     if (!this.content.trim() || !this.company.trim() || !this.date) {
-      this.snackBar.open('Company, date and content are required.', 'Close', { duration: 2500 });
+      this.snackBar.open(this.t('sourceExtraction.requiredMessage'), this.t('app.close'), { duration: 2500 });
       return;
     }
     const next = {
@@ -95,7 +99,7 @@ export class SourceExtraction implements OnInit {
       },
       error: () => {
         this.processing.set(false);
-        this.snackBar.open('Could not save record.', 'Close', { duration: 2500 });
+        this.snackBar.open(this.t('sourceExtraction.saveFailed'), this.t('app.close'), { duration: 2500 });
       },
     });
   }
@@ -103,14 +107,14 @@ export class SourceExtraction implements OnInit {
   removeRecord(id: string): void {
     this.sourceExtractionService.deleteRecord(id).subscribe({
       next: () => this.records.update((rows) => rows.filter((r) => r.id !== id)),
-      error: () => this.snackBar.open('Could not delete record.', 'Close', { duration: 2500 }),
+      error: () => this.snackBar.open(this.t('sourceExtraction.deleteFailed'), this.t('app.close'), { duration: 2500 }),
     });
   }
 
   clearAll(): void {
     this.sourceExtractionService.clearRecords().subscribe({
       next: () => this.records.set([]),
-      error: () => this.snackBar.open('Could not clear records.', 'Close', { duration: 2500 }),
+      error: () => this.snackBar.open(this.t('sourceExtraction.clearFailed'), this.t('app.close'), { duration: 2500 }),
     });
   }
 
@@ -125,7 +129,7 @@ export class SourceExtraction implements OnInit {
       const parsed = this.parseCsv(text);
       if (parsed.length === 0) {
         this.processing.set(false);
-        this.snackBar.open('No valid rows found in CSV.', 'Close', { duration: 2500 });
+        this.snackBar.open(this.t('sourceExtraction.noValidRows'), this.t('app.close'), { duration: 2500 });
         return;
       }
       this.sourceExtractionService.createRecords(parsed.map(({ id, ...row }) => row)).subscribe({
@@ -133,18 +137,18 @@ export class SourceExtraction implements OnInit {
           this.processing.set(false);
           const saved = Array.isArray(res.data) ? res.data.map((row) => this.normalizeRecord(row)) : [];
           this.records.update((rows) => [...saved, ...rows]);
-          this.snackBar.open(`${saved.length} rows imported.`, 'Close', { duration: 2500 });
+          this.snackBar.open(this.t('sourceExtraction.rowsImported', { count: saved.length }), this.t('app.close'), { duration: 2500 });
           input.value = '';
         },
         error: () => {
           this.processing.set(false);
-          this.snackBar.open('CSV import failed. Please try again.', 'Close', { duration: 2500 });
+          this.snackBar.open(this.t('sourceExtraction.csvImportFailed'), this.t('app.close'), { duration: 2500 });
         },
       });
     };
     reader.onerror = () => {
       this.processing.set(false);
-      this.snackBar.open('CSV import failed. Please try again.', 'Close', { duration: 2500 });
+      this.snackBar.open(this.t('sourceExtraction.csvImportFailed'), this.t('app.close'), { duration: 2500 });
     };
     reader.readAsText(file);
   }

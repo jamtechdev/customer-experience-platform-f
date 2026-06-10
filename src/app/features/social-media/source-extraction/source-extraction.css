@@ -1,19 +1,52 @@
 .source-extraction-container {
-  padding: 24px;
+  padding: 24px 28px 96px;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 20px;
+  max-width: 1280px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.content-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.header {
+  display: grid;
+  gap: 6px;
 }
 
 .header h1 {
-  margin: 0 0 8px;
-  font-size: 2rem;
+  margin: 0;
+  font-size: clamp(1.65rem, 2vw, 2rem);
+  font-weight: 800;
+  letter-spacing: -0.03em;
   color: #111827;
 }
 
 .header p {
   margin: 0;
   color: #6b7280;
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+.source-extraction-container mat-card {
+  border: 1px solid #e5e7eb;
+  border-radius: 18px;
+  box-shadow: 0 10px 28px rgba(15, 23, 42, 0.05);
+  overflow: hidden;
+}
+
+.source-extraction-container mat-card-header {
+  padding: 20px 24px 8px;
+}
+
+.source-extraction-container mat-card-content {
+  padding: 16px 24px 24px;
 }
 
 .chips {
@@ -25,8 +58,9 @@
 
 .form-grid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(220px, 1fr));
-  gap: 12px;
+  grid-template-columns: repeat(2, minmax(240px, 1fr));
+  gap: 16px;
+  align-items: start;
 }
 
 .full-row {
@@ -35,6 +69,8 @@
 
 .hint {
   color: #4b5563;
+  margin: 4px 0 0;
+  line-height: 1.5;
 }
 
 ol {
@@ -48,7 +84,7 @@ ol {
   flex-wrap: wrap;
   gap: 12px;
   align-items: center;
-  margin: 8px 0 12px;
+  margin: 16px 0 14px;
 }
 
 .actions a mat-icon {
@@ -60,19 +96,27 @@ ol {
 }
 
 .csv-upload span {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  min-height: 40px;
   border: 1px solid #d1d5db;
-  border-radius: 6px;
-  padding: 8px 12px;
+  border-radius: 10px;
+  padding: 10px 14px;
   cursor: pointer;
   font-weight: 500;
+  background: #fff;
 }
 
 .table-toolbar {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
   gap: 12px;
+  margin-bottom: 16px;
+}
+
+.table-toolbar mat-form-field {
+  min-width: 220px;
 }
 
 .table-wrapper {
@@ -81,11 +125,34 @@ ol {
 
 .records-table {
   width: 100%;
+  min-width: 860px;
+}
+
+:host ::ng-deep .records-table .mat-mdc-header-cell {
+  background: #e8f3ff !important;
+  color: #0f172a !important;
+  font-weight: 700 !important;
+  border-bottom: 1px solid #cbd5e1;
+}
+
+:host ::ng-deep .records-table .mat-mdc-cell {
+  color: #1f2937;
+  border-bottom: 1px solid #e5e7eb;
+  vertical-align: top;
+}
+
+:host ::ng-deep .records-table .mat-mdc-row:hover .mat-mdc-cell {
+  background: #f8fafc;
+}
+
+:host ::ng-deep .form-grid .mat-mdc-form-field-subscript-wrapper,
+:host ::ng-deep .table-toolbar .mat-mdc-form-field-subscript-wrapper {
+  display: none;
 }
 
 @media (max-width: 768px) {
   .source-extraction-container {
-    padding: 16px;
+    padding: 16px 16px 96px;
   }
 
   .form-grid {
@@ -95,6 +162,11 @@ ol {
   .table-toolbar {
     flex-direction: column;
     align-items: stretch;
+  }
+
+  .table-toolbar mat-form-field,
+  .table-toolbar a {
+    width: 100%;
   }
 }
 

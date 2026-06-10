@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, OnDestroy, signal } from '@angular/core';
+import { Component, Input, inject, OnInit, OnDestroy, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
 import { MatTableModule } from '@angular/material/table';
@@ -38,7 +38,7 @@ import { TwitterCxReportStore } from '../../../core/services/twitter-cx-report.s
   templateUrl: './import-history.html',
   styleUrl: './import-history.css',
 })
-export class ImportHistory implements OnInit {
+export class ImportHistory implements OnInit, OnDestroy {
   private csvService = inject(CSVService);
   private authService = inject(AuthService);
   private websocket = inject(CXWebSocketService);
@@ -58,6 +58,7 @@ export class ImportHistory implements OnInit {
   displayedColumns: string[] = [];
   deletingId = signal<number | null>(null);
   animationNow = signal<number>(Date.now());
+  @Input() embedded = false;
 
   ngOnInit(): void {
     this.configureDisplayedColumns();

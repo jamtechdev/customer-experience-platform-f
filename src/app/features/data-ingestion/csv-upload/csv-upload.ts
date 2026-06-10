@@ -10,6 +10,7 @@ import { CSVService, CSVFormat } from '../../../core/services/csv.service';
 import { TranslationService } from '../../../core/services/translation.service';
 import { environment } from '../../../../environments/environment';
 import { Router } from '@angular/router';
+import { ImportHistory } from '../import-history/import-history';
 
 type ProcessingStatus = 'idle' | 'uploading' | 'processing' | 'completed' | 'error';
 
@@ -30,7 +31,8 @@ const DEFAULT_FORMAT: CSVFormat = {
     MatIconModule,
     MatProgressBarModule,
     MatSnackBarModule,
-    MatChipsModule
+    MatChipsModule,
+    ImportHistory
   ],
   templateUrl: './csv-upload.html',
   styleUrl: './csv-upload.css',
@@ -155,11 +157,9 @@ export class CsvUpload implements OnInit {
           this.processingMessage.set(msg);
           this.snackBar.open(msg, this.t('app.close'), { duration: 6000 });
           this.uploading.set(false);
-          this.router.navigate(
-            response.data.status === 'processing'
-              ? ['/app/data-sources/import-history']
-              : ['/app/data-sources/csv-mapping', response.data.importId]
-          );
+          if (response.data.status !== 'processing') {
+            this.router.navigate(['/app/data-sources/csv-mapping', response.data.importId]);
+          }
         }
       },
       error: (error) => {

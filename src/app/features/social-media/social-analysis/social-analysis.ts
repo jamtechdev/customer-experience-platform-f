@@ -13,6 +13,7 @@ import { AuthService } from '../../../core/services/auth.service';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { OllamaLoader } from '../../../core/components/ollama-loader/ollama-loader';
 import { CXWebSocketService } from '../../../core/services/cx-websocket.service';
+import { TranslationService } from '../../../core/services/translation.service';
 
 interface PlatformData {
   platform: string;
@@ -49,6 +50,7 @@ export class SocialAnalysis implements OnInit, OnDestroy {
   private authService = inject(AuthService);
   private snackBar = inject(MatSnackBar);
   private websocket = inject(CXWebSocketService);
+  private translationService = inject(TranslationService);
   private lifecycleSub?: Subscription;
 
   loading = signal(false);
@@ -61,6 +63,8 @@ export class SocialAnalysis implements OnInit, OnDestroy {
   drilldownTitle = signal('');
   drilldownRows = signal<Array<{ id: number; content: string; contentSummary?: string; sentiment: string; date: string }>>([]);
   displayedColumns: string[] = ['platform', 'volume', 'sentiment', 'positive', 'negative', 'neutral'];
+  readonly t = (key: string, params?: Record<string, string | number>): string =>
+    this.translationService.translate(key, params);
 
   totalVolume = computed(() => {
     return this.platformData().reduce((sum, p) => sum + p.volume, 0);
@@ -143,8 +147,8 @@ export class SocialAnalysis implements OnInit, OnDestroy {
             this.loading.set(false);
             this.volumeNarrative.set(null);
             this.sentimentNarrative.set(null);
-            this.error.set('Failed to load sentiment distribution');
-            this.snackBar.open('Failed to load sentiment distribution', 'Close', { duration: 3000 });
+            this.error.set(this.t('socialMediaPage.sentimentLoadFailed'));
+            this.snackBar.open(this.t('socialMediaPage.sentimentLoadFailed'), this.t('app.close'), { duration: 3000 });
           }
         });
       },
@@ -152,8 +156,8 @@ export class SocialAnalysis implements OnInit, OnDestroy {
         this.loading.set(false);
         this.volumeNarrative.set(null);
         this.sentimentNarrative.set(null);
-        this.error.set('Failed to load volume data');
-        this.snackBar.open('Failed to load volume data', 'Close', { duration: 3000 });
+        this.error.set(this.t('socialMediaPage.volumeLoadFailed'));
+        this.snackBar.open(this.t('socialMediaPage.volumeLoadFailed'), this.t('app.close'), { duration: 3000 });
       }
     });
   }

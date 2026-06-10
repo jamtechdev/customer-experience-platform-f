@@ -1,13 +1,13 @@
 <div class="methodology-page">
   <mat-card class="methodology-card">
     <mat-card-header>
-      <mat-card-title>Scope and method</mat-card-title>
+      <mat-card-title>{{ t('nav.methodology') }}</mat-card-title>
     </mat-card-header>
     <mat-card-content>
       <div *ngIf="loading()" class="loading-container">
         <app-ollama-loader
-          [title]="'Loading scope and methodology'"
-          [subtitle]="'Reading saved cohort logic, filters, and analysis notes from the AI report'">
+          [title]="t('socialMediaPage.methodologyLoadingTitle')"
+          [subtitle]="t('socialMediaPage.methodologyLoadingSubtitle')">
         </app-ollama-loader>
       </div>
       <ul *ngIf="!loading()" class="list">
