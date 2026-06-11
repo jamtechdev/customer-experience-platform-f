@@ -320,7 +320,7 @@ export class ActionPlans implements OnInit, OnDestroy {
 
   canGenerateSuggestions(): boolean {
     const r = this.authService.currentUser()?.role;
-    return r === UserRole.ADMIN || r === UserRole.ANALYST;
+    return r === UserRole.ADMIN || r === UserRole.USER;
   }
 
   getPriorityColor(priority: string): string {

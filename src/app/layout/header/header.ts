@@ -30,7 +30,7 @@ export class Header implements OnInit, OnDestroy {
   private translationService = inject(TranslationService);
   private alertService = inject(AlertService);
   private analysisService = inject(AnalysisService);
-  private ollamaStatusTimer: ReturnType<typeof setInterval> | null = null;
+  private llmStatusTimer: ReturnType<typeof setInterval> | null = null;
   
   toggleSidenav = output<void>();
 
@@ -38,8 +38,9 @@ export class Header implements OnInit, OnDestroy {
   alertIndicator = signal<'green' | 'red'>('green');
   alertCount = signal<number>(0);
   alerts = signal<Alert[]>([]);
-  ollamaConnected = signal<boolean>(false);
-  ollamaModel = signal<string>('qwen2.5:3b-instruct');
+  llmConnected = signal<boolean>(false);
+  llmModel = signal<string>('gpt-4.1-mini');
+  llmProvider = signal<string>('openai');
 
   readonly t = (key: string): string => this.translationService.translate(key);
 
@@ -71,6 +72,18 @@ export class Header implements OnInit, OnDestroy {
     return translated === key ? String(user.role) : translated;
   }
 
+  llmProviderLabel(): string {
+    const provider = String(this.llmProvider() || 'openai').toLowerCase();
+    return provider === 'ollama' ? 'Ollama' : 'OpenAI';
+  }
+
+  llmStatusLabel(): string {
+    return this.translationService.translate(
+      this.llmConnected() ? 'header.llmConnected' : 'header.llmDisconnected',
+      { provider: this.llmProviderLabel() }
+    );
+  }
+
   ngOnInit(): void {
     this.alertService.getAlerts(false).subscribe({
       next: (res) => {
@@ -85,14 +98,14 @@ export class Header implements OnInit, OnDestroy {
         this.alertCount.set(0);
       },
     });
-    this.refreshOllamaStatus();
-    this.ollamaStatusTimer = setInterval(() => this.refreshOllamaStatus(), 30000);
+    this.refreshLlmStatus();
+    this.llmStatusTimer = setInterval(() => this.refreshLlmStatus(), 30000);
   }
 
   ngOnDestroy(): void {
-    if (this.ollamaStatusTimer) {
-      clearInterval(this.ollamaStatusTimer);
-      this.ollamaStatusTimer = null;
+    if (this.llmStatusTimer) {
+      clearInterval(this.llmStatusTimer);
+      this.llmStatusTimer = null;
     }
   }
 
@@ -171,17 +184,20 @@ export class Header implements OnInit, OnDestroy {
     }
   }
 
-  private refreshOllamaStatus(): void {
-    this.analysisService.getOllamaStatus().subscribe({
+  private refreshLlmStatus(): void {
+    this.analysisService.getLlmStatus().subscribe({
       next: (res) => {
         const reachable = !!res?.data?.enabled && !!res?.data?.reachable;
-        this.ollamaConnected.set(reachable);
+        this.llmConnected.set(reachable);
+        if (res?.data?.provider) {
+          this.llmProvider.set(String(res.data.provider));
+        }
         if (res?.data?.model) {
-          this.ollamaModel.set(res.data.model);
+          this.llmModel.set(res.data.model);
         }
       },
       error: () => {
-        this.ollamaConnected.set(false);
+        this.llmConnected.set(false);
       },
     });
   }

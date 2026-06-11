@@ -370,9 +370,9 @@ export class AnalysisService {
     return this.http.post<ApiResponse<{ deleted: number }>>(`${this.baseUrl}/competitor/cleanup-invalid`, {});
   }
 
-  getOllamaStatus(): Observable<ApiResponse<{ enabled: boolean; reachable: boolean; model: string }>> {
-    return this.http.get<ApiResponse<{ enabled: boolean; reachable: boolean; model: string }>>(
-      `${this.baseUrl}/ollama-status`,
+  getLlmStatus(): Observable<ApiResponse<{ enabled: boolean; reachable: boolean; model: string; provider?: string }>> {
+    return this.http.get<ApiResponse<{ enabled: boolean; reachable: boolean; model: string; provider?: string }>>(
+      `${this.baseUrl}/llm-status`,
       { params: this.realtimeParams() }
     );
   }

@@ -2,6 +2,7 @@ import { inject } from '@angular/core';
 import { Router, CanActivateFn } from '@angular/router';
 import { map } from 'rxjs';
 import { AuthService } from '../services/auth.service';
+import { UserRole } from '../models';
 
 export const authGuard: CanActivateFn = (route, state) => {
   const authService = inject(AuthService);
@@ -32,20 +33,24 @@ export const checkerGuard: CanActivateFn = (route, state) => {
 export const adminGuard: CanActivateFn = (route, state) => {
   const authService = inject(AuthService);
   const router = inject(Router);
-  return authService.ensureSession().pipe(map((ok) => (ok ? true : router.createUrlTree(['/login']))));
+  return authService.ensureSession().pipe(
+    map((ok) => {
+      if (!ok) return router.createUrlTree(['/login']);
+      return authService.currentUser()?.role === UserRole.ADMIN
+        ? true
+        : router.createUrlTree(['/app/reports/dashboard-reports']);
+    })
+  );
 };
 
-/** Allows Admin and CX Manager (analyst). Redirects Executive (viewer) to dashboard. Client §13. */
 export const analystOrAdminGuard: CanActivateFn = (route, state) => {
-  return adminGuard(route, state);
+  return authGuard(route, state);
 };
 
-/** Executive Dashboard: only Executive (viewer) role. Others redirect to main dashboard. */
 export const executiveOnlyGuard: CanActivateFn = (route, state) => {
-  return adminGuard(route, state);
+  return authGuard(route, state);
 };
 
-/** Redirect Executive (viewer) to executive-dashboard when they try to open main dashboard. */
 export const dashboardRedirectGuard: CanActivateFn = (route, state) => {
-  return adminGuard(route, state);
+  return authGuard(route, state);
 };

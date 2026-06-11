@@ -87,7 +87,7 @@
                     <div class="error-line ai-loader-line">
                       <mat-spinner diameter="16"></mat-spinner>
                       <span>
-                        <strong>Ollama AI</strong>
+                        <strong>AI</strong>
                         analyzing feedback
                         @if (row.errorDetails?.aiSummary?.attempted) {
                           —
@@ -98,7 +98,7 @@
                     </div>
                     @if (row.errorDetails?.aiSummary?.enabled) {
                       <div class="error-line">
-                        <strong>Ollama:</strong>
+                        <strong>AI:</strong>
                         attempted {{ row.errorDetails?.aiSummary?.attempted ?? 0 }},
                         success {{ row.errorDetails?.aiSummary?.succeeded ?? 0 }},
                         failed {{ row.errorDetails?.aiSummary?.failed ?? 0 }}.
@@ -130,11 +130,11 @@
                     }
                     <div class="error-line ai-loader-line">
                       <mat-spinner diameter="16"></mat-spinner>
-                      <span><strong>Ollama AI</strong> analyzing feedback…</span>
+                      <span><strong>AI</strong> analyzing feedback…</span>
                     </div>
                     @if (row.errorDetails?.aiSummary?.enabled) {
                       <div class="error-line">
-                        <strong>Ollama:</strong>
+                        <strong>AI:</strong>
                         attempted {{ row.errorDetails?.aiSummary?.attempted ?? 0 }},
                         success {{ row.errorDetails?.aiSummary?.succeeded ?? 0 }},
                         failed {{ row.errorDetails?.aiSummary?.failed ?? 0 }}.
@@ -182,14 +182,14 @@
                     }
                     @if (row.errorDetails.aiSummary?.enabled) {
                       <div class="error-line">
-                        <strong>Ollama:</strong>
+                        <strong>AI:</strong>
                         attempted {{ row.errorDetails.aiSummary?.attempted ?? 0 }},
                         success {{ row.errorDetails.aiSummary?.succeeded ?? 0 }},
                         failed {{ row.errorDetails.aiSummary?.failed ?? 0 }}.
                       </div>
                       @if (row.errorDetails.aiSummary?.failedExamples?.length) {
                         <details class="error-details">
-                          <summary class="error-summary">Ollama error samples</summary>
+                          <summary class="error-summary">AI error samples</summary>
                           <ul class="examples">
                             @for (x of row.errorDetails.aiSummary?.failedExamples ?? []; track x) {
                               <li>{{ x }}</li>
@@ -249,7 +249,7 @@
                   }
                   @if (row.errorDetails.aiSummary?.enabled) {
                     <div class="error-line">
-                      <strong>Ollama:</strong>
+                      <strong>AI:</strong>
                       attempted {{ row.errorDetails.aiSummary?.attempted ?? 0 }},
                       success {{ row.errorDetails.aiSummary?.succeeded ?? 0 }},
                       failed {{ row.errorDetails.aiSummary?.failed ?? 0 }}.
@@ -269,7 +269,7 @@
                     <mat-progress-bar class="chunk-progress completed-progress" mode="determinate" [value]="getFinalProgress(row)"></mat-progress-bar>
                   </div>
                   <div class="error-line">
-                    <strong>Ollama:</strong>
+                    <strong>AI:</strong>
                     attempted {{ row.errorDetails.aiSummary?.attempted ?? 0 }},
                     success {{ row.errorDetails.aiSummary?.succeeded ?? 0 }},
                     failed {{ row.errorDetails.aiSummary?.failed ?? 0 }}.

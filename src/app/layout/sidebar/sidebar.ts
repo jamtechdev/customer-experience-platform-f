@@ -9,6 +9,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { AuthService } from '../../core/services/auth.service';
 import { TranslationService } from '../../core/services/translation.service';
+import { UserRole } from '../../core/models';
 
 export interface SidebarMenuItem {
   labelKey: string;
@@ -51,8 +52,47 @@ export class Sidebar implements OnInit, OnDestroy {
   private routerSub?: Subscription;
   private destroyRef = inject(DestroyRef);
 
-  /** App menu (CX) – shown only when URL is under /app */
-  private appMenuItems: SidebarMenuItem[] = [
+  private adminMenuItems: SidebarMenuItem[] = [
+    { labelKey: 'nav.adminDashboard', icon: 'admin_panel_settings', route: '/app/admin-dashboard' },
+    {
+      labelKey: 'nav.dataSources',
+      icon: 'database',
+      children: [
+        { labelKey: 'nav.csvUpload', icon: 'upload', route: '/app/data-sources/csv-upload' },
+        { labelKey: 'nav.importHistory', icon: 'history', route: '/app/data-sources/import-history' }
+      ]
+    },
+    {
+      labelKey: 'nav.analysis',
+      icon: 'bar_chart',
+      children: [
+        { labelKey: 'nav.sentimentAnalysis', icon: 'sentiment_satisfied', route: '/app/analysis/sentiment' },
+        { labelKey: 'nav.rootCause', icon: 'search', route: '/app/analysis/root-cause' },
+        { labelKey: 'nav.npsAnalysis', icon: 'trending_up', route: '/app/analytics/nps-analysis' },
+        { labelKey: 'nav.competitorAnalysis', icon: 'compare', route: '/app/analysis/competitor' }
+      ]
+    },
+    {
+      labelKey: 'nav.reports',
+      icon: 'description',
+      children: [
+        { labelKey: 'nav.dashboardReports', icon: 'dashboard', route: '/app/reports/dashboard-reports' },
+        { labelKey: 'nav.executiveSummary', icon: 'summarize', route: '/app/reports/executive-summary' },
+        { labelKey: 'nav.reportBuilder', icon: 'edit', route: '/app/reports/builder' }
+      ]
+    },
+    {
+      labelKey: 'nav.admin',
+      icon: 'settings',
+      children: [
+        { labelKey: 'nav.alertConfiguration', icon: 'tune', route: '/app/alerts/alert-configuration' },
+        { labelKey: 'nav.alertDashboard', icon: 'notifications', route: '/app/alerts/alert-dashboard' }
+      ]
+    }
+  ];
+
+  private userMenuItems: SidebarMenuItem[] = [
+    { labelKey: 'nav.onboarding', icon: 'rocket_launch', route: '/app/onboarding' },
     { labelKey: 'nav.dashboard', icon: 'dashboard', route: '/app/reports/dashboard-reports' },
     {
       labelKey: 'nav.reports',
@@ -152,7 +192,8 @@ export class Sidebar implements OnInit, OnDestroy {
       this.flatMenuItems.set([]);
       return;
     }
-    this.flatMenuItems.set(this.flatten(this.appMenuItems));
+    const menu = user.role === UserRole.ADMIN ? this.adminMenuItems : this.userMenuItems;
+    this.flatMenuItems.set(this.flatten(menu));
   }
 
   constructor() {

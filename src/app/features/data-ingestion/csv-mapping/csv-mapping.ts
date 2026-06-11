@@ -284,7 +284,7 @@ export class CsvMapping implements OnInit {
     failed: number;
   } | undefined): string {
     if (!aiSummary?.enabled) return '';
-    return ` Ollama: ${aiSummary.succeeded}/${aiSummary.attempted} success, ${aiSummary.failed} failed.`;
+    return ` AI: ${aiSummary.succeeded}/${aiSummary.attempted} success, ${aiSummary.failed} failed.`;
   }
 
   startImport(): void {

@@ -78,20 +78,7 @@
         </div>
       </div>
 
-      <div class="form-group">
-        <label for="role">{{ t('auth.role') }}</label>
-        <div class="input-wrapper select-wrapper">
-          <select
-            id="role"
-            name="role"
-            [(ngModel)]="role"
-            [disabled]="loaderService.isLoading()"
-          >
-            <option value="viewer">{{ t('roles.viewer') }}</option>
-            <option value="analyst">{{ t('roles.analyst') }}</option>
-          </select>
-        </div>
-      </div>
+      <input type="hidden" name="role" [(ngModel)]="role" />
 
       <div class="form-group">
         <label for="email">{{ t('auth.email') }}</label>

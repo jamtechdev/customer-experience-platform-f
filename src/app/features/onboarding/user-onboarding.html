@@ -1,0 +1,47 @@
+<section class="onboarding-shell">
+  <div class="hero-card">
+    <div class="eyebrow">AI-powered CX workspace</div>
+    <h1>Welcome, {{ firstName }}. Let’s turn your CSV into clear customer insights.</h1>
+    <p>
+      Upload your customer feedback CSV, map the important columns, and the platform will parse,
+      validate, enrich, analyze sentiment, map journey stages, extract root causes, and prepare reports.
+    </p>
+
+    <div class="hero-actions">
+      <button mat-flat-button color="primary" type="button" (click)="startUpload()">
+        <mat-icon>upload_file</mat-icon>
+        Upload CSV
+      </button>
+      <a mat-stroked-button routerLink="/app/reports/dashboard-reports">
+        <mat-icon>dashboard</mat-icon>
+        View dashboard
+      </a>
+    </div>
+  </div>
+
+  <div class="flow-grid" aria-label="User onboarding steps">
+    <article class="flow-step">
+      <span class="step-number">1</span>
+      <h2>Upload data</h2>
+      <p>Bring in social, complaint, app review, or feedback CSV files.</p>
+    </article>
+
+    <article class="flow-step">
+      <span class="step-number">2</span>
+      <h2>Map columns</h2>
+      <p>Match content, date, source, rating, sentiment, and customer fields to the platform model.</p>
+    </article>
+
+    <article class="flow-step">
+      <span class="step-number">3</span>
+      <h2>AI checks</h2>
+      <p>The selected LLM validates meaning, sentiment, relevance, journey stage, and root-cause signals.</p>
+    </article>
+
+    <article class="flow-step">
+      <span class="step-number">4</span>
+      <h2>Review reports</h2>
+      <p>Use the dashboard, journey heatmap, root-cause page, and executive summary from saved DB results.</p>
+    </article>
+  </div>
+</section>

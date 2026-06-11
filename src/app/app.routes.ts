@@ -19,6 +19,11 @@ export const routes: Routes = [
     canActivate: [guestGuard]
   },
   {
+    path: 'signup',
+    loadComponent: () => import('./features/auth/signup/signup').then(m => m.Signup),
+    canActivate: [guestGuard]
+  },
+  {
     path: 'forgot-password',
     loadComponent: () => import('./features/auth/forgot-password/forgot-password').then(m => m.ForgotPassword),
     canActivate: [guestGuard]
@@ -45,6 +50,17 @@ export const routes: Routes = [
         path: 'dashboard',
         redirectTo: 'reports/dashboard-reports',
         pathMatch: 'full'
+      },
+      {
+        path: 'onboarding',
+        loadComponent: () => import('./features/onboarding/user-onboarding').then(m => m.UserOnboarding),
+        data: { title: 'Onboarding', breadcrumb: 'Onboarding' }
+      },
+      {
+        path: 'admin-dashboard',
+        loadComponent: () => import('./features/admin/dashboard/admin-dashboard/admin-dashboard').then(m => m.AdminDashboard),
+        canActivate: [adminGuard],
+        data: { title: 'Admin Dashboard', breadcrumb: 'Admin Dashboard' }
       },
       {
         path: 'executive-dashboard',

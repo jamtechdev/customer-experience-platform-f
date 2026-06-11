@@ -27,19 +27,13 @@ export interface User {
 }
 
 export enum UserRole {
-  /** Full system access, manage users and datasets, configure analytics (client: Admin) */
   ADMIN = 'admin',
-  /** Upload datasets, view dashboards, generate reports, configure alerts (client: CX Manager) */
-  ANALYST = 'analyst',
-  /** View dashboards, access summary reports, download executive analytics (client: Executive) */
-  VIEWER = 'viewer'
+  USER = 'user'
 }
 
-/** Client-facing role labels per Project Approach Document §13 */
 export const ROLE_LABELS: Record<UserRole, string> = {
   [UserRole.ADMIN]: 'Admin',
-  [UserRole.ANALYST]: 'CX Manager',
-  [UserRole.VIEWER]: 'Executive',
+  [UserRole.USER]: 'User',
 };
 
 export function getRoleLabel(role: UserRole | string): string {

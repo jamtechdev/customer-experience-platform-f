@@ -24,8 +24,7 @@ export class Signup {
   email = '';
   password = '';
   confirmPassword = '';
-  /** Role for registration: analyst (CX Manager) or viewer (Executive). Admin is only via seed. */
-  role: 'analyst' | 'viewer' = 'viewer';
+  role: 'user' = 'user';
   
   showPassword = signal(false);
   showConfirmPassword = signal(false);
@@ -63,7 +62,7 @@ export class Signup {
     }).subscribe({
       next: (response) => {
         if (response.success) {
-          this.router.navigate(['/app/dashboard'], { replaceUrl: true });
+          this.router.navigate(['/app/onboarding'], { replaceUrl: true });
         } else {
           this.errorMessage.set(this.t('auth.signupError'));
         }

@@ -4,9 +4,9 @@
   </button>
 
   <span class="toolbar-title">{{ t('app.title') }}</span>
-  <span class="ollama-status-badge" [class.connected]="ollamaConnected()" [class.disconnected]="!ollamaConnected()">
+  <span class="llm-status-badge" [class.connected]="llmConnected()" [class.disconnected]="!llmConnected()">
     <span class="status-dot"></span>
-    {{ ollamaConnected() ? t('header.ollamaConnected') : t('header.ollamaDisconnected') }}
+    {{ llmStatusLabel() }}
   </span>
 
   <span class="spacer"></span>

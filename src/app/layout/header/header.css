@@ -29,7 +29,7 @@
   max-width: clamp(180px, 32vw, 420px);
 }
 
-.ollama-status-badge {
+.llm-status-badge {
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -44,18 +44,18 @@
   white-space: nowrap;
 }
 
-.ollama-status-badge .status-dot {
+.llm-status-badge .status-dot {
   width: 8px;
   height: 8px;
   border-radius: 50%;
   background: #ef4444;
 }
 
-.ollama-status-badge.connected .status-dot {
+.llm-status-badge.connected .status-dot {
   background: #22c55e;
 }
 
-.ollama-status-badge.disconnected .status-dot {
+.llm-status-badge.disconnected .status-dot {
   background: #ef4444;
 }
 
@@ -161,7 +161,7 @@
 }
 
 :host-context([dir='rtl']) .menu-button,
-:host-context([dir='rtl']) .ollama-status-badge,
+:host-context([dir='rtl']) .llm-status-badge,
 :host-context([dir='rtl']) .icon-button,
 :host-context([dir='rtl']) .user-and-role {
   margin-left: 0;
@@ -312,7 +312,7 @@
     display: none;
   }
 
-  .ollama-status-badge {
+  .llm-status-badge {
     margin-left: 0;
     padding: 2px 8px;
     font-size: 0.7rem;
