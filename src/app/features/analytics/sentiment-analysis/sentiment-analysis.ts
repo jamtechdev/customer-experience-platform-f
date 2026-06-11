@@ -528,8 +528,9 @@ export class SentimentAnalysis implements OnInit, OnDestroy {
     this.drilldownRows.set([]);
   }
 
-  getCompanyId(): number {
+  getCompanyId(): number | undefined {
     const user = this.authService.currentUser();
+    if (user?.role === 'admin') return undefined;
     return user?.settings?.companyId ?? 1;
   }
 

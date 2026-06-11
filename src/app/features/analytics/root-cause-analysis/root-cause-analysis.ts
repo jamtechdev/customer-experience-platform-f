@@ -148,7 +148,7 @@ export class RootCauseAnalysis implements OnInit, OnDestroy {
 
   loadRootCauses(showLoading = true): void {
     if (showLoading) this.loading.set(true);
-    const companyId = this.currentCompanyId();
+    const companyId = this.listCompanyId();
     this.analysisService.getRootCauses(companyId).subscribe({
       next: (response) => {
         if (response.success && Array.isArray(response.data)) {
@@ -348,7 +348,7 @@ export class RootCauseAnalysis implements OnInit, OnDestroy {
     this.drilldownOpen.set(true);
     this.drilldownLoading.set(true);
     this.drilldownRows.set([]);
-    const companyId = this.currentCompanyId();
+    const companyId = this.listCompanyId();
     this.analysisService.getFeedbackByIds(companyId, row.feedbackIds, { rootCauseId: row.id }).subscribe({
       next: (res) => {
         this.drilldownLoading.set(false);
@@ -389,5 +389,10 @@ export class RootCauseAnalysis implements OnInit, OnDestroy {
 
   private currentCompanyId(): number {
     return this.authService.currentUser()?.settings?.companyId || 1;
+  }
+
+  private listCompanyId(): number | undefined {
+    const user = this.authService.currentUser();
+    return user?.role === 'admin' ? undefined : (user?.settings?.companyId || 1);
   }
 }
