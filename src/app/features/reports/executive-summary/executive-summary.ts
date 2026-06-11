@@ -146,8 +146,7 @@ export class ExecutiveSummary implements OnInit {
   loadSummary(withFilters: boolean = this.filtersApplied()): void {
     this.loading.set(true);
     const user = this.authService.currentUser();
-    const isAdmin = user?.role === 'admin';
-    const companyId = isAdmin ? undefined : (user?.settings?.companyId ?? 1);
+    const companyId = user?.role === 'admin' ? undefined : (user?.settings?.companyId ?? 1);
     let startDate: Date | undefined;
     let endDate: Date | undefined;
     if (withFilters) {

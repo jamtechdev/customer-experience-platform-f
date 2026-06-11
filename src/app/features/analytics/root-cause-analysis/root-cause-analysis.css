@@ -132,7 +132,7 @@
 
 .dense-table {
   width: 100%;
-  min-width: 760px;
+  min-width: 920px;
   table-layout: fixed;
 }
 
@@ -160,7 +160,75 @@
 
 :host ::ng-deep .dense-table .mat-mdc-cell,
 :host ::ng-deep .dense-table .mat-mdc-header-cell {
-  padding: 12px 14px;
+  padding: 16px 18px;
+}
+
+.root-cause-chart {
+  margin: 18px 0 24px;
+  padding: 18px;
+  border: 1px solid #dbe3ef;
+  border-radius: 16px;
+  background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
+}
+
+.root-cause-chart-title {
+  margin: 0 0 18px;
+  text-align: center;
+  color: #0f172a;
+  font-size: 0.95rem;
+  font-weight: 800;
+}
+
+.root-cause-chart-list {
+  display: grid;
+  gap: 12px;
+}
+
+.root-cause-chart-row {
+  display: grid;
+  grid-template-columns: minmax(180px, 34%) 64px minmax(220px, 1fr);
+  align-items: center;
+  gap: 14px;
+}
+
+.root-cause-chart-label {
+  color: #1f2937;
+  font-size: 0.9rem;
+  font-weight: 650;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
+.root-cause-chart-count {
+  justify-self: end;
+  min-width: 46px;
+  border: 0;
+  border-radius: 999px;
+  padding: 5px 10px;
+  color: #0f5f93;
+  background: #e0f2fe;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.root-cause-chart-count:hover {
+  background: #bae6fd;
+}
+
+.root-cause-chart-track {
+  height: 18px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: #e5edf7;
+  box-shadow: inset 0 1px 3px rgba(15, 23, 42, 0.12);
+}
+
+.root-cause-chart-fill {
+  height: 100%;
+  min-width: 3px;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #0ea5e9 0%, #0369a1 100%);
+  transition: width 220ms ease;
 }
 
 /* Matplotlib-style figure used in report section 6 */
@@ -311,6 +379,21 @@
 @media (max-width: 768px) {
   .root-cause-container {
     padding: 16px;
+  }
+
+  .root-cause-chart-row {
+    grid-template-columns: 1fr;
+    gap: 8px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid #e5e7eb;
+  }
+
+  .root-cause-chart-count {
+    justify-self: start;
+  }
+
+  .root-cause-chart-track {
+    width: 100%;
   }
 
   .root-cause-table .mat-column-title {

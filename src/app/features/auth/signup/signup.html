@@ -81,6 +81,28 @@
       <input type="hidden" name="role" [(ngModel)]="role" />
 
       <div class="form-group">
+        <label for="companyName">{{ t('auth.companyName') }}</label>
+        <div class="input-wrapper">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M3 21h18"/>
+            <path d="M5 21V7l8-4v18"/>
+            <path d="M19 21V11l-6-4"/>
+            <path d="M9 9h1M9 13h1M9 17h1"/>
+          </svg>
+          <input
+            type="text"
+            id="companyName"
+            [(ngModel)]="companyName"
+            name="companyName"
+            [placeholder]="t('auth.companyNamePlaceholder')"
+            required
+            autocomplete="organization"
+            [disabled]="loaderService.isLoading()"
+          />
+        </div>
+      </div>
+
+      <div class="form-group">
         <label for="email">{{ t('auth.email') }}</label>
         <div class="input-wrapper">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">

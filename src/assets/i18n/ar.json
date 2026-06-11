@@ -168,6 +168,8 @@
     "lastName": "اسم العائلة",
     "firstNamePlaceholder": "الاسم الأول",
     "lastNamePlaceholder": "اسم العائلة",
+    "companyName": "اسم الشركة",
+    "companyNamePlaceholder": "اسم شركتك أو مساحة العمل",
     "rememberMe": "تذكرني",
     "dontHaveAccount": "ليس لديك حساب؟",
     "alreadyHaveAccount": "لديك حساب بالفعل؟",

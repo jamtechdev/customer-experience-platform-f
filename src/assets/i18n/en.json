@@ -169,6 +169,8 @@
     "lastName": "Last name",
     "firstNamePlaceholder": "First name",
     "lastNamePlaceholder": "Last name",
+    "companyName": "Company name",
+    "companyNamePlaceholder": "Your company or workspace name",
     "rememberMe": "Remember me",
     "dontHaveAccount": "Don’t have an account?",
     "alreadyHaveAccount": "Already have an account?",

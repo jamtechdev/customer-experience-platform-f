@@ -2,7 +2,7 @@ import { Component, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
-import { MatSnackBar } from '@angular/material/snack-bar';
+import { ToastrService } from 'ngx-toastr';
 import { AuthService } from '../../../core/services/auth.service';
 import { TranslationService } from '../../../core/services/translation.service';
 import { LoaderService } from '../../../core/services/loader.service';
@@ -19,7 +19,7 @@ export class Login implements OnInit {
   private route = inject(ActivatedRoute);
   private authService = inject(AuthService);
   private translationService = inject(TranslationService);
-  private snackBar = inject(MatSnackBar);
+  private toastr = inject(ToastrService);
   protected loaderService = inject(LoaderService);
 
   email = '';
@@ -60,19 +60,19 @@ export class Login implements OnInit {
         if (response.success && response.data) {
           const okMsg =
             (typeof response.message === 'string' && response.message) || 'Login successful';
-          this.snackBar.open(okMsg, 'Close', { duration: 3000 });
+          this.toastr.success(okMsg, 'Signed in');
           this.router.navigate(['/app/dashboard'], { replaceUrl: true });
         } else {
           const msg =
             (typeof response.message === 'string' && response.message) || this.t('auth.loginError');
           this.errorMessage.set(msg);
-          this.snackBar.open(msg, 'Close', { duration: 5000 });
+          this.toastr.error(msg, 'Login failed');
         }
       },
       error: (error) => {
         const message = error.error?.message || error.message || this.t('auth.loginError');
         this.errorMessage.set(message);
-        this.snackBar.open(message, 'Close', { duration: 6000 });
+        this.toastr.error(message, 'Login failed');
       }
     });
   }

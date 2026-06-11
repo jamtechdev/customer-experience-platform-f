@@ -53,8 +53,8 @@ export const routes: Routes = [
       },
       {
         path: 'onboarding',
-        loadComponent: () => import('./features/onboarding/user-onboarding').then(m => m.UserOnboarding),
-        data: { title: 'Onboarding', breadcrumb: 'Onboarding' }
+        redirectTo: 'reports/dashboard-reports',
+        pathMatch: 'full'
       },
       {
         path: 'admin-dashboard',

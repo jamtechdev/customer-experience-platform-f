@@ -52,13 +52,15 @@ export class SocialMediaService {
     return this.http.get<ApiResponse<Methodology>>(`${this.baseUrl}/methodology`);
   }
 
-  getVolume(companyId: number): Observable<ApiResponse<VolumeAnalysis>> {
-    const params = new HttpParams().set('companyId', companyId.toString());
+  getVolume(companyId?: number): Observable<ApiResponse<VolumeAnalysis>> {
+    let params = new HttpParams();
+    if (companyId != null) params = params.set('companyId', companyId.toString());
     return this.http.get<ApiResponse<VolumeAnalysis>>(`${this.baseUrl}/volume`, { params });
   }
 
-  getSentimentDistribution(companyId: number): Observable<ApiResponse<SentimentDistribution>> {
-    const params = new HttpParams().set('companyId', companyId.toString());
+  getSentimentDistribution(companyId?: number): Observable<ApiResponse<SentimentDistribution>> {
+    let params = new HttpParams();
+    if (companyId != null) params = params.set('companyId', companyId.toString());
     return this.http.get<ApiResponse<SentimentDistribution>>(`${this.baseUrl}/sentiment-distribution`, { params });
   }
 }

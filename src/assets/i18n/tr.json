@@ -168,6 +168,8 @@
     "lastName": "Soyad",
     "firstNamePlaceholder": "Ad",
     "lastNamePlaceholder": "Soyad",
+    "companyName": "Şirket adı",
+    "companyNamePlaceholder": "Şirket veya çalışma alanı adı",
     "rememberMe": "Beni hatırla",
     "dontHaveAccount": "Hesabınız yok mu?",
     "alreadyHaveAccount": "Zaten hesabınız var mı?",

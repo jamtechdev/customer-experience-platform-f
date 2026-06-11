@@ -71,7 +71,7 @@
 }
 
 .error-cell {
-  max-width: 480px;
+  max-width: none;
   white-space: normal;
   word-break: break-word;
 }
@@ -110,10 +110,38 @@
 .table-container {
   width: 100%;
   overflow-x: auto;
+  border-radius: 16px;
+  background: #ffffff;
+  -webkit-overflow-scrolling: touch;
 }
 
 .imports-table {
-  min-width: 880px;
+  min-width: 1120px;
+  table-layout: fixed;
+}
+
+.imports-table .mat-column-select {
+  width: 72px;
+}
+
+.imports-table .mat-column-filename {
+  width: 28%;
+}
+
+.imports-table .mat-column-rowCount {
+  width: 92px;
+}
+
+.imports-table .mat-column-status {
+  width: 140px;
+}
+
+.imports-table .mat-column-createdAt {
+  width: 160px;
+}
+
+.imports-table .mat-column-actions {
+  width: 72px;
 }
 
 :host ::ng-deep .imports-table .mat-mdc-header-cell {
@@ -121,12 +149,28 @@
   color: #0f172a !important;
   font-weight: 700 !important;
   border-bottom: 1px solid #cbd5e1;
+  white-space: nowrap;
 }
 
 :host ::ng-deep .imports-table .mat-mdc-cell {
   color: #1f2937;
   border-bottom: 1px solid #e5e7eb;
   vertical-align: top;
+  line-height: 1.45;
+}
+
+:host ::ng-deep .imports-table .mat-mdc-cell,
+:host ::ng-deep .imports-table .mat-mdc-header-cell {
+  padding: 16px 18px !important;
+}
+
+:host ::ng-deep .imports-table .mat-mdc-row {
+  min-height: 72px;
+}
+
+:host ::ng-deep .imports-table .mat-mdc-cell.mat-column-filename {
+  overflow-wrap: anywhere;
+  font-weight: 600;
 }
 
 :host ::ng-deep .imports-table .mat-mdc-row:hover .mat-mdc-cell {
@@ -185,7 +229,8 @@
 }
 
 .progress-wrap {
-  margin-top: 0.3rem;
+  margin: 0.45rem 0 0.2rem;
+  max-width: 520px;
 }
 
 .chunk-progress {

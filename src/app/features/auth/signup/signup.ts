@@ -2,6 +2,7 @@ import { Component, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
+import { ToastrService } from 'ngx-toastr';
 import { AuthService } from '../../../core/services/auth.service';
 import { TranslationService } from '../../../core/services/translation.service';
 import { LoaderService } from '../../../core/services/loader.service';
@@ -17,10 +18,12 @@ export class Signup {
   private router = inject(Router);
   private authService = inject(AuthService);
   private translationService = inject(TranslationService);
+  private toastr = inject(ToastrService);
   protected loaderService = inject(LoaderService);
 
   firstName = '';
   lastName = '';
+  companyName = '';
   email = '';
   password = '';
   confirmPassword = '';
@@ -36,7 +39,7 @@ export class Signup {
   t = (key: string): string => this.translationService.translate(key);
 
   onSignup(): void {
-    if (!this.firstName || !this.lastName || !this.email || !this.password || !this.confirmPassword) {
+    if (!this.firstName || !this.lastName || !this.companyName || !this.email || !this.password || !this.confirmPassword) {
       this.errorMessage.set(this.t('auth.validationError'));
       return;
     }
@@ -56,20 +59,25 @@ export class Signup {
     this.authService.register({
       firstName: this.firstName,
       lastName: this.lastName,
+      companyName: this.companyName,
       email: this.email,
       password: this.password,
       role: this.role
     }).subscribe({
       next: (response) => {
         if (response.success) {
-          this.router.navigate(['/app/onboarding'], { replaceUrl: true });
+          this.toastr.success('Your workspace is ready.', 'Account created');
+          this.router.navigate(['/app/dashboard'], { replaceUrl: true });
         } else {
-          this.errorMessage.set(this.t('auth.signupError'));
+          const message = this.t('auth.signupError');
+          this.errorMessage.set(message);
+          this.toastr.error(message, 'Signup failed');
         }
       },
       error: (error) => {
         const message = error.error?.message || error.message || this.t('auth.signupError');
         this.errorMessage.set(message);
+        this.toastr.error(message, 'Signup failed');
       }
     });
   }

@@ -71,7 +71,14 @@ export class AuthService {
     return environment.apiUrl || '/api';
   }
 
-  register(data: { email: string; password: string; firstName: string; lastName: string; role?: string }): Observable<ApiResponse<AuthResponse>> {
+  register(data: {
+    email: string;
+    password: string;
+    firstName: string;
+    lastName: string;
+    companyName: string;
+    role?: string;
+  }): Observable<ApiResponse<AuthResponse>> {
     return this.http.post<ApiResponse<AuthResponse>>(`${this.apiBase}/auth/register`, data).pipe(
       tap(response => {
         if (response.success && response.data) {

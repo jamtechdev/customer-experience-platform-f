@@ -3,7 +3,7 @@ import { isPlatformBrowser } from '@angular/common';
 import { HttpRequest, HttpErrorResponse, HttpHandlerFn, HttpEvent } from '@angular/common/http';
 import { Observable, throwError } from 'rxjs';
 import { catchError, switchMap, finalize } from 'rxjs/operators';
-import { MatSnackBar } from '@angular/material/snack-bar';
+import { ToastrService } from 'ngx-toastr';
 import { AuthService } from '../services/auth.service';
 import { environment } from '../../../environments/environment';
 import { LoaderService } from '../services/loader.service';
@@ -140,7 +140,7 @@ function normalizeHttpErrorMessage(error: HttpErrorResponse, req: HttpRequest<un
 }
 
 function notifyHttpError(
-  snackBar: MatSnackBar,
+  toastr: ToastrService,
   platformId: object,
   message: string,
   req: HttpRequest<unknown>
@@ -150,9 +150,10 @@ function notifyHttpError(
   if (!message || !message.trim()) return;
   const text =
     message.length > SNACKBAR_MAX_LEN ? `${message.slice(0, SNACKBAR_MAX_LEN)}…` : message;
-  snackBar.open(text, 'Close', {
-    duration: 6000,
-    panelClass: ['http-error-snackbar'],
+  toastr.error(text, 'Request failed', {
+    timeOut: 6500,
+    extendedTimeOut: 2000,
+    progressBar: true,
   });
 }
 
@@ -199,7 +200,7 @@ export function errorInterceptor(
   next: HttpHandlerFn
 ): Observable<HttpEvent<unknown>> {
   const injector = inject(Injector);
-  const snackBar = inject(MatSnackBar);
+  const toastr = inject(ToastrService);
   const platformId = inject(PLATFORM_ID);
 
   return next(req).pipe(
@@ -210,7 +211,7 @@ export function errorInterceptor(
           const authService = injector.get(AuthService);
           const errorMessage = normalizeHttpErrorMessage(error, req);
           authService.logout();
-          notifyHttpError(snackBar, platformId, errorMessage, req);
+          notifyHttpError(toastr, platformId, errorMessage, req);
           return throwError(() => error);
         }
         // Login/register/etc. can return 401 for wrong credentials — not an expired session.
@@ -231,7 +232,7 @@ export function errorInterceptor(
             statusText: error.statusText,
             url: error.url || req.url,
           });
-          notifyHttpError(snackBar, platformId, errorMessage, req);
+          notifyHttpError(toastr, platformId, errorMessage, req);
           return throwError(() => enhancedError);
         }
         if (isAuthProfileEndpoint(req.url)) {
@@ -250,7 +251,7 @@ export function errorInterceptor(
               refreshMsg && refreshMsg !== 'An error occurred'
                 ? refreshMsg
                 : 'Session expired. Please sign in again.';
-            notifyHttpError(snackBar, platformId, sessionMsg, req);
+            notifyHttpError(toastr, platformId, sessionMsg, req);
             return throwError(() => refreshError);
           })
         );
@@ -275,7 +276,7 @@ export function errorInterceptor(
         url: error.url || req.url,
       });
 
-      notifyHttpError(snackBar, platformId, errorMessage, req);
+      notifyHttpError(toastr, platformId, errorMessage, req);
 
       return throwError(() => enhancedError);
     })
