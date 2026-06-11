@@ -1,5 +1,5 @@
 import { Routes } from '@angular/router';
-import { authGuard, guestGuard } from './core/guards/auth.guard';
+import { adminGuard, authGuard, guestGuard } from './core/guards/auth.guard';
 
 export const routes: Routes = [
   // Landing page (public)
@@ -243,6 +243,12 @@ export const routes: Routes = [
             data: { title: 'Alert Configuration', breadcrumb: 'Alert Configuration' }
           }
         ]
+      },
+      {
+        path: 'admin/users',
+        loadComponent: () => import('./features/admin/user-management/user-management').then(m => m.UserManagement),
+        canActivate: [adminGuard],
+        data: { title: 'User Management', breadcrumb: 'User Management' }
       },
       // Profile
       {

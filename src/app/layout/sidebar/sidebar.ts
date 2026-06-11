@@ -114,6 +114,7 @@ export class Sidebar implements OnInit, OnDestroy {
       labelKey: 'nav.admin',
       icon: 'settings',
       children: [
+        { labelKey: 'nav.userManagement', icon: 'manage_accounts', route: '/app/admin/users' },
         { labelKey: 'nav.alertConfiguration', icon: 'tune', route: '/app/alerts/alert-configuration' },
         { labelKey: 'nav.alertDashboard', icon: 'notifications', route: '/app/alerts/alert-dashboard' }
       ]
