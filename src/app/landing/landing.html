@@ -12,12 +12,11 @@
       </div>
       <div class="nav-links">
         <ng-container *ngIf="!isLoggedIn; else loggedInNav">
-          <a routerLink="/signup" class="btn-primary btn-large">{{ t('landing.getStarted') }}</a>
-          <a routerLink="/login" class="btn-nav-outline">{{ t('landing.login') }}</a>
+          <a routerLink="/login" class="btn-primary btn-large">Admin Login</a>
         </ng-container>
         <ng-template #loggedInNav>
           <button class="lagout-btn" type="button" (click)="logout()">Logout</button>
-          <a routerLink="/app/dashboard" class="btn-nav-outline">Dashboard</a>
+          <a routerLink="/app/dashboard" class="btn-nav-outline">Admin Dashboard</a>
         </ng-template>
         <app-language-switcher></app-language-switcher>
       </div>
@@ -31,8 +30,7 @@
       <p class="hero-subtitle">{{ t('landing.landingSubtitle') }}</p>
       <p class="hero-description">{{ t('landing.landingDescription') }}</p>
       <div class="hero-actions" *ngIf="!isLoggedIn">
-        <a routerLink="/signup" class="btn-primary btn-large">{{ t('landing.getStarted') }}</a>
-        <a routerLink="/login" class="btn-secondary btn-large">{{ t('landing.login') }}</a>
+        <a routerLink="/login" class="btn-primary btn-large">Admin Login</a>
       </div>
       <img src="https://media.whatagraph.com/Create_a_social_media_dashboard_in_minutes_747fdbe763_92a8998190.webp" />
     </div>
@@ -61,11 +59,10 @@
   <!-- CTA Section -->
   <section class="cta-section">
     <div class="container">
-      <h2 class="cta-title">{{ t('landing.getStarted') }}</h2>
+      <h2 class="cta-title">Admin Dashboard</h2>
       <p class="cta-subtitle">{{ t('landing.landingDescription') }}</p>
       <div class="cta-actions" *ngIf="!isLoggedIn">
-        <a routerLink="/signup" class="btn-primary btn-large">{{ t('landing.signupButton') }}</a>
-        <a routerLink="/login" class="btn-secondary btn-large">{{ t('landing.loginButton') }}</a>
+        <a routerLink="/login" class="btn-primary btn-large">Admin Login</a>
       </div>
     </div>
   </section>

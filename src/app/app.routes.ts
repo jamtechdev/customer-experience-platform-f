@@ -1,5 +1,5 @@
 import { Routes } from '@angular/router';
-import { adminGuard, authGuard, guestGuard } from './core/guards/auth.guard';
+import { adminGuard, guestGuard } from './core/guards/auth.guard';
 
 export const routes: Routes = [
   // Landing page (public)
@@ -8,7 +8,7 @@ export const routes: Routes = [
     pathMatch: 'full',
     loadComponent: () => import('./landing/landing').then(m => m.Landing)
   },
-  // All users use /app/dashboard; redirect old admin/manage URLs
+  // Admin-only platform; legacy public/user URLs go to admin login/dashboard.
   { path: 'admin', redirectTo: 'app/dashboard', pathMatch: 'prefix' },
   { path: 'manage/login', redirectTo: 'login', pathMatch: 'full' },
   { path: 'manage', redirectTo: 'app/dashboard', pathMatch: 'prefix' },
@@ -20,8 +20,8 @@ export const routes: Routes = [
   },
   {
     path: 'signup',
-    loadComponent: () => import('./features/auth/signup/signup').then(m => m.Signup),
-    canActivate: [guestGuard]
+    redirectTo: 'login',
+    pathMatch: 'full'
   },
   {
     path: 'forgot-password',
@@ -38,7 +38,7 @@ export const routes: Routes = [
   {
     path: 'app',
     loadComponent: () => import('./layout/main-layout/main-layout').then(m => m.MainLayout),
-    canActivate: [authGuard],
+    canActivate: [adminGuard],
     children: [
       // Dashboard
       {
@@ -243,12 +243,6 @@ export const routes: Routes = [
             data: { title: 'Alert Configuration', breadcrumb: 'Alert Configuration' }
           }
         ]
-      },
-      {
-        path: 'admin/users',
-        loadComponent: () => import('./features/admin/user-management/user-management').then(m => m.UserManagement),
-        canActivate: [adminGuard],
-        data: { title: 'User Management', breadcrumb: 'User Management' }
       },
       // Profile
       {

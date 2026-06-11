@@ -9,7 +9,6 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { AuthService } from '../../core/services/auth.service';
 import { TranslationService } from '../../core/services/translation.service';
-import { UserRole } from '../../core/models';
 
 export interface SidebarMenuItem {
   labelKey: string;
@@ -114,77 +113,8 @@ export class Sidebar implements OnInit, OnDestroy {
       labelKey: 'nav.admin',
       icon: 'settings',
       children: [
-        { labelKey: 'nav.userManagement', icon: 'manage_accounts', route: '/app/admin/users' },
         { labelKey: 'nav.alertConfiguration', icon: 'tune', route: '/app/alerts/alert-configuration' },
         { labelKey: 'nav.alertDashboard', icon: 'notifications', route: '/app/alerts/alert-dashboard' }
-      ]
-    }
-  ];
-
-  private userMenuItems: SidebarMenuItem[] = [
-    { labelKey: 'nav.dashboard', icon: 'dashboard', route: '/app/reports/dashboard-reports' },
-    {
-      labelKey: 'nav.reports',
-      icon: 'description',
-      route: '/app/reports',
-      children: [
-        { labelKey: 'nav.executiveSummary', icon: 'summarize', route: '/app/reports/executive-summary' },
-        { labelKey: 'nav.reportBuilder', icon: 'edit', route: '/app/reports/builder' }
-      ]
-    },
-    {
-      labelKey: 'nav.dataSources',
-      icon: 'database',
-      children: [
-        { labelKey: 'nav.csvUpload', icon: 'upload', route: '/app/data-sources/csv-upload' },
-        { labelKey: 'nav.importHistory', icon: 'history', route: '/app/data-sources/import-history' }
-      ]
-    },
-    {
-      labelKey: 'nav.analysis',
-      icon: 'bar_chart',
-      children: [
-        { labelKey: 'nav.sentimentAnalysis', icon: 'sentiment_satisfied', route: '/app/analysis/sentiment' },
-        { labelKey: 'nav.npsAnalysis', icon: 'trending_up', route: '/app/analytics/nps-analysis' },
-        { labelKey: 'nav.rootCause', icon: 'search', route: '/app/analysis/root-cause' },
-        { labelKey: 'nav.competitorAnalysis', icon: 'compare', route: '/app/analysis/competitor' }
-      ]
-    },
-    {
-      labelKey: 'nav.cxJourney',
-      icon: 'map',
-      children: [
-        { labelKey: 'nav.journeyMap', icon: 'route', route: '/app/cx/journeys' },
-        { labelKey: 'nav.journeyHeatmap', icon: 'grid_on', route: '/app/cx/journey-heatmap' },
-        { labelKey: 'nav.touchpoints', icon: 'place', route: '/app/cx/touchpoints' },
-        { labelKey: 'nav.actionPlans', icon: 'assignment', route: '/app/cx/action-plans' },
-        { labelKey: 'nav.processEnhancement', icon: 'trending_up', route: '/app/cx/process-enhancement' }
-      ]
-    },
-    {
-      labelKey: 'nav.socialMedia',
-      icon: 'share',
-      children: [
-        { labelKey: 'nav.socialAnalysis', icon: 'analytics', route: '/app/social-media/social-analysis' },
-        { labelKey: 'nav.sourceExtraction', icon: 'cloud_download', route: '/app/social-media/source-extraction' },
-        { labelKey: 'nav.methodology', icon: 'menu_book', route: '/app/social-media/methodology' },
-        { labelKey: 'nav.datasetProfile', icon: 'table_chart', route: '/app/social-media/dataset-profile' },
-        { labelKey: 'nav.executiveSummary', icon: 'summarize', route: '/app/reports/executive-summary' },
-        { labelKey: 'nav.sentimentAnalysis', icon: 'sentiment_satisfied', route: '/app/analysis/sentiment' },
-        { labelKey: 'nav.npsAnalysis', icon: 'trending_up', route: '/app/analytics/nps-analysis' },
-        { labelKey: 'nav.rootCause', icon: 'search', route: '/app/analysis/root-cause' },
-        { labelKey: 'nav.journeyMap', icon: 'route', route: '/app/cx/journeys' },
-        { labelKey: 'nav.journeyHeatmap', icon: 'grid_on', route: '/app/cx/journey-heatmap' },
-        { labelKey: 'nav.touchpoints', icon: 'place', route: '/app/cx/touchpoints' },
-        { labelKey: 'nav.actionPlans', icon: 'assignment', route: '/app/cx/action-plans' }
-      ]
-    },
-    {
-      labelKey: 'nav.alerts',
-      icon: 'notifications',
-      children: [
-        { labelKey: 'nav.alertDashboard', icon: 'dashboard', route: '/app/alerts/alert-dashboard' },
-        { labelKey: 'nav.alertConfiguration', icon: 'tune', route: '/app/alerts/alert-configuration' }
       ]
     }
   ];
@@ -221,8 +151,7 @@ export class Sidebar implements OnInit, OnDestroy {
       this.flatMenuItems.set([]);
       return;
     }
-    const menu = user.role === UserRole.ADMIN ? this.adminMenuItems : this.userMenuItems;
-    this.flatMenuItems.set(this.flatten(menu));
+    this.flatMenuItems.set(this.flatten(this.adminMenuItems));
   }
 
   constructor() {

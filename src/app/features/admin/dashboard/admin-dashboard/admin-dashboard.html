@@ -48,7 +48,7 @@
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/></svg>
         </div>
         <div class="stat-content">
-          <p class="stat-label">{{ t('userManagement') || 'Total Users' }}</p>
+          <p class="stat-label">Admin Workspace</p>
           <p class="stat-value">{{ stats()?.totalUsers ?? 'N/A' }}</p>
         </div>
       </div>
@@ -101,9 +101,9 @@
 
     <div class="admin-sections">
       <div class="section-card">
-        <h2>{{ t('userManagement') }}</h2>
-        <p>Manage users, roles, and permissions</p>
-        <a routerLink="/manage/users" class="btn-primary">Manage Users</a>
+        <h2>Data Control</h2>
+        <p>Manage admin-owned CSV data and analytics flow</p>
+        <a routerLink="/app/data-sources/csv-upload" class="btn-primary">Upload CSV</a>
       </div>
 
       <div class="section-card">

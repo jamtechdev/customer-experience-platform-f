@@ -32,7 +32,6 @@ export class AuthService {
   // Start with false, will be set to true after initialization
   readonly authReady$ = new BehaviorSubject<boolean>(false);
   readonly isAdmin = computed(() => this.currentUser()?.role === UserRole.ADMIN);
-  readonly isUser = computed(() => this.currentUser()?.role === UserRole.USER);
 
   constructor() {
     // Session validation is intentionally guard-driven. Public pages such as
@@ -69,27 +68,6 @@ export class AuthService {
 
   private get apiBase(): string {
     return environment.apiUrl || '/api';
-  }
-
-  register(data: {
-    email: string;
-    password: string;
-    firstName: string;
-    lastName: string;
-    companyName: string;
-    role?: string;
-  }): Observable<ApiResponse<AuthResponse>> {
-    return this.http.post<ApiResponse<AuthResponse>>(`${this.apiBase}/auth/register`, data).pipe(
-      tap(response => {
-        if (response.success && response.data) {
-          this.setSession(response.data);
-        }
-      }),
-      catchError(error => {
-        console.error('Registration error:', error);
-        return throwError(() => error);
-      })
-    );
   }
 
   login(credentials: LoginRequest): Observable<ApiResponse<AuthResponse>> {
@@ -135,9 +113,7 @@ export class AuthService {
     const user = this.currentUser();
     if (!user) return false;
     
-    if (user.role === UserRole.ADMIN) return true;
-    if (user.role === UserRole.USER && (permission.includes('read') || permission.includes('write'))) return true;
-    return user.permissions.includes(permission);
+    return user.role === UserRole.ADMIN;
   }
 
   hasRole(roles: UserRole[]): boolean {
