@@ -1,7 +1,6 @@
 import { Injectable, signal, computed, effect, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
-import { SettingsService } from './settings.service';
 
 export type Language = 'en' | 'tr' | 'ar';
 
@@ -14,7 +13,6 @@ export interface Translations {
 })
 export class TranslationService {
   private http = inject(HttpClient);
-  private settingsService = inject(SettingsService);
   private currentLanguage = signal<Language>('en');
   private translations: Record<Language, Translations> = {} as Record<Language, Translations>;
   private translationsLoaded = signal<boolean>(false);
@@ -32,12 +30,10 @@ export class TranslationService {
       ar: {}
     };
 
-    this.settingsService.settings$.subscribe((settings) => {
-      const lang = this.normalizeLanguage(settings.language);
-      if (lang) {
-        this.currentLanguage.set(lang);
-      }
-    });
+    const storedLanguage = this.readStoredLanguage();
+    if (storedLanguage) {
+      this.currentLanguage.set(storedLanguage);
+    }
 
     // Load translations on initialization
     this.loadTranslations();
@@ -93,11 +89,7 @@ export class TranslationService {
   setLanguage(lang: Language): void {
     const normalized = this.normalizeLanguage(lang) ?? 'en';
     this.currentLanguage.set(normalized);
-    this.settingsService.updateSettings({ language: normalized }).subscribe({
-      error: () => {
-        /* Keep the in-memory language for the current session; DB remains authoritative after refresh. */
-      },
-    });
+    this.storeLanguage(normalized);
   }
 
   /**
@@ -182,6 +174,25 @@ export class TranslationService {
       return 'en';
     }
     return null;
+  }
+
+  private readStoredLanguage(): Language | null {
+    try {
+      if (typeof localStorage === 'undefined') return null;
+      return this.normalizeLanguage(localStorage.getItem('sentimenter_language'));
+    } catch {
+      return null;
+    }
+  }
+
+  private storeLanguage(lang: Language): void {
+    try {
+      if (typeof localStorage !== 'undefined') {
+        localStorage.setItem('sentimenter_language', lang);
+      }
+    } catch {
+      // Storage can be unavailable in private browsing or SSR. Current session still updates.
+    }
   }
 
   /**
