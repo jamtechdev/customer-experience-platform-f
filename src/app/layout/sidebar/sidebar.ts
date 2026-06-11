@@ -82,6 +82,35 @@ export class Sidebar implements OnInit, OnDestroy {
       ]
     },
     {
+      labelKey: 'nav.cxJourney',
+      icon: 'map',
+      children: [
+        { labelKey: 'nav.journeyMap', icon: 'route', route: '/app/cx/journeys' },
+        { labelKey: 'nav.journeyHeatmap', icon: 'grid_on', route: '/app/cx/journey-heatmap' },
+        { labelKey: 'nav.touchpoints', icon: 'place', route: '/app/cx/touchpoints' },
+        { labelKey: 'nav.actionPlans', icon: 'assignment', route: '/app/cx/action-plans' },
+        { labelKey: 'nav.processEnhancement', icon: 'trending_up', route: '/app/cx/process-enhancement' }
+      ]
+    },
+    {
+      labelKey: 'nav.socialMedia',
+      icon: 'share',
+      children: [
+        { labelKey: 'nav.socialAnalysis', icon: 'analytics', route: '/app/social-media/social-analysis' },
+        { labelKey: 'nav.sourceExtraction', icon: 'cloud_download', route: '/app/social-media/source-extraction' },
+        { labelKey: 'nav.methodology', icon: 'menu_book', route: '/app/social-media/methodology' },
+        { labelKey: 'nav.datasetProfile', icon: 'table_chart', route: '/app/social-media/dataset-profile' }
+      ]
+    },
+    {
+      labelKey: 'nav.alerts',
+      icon: 'notifications',
+      children: [
+        { labelKey: 'nav.alertDashboard', icon: 'dashboard', route: '/app/alerts/alert-dashboard' },
+        { labelKey: 'nav.alertConfiguration', icon: 'tune', route: '/app/alerts/alert-configuration' }
+      ]
+    },
+    {
       labelKey: 'nav.admin',
       icon: 'settings',
       children: [
