@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams, HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Observable, of, timer, throwError } from 'rxjs';
-import { catchError, switchMap, delay, retry } from 'rxjs/operators';
+import { catchError, switchMap, retry } from 'rxjs/operators';
 import {
   SentimentAnalysisResult,
   RootCauseAnalysis,
@@ -18,6 +18,8 @@ export class AnalysisService {
   private readonly http = inject(HttpClient);
   private readonly baseUrl = environment.apiUrl ? `${environment.apiUrl.replace(/\/$/, '')}/analysis` : '/api/analysis';
   readonly drilldownIdLimit = 200;
+  private readonly cxReportPollMs = 5000;
+  private readonly cxReportPollAttempts = 36;
 
   private realtimeParams(params: HttpParams = new HttpParams()): HttpParams {
     return params.set('_t', Date.now().toString());
@@ -73,6 +75,47 @@ export class AnalysisService {
         report?: TwitterCxReportDto;
       }>
     >(`${this.baseUrl}/twitter-cx-report/snapshot-status`, { params });
+  }
+
+  private waitForTwitterCxReportSnapshot(
+    snapshotId: number,
+    attempt: number = 0
+  ): Observable<ApiResponse<TwitterCxReportDto>> {
+    return timer(attempt === 0 ? 2500 : this.cxReportPollMs).pipe(
+      switchMap(() => this.getTwitterCxReportSnapshotStatus(snapshotId)),
+      switchMap((statusResp) => {
+        const status = statusResp.data?.status;
+        if (!statusResp.success || status === 'failed') {
+          return of({
+            success: false,
+            data: undefined as unknown as TwitterCxReportDto,
+            message: 'snapshot_failed',
+          } as ApiResponse<TwitterCxReportDto>);
+        }
+        if (status === 'ready' && statusResp.data?.report) {
+          return of({
+            ...statusResp,
+            data: statusResp.data.report,
+            message: 'Twitter CX report (cached)',
+          } as ApiResponse<TwitterCxReportDto>);
+        }
+        if (attempt >= this.cxReportPollAttempts - 1) {
+          return of({
+            success: false,
+            data: undefined as unknown as TwitterCxReportDto,
+            message: 'snapshot_still_building',
+          } as ApiResponse<TwitterCxReportDto>);
+        }
+        return this.waitForTwitterCxReportSnapshot(snapshotId, attempt + 1);
+      }),
+      catchError(() =>
+        of({
+          success: false,
+          data: undefined as unknown as TwitterCxReportDto,
+          message: 'snapshot_poll_failed',
+        } as ApiResponse<TwitterCxReportDto>)
+      )
+    );
   }
 
   getFeedbackByIds(
@@ -156,11 +199,7 @@ export class AnalysisService {
             } as ApiResponse<TwitterCxReportDto>);
           }
           if (httpResp.status === 202 && body.data?.snapshotPending && body.data?.snapshotId != null) {
-            return of({
-              success: false,
-              message: 'snapshot_still_building',
-              data: undefined as unknown as TwitterCxReportDto,
-            } as ApiResponse<TwitterCxReportDto>);
+            return this.waitForTwitterCxReportSnapshot(Number(body.data.snapshotId));
           }
           return of(body as ApiResponse<TwitterCxReportDto>);
         }),

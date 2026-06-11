@@ -2,7 +2,7 @@
   <div class="header-section">
     <h1>{{ t('heatmap.title') }}</h1>
     <p class="subtitle">{{ t('heatmap.subtitle') }}</p>
-    <button mat-raised-button color="primary" (click)="loadHeatmap()" [disabled]="loading()">
+    <button mat-raised-button color="primary" (click)="loadHeatmap(false, true)" [disabled]="loading()">
       {{ loading() ? t('app.loading') : t('heatmap.load') }}
     </button>
   </div>
@@ -18,14 +18,14 @@
     <mat-card class="error-card">
       <mat-card-content>
         <p>{{ error() }}</p>
-        <button mat-raised-button (click)="loadHeatmap()">{{ t('app.retry') }}</button>
+        <button mat-raised-button (click)="loadHeatmap(false, true)">{{ t('app.retry') }}</button>
       </mat-card-content>
     </mat-card>
   } @else if (stages().length === 0) {
     <mat-card class="empty-card">
       <mat-card-content>
         <p>{{ t('heatmap.noStages') }}</p>
-        <button mat-raised-button color="primary" (click)="loadHeatmap()">{{ t('heatmap.load') }}</button>
+        <button mat-raised-button color="primary" (click)="loadHeatmap(false, true)">{{ t('heatmap.load') }}</button>
       </mat-card-content>
     </mat-card>
   } @else {

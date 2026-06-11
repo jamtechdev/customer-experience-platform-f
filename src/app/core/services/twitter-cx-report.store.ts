@@ -25,6 +25,17 @@ export class TwitterCxReportStore {
     return this.cache.get(this.cacheKey(companyId, csvImportId, startDate, endDate, false));
   }
 
+  clearCachedReport(
+    companyId: number | undefined,
+    csvImportId?: number,
+    startDate?: Date,
+    endDate?: Date
+  ): void {
+    const key = this.cacheKey(companyId, csvImportId, startDate, endDate, false);
+    this.cache.delete(key);
+    this.inflight.delete(key);
+  }
+
   loadTwitterCxReport(
     companyId: number | undefined,
     csvImportId?: number,
