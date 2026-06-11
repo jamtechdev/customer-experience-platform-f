@@ -1,7 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, BehaviorSubject } from 'rxjs';
-import { tap } from 'rxjs/operators';
+import { Observable, BehaviorSubject, of } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { ApiResponse } from '../models';
 import { AuthService } from './auth.service';
@@ -59,6 +58,7 @@ export class SettingsService {
   private readonly http = inject(HttpClient);
   private readonly authService = inject(AuthService);
   private readonly baseUrl = environment.apiUrl ? `${environment.apiUrl.replace(/\/$/, '')}/settings` : '/api/settings';
+  private readonly localSettingsKey = 'sentimenter_app_settings';
   
   private settingsSubject = new BehaviorSubject<AppSettings>(this.getDefaultSettings());
   public settings$ = this.settingsSubject.asObservable();
@@ -68,7 +68,7 @@ export class SettingsService {
       if (user) {
         this.loadSettings();
       } else {
-        this.settingsSubject.next(this.getDefaultSettings());
+        this.settingsSubject.next(this.readLocalSettings());
       }
     });
   }
@@ -109,44 +109,33 @@ export class SettingsService {
   }
 
   loadSettings(): void {
-    this.http.get<ApiResponse<AppSettings>>(this.baseUrl).subscribe({
-      next: (response) => {
-        if (response.success && response.data) {
-          this.settingsSubject.next({ ...this.getDefaultSettings(), ...response.data });
-        }
-      },
-      error: () => {
-        // Server settings not available, use defaults
-      }
-    });
+    this.settingsSubject.next(this.readLocalSettings());
   }
 
   updateSettings(settings: Partial<AppSettings>): Observable<ApiResponse<AppSettings>> {
-    const updated = { ...this.settingsSubject.value, ...settings };
-    
-    return new Observable(observer => {
-      this.http.put<ApiResponse<AppSettings>>(this.baseUrl, updated).subscribe({
-        next: (response) => {
-          if (response.success) {
-            this.settingsSubject.next(response.data);
-          }
-          observer.next(response);
-          observer.complete();
-        },
-        error: (error) => {
-          observer.error(error);
-        }
-      });
+    const updated = this.mergeSettings(this.settingsSubject.value, settings);
+    this.settingsSubject.next(updated);
+    this.writeLocalSettings(updated);
+    return of({
+      success: true,
+      message: 'Settings updated locally',
+      version: 'v1',
+      code: 200,
+      data: updated,
     });
   }
 
   deleteSettings(): Observable<ApiResponse<void>> {
-    return this.http.delete<ApiResponse<void>>(this.baseUrl).pipe(
-      tap(() => {
-        const defaults = this.getDefaultSettings();
-        this.settingsSubject.next(defaults);
-      })
-    );
+    const defaults = this.getDefaultSettings();
+    this.settingsSubject.next(defaults);
+    this.writeLocalSettings(defaults);
+    return of({
+      success: true,
+      message: 'Settings reset locally',
+      version: 'v1',
+      code: 200,
+      data: undefined,
+    });
   }
 
   resetSettings(): void {
@@ -189,5 +178,54 @@ export class SettingsService {
 
   getDateFormat(): string {
     return this.settingsSubject.value.dateFormat;
+  }
+
+  private readLocalSettings(): AppSettings {
+    try {
+      if (typeof localStorage === 'undefined') return this.getDefaultSettings();
+      const raw = localStorage.getItem(this.localSettingsKey);
+      if (!raw) return this.getDefaultSettings();
+      const parsed = JSON.parse(raw);
+      return this.mergeSettings(this.getDefaultSettings(), parsed);
+    } catch {
+      return this.getDefaultSettings();
+    }
+  }
+
+  private writeLocalSettings(settings: AppSettings): void {
+    try {
+      if (typeof localStorage !== 'undefined') {
+        localStorage.setItem(this.localSettingsKey, JSON.stringify(settings));
+      }
+    } catch {
+      // Ignore storage failures; in-memory settings still work for the session.
+    }
+  }
+
+  private mergeSettings(base: AppSettings, updates: Partial<AppSettings>): AppSettings {
+    return {
+      ...base,
+      ...updates,
+      notifications: {
+        ...base.notifications,
+        ...(updates.notifications || {}),
+      },
+      dashboard: {
+        ...base.dashboard,
+        ...(updates.dashboard || {}),
+      },
+      alerts: {
+        ...base.alerts,
+        ...(updates.alerts || {}),
+        thresholds: {
+          ...base.alerts.thresholds,
+          ...(updates.alerts?.thresholds || {}),
+        },
+      },
+      export: {
+        ...base.export,
+        ...(updates.export || {}),
+      },
+    };
   }
 }

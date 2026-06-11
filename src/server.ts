@@ -8,9 +8,31 @@ import express from 'express';
 import { join } from 'node:path';
 
 const browserDistFolder = join(import.meta.dirname, '../browser');
+const browserIndexFile = join(browserDistFolder, 'index.html');
+const defaultAllowedHosts = new Set([
+  'sentimenter.ai',
+  'www.sentimenter.ai',
+  'localhost',
+  '127.0.0.1',
+  '::1',
+]);
+const configuredAllowedHosts = (process.env['SSR_ALLOWED_HOSTS'] || process.env['ALLOWED_HOSTS'] || '')
+  .split(',')
+  .map((host) => host.trim().toLowerCase())
+  .filter(Boolean);
+
+for (const host of configuredAllowedHosts) {
+  defaultAllowedHosts.add(host);
+}
 
 const app = express();
 const angularApp = new AngularNodeAppEngine();
+
+function isAllowedSsrHost(hostname: string | undefined): boolean {
+  const normalized = (hostname || '').toLowerCase();
+  if (!normalized) return false;
+  return defaultAllowedHosts.has(normalized) || normalized.endsWith('.sentimenter.ai');
+}
 
 /**
  * Example Express Rest API endpoints can be defined here.
@@ -34,6 +56,24 @@ app.use(
     redirect: false,
   }),
 );
+
+/**
+ * Avoid Angular SSRF host-protection warnings for direct-IP/bot traffic.
+ * Unknown hosts still get the browser app for HTML routes; missing assets return 404.
+ */
+app.use((req, res, next) => {
+  if (isAllowedSsrHost(req.hostname)) {
+    next();
+    return;
+  }
+
+  if (req.path.includes('.')) {
+    res.sendStatus(404);
+    return;
+  }
+
+  res.sendFile(browserIndexFile);
+});
 
 /**
  * Handle all other requests by rendering the Angular application.
