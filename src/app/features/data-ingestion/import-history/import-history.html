@@ -104,6 +104,13 @@
                         failed {{ row.errorDetails?.aiSummary?.failed ?? 0 }}.
                       </div>
                     }
+                    @if (row.errorDetails?.npsAiSummary?.enabled) {
+                      <div class="error-line">
+                        <strong>NPS:</strong>
+                        saved {{ row.errorDetails?.npsAiSummary?.succeeded ?? 0 }}
+                        / {{ row.errorDetails?.npsAiSummary?.attempted ?? 0 }} OpenAI-inferred score(s).
+                      </div>
+                    }
                   </div>
                 } @else {
                   <div class="error-structured">
@@ -138,6 +145,11 @@
                         attempted {{ row.errorDetails?.aiSummary?.attempted ?? 0 }},
                         success {{ row.errorDetails?.aiSummary?.succeeded ?? 0 }},
                         failed {{ row.errorDetails?.aiSummary?.failed ?? 0 }}.
+                      </div>
+                    }
+                    @if (row.errorDetails?.npsAiSummary?.enabled) {
+                      <div class="error-line">
+                        <strong>NPS:</strong> OpenAI NPS scoring is queued after sentiment.
                       </div>
                     }
                   </div>
@@ -255,6 +267,20 @@
                       failed {{ row.errorDetails.aiSummary?.failed ?? 0 }}.
                     </div>
                   }
+                  @if (row.errorDetails.npsAiSummary?.enabled) {
+                    <div class="error-line">
+                      <strong>NPS:</strong>
+                      saved {{ row.errorDetails.npsAiSummary?.succeeded ?? 0 }}
+                      / {{ row.errorDetails.npsAiSummary?.attempted ?? 0 }} score(s).
+                    </div>
+                  }
+                  @if (row.errorDetails.postProcessingSummary) {
+                    <div class="error-line">
+                      <strong>Post analysis:</strong>
+                      root causes {{ row.errorDetails.postProcessingSummary.rootCauseAnalysisCount ?? 0 }},
+                      journey mappings {{ row.errorDetails.postProcessingSummary.journeyMappingCount ?? 0 }}.
+                    </div>
+                  }
                 </div>
               } @else if (row.status === 'completed' && row.errorDetails?.aiSummary?.enabled) {
                 <div class="error-structured import-omissions">
@@ -274,6 +300,20 @@
                     success {{ row.errorDetails.aiSummary?.succeeded ?? 0 }},
                     failed {{ row.errorDetails.aiSummary?.failed ?? 0 }}.
                   </div>
+                  @if (row.errorDetails.npsAiSummary?.enabled) {
+                    <div class="error-line">
+                      <strong>NPS:</strong>
+                      saved {{ row.errorDetails.npsAiSummary?.succeeded ?? 0 }}
+                      / {{ row.errorDetails.npsAiSummary?.attempted ?? 0 }} OpenAI-inferred score(s).
+                    </div>
+                  }
+                  @if (row.errorDetails.postProcessingSummary) {
+                    <div class="error-line">
+                      <strong>Post analysis:</strong>
+                      root causes {{ row.errorDetails.postProcessingSummary.rootCauseAnalysisCount ?? 0 }},
+                      journey mappings {{ row.errorDetails.postProcessingSummary.journeyMappingCount ?? 0 }}.
+                    </div>
+                  }
                 </div>
               } @else {
                 —

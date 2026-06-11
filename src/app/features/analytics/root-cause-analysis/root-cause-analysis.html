@@ -36,24 +36,38 @@
             <p>{{ emptyHint() || t('rootCausePage.noRootCausesHint') }}</p>
           </div>
         </div>
-        <figure *ngIf="rootCauseRows().length > 0" class="root-cause-chart" [attr.aria-label]="t('rootCausePage.chartLabel')">
-          <figcaption class="root-cause-chart-title">{{ t('rootCausePage.distributionSubtitle') }}</figcaption>
-          <div class="root-cause-chart-list">
-            @for (row of rootCauseRows(); track row.cause) {
-              <div class="root-cause-chart-row">
-                <div class="root-cause-chart-label" [title]="row.cause">{{ row.cause }}</div>
-                <button
-                  type="button"
-                  class="root-cause-chart-count"
-                  (click)="row.feedbackIds.length ? openRelatedRecords(row) : relinkRecords(row)"
-                  [attr.aria-label]="row.feedbackIds.length ? t('rootCausePage.viewRecords') : t('rootCausePage.relinkRecords')">
-                  {{ row.count }}
-                </button>
-                <div class="root-cause-chart-track">
-                  <div class="root-cause-chart-fill" [style.width.%]="rootCauseBarFillPct(row.count)"></div>
-                </div>
+        <figure *ngIf="rootCauseRows().length > 0" class="mpl-figure" [attr.aria-label]="t('rootCausePage.chartLabel')">
+          <figcaption class="mpl-figure-title">Negative Tweet Root Causes</figcaption>
+          <div class="mpl-chart mpl-chart-mplframe mpl-bar-root">
+            <div class="mpl-axes-frame">
+              <div class="mpl-y-label-outer" aria-hidden="true">Count</div>
+              <div class="mpl-y-axis mpl-y-axis-mpl">
+                <span>{{ rootCauseMaxEffective() }}</span>
+                <span>{{ (rootCauseMaxEffective() * 3) / 4 | number : '1.0-0' }}</span>
+                <span>{{ rootCauseMaxEffective() / 2 | number : '1.0-0' }}</span>
+                <span>{{ rootCauseMaxEffective() / 4 | number : '1.0-0' }}</span>
+                <span>0</span>
               </div>
-            }
+              <div class="mpl-plot mpl-plot-mpl mpl-plot-root">
+                @for (row of rootCauseRows(); track row.cause) {
+                  <div class="mpl-bar-col mpl-bar-col-root">
+                    <div class="mpl-bar-track">
+                      <div class="mpl-bar-fill mpl-bar-mpl" [style.height.%]="rootCauseBarFillPct(row.count)"></div>
+                    </div>
+                    <div class="mpl-bar-value">
+                      <button
+                        type="button"
+                        class="count-link bar-count-link"
+                        (click)="row.feedbackIds.length ? openRelatedRecords(row) : relinkRecords(row)"
+                        [attr.aria-label]="row.feedbackIds.length ? t('rootCausePage.viewRecords') : t('rootCausePage.relinkRecords')">
+                        {{ row.count }}
+                      </button>
+                    </div>
+                    <div class="mpl-bar-cat mpl-bar-cat-rot mpl-bar-cat-mpl">{{ truncateChartLabel(row.cause, 28) }}</div>
+                  </div>
+                }
+              </div>
+            </div>
           </div>
         </figure>
 

@@ -1,4 +1,4 @@
-import { Component, inject, signal, OnInit } from '@angular/core';
+import { Component, inject, signal, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
@@ -9,7 +9,6 @@ import { MatChipsModule } from '@angular/material/chips';
 import { CSVService, CSVFormat } from '../../../core/services/csv.service';
 import { TranslationService } from '../../../core/services/translation.service';
 import { environment } from '../../../../environments/environment';
-import { Router } from '@angular/router';
 import { ImportHistory } from '../import-history/import-history';
 
 type ProcessingStatus = 'idle' | 'uploading' | 'processing' | 'completed' | 'error';
@@ -37,11 +36,11 @@ const DEFAULT_FORMAT: CSVFormat = {
   templateUrl: './csv-upload.html',
   styleUrl: './csv-upload.css',
 })
-export class CsvUpload implements OnInit {
+export class CsvUpload implements OnInit, OnDestroy {
   private csvService = inject(CSVService);
   private snackBar = inject(MatSnackBar);
   private translationService = inject(TranslationService);
-  private router = inject(Router);
+  private statusPollTimer: ReturnType<typeof setTimeout> | null = null;
   document = document; // Expose document for template
 
   selectedFile: File | null = null;
@@ -68,6 +67,10 @@ export class CsvUpload implements OnInit {
       },
       error: () => {}
     });
+  }
+
+  ngOnDestroy(): void {
+    this.stopStatusPolling();
   }
 
   requiredColumnsText(): string {
@@ -146,20 +149,18 @@ export class CsvUpload implements OnInit {
     this.processingStatus.set('uploading');
     this.processingMessage.set(this.t('app.loading') || 'Uploading file...');
 
-    this.csvService.uploadCSV(this.selectedFile, false).subscribe({
+    this.csvService.uploadCSV(this.selectedFile, true).subscribe({
       next: (response) => {
         if (response.success && response.data?.importId) {
           this.uploadProgress.set(100);
           this.importId.set(response.data.importId);
-          this.processingStatus.set(response.data.status === 'processing' ? 'processing' : 'completed');
+          this.processingStatus.set('processing');
           const rows = response.data.rowCount;
-          const msg = `Upload completed: ${rows} row(s) from ${response.data.filename}. Please map columns before starting import.`;
+          const msg = `Upload completed: ${rows} row(s) from ${response.data.filename}. OpenAI parsing and analysis started.`;
           this.processingMessage.set(msg);
           this.snackBar.open(msg, this.t('app.close'), { duration: 6000 });
           this.uploading.set(false);
-          if (response.data.status !== 'processing') {
-            this.router.navigate(['/app/data-sources/csv-mapping', response.data.importId]);
-          }
+          this.pollImportStatus(response.data.importId);
         }
       },
       error: (error) => {
@@ -179,6 +180,61 @@ export class CsvUpload implements OnInit {
     });
   }
 
+  private pollImportStatus(importId: number): void {
+    this.stopStatusPolling();
+    this.statusPollTimer = setTimeout(() => {
+      this.csvService.getImportStatus(importId).subscribe({
+        next: (res) => {
+          const row = res.data;
+          if (!res.success || !row) {
+            this.pollImportStatus(importId);
+            return;
+          }
+          const details = row.errorDetails;
+          const pct = Number(details?.completionPct ?? 0);
+          this.uploadProgress.set(Math.max(5, Math.min(100, pct || this.uploadProgress())));
+
+          if (row.status === 'completed') {
+            this.processingStatus.set('completed');
+            this.uploadProgress.set(100);
+            const ai = details?.aiSummary;
+            const nps = details?.npsAiSummary;
+            this.processingMessage.set(
+              `Analysis completed. Imported ${details?.importedCount ?? row.rowCount ?? 0} row(s). ` +
+                `Sentiment ${ai?.succeeded ?? 0}/${ai?.attempted ?? 0}, NPS ${nps?.succeeded ?? 0}/${nps?.attempted ?? 0}.`
+            );
+            this.stopStatusPolling();
+            return;
+          }
+
+          if (row.status === 'failed') {
+            this.processingStatus.set('error');
+            this.processingMessage.set(row.errorMessage || 'Import failed. Check reason/details below.');
+            this.stopStatusPolling();
+            return;
+          }
+
+          const processed = details?.processedCount ?? 0;
+          const total = details?.totalRows ?? row.rowCount ?? 0;
+          const ai = details?.aiSummary;
+          this.processingStatus.set('processing');
+          this.processingMessage.set(
+            `OpenAI is parsing and saving analysis. Processed ${processed}/${total}. ` +
+              (ai?.attempted ? `Sentiment ${ai.succeeded + ai.failed}/${ai.attempted}.` : 'Preparing sentiment, NPS and root cause.')
+          );
+          this.pollImportStatus(importId);
+        },
+        error: () => this.pollImportStatus(importId),
+      });
+    }, 2500);
+  }
+
+  private stopStatusPolling(): void {
+    if (!this.statusPollTimer) return;
+    clearTimeout(this.statusPollTimer);
+    this.statusPollTimer = null;
+  }
+
   private resetUpload(): void {
     this.selectedFile = null;
     this.uploading.set(false);
@@ -186,6 +242,7 @@ export class CsvUpload implements OnInit {
     this.processingStatus.set('idle');
     this.processingMessage.set('');
     this.importId.set(null);
+    this.stopStatusPolling();
   }
 
   removeFile(): void {

@@ -44,6 +44,22 @@ export interface CSVImport {
       failed: number;
       failedExamples: string[];
     };
+    npsAiSummary?: {
+      enabled: boolean;
+      attempted: number;
+      succeeded: number;
+      failed: number;
+      failedExamples: string[];
+    };
+    postProcessingSummary?: {
+      success: boolean;
+      processed: number;
+      failed: number;
+      errors: string[];
+      sentimentAnalysisCount: number;
+      rootCauseAnalysisCount: number;
+      journeyMappingCount: number;
+    };
   };
   createdAt: Date;
   updatedAt: Date;
@@ -104,6 +120,22 @@ export interface CSVImportResult {
     succeeded: number;
     failed: number;
     failedExamples: string[];
+  };
+  npsAiSummary?: {
+    enabled: boolean;
+    attempted: number;
+    succeeded: number;
+    failed: number;
+    failedExamples: string[];
+  };
+  postProcessingSummary?: {
+    success: boolean;
+    processed: number;
+    failed: number;
+    errors: string[];
+    sentimentAnalysisCount: number;
+    rootCauseAnalysisCount: number;
+    journeyMappingCount: number;
   };
 }
 
