@@ -136,93 +136,55 @@
       </div>
     </div>
 
-    @if (trends()) {
-      <div class="trends-content">
-        <mat-card class="trend-card">
-          <mat-card-header>
-            <mat-card-title>{{ t('reports.sentimentOverTime') }}</mat-card-title>
-            <mat-card-subtitle>{{ t('reports.sentimentOverTimeSubtitle') }}</mat-card-subtitle>
-          </mat-card-header>
-          <mat-card-content>
-            @if (sentimentTrends().length === 0) {
-              <div class="chart-empty">{{ t('reports.noSentimentTrendData') }}</div>
-            } @else {
-              <div class="trend-chart">
-                <div *ngFor="let point of sentimentTrends()" class="trend-row">
-                  <span class="trend-label">{{ formatPeriodLabel(point.period) }}</span>
-                  <div class="trend-bars">
-                    <div class="bar-track full">
-                      <div class="bar-fill total" [style.width.%]="(point.total / maxSentimentTotal()) * 100"></div>
-                    </div>
-                    <span class="trend-value">{{ t('reports.totalCount', { count: point.total }) }}</span>
-                  </div>
-                  <div class="trend-breakdown">
-                    <span class="breakdown positive">+{{ point.positive }}</span>
-                    <span class="breakdown neutral">~{{ point.neutral }}</span>
-                    <span class="breakdown negative">-{{ point.negative }}</span>
-                    <span class="breakdown avg">{{ t('reports.averageShort') }} {{ point.averageScore | number:'1.2-2' }}</span>
-                  </div>
-                </div>
-              </div>
-            }
-          </mat-card-content>
-        </mat-card>
+    <mat-card class="history-card">
+      <mat-card-content>
+        <div class="history-card-head">
+          <div>
+            <h3>History table</h3>
+            <p class="muted">
+              {{ selectedPresetId() === 'none' ? 'Showing latest 90 days in selected period.' : 'Showing selected date range.' }}
+            </p>
+          </div>
+        </div>
 
-        <mat-card class="trend-card">
-          <mat-card-header>
-            <mat-card-title>{{ t('reports.npsOverTime') }}</mat-card-title>
-            <mat-card-subtitle>{{ t('reports.npsOverTimeSubtitle') }}</mat-card-subtitle>
-          </mat-card-header>
-          <mat-card-content>
-            @if (visibleNpsTrends().length === 0) {
-              <div class="chart-empty">{{ t('reports.noNpsTrendData') }}</div>
-            } @else {
-              <div class="trend-chart nps-chart">
-                <div *ngFor="let point of visibleNpsTrends()" class="trend-row">
-                  <span class="trend-label">{{ formatPeriodLabel(point.period) }}</span>
-                  <div class="nps-bar-wrap">
-                    <div class="nps-bar-track">
-                      <div
-                        class="nps-bar-fill"
-                        [style.width.%]="npsBarWidth(point.npsScore)"
-                        [class.positive]="point.npsScore >= 0"
-                        [class.negative]="point.npsScore < 0"></div>
-                    </div>
-                    <span class="trend-value">{{ point.npsScore | number:'1.1-1' }} (n={{ point.count }})</span>
-                  </div>
-                </div>
-              </div>
-            }
-          </mat-card-content>
-        </mat-card>
-
-        <mat-card class="trend-card">
-          <mat-card-header>
-            <mat-card-title>{{ t('reports.feedbackVolumeOverTime') }}</mat-card-title>
-            <mat-card-subtitle>{{ t('reports.feedbackVolumeSubtitle') }}</mat-card-subtitle>
-          </mat-card-header>
-          <mat-card-content>
-            @if (sentimentTrends().length === 0) {
-              <div class="chart-empty">{{ t('reports.noVolumeData') }}</div>
-            } @else {
-              <div class="volume-chart">
-                <div *ngFor="let point of sentimentTrends()" class="volume-bar-row">
-                  <span class="trend-label">{{ formatPeriodLabel(point.period) }}</span>
-                  <div class="volume-bar-track">
-                    <div class="volume-bar-fill" [style.width.%]="(point.total / maxSentimentTotal()) * 100"></div>
-                  </div>
-                  <span class="trend-value">{{ point.total }}</span>
-                </div>
-              </div>
-            }
-          </mat-card-content>
-        </mat-card>
-      </div>
-    } @else {
-      <div class="loading-container">
-        <p class="muted">{{ t('reports.noTrendResponse') }}</p>
-      </div>
-    }
+        @if (loadingTrends()) {
+          <div class="table-state">Loading history...</div>
+        } @else if (historyRows().length === 0) {
+          <div class="table-state">No history data yet. Upload CSV data or click refresh after processing completes.</div>
+        } @else {
+          <div class="history-table-wrap">
+            <table class="history-table">
+              <thead>
+                <tr>
+                  <th>Period</th>
+                  <th>Total feedback</th>
+                  <th>Positive</th>
+                  <th>Neutral</th>
+                  <th>Negative</th>
+                  <th>Avg score</th>
+                  <th>NPS</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (row of historyRows(); track row.period) {
+                  <tr>
+                    <td>
+                      <strong>{{ formatPeriodLabel(row.period) }}</strong>
+                    </td>
+                    <td>{{ row.total | number }}</td>
+                    <td><span class="pill positive">{{ row.positivePct === null ? '—' : (row.positivePct | number:'1.1-1') + '%' }}</span></td>
+                    <td><span class="pill neutral">{{ row.neutralPct === null ? '—' : (row.neutralPct | number:'1.1-1') + '%' }}</span></td>
+                    <td><span class="pill negative">{{ row.negativePct === null ? '—' : (row.negativePct | number:'1.1-1') + '%' }}</span></td>
+                    <td>{{ row.averageScore === null ? '—' : (row.averageScore | number:'1.2-2') }}</td>
+                    <td>{{ row.npsScore === null ? '—' : (row.npsScore | number:'1.1-1') + ' (n=' + row.npsCount + ')' }}</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        }
+      </mat-card-content>
+    </mat-card>
   </section>
   }
 </div>

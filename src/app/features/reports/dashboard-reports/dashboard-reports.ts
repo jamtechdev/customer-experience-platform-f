@@ -25,6 +25,17 @@ import { CXWebSocketService, type CSVImportStatusEvent } from '../../../core/ser
 import { Subscription } from 'rxjs';
 import { OllamaLoader } from '../../../core/components/ollama-loader/ollama-loader';
 
+interface TrendHistoryRow {
+  period: string;
+  total: number;
+  positivePct: number | null;
+  neutralPct: number | null;
+  negativePct: number | null;
+  averageScore: number | null;
+  npsScore: number | null;
+  npsCount: number;
+}
+
 @Component({
   selector: 'app-dashboard-reports',
   imports: [
@@ -74,6 +85,27 @@ export class DashboardReports implements OnInit, OnDestroy {
   visibleNpsTrends = computed(() => {
     if (!this.hasNpsBaseData()) return [];
     return this.npsTrends().filter((p) => (p?.count ?? 0) > 0);
+  });
+  historyRows = computed<TrendHistoryRow[]>(() => {
+    const sentimentByPeriod = new Map(this.sentimentTrends().map((point) => [point.period, point]));
+    const npsByPeriod = new Map(this.npsTrends().map((point) => [point.period, point]));
+    const periods = Array.from(new Set([...sentimentByPeriod.keys(), ...npsByPeriod.keys()]));
+
+    return periods.map((period) => {
+      const sentiment = sentimentByPeriod.get(period);
+      const nps = npsByPeriod.get(period);
+      const total = sentiment?.total ?? 0;
+      return {
+        period,
+        total,
+        positivePct: total > 0 && sentiment ? (sentiment.positive / total) * 100 : null,
+        neutralPct: total > 0 && sentiment ? (sentiment.neutral / total) * 100 : null,
+        negativePct: total > 0 && sentiment ? (sentiment.negative / total) * 100 : null,
+        averageScore: sentiment?.averageScore ?? null,
+        npsScore: nps && nps.count > 0 ? nps.npsScore : null,
+        npsCount: nps?.count ?? 0,
+      };
+    });
   });
 
   maxSentimentTotal = computed(() => {
@@ -193,8 +225,7 @@ export class DashboardReports implements OnInit, OnDestroy {
   }
 
   onPeriodChange(): void {
-    if (!this.filtersApplied()) return;
-    this.loadTrends(true);
+    this.loadTrends(this.filtersApplied());
   }
 
   loadCurrentStatus(withFilters: boolean = this.filtersApplied()): void {
@@ -228,11 +259,6 @@ export class DashboardReports implements OnInit, OnDestroy {
   }
 
   loadTrends(withFilters: boolean = this.filtersApplied()): void {
-    if (!withFilters) {
-      this.loadingTrends.set(false);
-      this.trends.set(null);
-      return;
-    }
     this.loadingTrends.set(true);
     this.trends.set(null);
     const user = this.authService.currentUser();
