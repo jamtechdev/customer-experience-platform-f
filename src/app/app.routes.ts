@@ -1,5 +1,5 @@
 import { Routes } from '@angular/router';
-import { adminGuard, authGuard, guestGuard } from './core/guards/auth.guard';
+import { authGuard, guestGuard } from './core/guards/auth.guard';
 
 export const routes: Routes = [
   // Landing page (public)
@@ -58,14 +58,13 @@ export const routes: Routes = [
       },
       {
         path: 'admin-dashboard',
-        loadComponent: () => import('./features/admin/dashboard/admin-dashboard/admin-dashboard').then(m => m.AdminDashboard),
-        canActivate: [adminGuard],
-        data: { title: 'Admin Dashboard', breadcrumb: 'Admin Dashboard' }
+        redirectTo: 'reports/dashboard-reports',
+        pathMatch: 'full'
       },
       {
         path: 'executive-dashboard',
-        loadComponent: () => import('./features/dashboard/executive-dashboard/executive-dashboard').then(m => m.ExecutiveDashboard),
-        data: { title: 'Executive Dashboard', breadcrumb: 'Executive Dashboard' }
+        redirectTo: 'reports/dashboard-reports',
+        pathMatch: 'full'
       },
 
       // CX Journey

@@ -53,7 +53,7 @@ export class Sidebar implements OnInit, OnDestroy {
   private destroyRef = inject(DestroyRef);
 
   private adminMenuItems: SidebarMenuItem[] = [
-    { labelKey: 'nav.adminDashboard', icon: 'admin_panel_settings', route: '/app/admin-dashboard' },
+    { labelKey: 'nav.dashboard', icon: 'dashboard', route: '/app/reports/dashboard-reports' },
     {
       labelKey: 'nav.dataSources',
       icon: 'database',
@@ -165,6 +165,12 @@ export class Sidebar implements OnInit, OnDestroy {
 
   getLinkActiveOptions(route: string): { exact: boolean } {
     return route === '/app/reports' ? this.exactTrueOptions : this.exactFalseOptions;
+  }
+
+  roleLabel(): string {
+    const role = this.authService.currentUser()?.role;
+    if (role === UserRole.ADMIN) return this.t('roles.admin');
+    return this.t('roles.user');
   }
 
   private flatten(items: SidebarMenuItem[]): SidebarFlatItem[] {

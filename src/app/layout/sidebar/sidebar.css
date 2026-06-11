@@ -21,6 +21,19 @@
   margin: 0;
 }
 
+.sidebar-role {
+  width: fit-content;
+  margin: 10px auto 0;
+  padding: 5px 12px;
+  border-radius: 999px;
+  color: #047857;
+  background: #d1fae5;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
 .menu-list {
   flex: 1;
   min-height: 0;
