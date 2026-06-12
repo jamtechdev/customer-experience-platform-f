@@ -441,7 +441,7 @@
     "executiveNarrativePositive": "Positive voice is driven mostly by long product lifetime, occasional praise for service accessibility, and campaign/discount engagement.",
     "noDataSelectedPeriod": "No data available for the selected period.",
     "createdReports": "Created reports",
-    "createdReportsSubtitle": "Shows how many times you created a report in this session.",
+    "createdReportsSubtitle": "Recent generated reports are kept after refresh for this browser.",
     "noReportCreated": "No report created yet.",
     "competitorLine": "Sentiment: {{sentiment}} | NPS: {{nps}} | Gap: {{gap}}"
   },

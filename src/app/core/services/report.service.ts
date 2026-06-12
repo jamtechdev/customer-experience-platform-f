@@ -33,6 +33,10 @@ export class ReportService {
     return this.http.get<ApiResponse<Report[]>>(this.baseUrl, { params });
   }
 
+  getReportExports(): Observable<ApiResponse<ReportExportRecord[]>> {
+    return this.http.get<ApiResponse<ReportExportRecord[]>>(this.baseUrl);
+  }
+
   getReportById(id: string): Observable<ApiResponse<Report>> {
     return this.http.get<ApiResponse<Report>>(`${this.baseUrl}/${id}`);
   }
@@ -135,6 +139,23 @@ export interface ReportDatePresetDto {
   label: string;
   startDate: string;
   endDate: string;
+}
+
+export interface ReportExportRecord {
+  id: number | string;
+  name?: string;
+  type?: string;
+  status?: string;
+  format?: string;
+  createdAt?: string | Date;
+  updatedAt?: string | Date;
+  fileName?: string;
+  fileSize?: number;
+  parameters?: {
+    startDate?: string;
+    endDate?: string;
+    [key: string]: unknown;
+  };
 }
 
 @Injectable({
