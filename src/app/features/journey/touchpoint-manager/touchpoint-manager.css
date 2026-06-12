@@ -164,28 +164,62 @@
 }
 
 .mpl-chart-mplframe { background: #fff; }
-.mpl-axes-frame { display: flex; align-items: stretch; border: 1px solid #000; background: #fff; }
-.mpl-y-label-outer { width: 22px; display: flex; align-items: center; justify-content: center; writing-mode: vertical-rl; transform: rotate(180deg); font-size: 11px; color:#000; border-right:1px solid #000; }
-.mpl-y-axis-mpl { display:flex; flex-direction:column; justify-content:space-between; width:34px; min-height:200px; padding:6px 6px 6px 4px; font-size:10px; text-align:right; color:#000; border-right:1px solid #000; }
-.mpl-plot-mpl {
+.mpl-axes-frame {
   --plot-height: 220px;
+  display: flex;
+  align-items: flex-start;
+  border: 1px solid #000;
+  background: #fff;
+}
+.mpl-y-label-outer {
+  width: 22px;
+  height: var(--plot-height);
+  margin-top: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  font-size: 11px;
+  color:#000;
+  border-right:1px solid #000;
+}
+.mpl-y-axis-mpl {
+  display:flex;
+  flex-direction:column;
+  justify-content:space-between;
+  width:34px;
+  height: var(--plot-height);
+  min-height: 0;
+  margin-top: 10px;
+  padding: 0 6px 0 4px;
+  font-size:10px;
+  text-align:right;
+  color:#000;
+  border-right:1px solid #000;
+}
+.mpl-plot-mpl {
   flex: 1;
   display: flex;
   align-items: stretch;
   justify-content: flex-start;
   gap: 10px;
-  min-height: 300px;
-  padding: 10px 18px 10px;
+  min-height: 272px;
+  padding: 10px 18px 0;
   position: relative;
   background:
     linear-gradient(to bottom, transparent calc(10px + var(--plot-height) - 1px), #000 calc(10px + var(--plot-height) - 1px), #000 calc(10px + var(--plot-height)), transparent calc(10px + var(--plot-height)));
 }
-.mpl-plot-touch { flex-wrap:nowrap; overflow-x:auto; }
+.mpl-plot-touch {
+  flex-wrap:nowrap;
+  overflow-x:auto;
+  padding-bottom: 6px;
+}
 .mpl-bar-col-touch {
-  flex: 0 0 92px;
-  min-width: 92px;
+  flex: 0 0 132px;
+  min-width: 132px;
   display: grid;
-  grid-template-rows: var(--plot-height) 20px 58px;
+  grid-template-rows: var(--plot-height) 18px 34px;
   align-items: end;
   justify-items: center;
 }
@@ -200,7 +234,17 @@
 .mpl-bar-mpl { background:#1f77b4; min-height:1px; }
 .mpl-bar-value { font-size:11px; color:#000; margin-top:4px; font-weight:600; }
 .mpl-bar-cat { font-size:10px; color:#000; margin-top:4px; text-align:center; }
-.mpl-bar-cat-rot { transform: rotate(-22deg); transform-origin: top center; white-space: nowrap; max-width: 150px; overflow: hidden; text-overflow: ellipsis; height: 58px; line-height: 1.15; }
+.mpl-bar-cat-rot {
+  transform: none;
+  white-space: normal;
+  max-width: 126px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-height: 30px;
+  height: auto;
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+}
 .mpl-bar-cat-mpl { font-size:9px; }
 
 :host ::ng-deep .report-mat-table .mat-mdc-header-cell {
