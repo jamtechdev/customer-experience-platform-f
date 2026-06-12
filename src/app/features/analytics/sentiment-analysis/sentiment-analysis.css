@@ -208,6 +208,9 @@
 }
 
 .ai-processing-inline {
+  display: flex;
+  align-items: center;
+  gap: 10px;
   margin: 0 0 16px;
   padding: 10px 14px;
   border-radius: 8px;

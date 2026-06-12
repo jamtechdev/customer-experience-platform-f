@@ -187,6 +187,24 @@ textarea {
 input[type="date"] {
   color: var(--text-primary);
   min-width: 0;
+  color-scheme: light;
+}
+
+.date-picker-trigger.mat-mdc-icon-button {
+  --mdc-icon-button-icon-color: var(--text-secondary);
+  width: 36px;
+  height: 36px;
+  padding: 6px;
+}
+
+.date-picker-trigger.mat-mdc-icon-button:hover {
+  --mdc-icon-button-icon-color: var(--primary-color);
+}
+
+.mat-mdc-form-field.mat-form-field-disabled input.mat-mdc-input-element,
+.mat-mdc-form-field.mat-form-field-disabled .mat-mdc-select-value {
+  color: rgba(17, 24, 39, 0.72) !important;
+  -webkit-text-fill-color: rgba(17, 24, 39, 0.72) !important;
 }
 
 .mat-mdc-form-field {

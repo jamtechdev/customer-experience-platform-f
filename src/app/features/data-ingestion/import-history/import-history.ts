@@ -226,6 +226,9 @@ export class ImportHistory implements OnInit, OnDestroy {
     }
     const custom = row.errorDetails?.statusLabel;
     if (custom === 'completed_with_omissions') return 'Completed (with omissions)';
+    if (custom === 'processing_ai') return 'AI analyzing';
+    if (custom === 'processing_nps') return 'NPS scoring';
+    if (custom === 'processing_post_analysis') return 'Finalizing analysis';
     if (custom === 'processing') return 'Processing';
     if (row.status === 'pending') return 'Pending mapping';
     if (row.status === 'failed') return 'Failed';
@@ -248,7 +251,18 @@ export class ImportHistory implements OnInit, OnDestroy {
   }
 
   isAiFinalizing(row: CSVImport): boolean {
-    return row.status === 'processing' && row.errorDetails?.statusLabel === 'processing_ai';
+    const label = row.errorDetails?.statusLabel;
+    return (
+      row.status === 'processing' &&
+      (label === 'processing_ai' || label === 'processing_nps' || label === 'processing_post_analysis')
+    );
+  }
+
+  getFinalizingLabel(row: CSVImport): string {
+    const label = row.errorDetails?.statusLabel;
+    if (label === 'processing_nps') return 'generating NPS scores';
+    if (label === 'processing_post_analysis') return 'finalizing root cause, journey mapping, and dashboard summaries';
+    return 'analyzing feedback';
   }
 
   isEffectivelyCompleted(row: CSVImport): boolean {

@@ -229,6 +229,7 @@
 .mpl-plot-root {
   flex-wrap: nowrap;
   overflow-x: auto;
+  padding-bottom: 28px;
 }
 
 .mpl-bar-col {
@@ -240,7 +241,7 @@
 
 .mpl-bar-col-root {
   flex: 0 0 auto;
-  min-width: 92px;
+  min-width: 132px;
 }
 
 .mpl-bar-track {
@@ -274,14 +275,15 @@
 }
 
 .mpl-bar-cat-rot {
-  transform: rotate(-22deg);
-  transform-origin: top center;
-  white-space: nowrap;
-  max-width: 140px;
+  transform: none;
+  white-space: normal;
+  max-width: 126px;
   overflow: hidden;
   text-overflow: ellipsis;
-  height: 52px;
-  line-height: 1.15;
+  min-height: 48px;
+  height: auto;
+  line-height: 1.2;
+  overflow-wrap: anywhere;
 }
 
 .mpl-bar-cat-mpl {

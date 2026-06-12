@@ -178,7 +178,7 @@ export class JourneyMap implements OnInit, OnDestroy {
     this.drilldownOpen.set(true);
     this.drilldownLoading.set(true);
     this.drilldownRows.set([]);
-    const companyId = this.authService.currentUser()?.settings?.companyId ?? 1;
+    const companyId = this.listCompanyId();
     this.analysisService.getFeedbackByIds(companyId, ids).subscribe({
       next: (res) => {
         this.drilldownLoading.set(false);
@@ -204,5 +204,10 @@ export class JourneyMap implements OnInit, OnDestroy {
     }
     const n = this.flowStagesWithDataInFirstThree();
     return `Flow progress: ${n}/3 of the first three stages have feedback. Map CSV touchpoints or categories to each stage so the journey completes through step three.`;
+  }
+
+  private listCompanyId(): number | undefined {
+    const user = this.authService.currentUser();
+    return user?.role === 'admin' ? undefined : (user?.settings?.companyId ?? 1);
   }
 }

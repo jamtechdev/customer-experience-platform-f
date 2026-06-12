@@ -32,7 +32,7 @@
 
 .report-period-row {
   display: grid;
-  grid-template-columns: minmax(220px, 1.25fr) repeat(2, minmax(180px, 1fr)) auto auto;
+  grid-template-columns: minmax(220px, 1.1fr) repeat(2, minmax(210px, 1fr)) minmax(130px, auto) minmax(150px, auto);
   align-items: start;
   gap: 14px;
   width: 100%;
@@ -55,6 +55,14 @@
   white-space: nowrap;
   border-radius: 10px;
   padding: 0 16px;
+}
+
+.report-period-row .date-picker-trigger {
+  min-height: 36px;
+  height: 36px;
+  width: 36px;
+  padding: 6px;
+  align-self: center;
 }
 
 :host ::ng-deep .report-period-row .mat-mdc-form-field-subscript-wrapper {

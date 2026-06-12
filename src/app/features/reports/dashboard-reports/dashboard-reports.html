@@ -21,22 +21,44 @@
           <mat-form-field appearance="outline">
             <mat-label>{{ t('reports.fromDate') }}</mat-label>
             <input
+              #dashStartInput
               matInput
               type="date"
               [ngModel]="startDate()"
               [disabled]="selectedPresetId() !== 'custom'"
               (ngModelChange)="startDate.set($event); onManualDate()"
             />
+            <button
+              mat-icon-button
+              matSuffix
+              class="date-picker-trigger"
+              type="button"
+              [disabled]="selectedPresetId() !== 'custom'"
+              [attr.aria-label]="t('reports.fromDate')"
+              (click)="$event.preventDefault(); $event.stopPropagation(); openNativeDatePicker(dashStartInput)">
+              <mat-icon>calendar_today</mat-icon>
+            </button>
           </mat-form-field>
           <mat-form-field appearance="outline">
             <mat-label>{{ t('reports.toDate') }}</mat-label>
             <input
+              #dashEndInput
               matInput
               type="date"
               [ngModel]="endDate()"
               [disabled]="selectedPresetId() !== 'custom'"
               (ngModelChange)="endDate.set($event); onManualDate()"
             />
+            <button
+              mat-icon-button
+              matSuffix
+              class="date-picker-trigger"
+              type="button"
+              [disabled]="selectedPresetId() !== 'custom'"
+              [attr.aria-label]="t('reports.toDate')"
+              (click)="$event.preventDefault(); $event.stopPropagation(); openNativeDatePicker(dashEndInput)">
+              <mat-icon>calendar_today</mat-icon>
+            </button>
           </mat-form-field>
           <button mat-flat-button color="primary" type="button" (click)="applyRangeAndReload()" [disabled]="loading() && loadingTrends()">
             {{ t('reports.applyRange') }}

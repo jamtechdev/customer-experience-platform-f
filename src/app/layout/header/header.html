@@ -22,7 +22,7 @@
     <span class="alert-count" *ngIf="alertCount() > 0">{{ alertCount() > 99 ? '99+' : alertCount() }}</span>
   </button>
 
-  <mat-menu #notificationsMenu="matMenu" panelClass="notification-menu-panel">
+  <mat-menu #notificationsMenu="matMenu" panelClass="notification-menu-panel" [hasBackdrop]="false">
     <div class="notification-menu">
       <div class="notification-header">{{ t('header.notifications') }}</div>
       <div *ngIf="alerts().length === 0" class="notification-empty">{{ t('header.noNotifications') }}</div>
@@ -47,7 +47,6 @@
   <app-language-switcher></app-language-switcher>
 
   <div class="user-and-role">
-    <span class="role-badge" *ngIf="roleLabel">{{ roleLabel }}</span>
     <button mat-icon-button [matMenuTriggerFor]="userMenu" class="user-menu-button">
       <div class="user-avatar">{{ userInitials }}</div>
     </button>

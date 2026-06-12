@@ -44,6 +44,8 @@ export class TranslationService {
       if (typeof document !== 'undefined') {
         document.documentElement.setAttribute('dir', lang === 'ar' ? 'rtl' : 'ltr');
         document.documentElement.setAttribute('lang', lang);
+        document.documentElement.setAttribute('translate', 'no');
+        document.body?.setAttribute('translate', 'no');
       }
     });
   }

@@ -119,6 +119,15 @@ export class ExecutiveSummary implements OnInit {
     this.selectedPresetId.set('custom');
   }
 
+  openNativeDatePicker(input: HTMLInputElement): void {
+    const picker = input as HTMLInputElement & { showPicker?: () => void };
+    if (typeof picker.showPicker === 'function' && !input.disabled) {
+      picker.showPicker();
+    } else {
+      input.focus();
+    }
+  }
+
   datesValid(): boolean {
     const s = this.startDate();
     const e = this.endDate();

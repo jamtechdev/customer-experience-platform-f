@@ -88,7 +88,7 @@
                       <mat-spinner diameter="16"></mat-spinner>
                       <span>
                         <strong>AI</strong>
-                        analyzing feedback
+                        {{ getFinalizingLabel(row) }}
                         @if (row.errorDetails?.aiSummary?.attempted) {
                           —
                           {{ (row.errorDetails?.aiSummary?.succeeded ?? 0) + (row.errorDetails?.aiSummary?.failed ?? 0) }}
@@ -158,7 +158,11 @@
                 @if (row.errorDetails) {
                   <div class="error-structured">
                     <div class="error-line">
-                      <strong>{{ row.errorDetails.totalIssues }}</strong> validation issue(s) detected.
+                      @if (row.errorDetails.totalIssues !== undefined) {
+                        <strong>{{ row.errorDetails.totalIssues }}</strong> validation issue(s) detected.
+                      } @else {
+                        <strong>Import processing issue</strong>
+                      }
                     </div>
                     @if (row.errorDetails.requiredMappings?.length) {
                       <div class="error-line">

@@ -281,6 +281,15 @@ export class SentimentAnalysis implements OnInit, OnDestroy {
     this.reloadAll();
   }
 
+  openNativeDatePicker(input: HTMLInputElement): void {
+    const picker = input as HTMLInputElement & { showPicker?: () => void };
+    if (typeof picker.showPicker === 'function' && !input.disabled) {
+      picker.showPicker();
+    } else {
+      input.focus();
+    }
+  }
+
   reRunAiEnrichment(): void {
     const companyId = this.getCompanyId();
     const { start, end } = resolveOptionalApiDateRange(this.filtersApplied(), this.startDate(), this.endDate());
@@ -290,6 +299,7 @@ export class SentimentAnalysis implements OnInit, OnDestroy {
     if (!ok) return;
 
     this.reanalyzing.set(true);
+    this.snackBar.open(this.t('sentiment.enrichmentStarted'), this.t('app.close'), { duration: 4000 });
     this.analysisService.reanalyzeEnrichment(companyId, start, end).subscribe({
       next: (res) => {
         this.reanalyzing.set(false);

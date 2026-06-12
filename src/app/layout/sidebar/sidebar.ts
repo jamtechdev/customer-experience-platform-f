@@ -174,7 +174,20 @@ export class Sidebar implements OnInit, OnDestroy {
   }
 
   onNavigate(event?: MouseEvent): void {
-    (event?.currentTarget as HTMLElement | null)?.blur();
+    const current = event?.currentTarget as HTMLElement | null;
+    const list = current?.closest('.menu-list') as HTMLElement | null;
+    const scrollTop = list?.scrollTop ?? 0;
+    current?.blur();
+    if (list) {
+      const restore = () => {
+        list.scrollTop = scrollTop;
+      };
+      if (typeof requestAnimationFrame === 'function') {
+        requestAnimationFrame(restore);
+      } else {
+        setTimeout(restore, 0);
+      }
+    }
     this.navigate.emit();
   }
 }

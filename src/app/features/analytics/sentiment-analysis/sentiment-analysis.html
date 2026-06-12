@@ -32,12 +32,30 @@
 
           <mat-form-field appearance="outline">
             <mat-label>{{ t('reports.fromDate') }}</mat-label>
-            <input matInput type="date" [ngModel]="startDate()" (ngModelChange)="startDate.set($event); onManualDate()" name="sentStart" />
+            <input #sentStartInput matInput type="date" [ngModel]="startDate()" (ngModelChange)="startDate.set($event); onManualDate()" name="sentStart" />
+            <button
+              mat-icon-button
+              matSuffix
+              class="date-picker-trigger"
+              type="button"
+              [attr.aria-label]="t('reports.fromDate')"
+              (click)="$event.preventDefault(); $event.stopPropagation(); openNativeDatePicker(sentStartInput)">
+              <mat-icon>calendar_today</mat-icon>
+            </button>
           </mat-form-field>
 
           <mat-form-field appearance="outline">
             <mat-label>{{ t('reports.toDate') }}</mat-label>
-            <input matInput type="date" [ngModel]="endDate()" (ngModelChange)="endDate.set($event); onManualDate()" name="sentEnd" />
+            <input #sentEndInput matInput type="date" [ngModel]="endDate()" (ngModelChange)="endDate.set($event); onManualDate()" name="sentEnd" />
+            <button
+              mat-icon-button
+              matSuffix
+              class="date-picker-trigger"
+              type="button"
+              [attr.aria-label]="t('reports.toDate')"
+              (click)="$event.preventDefault(); $event.stopPropagation(); openNativeDatePicker(sentEndInput)">
+              <mat-icon>calendar_today</mat-icon>
+            </button>
           </mat-form-field>
 
           <button mat-stroked-button color="primary" type="button" (click)="applyRangeAndReload()" [disabled]="initialLoading()">
@@ -68,6 +86,11 @@
       [title]="t('sentiment.loadingStatsTitle')"
       [subtitle]="t('sentiment.loadingStatsSubtitle')">
     </app-ollama-loader>
+  </div>
+
+  <div *ngIf="reanalyzing()" class="ai-processing-inline" role="status" aria-live="polite">
+    <mat-progress-spinner mode="indeterminate" diameter="18"></mat-progress-spinner>
+    <span>{{ t('sentiment.enrichmentInProgress') }}</span>
   </div>
 
 

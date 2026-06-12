@@ -450,6 +450,8 @@
     "reRunAi": "Re-run AI enrichment",
     "reRunningAi": "Re-running AI…",
     "reRunConfirm": "Re-run AI enrichment for all feedback in range? This updates sentiment, journey stage, and relevance (may take several minutes). After it finishes, rebuild the CX report from Import history.",
+    "enrichmentStarted": "AI enrichment started. This may take a few minutes.",
+    "enrichmentInProgress": "AI enrichment is running. Results will refresh when it finishes.",
     "enrichmentComplete": "Enrichment complete: {{succeeded}} succeeded, {{failed}} failed of {{total}}.",
     "enrichmentFinished": "Enrichment finished.",
     "enrichmentFailed": "AI enrichment failed. Check the selected LLM configuration.",

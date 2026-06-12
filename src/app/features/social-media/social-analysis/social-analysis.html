@@ -38,7 +38,7 @@
             <mat-icon>volume_up</mat-icon>
             <span>{{ t('socialMediaPage.totalVolume') }}</span>
           </div>
-          <button class="summary-value link-value" type="button" (click)="openRelated(t('socialMediaPage.allSocialFeedback'), totalFeedbackIds())">
+          <button class="summary-value link-value" type="button" (click)="openRelated(t('socialMediaPage.allSocialFeedback'), totalFeedbackIds(), undefined, true)">
             {{ totalVolume() }}
           </button>
         </mat-card-content>
@@ -74,7 +74,7 @@
           <ng-container matColumnDef="volume">
             <th mat-header-cell *matHeaderCellDef>{{ t('socialMediaPage.volume') }}</th>
             <td mat-cell *matCellDef="let row">
-              <button mat-button color="primary" type="button" (click)="openRelated(row.platform + ' ' + t('feedback.title'), row.feedbackIds)" [disabled]="!row.feedbackIds?.length">
+              <button mat-button color="primary" type="button" (click)="openRelated(row.platform + ' ' + t('feedback.title'), row.feedbackIds, row.platform, true)" [disabled]="!row.feedbackIds?.length && row.volume === 0">
                 {{ row.volume }}
               </button>
             </td>
@@ -88,21 +88,21 @@
           <ng-container matColumnDef="positive">
             <th mat-header-cell *matHeaderCellDef>{{ t('dashboard.positive') }}</th>
             <td mat-cell *matCellDef="let row" class="positive">
-              <button mat-button type="button" (click)="openRelated(row.platform + ' ' + t('dashboard.positive'), row.positiveFeedbackIds)" [disabled]="!row.positiveFeedbackIds?.length">{{ row.positive }}</button>
+              <button mat-button type="button" (click)="openRelated(row.platform + ' ' + t('dashboard.positive'), row.positiveFeedbackIds, row.platform, false, 'positive')" [disabled]="!row.positiveFeedbackIds?.length && row.positive === 0">{{ row.positive }}</button>
             </td>
           </ng-container>
 
           <ng-container matColumnDef="negative">
             <th mat-header-cell *matHeaderCellDef>{{ t('dashboard.negative') }}</th>
             <td mat-cell *matCellDef="let row" class="negative">
-              <button mat-button type="button" (click)="openRelated(row.platform + ' ' + t('dashboard.negative'), row.negativeFeedbackIds)" [disabled]="!row.negativeFeedbackIds?.length">{{ row.negative }}</button>
+              <button mat-button type="button" (click)="openRelated(row.platform + ' ' + t('dashboard.negative'), row.negativeFeedbackIds, row.platform, false, 'negative')" [disabled]="!row.negativeFeedbackIds?.length && row.negative === 0">{{ row.negative }}</button>
             </td>
           </ng-container>
 
           <ng-container matColumnDef="neutral">
             <th mat-header-cell *matHeaderCellDef>{{ t('dashboard.neutral') }}</th>
             <td mat-cell *matCellDef="let row" class="neutral">
-              <button mat-button type="button" (click)="openRelated(row.platform + ' ' + t('dashboard.neutral'), row.neutralFeedbackIds)" [disabled]="!row.neutralFeedbackIds?.length">{{ row.neutral }}</button>
+              <button mat-button type="button" (click)="openRelated(row.platform + ' ' + t('dashboard.neutral'), row.neutralFeedbackIds, row.platform, false, 'neutral')" [disabled]="!row.neutralFeedbackIds?.length && row.neutral === 0">{{ row.neutral }}</button>
             </td>
           </ng-container>
 

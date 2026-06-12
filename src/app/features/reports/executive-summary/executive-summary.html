@@ -19,22 +19,44 @@
         <mat-form-field appearance="outline">
           <mat-label>{{ t('reports.fromDate') }}</mat-label>
           <input
+            #execStartInput
             matInput
             type="date"
             [value]="startDate()"
             [disabled]="selectedPresetId() !== 'custom'"
             (input)="startDate.set(($any($event.target).value) || null); onManualDate()"
           />
+          <button
+            mat-icon-button
+            matSuffix
+            class="date-picker-trigger"
+            type="button"
+            [disabled]="selectedPresetId() !== 'custom'"
+            [attr.aria-label]="t('reports.fromDate')"
+            (click)="$event.preventDefault(); $event.stopPropagation(); openNativeDatePicker(execStartInput)">
+            <mat-icon>calendar_today</mat-icon>
+          </button>
         </mat-form-field>
         <mat-form-field appearance="outline">
           <mat-label>{{ t('reports.toDate') }}</mat-label>
           <input
+            #execEndInput
             matInput
             type="date"
             [value]="endDate()"
             [disabled]="selectedPresetId() !== 'custom'"
             (input)="endDate.set(($any($event.target).value) || null); onManualDate()"
           />
+          <button
+            mat-icon-button
+            matSuffix
+            class="date-picker-trigger"
+            type="button"
+            [disabled]="selectedPresetId() !== 'custom'"
+            [attr.aria-label]="t('reports.toDate')"
+            (click)="$event.preventDefault(); $event.stopPropagation(); openNativeDatePicker(execEndInput)">
+            <mat-icon>calendar_today</mat-icon>
+          </button>
         </mat-form-field>
         <button mat-stroked-button color="primary" type="button" (click)="applyRangeAndReload()" [disabled]="loading() || !canUseSelectedRange()">
           {{ t('reports.applyRange') }}

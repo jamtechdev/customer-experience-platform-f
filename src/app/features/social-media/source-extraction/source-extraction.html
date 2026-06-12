@@ -34,7 +34,16 @@
         </mat-form-field>
         <mat-form-field appearance="outline">
           <mat-label>{{ t('app.date') }}</mat-label>
-          <input matInput type="date" [(ngModel)]="date" />
+          <input #sourceDateInput matInput type="date" [(ngModel)]="date" />
+          <button
+            mat-icon-button
+            matSuffix
+            class="date-picker-trigger"
+            type="button"
+            [attr.aria-label]="t('app.date')"
+            (click)="$event.preventDefault(); $event.stopPropagation(); openNativeDatePicker(sourceDateInput)">
+            <mat-icon>calendar_today</mat-icon>
+          </button>
         </mat-form-field>
         <mat-form-field appearance="outline" class="full-row">
           <mat-label>{{ t('sourceExtraction.commentContent') }}</mat-label>

@@ -111,7 +111,7 @@ export class ProcessEnhancement implements OnInit, OnDestroy {
     this.drilldownOpen.set(true);
     this.drilldownLoading.set(true);
     this.drilldownRows.set([]);
-    const companyId = this.authService.currentUser()?.settings?.companyId ?? 1;
+    const companyId = this.listCompanyId();
     this.analysisService.getFeedbackByIds(companyId, ids).subscribe({
       next: (res) => {
         this.drilldownLoading.set(false);
@@ -124,5 +124,10 @@ export class ProcessEnhancement implements OnInit, OnDestroy {
   closeDrilldown(): void {
     this.drilldownOpen.set(false);
     this.drilldownRows.set([]);
+  }
+
+  private listCompanyId(): number | undefined {
+    const user = this.authService.currentUser();
+    return user?.role === 'admin' ? undefined : (user?.settings?.companyId ?? 1);
   }
 }

@@ -31,7 +31,15 @@ export interface CSVImport {
     omittedCount?: number;
     omittedExamplesTruncated?: boolean;
     omittedRowsFileName?: string;
-    statusLabel?: 'processing' | 'processing_ai' | 'completed_with_omissions' | 'completed' | 'failed' | 'failed_timeout';
+    statusLabel?:
+      | 'processing'
+      | 'processing_ai'
+      | 'processing_nps'
+      | 'processing_post_analysis'
+      | 'completed_with_omissions'
+      | 'completed'
+      | 'failed'
+      | 'failed_timeout';
     progress?: boolean;
     totalRows?: number;
     processedCount?: number;

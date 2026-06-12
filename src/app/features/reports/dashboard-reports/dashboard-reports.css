@@ -47,9 +47,9 @@
 
 .filters-row {
   display: grid;
-  grid-template-columns: repeat(3, minmax(180px, 1fr)) auto auto;
+  grid-template-columns: minmax(220px, 1fr) repeat(2, minmax(210px, 1fr)) minmax(150px, auto) minmax(140px, auto);
   gap: 14px;
-  align-items: center;
+  align-items: start;
 }
 
 .filters-row button,
@@ -57,6 +57,14 @@
   min-height: 46px;
   border-radius: 999px;
   white-space: nowrap;
+}
+
+.filters-row .date-picker-trigger {
+  min-height: 36px;
+  width: 36px;
+  height: 36px;
+  padding: 6px;
+  border-radius: 999px;
 }
 
 .section {

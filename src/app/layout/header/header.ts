@@ -151,6 +151,13 @@ export class Header implements OnInit, OnDestroy {
       }
     });
     this.writeSeenAlertIds(seenIds);
+    alerts.forEach((alert) => {
+      const id = Number(alert.id);
+      if (!alert.acknowledged && Number.isFinite(id)) {
+        this.alertService.acknowledgeAlert(id).subscribe({ error: () => undefined });
+      }
+    });
+    this.alerts.set(alerts.map((alert) => ({ ...alert, acknowledged: true })));
     this.alertCount.set(0);
     this.alertIndicator.set('green');
   }

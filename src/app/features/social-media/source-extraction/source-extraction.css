@@ -126,6 +126,19 @@ ol {
 .records-table {
   width: 100%;
   min-width: 860px;
+  table-layout: fixed;
+}
+
+.records-table .mat-column-source,
+.records-table .mat-column-company,
+.records-table .mat-column-competitor,
+.records-table .mat-column-date,
+.records-table .mat-column-actions {
+  width: 132px;
+}
+
+.records-table .mat-column-content {
+  width: auto;
 }
 
 :host ::ng-deep .records-table .mat-mdc-header-cell {
@@ -139,6 +152,7 @@ ol {
   color: #1f2937;
   border-bottom: 1px solid #e5e7eb;
   vertical-align: top;
+  overflow-wrap: anywhere;
 }
 
 :host ::ng-deep .records-table .mat-mdc-row:hover .mat-mdc-cell {

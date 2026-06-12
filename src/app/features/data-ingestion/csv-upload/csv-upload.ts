@@ -217,10 +217,17 @@ export class CsvUpload implements OnInit, OnDestroy {
           const processed = details?.processedCount ?? 0;
           const total = details?.totalRows ?? row.rowCount ?? 0;
           const ai = details?.aiSummary;
+          const phase =
+            details?.statusLabel === 'processing_nps'
+              ? 'OpenAI is generating NPS scores.'
+              : details?.statusLabel === 'processing_post_analysis'
+                ? 'Root cause, journey mapping, and dashboard summaries are finalizing.'
+                : ai?.attempted
+                  ? `Sentiment ${ai.succeeded + ai.failed}/${ai.attempted}.`
+                  : 'Preparing sentiment, NPS and root cause.';
           this.processingStatus.set('processing');
           this.processingMessage.set(
-            `OpenAI is parsing and saving analysis. Processed ${processed}/${total}. ` +
-              (ai?.attempted ? `Sentiment ${ai.succeeded + ai.failed}/${ai.attempted}.` : 'Preparing sentiment, NPS and root cause.')
+            `OpenAI is parsing and saving analysis. Processed ${processed}/${total}. ${phase}`
           );
           this.pollImportStatus(importId);
         },

@@ -104,6 +104,15 @@ export class SourceExtraction implements OnInit {
     });
   }
 
+  openNativeDatePicker(input: HTMLInputElement): void {
+    const picker = input as HTMLInputElement & { showPicker?: () => void };
+    if (typeof picker.showPicker === 'function' && !input.disabled) {
+      picker.showPicker();
+    } else {
+      input.focus();
+    }
+  }
+
   removeRecord(id: string): void {
     this.sourceExtractionService.deleteRecord(id).subscribe({
       next: () => this.records.update((rows) => rows.filter((r) => r.id !== id)),

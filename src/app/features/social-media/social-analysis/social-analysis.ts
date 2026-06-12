@@ -169,9 +169,16 @@ export class SocialAnalysis implements OnInit, OnDestroy {
     return [...new Set(this.platformData().flatMap((row) => row.feedbackIds || []))];
   }
 
-  openRelated(title: string, ids: number[]): void {
+  openRelated(
+    title: string,
+    ids: number[],
+    source?: string,
+    includeIrrelevant: boolean = true,
+    sentiment?: 'positive' | 'negative' | 'neutral'
+  ): void {
     const unique = [...new Set((ids || []).filter((id) => Number.isFinite(id) && id > 0))];
-    if (!unique.length) return;
+    const hasSourceFallback = !!source?.trim();
+    if (!unique.length && !hasSourceFallback) return;
     const safeIds = unique.slice(0, this.drilldownRequestedLimit);
     this.drilldownTitle.set(title);
     this.drilldownRequestedCount.set(unique.length);
@@ -180,7 +187,13 @@ export class SocialAnalysis implements OnInit, OnDestroy {
     this.drilldownRows.set([]);
     const user = this.authService.currentUser();
     const companyId = user?.role === 'admin' ? undefined : (user?.settings?.companyId ?? 1);
-    this.analysisService.getAnalyticsDrilldown({ companyId, ids: safeIds }).subscribe({
+    this.analysisService.getAnalyticsDrilldown({
+      companyId,
+      ids: safeIds,
+      source: source?.trim() || undefined,
+      sentiment,
+      includeIrrelevant,
+    }).subscribe({
       next: (res) => {
         this.drilldownLoading.set(false);
         this.drilldownRows.set(res?.data?.list || []);
