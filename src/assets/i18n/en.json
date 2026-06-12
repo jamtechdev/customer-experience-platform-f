@@ -73,7 +73,7 @@
     "scheduledReports": "Scheduled Reports",
     "tasks": "Tasks & Alarms",
     "dataSources": "Data Sources",
-    "csvUpload": "CSV upload",
+    "csvUpload": "CSV imports",
     "importHistory": "Import history",
     "makerChecker": "Maker-Checker",
     "admin": "Administration",
@@ -117,8 +117,8 @@
     "copyright": "{{company}} — Customer Experience Platform. All rights reserved."
   },
   "csv": {
-    "uploadTitle": "CSV upload",
-    "uploadSubtitle": "Upload any CSV export. Next, map your columns to system fields (content/date/source for feedback, score/date for NPS), validate types, then import.",
+    "uploadTitle": "CSV upload & import history",
+    "uploadSubtitle": "Upload a CSV/XLSX file, track validation, mapping, AI processing, and previous imports in one place.",
     "dragDrop": "Drag and drop your CSV file here",
     "or": "or",
     "browseFiles": "Browse files",

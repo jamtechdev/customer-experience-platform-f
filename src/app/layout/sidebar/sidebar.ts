@@ -57,8 +57,7 @@ export class Sidebar implements OnInit, OnDestroy {
       labelKey: 'nav.dataSources',
       icon: 'database',
       children: [
-        { labelKey: 'nav.csvUpload', icon: 'upload', route: '/app/data-sources/csv-upload' },
-        { labelKey: 'nav.importHistory', icon: 'history', route: '/app/data-sources/import-history' }
+        { labelKey: 'nav.csvUpload', icon: 'upload', route: '/app/data-sources/csv-upload' }
       ]
     },
     {

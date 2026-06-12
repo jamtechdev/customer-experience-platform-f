@@ -6,6 +6,18 @@
   margin-top: 0;
 }
 
+.import-history-container.embedded .header-section {
+  margin-bottom: 10px;
+}
+
+.import-history-container.embedded .header-section h1 {
+  font-size: 1.2rem;
+}
+
+.import-history-container.embedded .subtitle {
+  font-size: 0.84rem;
+}
+
 .header-section {
   display: flex;
   flex-wrap: wrap;

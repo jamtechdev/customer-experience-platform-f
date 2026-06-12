@@ -131,7 +131,7 @@ export const routes: Routes = [
       {
         path: 'data-sources/csv-upload',
         loadComponent: () => import('./features/data-ingestion/csv-upload/csv-upload').then(m => m.CsvUpload),
-        data: { title: 'CSV Upload', breadcrumb: 'CSV Upload' }
+        data: { title: 'CSV Imports', breadcrumb: 'CSV Imports' }
       },
       {
         path: 'data-sources/csv-mapping/:importId',
@@ -140,8 +140,8 @@ export const routes: Routes = [
       },
       {
         path: 'data-sources/import-history',
-        loadComponent: () => import('./features/data-ingestion/import-history/import-history').then(m => m.ImportHistory),
-        data: { title: 'Import History', breadcrumb: 'Import History' }
+        redirectTo: 'data-sources/csv-upload',
+        pathMatch: 'full'
       },
 
       // Reports (list + executive-summary for all; builder for Admin + CX Manager only)

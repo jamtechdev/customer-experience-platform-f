@@ -180,14 +180,17 @@
 .mpl-chart-mplframe { background: #fff; }
 
 .mpl-axes-frame {
+  --plot-height: 220px;
   display: flex;
-  align-items: stretch;
+  align-items: flex-start;
   border: 1px solid #000;
   background: #fff;
 }
 
 .mpl-y-label-outer {
   width: 22px;
+  height: var(--plot-height);
+  margin-top: 10px;
   flex-shrink: 0;
   display: flex;
   align-items: center;
@@ -204,8 +207,10 @@
   flex-direction: column;
   justify-content: space-between;
   width: 34px;
-  min-height: 200px;
-  padding: 6px 6px 6px 4px;
+  height: var(--plot-height);
+  min-height: 0;
+  margin-top: 10px;
+  padding: 0 6px 0 4px;
   font-size: 10px;
   color: #000;
   text-align: right;
@@ -213,14 +218,13 @@
 }
 
 .mpl-plot-mpl {
-  --plot-height: 220px;
   flex: 1;
   display: flex;
   align-items: stretch;
   justify-content: flex-start;
   gap: 10px;
-  min-height: 300px;
-  padding: 10px 18px 10px;
+  min-height: 272px;
+  padding: 10px 18px 0;
   position: relative;
   background:
     linear-gradient(to bottom, transparent calc(10px + var(--plot-height) - 1px), #000 calc(10px + var(--plot-height) - 1px), #000 calc(10px + var(--plot-height)), transparent calc(10px + var(--plot-height)));
@@ -229,12 +233,12 @@
 .mpl-plot-root {
   flex-wrap: nowrap;
   overflow-x: auto;
-  padding-bottom: 28px;
+  padding-bottom: 6px;
 }
 
 .mpl-bar-col {
   display: grid;
-  grid-template-rows: var(--plot-height) 20px 58px;
+  grid-template-rows: var(--plot-height) 18px 34px;
   align-items: end;
   justify-items: center;
 }
@@ -280,7 +284,7 @@
   max-width: 126px;
   overflow: hidden;
   text-overflow: ellipsis;
-  min-height: 48px;
+  min-height: 30px;
   height: auto;
   line-height: 1.2;
   overflow-wrap: anywhere;

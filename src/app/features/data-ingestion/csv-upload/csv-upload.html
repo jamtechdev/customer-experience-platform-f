@@ -1,7 +1,7 @@
 <div class="csv-upload-container">
   <div class="upload-hero">
     <div>
-      <p class="eyebrow">Data ingestion</p>
+      <p class="eyebrow">Upload + history</p>
       <h1>{{ t('csv.uploadTitle') }}</h1>
       <p class="subtitle">{{ t('csv.uploadSubtitle') }}</p>
     </div>
@@ -32,7 +32,7 @@
               <mat-icon class="upload-icon">cloud_upload</mat-icon>
             </div>
             <p class="upload-text">{{ t('csv.dragDrop') }}</p>
-            <p class="upload-hint">CSV or XLSX files are accepted. We will validate columns before import.</p>
+            <p class="upload-hint">CSV/XLSX accepted. Columns are validated before import.</p>
             <button mat-raised-button color="primary" (click)="document.getElementById('file-input')?.click()">
               <mat-icon>folder_open</mat-icon>
               {{ t('csv.browseFiles') }}
@@ -93,11 +93,9 @@
         <mat-card-title>{{ t('csv.requirementsTitle') }}</mat-card-title>
       </mat-card-header>
       <mat-card-content>
-        <ul class="requirements-list">
+        <ul class="requirements-list compact">
           <li>{{ t('csv.reqFormat') }}</li>
-          <li *ngIf="format().firstRowHeaders !== false">{{ t('csv.reqHeaders') }}</li>
           <li>{{ t('csv.reqRequiredColumns', { cols: requiredColumnsText() }) }}</li>
-          <li>{{ t('csv.reqOptionalColumns', { cols: optionalColumnsText() }) }}</li>
           <li>{{ t('csv.reqMaxSize', { mb: maxFileSizeMB().toString() }) }}</li>
         </ul>
         <p class="sample-download">

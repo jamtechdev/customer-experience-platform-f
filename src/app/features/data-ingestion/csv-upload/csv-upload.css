@@ -1,5 +1,5 @@
 .csv-upload-container {
-  padding: 24px;
+  padding: 16px 20px 96px;
   max-width: 1280px;
   margin: 0 auto;
   width: 100%;
@@ -9,14 +9,14 @@
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 20px;
-  margin-bottom: 24px;
+  gap: 16px;
+  margin-bottom: 14px;
 }
 
 .upload-hero h1 {
-  font-size: 2rem;
-  font-weight: 600;
-  margin-bottom: 8px;
+  font-size: clamp(1.45rem, 2vw, 1.8rem);
+  font-weight: 800;
+  margin: 0 0 4px;
   color: #111827;
 }
 
@@ -31,8 +31,9 @@
 
 .subtitle {
   color: #6b7280;
-  font-size: 1rem;
+  font-size: 0.92rem;
   margin: 0;
+  max-width: 760px;
 }
 
 .hero-chip {
@@ -40,7 +41,7 @@
   align-items: center;
   gap: 8px;
   flex: 0 0 auto;
-  padding: 10px 14px;
+  padding: 8px 12px;
   border-radius: 999px;
   background: #ecfdf5;
   color: #047857;
@@ -57,32 +58,32 @@
 
 .upload-grid {
   display: grid;
-  grid-template-columns: minmax(0, 1.35fr) minmax(320px, 0.65fr);
-  gap: 20px;
+  grid-template-columns: minmax(0, 1.4fr) minmax(280px, 0.6fr);
+  gap: 14px;
   align-items: stretch;
 }
 
 .upload-card {
   border: 1px solid #dbeafe;
-  border-radius: 18px;
-  box-shadow: 0 14px 32px rgba(15, 23, 42, 0.07);
+  border-radius: 14px;
+  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.06);
   overflow: hidden;
 }
 
 .upload-card .mat-mdc-card-content {
-  padding: 20px;
+  padding: 14px;
 }
 
 .upload-area {
   border: 2px dashed #a7f3d0;
-  border-radius: 18px;
-  padding: 48px;
+  border-radius: 14px;
+  padding: 18px 20px;
   text-align: center;
   transition: border-color 160ms ease, background-color 160ms ease, transform 160ms ease;
   background:
     radial-gradient(circle at top left, rgba(5, 150, 105, 0.12), transparent 34%),
     linear-gradient(180deg, #ffffff, #f8fafc);
-  min-height: 280px;
+  min-height: 150px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -96,22 +97,24 @@
 
 .upload-placeholder {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   align-items: center;
-  gap: 16px;
+  justify-content: center;
+  gap: 14px;
+  flex-wrap: wrap;
 }
 
 .upload-icon {
-  font-size: 44px;
-  width: 44px;
-  height: 44px;
+  font-size: 28px;
+  width: 28px;
+  height: 28px;
   color: #059669;
 }
 
 .upload-icon-wrap {
-  width: 84px;
-  height: 84px;
-  border-radius: 24px;
+  width: 52px;
+  height: 52px;
+  border-radius: 16px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -120,8 +123,8 @@
 }
 
 .upload-text {
-  font-size: 1.125rem;
-  font-weight: 500;
+  font-size: 1rem;
+  font-weight: 700;
   color: #111827;
   margin: 0;
 }
@@ -129,8 +132,10 @@
 .upload-hint {
   color: #6b7280;
   margin: 0;
-  max-width: 440px;
-  line-height: 1.5;
+  max-width: 240px;
+  line-height: 1.35;
+  font-size: 0.84rem;
+  text-align: left;
 }
 
 .file-selected {
@@ -138,7 +143,7 @@
   align-items: center;
   gap: 16px;
   width: 100%;
-  padding: 16px;
+  padding: 12px;
   background: #ffffff;
   border-radius: 14px;
   border: 1px solid #bbf7d0;
@@ -146,9 +151,9 @@
 }
 
 .file-icon {
-  font-size: 48px;
-  width: 48px;
-  height: 48px;
+  font-size: 34px;
+  width: 34px;
+  height: 34px;
   color: #059669;
 }
 
@@ -185,8 +190,8 @@
 }
 
 .processing-status {
-  margin-top: 24px;
-  padding: 16px;
+  margin-top: 12px;
+  padding: 12px;
   background: #f8fafc;
   border-radius: 14px;
   border: 1px solid #dbeafe;
@@ -232,7 +237,7 @@
 .processing-steps {
   display: flex;
   gap: 8px;
-  margin-top: 12px;
+  margin-top: 10px;
   flex-wrap: wrap;
 }
 
@@ -242,30 +247,30 @@
 }
 
 .upload-actions {
-  margin-top: 24px;
+  margin-top: 12px;
   display: flex;
   justify-content: flex-end;
 }
 
 .upload-button {
   min-width: 150px;
-  min-height: 46px;
+  min-height: 42px;
   border-radius: 999px;
 }
 
 .info-card {
   border: 1px solid #e5e7eb;
-  border-radius: 18px;
+  border-radius: 14px;
   box-shadow: 0 8px 24px rgba(15, 23, 42, 0.05);
   height: 100%;
 }
 
 .info-card .mat-mdc-card-header {
-  padding: 20px 20px 8px;
+  padding: 14px 16px 4px;
 }
 
 .info-card .mat-mdc-card-content {
-  padding: 8px 20px 20px;
+  padding: 6px 16px 14px;
 }
 
 .requirements-list {
@@ -275,9 +280,10 @@
 }
 
 .requirements-list li {
-  padding: 10px 0;
+  padding: 7px 0;
   color: #374151;
-  line-height: 1.45;
+  line-height: 1.35;
+  font-size: 0.84rem;
   border-bottom: 1px solid #e5e7eb;
 }
 
@@ -293,8 +299,8 @@
 }
 
 .sample-download {
-  margin-top: 16px;
-  padding-top: 16px;
+  margin-top: 10px;
+  padding-top: 10px;
   border-top: 1px solid #e5e7eb;
 }
 
@@ -306,7 +312,7 @@
 
 app-import-history {
   display: block;
-  margin-top: 24px;
+  margin-top: 14px;
 }
 
 @media (max-width: 600px) {
@@ -328,8 +334,17 @@ app-import-history {
   }
 
   .upload-area {
-    padding: 32px 16px;
-    min-height: 220px;
+    padding: 18px 14px;
+    min-height: 170px;
+  }
+
+  .upload-placeholder {
+    flex-direction: column;
+  }
+
+  .upload-hint {
+    text-align: center;
+    max-width: 100%;
   }
 
   .file-selected {
