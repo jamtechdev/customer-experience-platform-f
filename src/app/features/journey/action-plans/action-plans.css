@@ -278,23 +278,7 @@
   --mdc-chip-label-text-color: #3730a3;
 }
 
-:host ::ng-deep .report-mat-table .mat-mdc-header-cell {
-  background: #f8fafc !important;
-  color: #0f172a !important;
-  font-weight: 800 !important;
-  border-bottom: 1px solid #dbe3ef;
-}
 
-:host ::ng-deep .report-mat-table .mat-mdc-cell {
-  border-bottom: 1px solid #e2e8f0;
-  color: #1f2937;
-  vertical-align: top;
-}
-
-:host ::ng-deep .report-mat-table .mat-mdc-cell,
-:host ::ng-deep .report-mat-table .mat-mdc-header-cell {
-  padding: 12px 14px;
-}
 
 .reference-overlay {
   position: fixed;

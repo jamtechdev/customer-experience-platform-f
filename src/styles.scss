@@ -192,7 +192,7 @@ input[type="date"] {
 
 .date-picker-trigger.mat-mdc-icon-button {
   --mdc-icon-button-icon-color: var(--text-secondary);
-  width: 36px;
+  // width: 36px;
   height: 36px;
   padding: 6px;
 }
@@ -250,40 +250,165 @@ th, td {
   padding: var(--spacing-md);
 }
 
+/* Universal scrollable table wrapper — use any of these class names */
 .table-wrapper,
 .table-container,
-.table-wrap {
+.table-wrap,
+.table-responsive,
+.mini-table-wrap,
+.scroll-x {
   width: 100%;
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
 }
 
+/* ============================================
+   Angular Material Table — unified global styles
+   Single source of truth for ALL mat-tables
+   ============================================ */
+
+/* Token values used throughout */
+:root {
+  --table-header-bg:        #e8f3ff;
+  --table-header-color:     #0f172a;
+  --table-header-border:    #cbd5e1;
+  --table-row-border:       #e5e7eb;
+  --table-row-hover-bg:     #f8fafc;
+  --table-cell-padding:     10px 16px;
+  --table-header-padding:   10px 16px;
+}
+
+[data-theme="dark"] {
+  --table-header-bg:        #1e3a5f;
+  --table-header-color:     #d1d5db;
+  --table-header-border:    #4b5563;
+  --table-row-border:       #374151;
+  --table-row-hover-bg:     #1f2937;
+}
+
+/* Base mat-table */
 .mat-mdc-table {
-  background: #ffffff;
+  width: 100%;
+  background: var(--bg-primary);
   border-collapse: separate;
   border-spacing: 0;
 }
 
-.mat-mdc-table .mat-mdc-header-cell {
-  background: #e8f3ff;
-  color: #0f172a;
-  font-weight: 700;
-  border-bottom: 1px solid #cbd5e1;
+/* Header row */
+.mat-mdc-table .mat-mdc-header-row {
+  background: var(--table-header-bg);
 }
 
-.mat-mdc-table .mat-mdc-cell {
-  color: #1f2937;
-  border-bottom: 1px solid #e5e7eb;
-  vertical-align: top;
-}
-
-.mat-mdc-table .mat-mdc-row:hover .mat-mdc-cell {
-  background: #f8fafc;
-}
-
-.mat-mdc-table .mat-mdc-cell,
-.mat-mdc-table .mat-mdc-header-cell {
+/* Header cells — override any ::ng-deep from components */
+.mat-mdc-table .mat-mdc-header-cell,
+.mat-mdc-table .mat-header-cell {
+  background: #d1fae5 !important;
+  color: var(--table-header-color) !important;
+  font-size: var(--font-size-sm);
+  font-weight: 700 !important;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  border-bottom: 2px solid var(--table-header-border) !important;
+  padding: var(--table-header-padding);
+  white-space: nowrap;
   line-height: 1.45;
+}
+
+/* Data cells */
+.mat-mdc-table .mat-mdc-cell,
+.mat-mdc-table .mat-cell {
+  color: var(--text-primary);
+  font-size: var(--font-size-base);
+  border-bottom: 1px solid var(--table-row-border) !important;
+  padding: var(--table-cell-padding);
+  vertical-align: middle;
+  line-height: 1.45;
+}
+
+/* Remove border on last row */
+.mat-mdc-table .mat-mdc-row:last-child .mat-mdc-cell,
+.mat-mdc-table .mat-mdc-row:last-child .mat-cell {
+  border-bottom: none !important;
+}
+
+/* Hover */
+.mat-mdc-table .mat-mdc-row:hover .mat-mdc-cell,
+.mat-mdc-table .mat-mdc-row:hover .mat-cell {
+  background: var(--table-row-hover-bg);
+}
+
+/* No-data row */
+.mat-mdc-table tr.mat-mdc-no-data-row td,
+.mat-mdc-table tr.mat-no-data-row td {
+  padding: var(--spacing-lg);
+  text-align: center;
+  color: var(--text-tertiary);
+  font-style: italic;
+}
+
+/* Dense / report variant — tighter padding, smaller font */
+.mat-mdc-table.dense-table .mat-mdc-cell,
+.mat-mdc-table.dense-table .mat-mdc-header-cell,
+.mat-mdc-table.report-mat-table .mat-mdc-cell,
+.mat-mdc-table.report-mat-table .mat-mdc-header-cell {
+  padding: 8px 14px !important;
+  font-size: var(--font-size-sm);
+}
+
+/* Wrap-cell — for long-text columns */
+.mat-mdc-table .mat-mdc-cell.wrap-cell {
+  white-space: normal;
+  word-break: break-word;
+  max-width: 320px;
+}
+
+/* ============================================
+   Plain <table> — unified styles
+   Applies to: dashboard-reports history-table,
+   csv-mapping preview-table, report-list,
+   alerts-table, etc.
+   ============================================ */
+.history-table,
+.preview-table table,
+.reports-table,
+.alerts-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.history-table th,
+.preview-table table th,
+.reports-table th,
+.alerts-table th {
+  background: var(--table-header-bg);
+  color: var(--table-header-color);
+  font-size: var(--font-size-sm);
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  border-bottom: 2px solid var(--table-header-border);
+  padding: var(--table-header-padding);
+  text-align: left;
+  white-space: nowrap;
+}
+
+.history-table td,
+.preview-table table td,
+.reports-table td,
+.alerts-table td {
+  color: var(--text-primary);
+  font-size: var(--font-size-base);
+  border-bottom: 1px solid var(--table-row-border);
+  padding: var(--table-cell-padding);
+  vertical-align: middle;
+  line-height: 1.45;
+}
+
+.history-table tbody tr:hover,
+.preview-table table tbody tr:hover,
+.reports-table tbody tr:hover,
+.alerts-table tbody tr:hover {
+  background: var(--table-row-hover-bg);
 }
 
 .mat-mdc-card {

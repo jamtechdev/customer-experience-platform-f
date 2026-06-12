@@ -144,24 +144,7 @@
   width: 190px;
 }
 
-:host ::ng-deep .dense-table .mat-mdc-header-cell {
-  background: #f8fafc !important;
-  color: #0f172a !important;
-  font-weight: 800 !important;
-  border-bottom: 1px solid #dbe3ef;
-}
 
-:host ::ng-deep .dense-table .mat-mdc-cell {
-  color: #1f2937;
-  border-bottom: 1px solid #e5e7eb;
-  vertical-align: top;
-  line-height: 1.45;
-}
-
-:host ::ng-deep .dense-table .mat-mdc-cell,
-:host ::ng-deep .dense-table .mat-mdc-header-cell {
-  padding: 16px 18px;
-}
 
 /* Matplotlib-style figure used in report section 6 */
 .mpl-figure {
@@ -294,15 +277,7 @@
   font-size: 9px;
 }
 
-:host ::ng-deep .report-mat-table .mat-mdc-header-cell {
-  background: #b8d4f2 !important;
-  color: #0f172a !important;
-  font-weight: 600 !important;
-}
 
-:host ::ng-deep .report-mat-table .mat-mdc-cell {
-  border-bottom: 1px solid #e2e8f0;
-}
 
 @media (max-width: 768px) {
   .root-cause-container {
