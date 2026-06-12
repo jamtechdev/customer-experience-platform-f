@@ -21,6 +21,7 @@
           (dragleave)="onDragLeave($event)"
           (drop)="onDrop($event)">
           <input
+            #fileInput
             type="file"
             id="file-input"
             accept=".csv,.xlsx"
@@ -33,7 +34,7 @@
             </div>
             <p class="upload-text">{{ t('csv.dragDrop') }}</p>
             <p class="upload-hint">CSV/XLSX accepted. Columns are validated before import.</p>
-            <button mat-raised-button color="primary" (click)="document.getElementById('file-input')?.click()">
+            <button mat-raised-button color="primary" (click)="fileInput.click()">
               <mat-icon>folder_open</mat-icon>
               {{ t('csv.browseFiles') }}
             </button>
@@ -45,7 +46,13 @@
               <p class="file-name">{{ selectedFile.name }}</p>
               <p class="file-size">{{ (selectedFile.size / 1024).toFixed(2) }} KB · Ready for validation</p>
             </div>
-            <button mat-icon-button (click)="removeFile()" class="remove-button" [disabled]="uploading()">
+            <button
+              mat-icon-button
+              type="button"
+              (click)="removeFile()"
+              class="remove-button"
+              [disabled]="!canCancelSelection()"
+              [attr.aria-label]="t('app.cancel')">
               <mat-icon>close</mat-icon>
             </button>
           </div>
@@ -76,10 +83,22 @@
 
         <div class="upload-actions">
           <button
+            *ngIf="selectedFile"
+            mat-stroked-button
+            color="warn"
+            type="button"
+            (click)="removeFile()"
+            [disabled]="!canCancelSelection()"
+            class="cancel-button">
+            <mat-icon>close</mat-icon>
+            {{ t('app.cancel') }}
+          </button>
+          <button
             mat-raised-button
             color="primary"
+            type="button"
             (click)="uploadFile()"
-            [disabled]="!selectedFile || uploading() || processingStatus() === 'processing'"
+            [disabled]="!canUploadSelectedFile()"
             class="upload-button">
             <mat-icon>upload</mat-icon>
             {{ t('csv.uploadButton') }}

@@ -249,7 +249,14 @@
 .upload-actions {
   margin-top: 12px;
   display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
   justify-content: flex-end;
+}
+
+.cancel-button {
+  min-height: 42px;
+  border-radius: 999px;
 }
 
 .upload-button {

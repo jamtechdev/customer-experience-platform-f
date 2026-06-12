@@ -1,4 +1,4 @@
-import { Component, inject, signal, OnDestroy, OnInit } from '@angular/core';
+import { Component, ElementRef, ViewChild, inject, signal, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
@@ -37,11 +37,12 @@ const DEFAULT_FORMAT: CSVFormat = {
   styleUrl: './csv-upload.css',
 })
 export class CsvUpload implements OnInit, OnDestroy {
+  @ViewChild('fileInput') private fileInput?: ElementRef<HTMLInputElement>;
+
   private csvService = inject(CSVService);
   private snackBar = inject(MatSnackBar);
   private translationService = inject(TranslationService);
   private statusPollTimer: ReturnType<typeof setTimeout> | null = null;
-  document = document; // Expose document for template
 
   selectedFile: File | null = null;
   uploading = signal(false);
@@ -136,20 +137,35 @@ export class CsvUpload implements OnInit, OnDestroy {
       return;
     }
     this.selectedFile = file;
+    this.processingStatus.set('idle');
+    this.processingMessage.set('');
+    this.uploadProgress.set(0);
+    this.importId.set(null);
+  }
+
+  canCancelSelection(): boolean {
+    return !!this.selectedFile && !this.uploading() && this.processingStatus() !== 'processing';
+  }
+
+  canUploadSelectedFile(): boolean {
+    const status = this.processingStatus();
+    return !!this.selectedFile && !this.uploading() && (status === 'idle' || status === 'error');
   }
 
   uploadFile(): void {
-    if (!this.selectedFile) {
+    if (!this.canUploadSelectedFile()) {
       this.snackBar.open(this.t('errors.validation') || 'Please select a file first', this.t('app.close'), { duration: 3000 });
       return;
     }
+    const file = this.selectedFile;
+    if (!file) return;
 
     this.uploading.set(true);
     this.uploadProgress.set(0);
     this.processingStatus.set('uploading');
     this.processingMessage.set(this.t('app.loading') || 'Uploading file...');
 
-    this.csvService.uploadCSV(this.selectedFile, true).subscribe({
+    this.csvService.uploadCSV(file, true).subscribe({
       next: (response) => {
         if (response.success && response.data?.importId) {
           this.uploadProgress.set(100);
@@ -250,9 +266,13 @@ export class CsvUpload implements OnInit, OnDestroy {
     this.processingMessage.set('');
     this.importId.set(null);
     this.stopStatusPolling();
+    if (this.fileInput?.nativeElement) {
+      this.fileInput.nativeElement.value = '';
+    }
   }
 
   removeFile(): void {
-    this.selectedFile = null;
+    if (!this.canCancelSelection()) return;
+    this.resetUpload();
   }
 }
