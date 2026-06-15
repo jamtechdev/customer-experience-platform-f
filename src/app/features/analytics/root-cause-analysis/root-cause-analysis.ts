@@ -133,12 +133,23 @@ export class RootCauseAnalysis implements OnInit, OnDestroy {
   /** Re-runs server-side extraction on negative feedback (creates additional rows; refreshes list). */
   runRootCauseAnalysis(): void {
     const companyId = this.currentCompanyId();
+    const ok = window.confirm(
+      'Run root cause analysis now? This analyzes negative/relevant feedback, may call OpenAI if enabled, and will replace saved root-cause rows.'
+    );
+    if (!ok) return;
+
     this.reanalyzing.set(true);
+    this.emptyHint.set('Root cause analysis is running. This may take a few minutes.');
     this.analysisService.analyzeRootCauses(companyId, 50).subscribe({
       next: (res) => {
         this.reanalyzing.set(false);
         if (res.success) {
-          this.snackBar.open('Root cause analysis updated', 'Close', { duration: 3000 });
+          const count = Array.isArray(res.data) ? res.data.length : 0;
+          this.snackBar.open(
+            count > 0 ? `Root cause analysis updated: ${count} cause(s) found.` : 'Analysis finished, but no root causes were generated.',
+            'Close',
+            { duration: 5000 }
+          );
           this.loadRootCauses();
         } else {
           this.snackBar.open(res.message || 'Analysis failed', 'Close', { duration: 4000 });

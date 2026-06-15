@@ -1,5 +1,17 @@
-import { CommonModule } from '@angular/common';
-import { Component, EventEmitter, HostListener, Input, Output } from '@angular/core';
+import { CommonModule, DOCUMENT, isPlatformBrowser } from '@angular/common';
+import {
+  Component,
+  ElementRef,
+  EventEmitter,
+  HostListener,
+  Inject,
+  Input,
+  OnChanges,
+  OnDestroy,
+  Output,
+  PLATFORM_ID,
+  SimpleChanges,
+} from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
@@ -27,7 +39,7 @@ export interface RelatedFeedbackRow {
   templateUrl: './related-feedback-modal.html',
   styleUrl: './related-feedback-modal.css',
 })
-export class RelatedFeedbackModal {
+export class RelatedFeedbackModal implements OnChanges, OnDestroy {
   @Input() open = false;
   @Input() loading = false;
   @Input() title = '';
@@ -38,6 +50,32 @@ export class RelatedFeedbackModal {
 
   @Output() closed = new EventEmitter<void>();
   @Output() pageChange = new EventEmitter<number>();
+
+  private readonly isBrowser: boolean;
+  private originalParent: Node | null = null;
+  private originalNextSibling: Node | null = null;
+  private movedToBody = false;
+
+  constructor(
+    private readonly elementRef: ElementRef<HTMLElement>,
+    @Inject(DOCUMENT) private readonly documentRef: Document,
+    @Inject(PLATFORM_ID) platformId: object
+  ) {
+    this.isBrowser = isPlatformBrowser(platformId);
+  }
+
+  ngOnChanges(changes: SimpleChanges): void {
+    if (!changes['open']) return;
+    if (this.open) {
+      this.moveHostToBody();
+    } else {
+      this.restoreHostLocation();
+    }
+  }
+
+  ngOnDestroy(): void {
+    this.restoreHostLocation();
+  }
 
   @HostListener('document:keydown.escape', ['$event'])
   onEscape(event: Event): void {
@@ -62,6 +100,26 @@ export class RelatedFeedbackModal {
 
   close(): void {
     this.closed.emit();
+  }
+
+  private moveHostToBody(): void {
+    if (!this.isBrowser || this.movedToBody) return;
+    const host = this.elementRef.nativeElement;
+    this.originalParent = host.parentNode;
+    this.originalNextSibling = host.nextSibling;
+    this.documentRef.body.appendChild(host);
+    this.movedToBody = true;
+  }
+
+  private restoreHostLocation(): void {
+    if (!this.isBrowser || !this.movedToBody || !this.originalParent) return;
+    const host = this.elementRef.nativeElement;
+    if (this.originalNextSibling && this.originalNextSibling.parentNode === this.originalParent) {
+      this.originalParent.insertBefore(host, this.originalNextSibling);
+    } else {
+      this.originalParent.appendChild(host);
+    }
+    this.movedToBody = false;
   }
 
   goPrev(): void {

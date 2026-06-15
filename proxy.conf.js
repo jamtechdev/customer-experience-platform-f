@@ -1,7 +1,7 @@
 // Proxy /api requests to the local backend during development.
 module.exports = {
   '/api': {
-    target: 'http://localhost:5000',
+    target: 'https://api.sentimenter.ai',
     secure: false,
     changeOrigin: true,
     logLevel: 'debug',

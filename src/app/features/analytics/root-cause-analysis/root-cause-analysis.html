@@ -34,6 +34,16 @@
             <mat-icon>info</mat-icon>
             <h3>{{ t('rootCausePage.noRootCauses') }}</h3>
             <p>{{ emptyHint() || t('rootCausePage.noRootCausesHint') }}</p>
+            <button
+              mat-raised-button
+              color="primary"
+              type="button"
+              class="empty-action"
+              (click)="runRootCauseAnalysis()"
+              [disabled]="reanalyzing()">
+              <mat-icon>psychology</mat-icon>
+              {{ reanalyzing() ? t('rootCausePage.analyzing') : t('rootCausePage.rerun') }}
+            </button>
           </div>
         </div>
         <figure *ngIf="rootCauseRows().length > 0" class="mpl-figure" [attr.aria-label]="t('rootCausePage.chartLabel')">
