@@ -82,23 +82,14 @@
   }
 </div>
 
-<div
-  *ngIf="drilldownOpen()"
-  class="reference-overlay"
-  (click)="closeDrilldown()"
-  role="dialog"
-  aria-modal="true">
-  <div class="reference-modal" (click)="$event.stopPropagation()">
-    <h3>Reference feedback · {{ drilldownTitle() }}</h3>
-    <p *ngIf="drilldownLoading()">Loading…</p>
-    <ul *ngIf="!drilldownLoading() && drilldownRows().length">
-      <li *ngFor="let r of drilldownRows()">
-        <small>#{{ r.id }} · {{ r.author || 'unknown' }} · {{ r.sentiment || 'unknown' }} · {{ r.source || 'source' }}</small>
-        <p *ngIf="r.relevanceReason"><strong>Why:</strong> {{ r.relevanceReason }}</p>
-        <p><strong>AI summary:</strong> {{ r.contentSummary || r.content }}</p>
-        <pre>{{ r.content }}</pre>
-      </li>
-    </ul>
-    <button mat-stroked-button type="button" (click)="closeDrilldown()">Close</button>
-  </div>
-</div>
+<app-related-feedback-modal
+  [open]="drilldownOpen()"
+  [loading]="drilldownLoading()"
+  [title]="drilldownTitle()"
+  [rows]="drilldownRows()"
+  [page]="drilldownPage()"
+  [pageSize]="drilldownPageSize"
+  [total]="drilldownTotal()"
+  (pageChange)="loadDrilldownPage($event)"
+  (closed)="closeDrilldown()">
+</app-related-feedback-modal>

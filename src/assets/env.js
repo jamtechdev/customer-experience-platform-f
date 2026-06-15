@@ -2,3 +2,10 @@
 window.__env__ = window.__env__ || {};
 window.__env__.NG_APP_API_URL = "/api";
 window.__env__.NG_APP_PRODUCTION = "false";
+window.__env__.NG_APP_FIREBASE_API_KEY = "";
+window.__env__.NG_APP_FIREBASE_AUTH_DOMAIN = "";
+window.__env__.NG_APP_FIREBASE_PROJECT_ID = "";
+window.__env__.NG_APP_FIREBASE_STORAGE_BUCKET = "";
+window.__env__.NG_APP_FIREBASE_MESSAGING_SENDER_ID = "";
+window.__env__.NG_APP_FIREBASE_APP_ID = "";
+window.__env__.NG_APP_FIREBASE_VAPID_KEY = "";

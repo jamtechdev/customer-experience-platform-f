@@ -6,6 +6,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatChipsModule } from '@angular/material/chips';
+import { Router } from '@angular/router';
 import { CSVService, CSVFormat } from '../../../core/services/csv.service';
 import { TranslationService } from '../../../core/services/translation.service';
 import { environment } from '../../../../environments/environment';
@@ -42,6 +43,7 @@ export class CsvUpload implements OnInit, OnDestroy {
   private csvService = inject(CSVService);
   private snackBar = inject(MatSnackBar);
   private translationService = inject(TranslationService);
+  private router = inject(Router);
   private statusPollTimer: ReturnType<typeof setTimeout> | null = null;
 
   selectedFile: File | null = null;
@@ -165,18 +167,18 @@ export class CsvUpload implements OnInit, OnDestroy {
     this.processingStatus.set('uploading');
     this.processingMessage.set(this.t('app.loading') || 'Uploading file...');
 
-    this.csvService.uploadCSV(file, true).subscribe({
+    this.csvService.uploadCSV(file, false).subscribe({
       next: (response) => {
         if (response.success && response.data?.importId) {
           this.uploadProgress.set(100);
           this.importId.set(response.data.importId);
-          this.processingStatus.set('processing');
+          this.processingStatus.set('completed');
           const rows = response.data.rowCount;
-          const msg = `Upload completed: ${rows} row(s) from ${response.data.filename}. OpenAI parsing and analysis started.`;
+          const msg = `Upload completed: ${rows} row(s) from ${response.data.filename}. Please map the CSV columns before import.`;
           this.processingMessage.set(msg);
           this.snackBar.open(msg, this.t('app.close'), { duration: 6000 });
           this.uploading.set(false);
-          this.pollImportStatus(response.data.importId);
+          this.router.navigate(['/app/data-sources/csv-mapping', response.data.importId]);
         }
       },
       error: (error) => {

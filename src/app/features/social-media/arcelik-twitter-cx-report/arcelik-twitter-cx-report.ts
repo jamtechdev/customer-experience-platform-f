@@ -26,6 +26,7 @@ import {
 } from '../../../core/utils/report-date-presets';
 import { twitterCxReportFailureMessage } from '../../../core/utils/twitter-cx-report-load';
 import { OllamaLoader } from '../../../core/components/ollama-loader/ollama-loader';
+import { RelatedFeedbackModal, RelatedFeedbackRow } from '../../../core/components/related-feedback-modal/related-feedback-modal';
 
 type SortDir = 'asc' | 'desc';
 
@@ -116,6 +117,7 @@ interface ActionPlanRow {
     MatProgressSpinnerModule,
     MatSnackBarModule,
     OllamaLoader,
+    RelatedFeedbackModal,
   ],
   templateUrl: './arcelik-twitter-cx-report.html',
   styleUrl: './arcelik-twitter-cx-report.css',
@@ -136,9 +138,11 @@ export class ArcelikTwitterCxReport implements OnInit, OnDestroy {
   drilldownOpen = signal(false);
   drilldownLoading = signal(false);
   drilldownTitle = signal('');
-  drilldownRows = signal<
-    Array<{ id: number; content: string; source: string; date: string; author?: string; sentiment: string; score: number }>
-  >([]);
+  drilldownRows = signal<RelatedFeedbackRow[]>([]);
+  drilldownPage = signal(1);
+  drilldownTotal = signal(0);
+  readonly drilldownPageSize = 10;
+  private drilldownIds: number[] = [];
 
   presets = signal<ReportDatePreset[]>([]);
   selectedPresetId = signal<string>(NO_DATE_FILTER_PRESET_ID);
@@ -487,6 +491,9 @@ export class ArcelikTwitterCxReport implements OnInit, OnDestroy {
     this.drilldownOpen.set(false);
     this.drilldownRows.set([]);
     this.drilldownTitle.set('');
+    this.drilldownPage.set(1);
+    this.drilldownTotal.set(0);
+    this.drilldownIds = [];
   }
 
   openRelatedRecords(row: RootCauseRow): void {
@@ -500,15 +507,27 @@ export class ArcelikTwitterCxReport implements OnInit, OnDestroy {
     }
     this.drilldownTitle.set(title);
     this.drilldownOpen.set(true);
+    this.drilldownIds = feedbackIds;
+    this.loadDrilldownPage(1);
+  }
+
+  loadDrilldownPage(page: number): void {
+    if (!this.drilldownIds.length) return;
     this.drilldownLoading.set(true);
+    this.drilldownPage.set(page);
     this.drilldownRows.set([]);
     const user = this.authService.currentUser();
     const companyId = user?.role === 'admin' ? undefined : (user?.settings?.companyId ?? 1);
-    this.analysisService.getFeedbackByIds(companyId, feedbackIds).subscribe({
+    this.analysisService.getFeedbackByIds(companyId, this.drilldownIds, {
+      page,
+      limit: this.drilldownPageSize,
+      includeIrrelevant: false,
+    }).subscribe({
       next: (res) => {
         this.drilldownLoading.set(false);
         if (res.success && Array.isArray(res.data?.list)) {
           this.drilldownRows.set(res.data.list);
+          this.drilldownTotal.set(Number(res.data?.total ?? res.data?.returned ?? 0));
         } else {
           this.snackBar.open(res.message || 'Could not load related records', 'Close', { duration: 5000 });
           this.closeDrilldown();
@@ -516,6 +535,7 @@ export class ArcelikTwitterCxReport implements OnInit, OnDestroy {
       },
       error: () => {
         this.drilldownLoading.set(false);
+        this.drilldownTotal.set(0);
         this.snackBar.open('Could not load related records', 'Close', { duration: 4000 });
         this.closeDrilldown();
       },

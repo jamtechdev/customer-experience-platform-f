@@ -29,6 +29,7 @@ import { CXWebSocketService, type CSVImportStatusEvent } from '../../../core/ser
 import { forkJoin, Subscription } from 'rxjs';
 import { OllamaLoader } from '../../../core/components/ollama-loader/ollama-loader';
 import { TranslationService } from '../../../core/services/translation.service';
+import { RelatedFeedbackModal, RelatedFeedbackRow } from '../../../core/components/related-feedback-modal/related-feedback-modal';
 
 interface SentimentStats {
   positive: number;
@@ -69,7 +70,8 @@ interface SentimentReferenceRow {
     MatChipsModule,
     MatSnackBarModule,
     MatDialogModule,
-    OllamaLoader
+    OllamaLoader,
+    RelatedFeedbackModal
   ],
   templateUrl: './sentiment-analysis.html',
   styleUrl: './sentiment-analysis.css',
@@ -115,28 +117,25 @@ export class SentimentAnalysis implements OnInit, OnDestroy {
   filterSearch = signal<string>('');
   referenceOpen = signal(false);
   referenceRow = signal<{
+    id?: number;
     content: string;
     referenceContent?: string;
     journeyStage?: string;
     relevanceReason?: string;
     isRelevant?: boolean;
+    source?: string;
+    date?: string;
+    sentiment?: string;
+    score?: number;
   } | null>(null);
   drilldownOpen = signal(false);
   drilldownLoading = signal(false);
   drilldownTitle = signal('');
-  drilldownRows = signal<
-    Array<{
-      id: number;
-      content: string;
-      referenceContent?: string;
-      source: string;
-      date: string;
-      sentiment: string;
-      journeyStage?: string;
-      relevanceReason?: string;
-      isRelevant?: boolean;
-    }>
-  >([]);
+  drilldownRows = signal<RelatedFeedbackRow[]>([]);
+  drilldownPage = signal(1);
+  drilldownTotal = signal(0);
+  readonly drilldownPageSize = 10;
+  private drilldownBar: SentimentChartBar | null = null;
 
   presets = signal<ReportDatePreset[]>([]);
   selectedPresetId = signal<string>(NO_DATE_FILTER_PRESET_ID);
@@ -479,11 +478,16 @@ export class SentimentAnalysis implements OnInit, OnDestroy {
   }
 
   openReference(row: {
+    id?: number;
     content: string;
     referenceContent?: string;
     journeyStage?: string;
     relevanceReason?: string;
     isRelevant?: boolean;
+    source?: string;
+    date?: string;
+    sentiment?: string;
+    score?: number;
   }): void {
     this.referenceRow.set(row);
     this.referenceOpen.set(true);
@@ -494,11 +498,36 @@ export class SentimentAnalysis implements OnInit, OnDestroy {
     this.referenceRow.set(null);
   }
 
+  referenceModalRows(): RelatedFeedbackRow[] {
+    const row = this.referenceRow();
+    if (!row) return [];
+    return [{
+      id: Number(row.id) || 0,
+      content: this.humanizeFeedbackText(row.content || ''),
+      referenceContent: row.referenceContent,
+      journeyStage: row.journeyStage,
+      relevanceReason: row.relevanceReason,
+      isRelevant: row.isRelevant,
+      source: row.source,
+      date: normalizeApiDateToIso(row.date),
+      sentiment: row.sentiment,
+      score: row.score,
+    }];
+  }
+
   openSentimentDrilldown(bar: SentimentChartBar): void {
     if (!bar.count) return;
     this.drilldownTitle.set(`${bar.label} feedback (${bar.count})`);
+    this.drilldownBar = bar;
     this.drilldownOpen.set(true);
+    this.loadDrilldownPage(1);
+  }
+
+  loadDrilldownPage(page: number): void {
+    const bar = this.drilldownBar;
+    if (!bar) return;
     this.drilldownLoading.set(true);
+    this.drilldownPage.set(page);
     this.drilldownRows.set([]);
 
     const companyId = this.getCompanyId();
@@ -506,7 +535,7 @@ export class SentimentAnalysis implements OnInit, OnDestroy {
     const rel = this.filterIsRelevant();
     const isRelevant = rel === 'true' ? true : rel === 'false' ? false : undefined;
     this.analysisService
-      .getFeedbackWithSentiment(companyId, start, end, 1, 100, {
+      .getFeedbackWithSentiment(companyId, start, end, page, this.drilldownPageSize, {
         sentiment: bar.key,
         journeyStage: this.filterJourneyStage() || undefined,
         isRelevant,
@@ -524,10 +553,12 @@ export class SentimentAnalysis implements OnInit, OnDestroy {
               date: normalizeApiDateToIso(row.date),
             }))
           );
+          this.drilldownTotal.set(Number(response?.data?.total ?? 0));
         },
         error: () => {
           this.drilldownLoading.set(false);
           this.drilldownRows.set([]);
+          this.drilldownTotal.set(0);
         },
       });
   }
@@ -536,6 +567,9 @@ export class SentimentAnalysis implements OnInit, OnDestroy {
     this.drilldownOpen.set(false);
     this.drilldownLoading.set(false);
     this.drilldownRows.set([]);
+    this.drilldownPage.set(1);
+    this.drilldownTotal.set(0);
+    this.drilldownBar = null;
   }
 
   getCompanyId(): number | undefined {

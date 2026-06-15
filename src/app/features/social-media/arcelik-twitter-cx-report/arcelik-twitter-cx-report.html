@@ -552,41 +552,15 @@
     </mat-card-content>
   </mat-card>
 
-  @if (drilldownOpen()) {
-    <div class="arc-drilldown-overlay" role="dialog" aria-modal="true" (click)="closeDrilldown()">
-      <div class="arc-drilldown-panel" (click)="$event.stopPropagation()">
-        <div class="arc-drilldown-head">
-          <h2>Related feedback · {{ drilldownTitle() }}</h2>
-          <button mat-icon-button type="button" aria-label="Close" (click)="closeDrilldown()">
-            <mat-icon>close</mat-icon>
-          </button>
-        </div>
-        <div class="arc-drilldown-body">
-          @if (drilldownLoading()) {
-            <div class="arc-drilldown-loading">
-              <mat-progress-spinner mode="indeterminate" diameter="36"></mat-progress-spinner>
-            </div>
-          } @else if (drilldownRows().length === 0) {
-            <p class="muted">No rows returned.</p>
-          } @else {
-            <ul class="arc-drilldown-list">
-              @for (r of drilldownRows(); track r.id) {
-                <li>
-                  <div class="arc-dr-meta">
-                    <span>#{{ r.id }}</span>
-                    <span>{{ r.sentiment }}</span>
-                    <span>{{ formatFeedbackDate(r.date) }}</span>
-                  </div>
-                  <p class="arc-dr-content">{{ r.content }}</p>
-                </li>
-              }
-            </ul>
-          }
-        </div>
-        <div class="arc-drilldown-actions">
-          <button mat-raised-button color="primary" type="button" (click)="closeDrilldown()">Close</button>
-        </div>
-      </div>
-    </div>
-  }
+  <app-related-feedback-modal
+    [open]="drilldownOpen()"
+    [loading]="drilldownLoading()"
+    [title]="drilldownTitle()"
+    [rows]="drilldownRows()"
+    [page]="drilldownPage()"
+    [pageSize]="drilldownPageSize"
+    [total]="drilldownTotal()"
+    (pageChange)="loadDrilldownPage($event)"
+    (closed)="closeDrilldown()">
+  </app-related-feedback-modal>
 </div>

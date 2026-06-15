@@ -178,4 +178,14 @@ export const environment = {
     confidenceThreshold: getEnvNumber('NG_APP_AI_CONFIDENCE_THRESHOLD', 0.7),
     maxTokens: getEnvNumber('NG_APP_AI_MAX_TOKENS', 2048),
   },
+
+  firebase: {
+    apiKey: getEnv('NG_APP_FIREBASE_API_KEY', ''),
+    authDomain: getEnv('NG_APP_FIREBASE_AUTH_DOMAIN', ''),
+    projectId: getEnv('NG_APP_FIREBASE_PROJECT_ID', ''),
+    storageBucket: getEnv('NG_APP_FIREBASE_STORAGE_BUCKET', ''),
+    messagingSenderId: getEnv('NG_APP_FIREBASE_MESSAGING_SENDER_ID', ''),
+    appId: getEnv('NG_APP_FIREBASE_APP_ID', ''),
+    vapidKey: getEnv('NG_APP_FIREBASE_VAPID_KEY', ''),
+  },
 };

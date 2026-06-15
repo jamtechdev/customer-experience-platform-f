@@ -24,6 +24,7 @@ import {
 import { CXWebSocketService, type CSVImportStatusEvent } from '../../../core/services/cx-websocket.service';
 import { Subscription } from 'rxjs';
 import { OllamaLoader } from '../../../core/components/ollama-loader/ollama-loader';
+import { RelatedFeedbackModal, RelatedFeedbackRow } from '../../../core/components/related-feedback-modal/related-feedback-modal';
 
 interface CompetitorData {
   id: number;
@@ -50,6 +51,7 @@ interface CompetitorData {
     MatSelectModule,
     MatTooltipModule,
     OllamaLoader,
+    RelatedFeedbackModal,
   ],
   templateUrl: './competitor-comparison.html',
   styleUrl: './competitor-comparison.css',
@@ -73,7 +75,11 @@ export class CompetitorComparison implements OnInit, OnDestroy {
   drilldownOpen = signal(false);
   drilldownLoading = signal(false);
   drilldownTitle = signal('');
-  drilldownRows = signal<Array<{ id: number; content: string; contentSummary?: string; sentiment: string; date: string }>>([]);
+  drilldownRows = signal<RelatedFeedbackRow[]>([]);
+  drilldownPage = signal(1);
+  drilldownTotal = signal(0);
+  readonly drilldownPageSize = 10;
+  private drilldownIds: number[] = [];
   displayedColumns: string[] = ['name', 'sentimentScore', 'npsScore', 'feedbackCount', 'gap', 'actions'];
   newCompetitorName = '';
 
@@ -309,17 +315,30 @@ export class CompetitorComparison implements OnInit, OnDestroy {
     if (!ids.length) return;
     this.drilldownTitle.set(row.name);
     this.drilldownOpen.set(true);
+    this.drilldownIds = ids;
+    this.loadDrilldownPage(1);
+  }
+
+  loadDrilldownPage(page: number): void {
+    if (!this.drilldownIds.length) return;
+    this.drilldownPage.set(page);
     this.drilldownLoading.set(true);
     this.drilldownRows.set([]);
     const companyId = this.authService.currentUser()?.settings?.companyId ?? 1;
-    this.analysisService.getFeedbackByIds(companyId, ids).subscribe({
+    this.analysisService.getFeedbackByIds(companyId, this.drilldownIds, {
+      page,
+      limit: this.drilldownPageSize,
+      includeIrrelevant: false,
+    }).subscribe({
       next: (res) => {
         this.drilldownLoading.set(false);
         this.drilldownRows.set(res?.data?.list || []);
+        this.drilldownTotal.set(Number(res?.data?.total ?? res?.data?.returned ?? 0));
       },
       error: () => {
         this.drilldownLoading.set(false);
         this.drilldownRows.set([]);
+        this.drilldownTotal.set(0);
       },
     });
   }
@@ -327,6 +346,9 @@ export class CompetitorComparison implements OnInit, OnDestroy {
   closeDrilldown(): void {
     this.drilldownOpen.set(false);
     this.drilldownRows.set([]);
+    this.drilldownPage.set(1);
+    this.drilldownTotal.set(0);
+    this.drilldownIds = [];
   }
 
   hasValidCompetitors(): boolean {

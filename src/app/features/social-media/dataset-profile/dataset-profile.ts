@@ -12,6 +12,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { twitterCxReportFailureMessage } from '../../../core/utils/twitter-cx-report-load';
 import { OllamaLoader } from '../../../core/components/ollama-loader/ollama-loader';
 import { TranslationService } from '../../../core/services/translation.service';
+import { RelatedFeedbackModal, RelatedFeedbackRow } from '../../../core/components/related-feedback-modal/related-feedback-modal';
 
 interface DatasetProfileRow {
   metric: string;
@@ -30,6 +31,7 @@ interface DatasetProfileRow {
     MatProgressSpinnerModule,
     MatButtonModule,
     OllamaLoader,
+    RelatedFeedbackModal,
   ],
   templateUrl: './dataset-profile.html',
   styleUrl: './dataset-profile.css',
@@ -49,7 +51,10 @@ export class DatasetProfile implements OnInit, OnDestroy {
   drilldownOpen = signal(false);
   drilldownLoading = signal(false);
   drilldownTitle = signal('');
-  drilldownRows = signal<Array<{ id: number; content: string; contentSummary?: string; sentiment: string; source: string; date: string; relevanceReason?: string }>>([]);
+  drilldownRows = signal<RelatedFeedbackRow[]>([]);
+  drilldownPage = signal(1);
+  drilldownTotal = signal(0);
+  readonly drilldownPageSize = 10;
 
   rows = signal<DatasetProfileRow[]>([]);
 
@@ -94,20 +99,32 @@ export class DatasetProfile implements OnInit, OnDestroy {
 
   openProfileDrilldown(row: DatasetProfileRow): void {
     if (!this.isCountRow(row)) return;
-    const user = this.authService.currentUser();
-    const companyId = user?.role === 'admin' ? undefined : (user?.settings?.companyId ?? 1);
     this.drilldownTitle.set(row.metric);
     this.drilldownOpen.set(true);
+    this.loadDrilldownPage(1);
+  }
+
+  loadDrilldownPage(page: number): void {
+    const user = this.authService.currentUser();
+    const companyId = user?.role === 'admin' ? undefined : (user?.settings?.companyId ?? 1);
+    this.drilldownPage.set(page);
     this.drilldownLoading.set(true);
     this.drilldownRows.set([]);
-    this.analysisService.getAnalyticsDrilldown({ companyId }).subscribe({
+    this.analysisService.getAnalyticsDrilldown({
+      companyId,
+      page,
+      limit: this.drilldownPageSize,
+      includeIrrelevant: false,
+    }).subscribe({
       next: (res) => {
         this.drilldownLoading.set(false);
         this.drilldownRows.set(res?.data?.list || []);
+        this.drilldownTotal.set(Number(res?.data?.total ?? res?.data?.returned ?? 0));
       },
       error: () => {
         this.drilldownLoading.set(false);
         this.drilldownRows.set([]);
+        this.drilldownTotal.set(0);
       },
     });
   }
@@ -115,5 +132,7 @@ export class DatasetProfile implements OnInit, OnDestroy {
   closeDrilldown(): void {
     this.drilldownOpen.set(false);
     this.drilldownRows.set([]);
+    this.drilldownPage.set(1);
+    this.drilldownTotal.set(0);
   }
 }

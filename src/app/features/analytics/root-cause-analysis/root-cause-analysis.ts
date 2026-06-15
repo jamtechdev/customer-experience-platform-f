@@ -1,4 +1,4 @@
-import { Component, inject, OnDestroy, OnInit, signal } from '@angular/core';
+import { Component, HostListener, inject, OnDestroy, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
 import { MatTableModule } from '@angular/material/table';
@@ -14,6 +14,7 @@ import { TranslationService } from '../../../core/services/translation.service';
 import { CXWebSocketService, type CSVImportStatusEvent } from '../../../core/services/cx-websocket.service';
 import { Subscription } from 'rxjs';
 import { OllamaLoader } from '../../../core/components/ollama-loader/ollama-loader';
+import { RelatedFeedbackModal, RelatedFeedbackRow } from '../../../core/components/related-feedback-modal/related-feedback-modal';
 
 interface RootCauseStructuredInsights {
   painPointTitle?: string;
@@ -53,7 +54,8 @@ interface RootCauseChartRow {
     MatProgressSpinnerModule,
     MatPaginatorModule,
     MatSnackBarModule,
-    OllamaLoader
+    OllamaLoader,
+    RelatedFeedbackModal
   ],
   templateUrl: './root-cause-analysis.html',
   styleUrl: './root-cause-analysis.css',
@@ -76,19 +78,11 @@ export class RootCauseAnalysis implements OnInit, OnDestroy {
   drilldownOpen = signal(false);
   drilldownLoading = signal(false);
   drilldownTitle = signal('');
-  drilldownRows = signal<
-    Array<{
-      id: number;
-      content: string;
-      contentSummary?: string;
-      relevanceReason?: string;
-      source: string;
-      date: string;
-      author?: string;
-      sentiment: string;
-      score: number;
-    }>
-  >([]);
+  drilldownRows = signal<RelatedFeedbackRow[]>([]);
+  drilldownPage = signal(1);
+  drilldownTotal = signal(0);
+  readonly drilldownPageSize = 10;
+  private drilldownState: { row: RootCauseChartRow; allowRelink: boolean } | null = null;
   displayedColumns: string[] = ['title', 'category', 'priority', 'frequency', 'severity', 'actions'];
   pageSize = 10;
   pageIndex = 0;
@@ -123,6 +117,17 @@ export class RootCauseAnalysis implements OnInit, OnDestroy {
   ngOnDestroy(): void {
     this.importStatusSub?.unsubscribe();
     this.stopAutoRefreshRootCauses();
+  }
+
+  @HostListener('document:keydown.escape', ['$event'])
+  onEscape(event: Event): void {
+    if (!this.selectedCause() && !this.drilldownOpen()) return;
+    event.preventDefault();
+    if (this.drilldownOpen()) {
+      this.closeDrilldown();
+      return;
+    }
+    this.closeRootCauseModal();
   }
 
   /** Re-runs server-side extraction on negative feedback (creates additional rows; refreshes list). */
@@ -310,6 +315,9 @@ export class RootCauseAnalysis implements OnInit, OnDestroy {
     this.drilldownOpen.set(false);
     this.drilldownRows.set([]);
     this.drilldownTitle.set('');
+    this.drilldownPage.set(1);
+    this.drilldownTotal.set(0);
+    this.drilldownState = null;
   }
 
   relinkRecords(row: RootCauseChartRow, causeId?: number): void {
@@ -346,19 +354,33 @@ export class RootCauseAnalysis implements OnInit, OnDestroy {
     }
     this.drilldownTitle.set(row.cause);
     this.drilldownOpen.set(true);
+    this.drilldownState = { row, allowRelink };
+    this.loadDrilldownPage(1);
+  }
+
+  loadDrilldownPage(page: number): void {
+    const state = this.drilldownState;
+    if (!state?.row.feedbackIds?.length) return;
+    this.drilldownPage.set(page);
     this.drilldownLoading.set(true);
     this.drilldownRows.set([]);
     const companyId = this.listCompanyId();
-    this.analysisService.getFeedbackByIds(companyId, row.feedbackIds, { rootCauseId: row.id }).subscribe({
+    this.analysisService.getFeedbackByIds(companyId, state.row.feedbackIds, {
+      rootCauseId: state.row.id,
+      page,
+      limit: this.drilldownPageSize,
+      includeIrrelevant: false,
+    }).subscribe({
       next: (res) => {
         this.drilldownLoading.set(false);
         if (res.success && Array.isArray(res.data?.list)) {
-          if (!res.data.list.length && allowRelink && row.id) {
+          if (!res.data.list.length && state.allowRelink && state.row.id && page === 1) {
             this.closeDrilldown();
-            this.relinkRecords(row);
+            this.relinkRecords(state.row);
             return;
           }
           this.drilldownRows.set(res.data.list);
+          this.drilldownTotal.set(Number(res.data?.total ?? res.data?.returned ?? 0));
         } else {
           this.snackBar.open(res.message || 'Could not load related records', 'Close', { duration: 5000 });
           this.closeDrilldown();
@@ -367,6 +389,7 @@ export class RootCauseAnalysis implements OnInit, OnDestroy {
       error: () => {
         this.drilldownLoading.set(false);
         this.snackBar.open('Could not load related records', 'Close', { duration: 4000 });
+        this.drilldownTotal.set(0);
         this.closeDrilldown();
       },
     });

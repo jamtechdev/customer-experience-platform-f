@@ -23,6 +23,7 @@ import {
 import { CXWebSocketService, type CSVImportStatusEvent } from '../../../core/services/cx-websocket.service';
 import { Subscription } from 'rxjs';
 import { OllamaLoader } from '../../../core/components/ollama-loader/ollama-loader';
+import { RelatedFeedbackModal, RelatedFeedbackRow } from '../../../core/components/related-feedback-modal/related-feedback-modal';
 
 interface NPSData {
   score: number;
@@ -47,7 +48,8 @@ interface NPSData {
     MatSelectModule,
     MatInputModule,
     MatSnackBarModule,
-    OllamaLoader
+    OllamaLoader,
+    RelatedFeedbackModal
   ],
   templateUrl: './nps-analysis.html',
   styleUrl: './nps-analysis.css',
@@ -71,18 +73,11 @@ export class NpsAnalysis implements OnInit, OnDestroy {
   drilldownOpen = signal(false);
   drilldownLoading = signal(false);
   drilldownTitle = signal('');
-  drilldownRows = signal<
-    Array<{
-      id: number;
-      content: string;
-      referenceContent?: string;
-      source: string;
-      date: string;
-      sentiment: string;
-      journeyStage?: string;
-      relevanceReason?: string;
-    }>
-  >([]);
+  drilldownRows = signal<RelatedFeedbackRow[]>([]);
+  drilldownPage = signal(1);
+  drilldownTotal = signal(0);
+  readonly drilldownPageSize = 10;
+  private drilldownSentiment?: 'positive' | 'negative' | 'neutral';
   presets = signal<ReportDatePreset[]>([]);
   selectedPresetId = signal<string>(NO_DATE_FILTER_PRESET_ID);
   startDate = signal<string | null>(null);
@@ -355,6 +350,14 @@ export class NpsAnalysis implements OnInit, OnDestroy {
     const count = bucket === 'promoters' ? data.promoters : bucket === 'detractors' ? data.detractors : data.passives;
     if (!count) return;
 
+    this.drilldownTitle.set(`${bucket} (${count})`);
+    this.drilldownSentiment = sentiment;
+    this.drilldownOpen.set(true);
+    this.loadDrilldownPage(1);
+  }
+
+  loadDrilldownPage(page: number): void {
+    if (!this.drilldownSentiment) return;
     let start: Date | undefined;
     let end: Date | undefined;
     if (this.filtersApplied() && this.datesValid()) {
@@ -365,14 +368,13 @@ export class NpsAnalysis implements OnInit, OnDestroy {
 
     const user = this.authService.currentUser();
     const companyId = user?.role === 'admin' ? undefined : (user?.settings?.companyId || 1);
-    this.drilldownTitle.set(`${bucket} (${count})`);
-    this.drilldownOpen.set(true);
+    this.drilldownPage.set(page);
     this.drilldownLoading.set(true);
     this.drilldownRows.set([]);
 
     this.analysisService
-      .getFeedbackWithSentiment(companyId, start, end, 1, 100, {
-        sentiment,
+      .getFeedbackWithSentiment(companyId, start, end, page, this.drilldownPageSize, {
+        sentiment: this.drilldownSentiment,
         includeIrrelevant: false,
       })
       .subscribe({
@@ -384,10 +386,12 @@ export class NpsAnalysis implements OnInit, OnDestroy {
               content: String(row.contentSummary || row.content || ''),
             }))
           );
+          this.drilldownTotal.set(Number(res?.data?.total ?? 0));
         },
         error: () => {
           this.drilldownLoading.set(false);
           this.drilldownRows.set([]);
+          this.drilldownTotal.set(0);
         },
       });
   }
@@ -396,6 +400,9 @@ export class NpsAnalysis implements OnInit, OnDestroy {
     this.drilldownOpen.set(false);
     this.drilldownLoading.set(false);
     this.drilldownRows.set([]);
+    this.drilldownPage.set(1);
+    this.drilldownTotal.set(0);
+    this.drilldownSentiment = undefined;
   }
 
   formatDate(value: string): string {

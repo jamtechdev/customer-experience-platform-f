@@ -276,46 +276,26 @@
 
   </div>
 
-  <div
-    class="reference-overlay"
-    *ngIf="referenceOpen()"
-    (click)="closeReference()"
-    role="dialog"
-    aria-modal="true">
-    <div class="reference-modal" (click)="$event.stopPropagation()">
-      <h3>{{ t('sentiment.referenceData') }}</h3>
-      <p *ngIf="referenceRow()?.journeyStage"><strong>{{ t('sentiment.journeyStage') }}:</strong> {{ referenceRow()?.journeyStage }}</p>
-      <p *ngIf="referenceRow()?.isRelevant !== undefined"><strong>{{ t('sentiment.brandRelevant') }}:</strong> {{ referenceRow()?.isRelevant === false ? t('app.no') : t('app.yes') }}</p>
-      <p *ngIf="referenceRow()?.relevanceReason"><strong>{{ t('sentiment.why') }}:</strong> {{ referenceRow()?.relevanceReason }}</p>
-      <p><strong>{{ t('sentiment.aiSummary') }}:</strong> {{ referenceRow()?.content }}</p>
-      <p><strong>{{ t('sentiment.sourceTweet') }}:</strong></p>
-      <pre class="reference-text">{{ referenceRow()?.referenceContent || referenceRow()?.content }}</pre>
-      <button mat-stroked-button type="button" (click)="closeReference()">{{ t('app.close') }}</button>
-    </div>
-  </div>
+  <app-related-feedback-modal
+    [open]="referenceOpen()"
+    [loading]="false"
+    [title]="t('sentiment.referenceData')"
+    [rows]="referenceModalRows()"
+    [page]="1"
+    [pageSize]="1"
+    [total]="referenceModalRows().length"
+    (closed)="closeReference()">
+  </app-related-feedback-modal>
 
-  <div
-    class="reference-overlay"
-    *ngIf="drilldownOpen()"
-    (click)="closeDrilldown()"
-    role="dialog"
-    aria-modal="true">
-    <div class="reference-modal" (click)="$event.stopPropagation()">
-      <h3>{{ t('sentiment.relatedContent') }} · {{ drilldownTitle() }}</h3>
-      <div *ngIf="drilldownLoading()" class="drilldown-loading">
-        <mat-progress-spinner mode="indeterminate" diameter="36"></mat-progress-spinner>
-      </div>
-      <p *ngIf="!drilldownLoading() && drilldownRows().length === 0">{{ t('sentiment.noRelatedRows') }}</p>
-      <ul class="drilldown-list" *ngIf="!drilldownLoading() && drilldownRows().length">
-        <li *ngFor="let row of drilldownRows()">
-          <strong>#{{ row.id }} · {{ sentimentLabel(row.sentiment) }} · {{ formatDate(row.date) }}</strong>
-          <p *ngIf="row.journeyStage"><strong>{{ t('sentiment.journeyStage') }}:</strong> {{ row.journeyStage }}</p>
-          <p *ngIf="row.relevanceReason"><strong>{{ t('sentiment.why') }}:</strong> {{ row.relevanceReason }}</p>
-          <p><strong>{{ t('sentiment.aiSummary') }}:</strong> {{ row.content }}</p>
-          <pre class="reference-text">{{ row.referenceContent || row.content }}</pre>
-        </li>
-      </ul>
-      <button mat-stroked-button type="button" (click)="closeDrilldown()">{{ t('app.close') }}</button>
-    </div>
-  </div>
+  <app-related-feedback-modal
+    [open]="drilldownOpen()"
+    [loading]="drilldownLoading()"
+    [title]="drilldownTitle()"
+    [rows]="drilldownRows()"
+    [page]="drilldownPage()"
+    [pageSize]="drilldownPageSize"
+    [total]="drilldownTotal()"
+    (pageChange)="loadDrilldownPage($event)"
+    (closed)="closeDrilldown()">
+  </app-related-feedback-modal>
 </div>

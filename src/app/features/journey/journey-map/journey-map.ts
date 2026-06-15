@@ -13,6 +13,7 @@ import { AuthService } from '../../../core/services/auth.service';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { OllamaLoader } from '../../../core/components/ollama-loader/ollama-loader';
 import { twitterCxReportFailureMessage } from '../../../core/utils/twitter-cx-report-load';
+import { RelatedFeedbackModal, RelatedFeedbackRow } from '../../../core/components/related-feedback-modal/related-feedback-modal';
 
 interface JourneyStage {
   id: number;
@@ -37,7 +38,8 @@ interface JourneyStage {
     MatChipsModule,
     MatTableModule,
     MatSnackBarModule,
-    OllamaLoader
+    OllamaLoader,
+    RelatedFeedbackModal
   ],
   templateUrl: './journey-map.html',
   styleUrl: './journey-map.css',
@@ -50,7 +52,11 @@ export class JourneyMap implements OnInit, OnDestroy {
   drilldownOpen = signal(false);
   drilldownLoading = signal(false);
   drilldownTitle = signal('');
-  drilldownRows = signal<Array<{ id: number; content: string; contentSummary?: string; relevanceReason?: string; author?: string; date: string }>>([]);
+  drilldownRows = signal<RelatedFeedbackRow[]>([]);
+  drilldownPage = signal(1);
+  drilldownTotal = signal(0);
+  readonly drilldownPageSize = 10;
+  private drilldownIds: number[] = [];
   private refreshSub?: Subscription;
 
   loading = signal(false);
@@ -176,21 +182,39 @@ export class JourneyMap implements OnInit, OnDestroy {
     if (!ids.length) return;
     this.drilldownTitle.set(`${stageName} · ${polarity}`);
     this.drilldownOpen.set(true);
+    this.drilldownIds = [...new Set(ids.map((id) => Number(id)).filter((id) => Number.isFinite(id) && id > 0))];
+    this.loadDrilldownPage(1);
+  }
+
+  loadDrilldownPage(page: number): void {
+    if (!this.drilldownIds.length) return;
+    this.drilldownPage.set(page);
     this.drilldownLoading.set(true);
     this.drilldownRows.set([]);
     const companyId = this.listCompanyId();
-    this.analysisService.getFeedbackByIds(companyId, ids).subscribe({
+    this.analysisService.getFeedbackByIds(companyId, this.drilldownIds, {
+      page,
+      limit: this.drilldownPageSize,
+      includeIrrelevant: false,
+    }).subscribe({
       next: (res) => {
         this.drilldownLoading.set(false);
         if (res?.data?.list) this.drilldownRows.set(res.data.list);
+        this.drilldownTotal.set(Number(res?.data?.total ?? res?.data?.returned ?? 0));
       },
-      error: () => this.drilldownLoading.set(false),
+      error: () => {
+        this.drilldownLoading.set(false);
+        this.drilldownTotal.set(0);
+      },
     });
   }
 
   closeDrilldown(): void {
     this.drilldownOpen.set(false);
     this.drilldownRows.set([]);
+    this.drilldownPage.set(1);
+    this.drilldownTotal.set(0);
+    this.drilldownIds = [];
   }
 
   flowMilestoneMessage(): string {

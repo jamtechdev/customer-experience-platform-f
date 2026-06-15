@@ -47,22 +47,15 @@
   </mat-card>
   </div>
 
-  <div
-    class="reference-overlay"
-    *ngIf="drilldownOpen()"
-    (click)="closeDrilldown()"
-    role="dialog"
-    aria-modal="true">
-    <div class="reference-modal" (click)="$event.stopPropagation()">
-      <h3>{{ drilldownTitle() }}</h3>
-      <p *ngIf="drilldownLoading()" class="muted">Loading reference tweets…</p>
-      <ul *ngIf="!drilldownLoading() && drilldownRows().length">
-        <li *ngFor="let r of drilldownRows()">
-          <pre class="reference-text">{{ r.content }}</pre>
-          <span class="meta" *ngIf="r.author">{{ r.author }} · {{ r.date | date:'short' }}</span>
-        </li>
-      </ul>
-      <button mat-stroked-button type="button" (click)="closeDrilldown()">Close</button>
-    </div>
-  </div>
+  <app-related-feedback-modal
+    [open]="drilldownOpen()"
+    [loading]="drilldownLoading()"
+    [title]="drilldownTitle()"
+    [rows]="drilldownRows()"
+    [page]="drilldownPage()"
+    [pageSize]="drilldownPageSize"
+    [total]="drilldownTotal()"
+    (pageChange)="loadDrilldownPage($event)"
+    (closed)="closeDrilldown()">
+  </app-related-feedback-modal>
 </div>

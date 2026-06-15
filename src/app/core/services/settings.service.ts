@@ -22,6 +22,11 @@ export interface AlertEmailSettings {
   recipients: string[];
 }
 
+export interface AlertPushSettings {
+  enabled: boolean;
+  tokens: string[];
+}
+
 export interface AppSettings {
   theme: 'light' | 'dark' | 'auto';
   language: string;
@@ -157,6 +162,24 @@ export class SettingsService {
 
   updateAlertEmailSettings(settings: AlertEmailSettings): Observable<ApiResponse<AlertEmailSettings>> {
     return this.http.put<ApiResponse<AlertEmailSettings>>(`${this.baseUrl}/alert-email`, settings);
+  }
+
+  getAlertPushSettings(): Observable<ApiResponse<AlertPushSettings>> {
+    return this.http.get<ApiResponse<AlertPushSettings>>(`${this.baseUrl}/alert-push`);
+  }
+
+  updateAlertPushSettings(settings: AlertPushSettings): Observable<ApiResponse<AlertPushSettings>> {
+    return this.http.put<ApiResponse<AlertPushSettings>>(`${this.baseUrl}/alert-push`, settings);
+  }
+
+  registerAlertPushToken(token: string): Observable<ApiResponse<AlertPushSettings>> {
+    return this.http.post<ApiResponse<AlertPushSettings>>(`${this.baseUrl}/alert-push/token`, { token });
+  }
+
+  unregisterAlertPushToken(token: string): Observable<ApiResponse<AlertPushSettings>> {
+    return this.http.request<ApiResponse<AlertPushSettings>>('DELETE', `${this.baseUrl}/alert-push/token`, {
+      body: { token },
+    });
   }
 
   getSentimentParameters(): Observable<ApiResponse<SentimentParameters>> {

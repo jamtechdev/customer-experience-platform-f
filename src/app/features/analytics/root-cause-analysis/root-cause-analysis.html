@@ -144,43 +144,15 @@
     </div>
   </div>
 
-  <div
-    *ngIf="drilldownOpen()"
-    class="root-cause-modal-overlay"
-    role="dialog"
-    aria-modal="true"
-    aria-labelledby="drilldown-title"
-    (click)="closeDrilldown()">
-    <div class="root-cause-modal drilldown-modal" (click)="$event.stopPropagation()">
-      <div class="root-cause-modal-header">
-        <h2 id="drilldown-title">{{ t('rootCausePage.relatedFeedback') }} · {{ drilldownTitle() }}</h2>
-        <button mat-icon-button type="button" [attr.aria-label]="t('app.close')" (click)="closeDrilldown()">
-          <mat-icon>close</mat-icon>
-        </button>
-      </div>
-      <div class="root-cause-modal-content">
-        <div *ngIf="drilldownLoading()" class="drilldown-loading">
-          <mat-progress-spinner mode="indeterminate" diameter="36"></mat-progress-spinner>
-        </div>
-        <div *ngIf="!drilldownLoading() && drilldownRows().length === 0" class="empty-state">
-          <p>{{ t('sentiment.noRelatedRows') }}</p>
-        </div>
-        <ul class="drilldown-list" *ngIf="!drilldownLoading() && drilldownRows().length">
-          <li *ngFor="let r of drilldownRows()">
-            <div class="drilldown-meta">
-              <span class="dr-id">#{{ r.id }}</span>
-              <span class="dr-sent">{{ r.sentiment }}</span>
-              <span class="dr-date">{{ formatFeedbackDate(r.date) }}</span>
-            </div>
-            <p *ngIf="r.relevanceReason" class="dr-content"><strong>{{ t('sentiment.why') }}:</strong> {{ r.relevanceReason }}</p>
-            <p class="dr-content"><strong>{{ t('sentiment.aiSummary') }}:</strong> {{ r.contentSummary || r.content }}</p>
-            <pre class="dr-content">{{ r.content }}</pre>
-          </li>
-        </ul>
-      </div>
-      <div class="root-cause-modal-actions">
-        <button mat-raised-button color="primary" type="button" (click)="closeDrilldown()">{{ t('app.close') }}</button>
-      </div>
-    </div>
-  </div>
+  <app-related-feedback-modal
+    [open]="drilldownOpen()"
+    [loading]="drilldownLoading()"
+    [title]="drilldownTitle()"
+    [rows]="drilldownRows()"
+    [page]="drilldownPage()"
+    [pageSize]="drilldownPageSize"
+    [total]="drilldownTotal()"
+    (pageChange)="loadDrilldownPage($event)"
+    (closed)="closeDrilldown()">
+  </app-related-feedback-modal>
 </div>

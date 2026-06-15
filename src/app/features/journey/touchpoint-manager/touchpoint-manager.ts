@@ -17,6 +17,7 @@ import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { AuthService } from '../../../core/services/auth.service';
 import { OllamaLoader } from '../../../core/components/ollama-loader/ollama-loader';
 import { twitterCxReportFailureMessage } from '../../../core/utils/twitter-cx-report-load';
+import { RelatedFeedbackModal, RelatedFeedbackRow } from '../../../core/components/related-feedback-modal/related-feedback-modal';
 
 const SOURCE_CHANNEL_NAMES = new Set([
   'twitter',
@@ -52,7 +53,8 @@ function isSourceChannelName(value: string): boolean {
     MatFormFieldModule,
     MatInputModule,
     MatSnackBarModule,
-    OllamaLoader
+    OllamaLoader,
+    RelatedFeedbackModal
   ],
   templateUrl: './touchpoint-manager.html',
   styleUrl: './touchpoint-manager.css',
@@ -91,7 +93,11 @@ export class TouchpointManager implements OnInit, OnDestroy {
   drilldownOpen = signal(false);
   drilldownLoading = signal(false);
   drilldownTitle = signal('');
-  drilldownRows = signal<Array<{ id: number; content: string; contentSummary?: string; sentiment: string; date: string }>>([]);
+  drilldownRows = signal<RelatedFeedbackRow[]>([]);
+  drilldownPage = signal(1);
+  drilldownTotal = signal(0);
+  readonly drilldownPageSize = 10;
+  private drilldownIds: number[] = [];
   /** Snapshot rows use synthetic ids; CRUD applies to Admin touchpoint config only. */
   snapshotViewOnly = signal(true);
   showForm = signal(false);
@@ -205,18 +211,33 @@ export class TouchpointManager implements OnInit, OnDestroy {
     if (!ids.length) return;
     this.drilldownTitle.set(row.name);
     this.drilldownOpen.set(true);
+    this.drilldownIds = ids;
+    this.loadDrilldownPage(1);
+  }
+
+  loadDrilldownPage(page: number): void {
+    if (!this.drilldownIds.length) return;
+    this.drilldownPage.set(page);
     this.drilldownLoading.set(true);
     this.drilldownRows.set([]);
     const user = this.authService.currentUser();
     const companyId = user?.role === 'admin' ? undefined : (user?.settings?.companyId ?? 1);
-    this.analysisService.getAnalyticsDrilldown({ companyId, ids }).subscribe({
+    this.analysisService.getAnalyticsDrilldown({
+      companyId,
+      ids: this.drilldownIds,
+      includeIrrelevant: false,
+      page,
+      limit: this.drilldownPageSize,
+    }).subscribe({
       next: (res) => {
         this.drilldownLoading.set(false);
         this.drilldownRows.set(res?.data?.list || []);
+        this.drilldownTotal.set(Number(res?.data?.total ?? res?.data?.returned ?? 0));
       },
       error: () => {
         this.drilldownLoading.set(false);
         this.drilldownRows.set([]);
+        this.drilldownTotal.set(0);
       },
     });
   }
@@ -224,6 +245,9 @@ export class TouchpointManager implements OnInit, OnDestroy {
   closeDrilldown(): void {
     this.drilldownOpen.set(false);
     this.drilldownRows.set([]);
+    this.drilldownPage.set(1);
+    this.drilldownTotal.set(0);
+    this.drilldownIds = [];
   }
 
   openCreate(): void {

@@ -20,6 +20,7 @@ import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { formatApiDate, toInputDateValue } from '../../../core/utils/api-date';
 import { OllamaLoader } from '../../../core/components/ollama-loader/ollama-loader';
 import { twitterCxReportFailureMessage } from '../../../core/utils/twitter-cx-report-load';
+import { RelatedFeedbackModal, RelatedFeedbackRow } from '../../../core/components/related-feedback-modal/related-feedback-modal';
 
 @Component({
   selector: 'app-action-plans',
@@ -36,7 +37,8 @@ import { twitterCxReportFailureMessage } from '../../../core/utils/twitter-cx-re
     MatInputModule,
     MatSelectModule,
     MatSnackBarModule,
-    OllamaLoader
+    OllamaLoader,
+    RelatedFeedbackModal
   ],
   templateUrl: './action-plans.html',
   styleUrl: './action-plans.css',
@@ -97,7 +99,11 @@ export class ActionPlans implements OnInit, OnDestroy {
   drilldownOpen = signal(false);
   drilldownLoading = signal(false);
   drilldownTitle = signal('');
-  drilldownRows = signal<Array<{ id: number; content: string; contentSummary?: string; relevanceReason?: string; author?: string; date: string; sentiment?: string; source?: string }>>([]);
+  drilldownRows = signal<RelatedFeedbackRow[]>([]);
+  drilldownPage = signal(1);
+  drilldownTotal = signal(0);
+  readonly drilldownPageSize = 10;
+  private drilldownIds: number[] = [];
   showForm = signal(false);
   editingId = signal<number | null>(null);
   form: FormGroup;
@@ -191,21 +197,42 @@ export class ActionPlans implements OnInit, OnDestroy {
     if (!ids.length) return;
     this.drilldownTitle.set(row.action.slice(0, 80));
     this.drilldownOpen.set(true);
+    this.drilldownIds = [...new Set(ids.map((id) => Number(id)).filter((id) => Number.isFinite(id) && id > 0))];
+    this.loadDrilldownPage(1);
+  }
+
+  loadDrilldownPage(page: number): void {
+    if (!this.drilldownIds.length) return;
+    this.drilldownPage.set(page);
     this.drilldownLoading.set(true);
+    this.drilldownRows.set([]);
     const user = this.authService.currentUser();
     const companyId = user?.role === 'admin' ? undefined : (user?.settings?.companyId ?? 1);
-    this.analysisService.getAnalyticsDrilldown({ companyId, ids }).subscribe({
+    this.analysisService.getAnalyticsDrilldown({
+      companyId,
+      ids: this.drilldownIds,
+      includeIrrelevant: false,
+      page,
+      limit: this.drilldownPageSize,
+    }).subscribe({
       next: (res) => {
         this.drilldownLoading.set(false);
         if (res?.data?.list) this.drilldownRows.set(res.data.list);
+        this.drilldownTotal.set(Number(res?.data?.total ?? res?.data?.returned ?? 0));
       },
-      error: () => this.drilldownLoading.set(false),
+      error: () => {
+        this.drilldownLoading.set(false);
+        this.drilldownTotal.set(0);
+      },
     });
   }
 
   closeDrilldown(): void {
     this.drilldownOpen.set(false);
     this.drilldownRows.set([]);
+    this.drilldownPage.set(1);
+    this.drilldownTotal.set(0);
+    this.drilldownIds = [];
   }
 
   goNextPage(): void {

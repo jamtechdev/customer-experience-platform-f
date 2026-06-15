@@ -16,6 +16,7 @@ import { AuthService } from '../../../core/services/auth.service';
 import { TranslationService } from '../../../core/services/translation.service';
 import { CXWebSocketService, type CSVImportStatusEvent } from '../../../core/services/cx-websocket.service';
 import { Subscription } from 'rxjs';
+import { RelatedFeedbackModal, RelatedFeedbackRow } from '../../../core/components/related-feedback-modal/related-feedback-modal';
 
 interface KPICard {
   title: string;
@@ -58,7 +59,8 @@ interface SentimentCategoryBar {
     MatFormFieldModule,
     MatSelectModule,
     MatInputModule,
-    FormsModule
+    FormsModule,
+    RelatedFeedbackModal
   ],
   templateUrl: './main-dashboard.html',
   styleUrl: './main-dashboard.css',
@@ -80,7 +82,11 @@ export class MainDashboard implements OnInit, OnDestroy {
   drilldownOpen = signal(false);
   drilldownLoading = signal(false);
   drilldownTitle = signal('');
-  drilldownRows = signal<Array<{ id: number; content: string; contentSummary?: string; referenceContent?: string; sentiment: string; source: string; date: string; relevanceReason?: string }>>([]);
+  drilldownRows = signal<RelatedFeedbackRow[]>([]);
+  drilldownPage = signal(1);
+  drilldownTotal = signal(0);
+  readonly drilldownPageSize = 10;
+  private drilldownSentiment?: 'positive' | 'neutral' | 'negative';
   Math = Math; // Expose Math for template
   today = new Date();
 
@@ -482,27 +488,37 @@ export class MainDashboard implements OnInit, OnDestroy {
   }
 
   openDashboardDrilldown(title: string, sentiment?: 'positive' | 'neutral' | 'negative'): void {
-    const user = this.authService.currentUser();
-    const companyId = user?.role === 'admin' ? undefined : (user?.settings?.companyId || 1);
     this.drilldownTitle.set(title);
+    this.drilldownSentiment = sentiment;
     this.drilldownOpen.set(true);
+    this.loadDrilldownPage(1);
+  }
+
+  loadDrilldownPage(page: number): void {
+    this.drilldownPage.set(page);
     this.drilldownLoading.set(true);
     this.drilldownRows.set([]);
+    const user = this.authService.currentUser();
+    const companyId = user?.role === 'admin' ? undefined : (user?.settings?.companyId || 1);
     this.analysisService
       .getAnalyticsDrilldown({
         companyId,
-        sentiment,
+        sentiment: this.drilldownSentiment,
         startDate: this.dateRangeStart() ?? undefined,
         endDate: this.dateRangeEnd() ?? undefined,
+        page,
+        limit: this.drilldownPageSize,
       })
       .subscribe({
         next: (res) => {
           this.drilldownLoading.set(false);
           this.drilldownRows.set(res?.data?.list || []);
+          this.drilldownTotal.set(Number(res?.data?.total ?? res?.data?.returned ?? 0));
         },
         error: () => {
           this.drilldownLoading.set(false);
           this.drilldownRows.set([]);
+          this.drilldownTotal.set(0);
         },
       });
   }
@@ -511,5 +527,8 @@ export class MainDashboard implements OnInit, OnDestroy {
     this.drilldownOpen.set(false);
     this.drilldownLoading.set(false);
     this.drilldownRows.set([]);
+    this.drilldownPage.set(1);
+    this.drilldownTotal.set(0);
+    this.drilldownSentiment = undefined;
   }
 }

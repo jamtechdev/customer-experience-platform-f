@@ -14,6 +14,7 @@ import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { OllamaLoader } from '../../../core/components/ollama-loader/ollama-loader';
 import { CXWebSocketService } from '../../../core/services/cx-websocket.service';
 import { TranslationService } from '../../../core/services/translation.service';
+import { RelatedFeedbackModal, RelatedFeedbackRow } from '../../../core/components/related-feedback-modal/related-feedback-modal';
 
 interface PlatformData {
   platform: string;
@@ -40,6 +41,7 @@ interface PlatformData {
     MatChipsModule,
     MatSnackBarModule,
     OllamaLoader,
+    RelatedFeedbackModal,
   ],
   templateUrl: './social-analysis.html',
   styleUrl: './social-analysis.css',
@@ -61,9 +63,19 @@ export class SocialAnalysis implements OnInit, OnDestroy {
   drilldownOpen = signal(false);
   drilldownLoading = signal(false);
   drilldownTitle = signal('');
-  drilldownRows = signal<Array<{ id: number; content: string; contentSummary?: string; sentiment: string; date: string }>>([]);
+  drilldownRows = signal<RelatedFeedbackRow[]>([]);
   drilldownRequestedCount = signal(0);
   drilldownRequestedLimit = this.analysisService.drilldownIdLimit;
+  drilldownPage = signal(1);
+  drilldownTotal = signal(0);
+  readonly drilldownPageSize = 10;
+  private drilldownState: {
+    title: string;
+    ids: number[];
+    source?: string;
+    includeIrrelevant: boolean;
+    sentiment?: 'positive' | 'negative' | 'neutral';
+  } | null = null;
   displayedColumns: string[] = ['platform', 'volume', 'sentiment', 'positive', 'negative', 'neutral'];
   readonly t = (key: string, params?: Record<string, string | number>): string =>
     this.translationService.translate(key, params);
@@ -173,34 +185,45 @@ export class SocialAnalysis implements OnInit, OnDestroy {
     title: string,
     ids: number[],
     source?: string,
-    includeIrrelevant: boolean = true,
+    includeIrrelevant: boolean = false,
     sentiment?: 'positive' | 'negative' | 'neutral'
   ): void {
     const unique = [...new Set((ids || []).filter((id) => Number.isFinite(id) && id > 0))];
     const hasSourceFallback = !!source?.trim();
     if (!unique.length && !hasSourceFallback) return;
-    const safeIds = unique.slice(0, this.drilldownRequestedLimit);
+    this.drilldownState = { title, ids: unique, source, includeIrrelevant, sentiment };
     this.drilldownTitle.set(title);
     this.drilldownRequestedCount.set(unique.length);
     this.drilldownOpen.set(true);
+    this.loadDrilldownPage(1);
+  }
+
+  loadDrilldownPage(page: number): void {
+    const state = this.drilldownState;
+    if (!state) return;
+    this.drilldownPage.set(page);
     this.drilldownLoading.set(true);
     this.drilldownRows.set([]);
     const user = this.authService.currentUser();
     const companyId = user?.role === 'admin' ? undefined : (user?.settings?.companyId ?? 1);
     this.analysisService.getAnalyticsDrilldown({
       companyId,
-      ids: safeIds,
-      source: source?.trim() || undefined,
-      sentiment,
-      includeIrrelevant,
+      ids: state.ids,
+      source: state.source?.trim() || undefined,
+      sentiment: state.sentiment,
+      includeIrrelevant: state.includeIrrelevant,
+      page,
+      limit: this.drilldownPageSize,
     }).subscribe({
       next: (res) => {
         this.drilldownLoading.set(false);
         this.drilldownRows.set(res?.data?.list || []);
+        this.drilldownTotal.set(Number(res?.data?.total ?? res?.data?.returned ?? 0));
       },
       error: () => {
         this.drilldownLoading.set(false);
         this.drilldownRows.set([]);
+        this.drilldownTotal.set(0);
       },
     });
   }
@@ -209,5 +232,8 @@ export class SocialAnalysis implements OnInit, OnDestroy {
     this.drilldownOpen.set(false);
     this.drilldownRows.set([]);
     this.drilldownRequestedCount.set(0);
+    this.drilldownPage.set(1);
+    this.drilldownTotal.set(0);
+    this.drilldownState = null;
   }
 }

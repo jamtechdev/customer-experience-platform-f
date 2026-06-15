@@ -8,11 +8,12 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
-import { SettingsService, AlertEmailSettings } from '../../../core/services/settings.service';
+import { SettingsService } from '../../../core/services/settings.service';
 import { AlertService } from '../../../core/services/alert.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { OllamaLoader } from '../../../core/components/ollama-loader/ollama-loader';
+import { FirebaseNotificationService } from '../../../core/services/firebase-notification.service';
 
 @Component({
   selector: 'app-alert-configuration',
@@ -40,6 +41,7 @@ export class AlertConfiguration implements OnInit {
   private alertService = inject(AlertService);
   private authService = inject(AuthService);
   private snackBar = inject(MatSnackBar);
+  private firebaseNotificationService = inject(FirebaseNotificationService);
 
   loading = signal(false);
   saving = signal(false);
@@ -48,6 +50,10 @@ export class AlertConfiguration implements OnInit {
   form: FormGroup;
   emailEnabled = false;
   emailRecipients = '';
+  pushEnabled = signal(false);
+  pushSaving = signal(false);
+  pushTokenCount = signal(0);
+  firebaseConfigured = this.firebaseNotificationService.isConfigured();
 
   constructor() {
     this.form = this.fb.group({
@@ -61,6 +67,7 @@ export class AlertConfiguration implements OnInit {
   ngOnInit(): void {
     this.loadThresholds();
     this.loadAlertEmailSettings();
+    this.loadAlertPushSettings();
   }
 
   loadAlertEmailSettings(): void {
@@ -91,6 +98,57 @@ export class AlertConfiguration implements OnInit {
       error: () => {
         this.savingEmail.set(false);
         this.snackBar.open('Failed to save alert email settings', 'Close', { duration: 3000 });
+      },
+    });
+  }
+
+  loadAlertPushSettings(): void {
+    this.settingsService.getAlertPushSettings().subscribe({
+      next: (res) => {
+        if (res.success && res.data) {
+          this.pushEnabled.set(res.data.enabled);
+          this.pushTokenCount.set(res.data.tokens?.length || 0);
+        }
+      },
+      error: () => {},
+    });
+  }
+
+  async enableFirebaseNotifications(): Promise<void> {
+    if (!this.firebaseConfigured) {
+      this.snackBar.open('Firebase frontend config is missing. Set NG_APP_FIREBASE_* values first.', 'Close', { duration: 5000 });
+      return;
+    }
+    this.pushSaving.set(true);
+    try {
+      const token = await this.firebaseNotificationService.enableAlertNotifications();
+      this.pushSaving.set(false);
+      if (token) {
+        this.pushEnabled.set(true);
+        this.loadAlertPushSettings();
+        this.snackBar.open('Firebase notifications enabled for this browser', 'Close', { duration: 3000 });
+      } else {
+        this.snackBar.open('Notification permission was not granted or Firebase messaging is unsupported', 'Close', { duration: 5000 });
+      }
+    } catch {
+      this.pushSaving.set(false);
+      this.snackBar.open('Failed to enable Firebase notifications', 'Close', { duration: 4000 });
+    }
+  }
+
+  async disableFirebaseNotifications(): Promise<void> {
+    this.pushSaving.set(true);
+    await this.firebaseNotificationService.disableAlertNotifications();
+    this.settingsService.updateAlertPushSettings({ enabled: false, tokens: [] }).subscribe({
+      next: () => {
+        this.pushSaving.set(false);
+        this.pushEnabled.set(false);
+        this.pushTokenCount.set(0);
+        this.snackBar.open('Firebase notifications disabled', 'Close', { duration: 3000 });
+      },
+      error: () => {
+        this.pushSaving.set(false);
+        this.snackBar.open('Failed to disable Firebase notifications', 'Close', { duration: 3000 });
       },
     });
   }

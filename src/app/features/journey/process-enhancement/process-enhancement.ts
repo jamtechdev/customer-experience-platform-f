@@ -9,6 +9,7 @@ import { AnalysisService } from '../../../core/services/analysis.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { OllamaLoader } from '../../../core/components/ollama-loader/ollama-loader';
 import { twitterCxReportFailureMessage } from '../../../core/utils/twitter-cx-report-load';
+import { RelatedFeedbackModal, RelatedFeedbackRow } from '../../../core/components/related-feedback-modal/related-feedback-modal';
 
 export interface ProcessImprovementRow {
   text: string;
@@ -23,7 +24,8 @@ export interface ProcessImprovementRow {
     MatCardModule,
     MatButtonModule,
     MatSnackBarModule,
-    OllamaLoader
+    OllamaLoader,
+    RelatedFeedbackModal
   ],
   templateUrl: './process-enhancement.html',
   styleUrl: './process-enhancement.css',
@@ -41,7 +43,11 @@ export class ProcessEnhancement implements OnInit, OnDestroy {
   drilldownOpen = signal(false);
   drilldownLoading = signal(false);
   drilldownTitle = signal('');
-  drilldownRows = signal<Array<{ id: number; content: string; author?: string; date: string }>>([]);
+  drilldownRows = signal<RelatedFeedbackRow[]>([]);
+  drilldownPage = signal(1);
+  drilldownTotal = signal(0);
+  readonly drilldownPageSize = 10;
+  private drilldownIds: number[] = [];
 
   ngOnInit(): void {
     this.loadProcessData();
@@ -109,21 +115,39 @@ export class ProcessEnhancement implements OnInit, OnDestroy {
     if (!ids.length) return;
     this.drilldownTitle.set('Process improvement · reference tweets');
     this.drilldownOpen.set(true);
+    this.drilldownIds = [...new Set(ids.map((id) => Number(id)).filter((id) => Number.isFinite(id) && id > 0))];
+    this.loadDrilldownPage(1);
+  }
+
+  loadDrilldownPage(page: number): void {
+    if (!this.drilldownIds.length) return;
+    this.drilldownPage.set(page);
     this.drilldownLoading.set(true);
     this.drilldownRows.set([]);
     const companyId = this.listCompanyId();
-    this.analysisService.getFeedbackByIds(companyId, ids).subscribe({
+    this.analysisService.getFeedbackByIds(companyId, this.drilldownIds, {
+      page,
+      limit: this.drilldownPageSize,
+      includeIrrelevant: false,
+    }).subscribe({
       next: (res) => {
         this.drilldownLoading.set(false);
         if (res?.data?.list) this.drilldownRows.set(res.data.list);
+        this.drilldownTotal.set(Number(res?.data?.total ?? res?.data?.returned ?? 0));
       },
-      error: () => this.drilldownLoading.set(false),
+      error: () => {
+        this.drilldownLoading.set(false);
+        this.drilldownTotal.set(0);
+      },
     });
   }
 
   closeDrilldown(): void {
     this.drilldownOpen.set(false);
     this.drilldownRows.set([]);
+    this.drilldownPage.set(1);
+    this.drilldownTotal.set(0);
+    this.drilldownIds = [];
   }
 
   private listCompanyId(): number | undefined {

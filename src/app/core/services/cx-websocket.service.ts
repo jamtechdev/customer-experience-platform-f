@@ -4,7 +4,6 @@ import { PLATFORM_ID } from '@angular/core';
 import { io, Socket } from 'socket.io-client';
 import { Subject, Observable } from 'rxjs';
 import { AuthService } from './auth.service';
-import { AnalysisService } from './analysis.service';
 import { TwitterCxReportStore } from './twitter-cx-report.store';
 import { environment } from '../../../environments/environment';
 
@@ -31,7 +30,6 @@ export class CXWebSocketService {
   private platformId = inject(PLATFORM_ID);
   private authService = inject(AuthService);
   private twitterCxReportStore = inject(TwitterCxReportStore);
-  private analysisService = inject(AnalysisService);
 
   private started = signal(false);
   private socket: Socket | null = null;
@@ -93,11 +91,6 @@ export class CXWebSocketService {
 
       if (ev.status === 'completed' && this.latestCompanyId != null) {
         this.twitterCxReportStore.invalidate(this.latestCompanyId);
-        this.analysisService.rebuildTwitterCxReport(this.latestCompanyId).subscribe({
-          error: () => {
-            /* rebuild is best-effort; pages reload from onRefresh$ */
-          },
-        });
       }
     });
 
@@ -129,13 +122,6 @@ export class CXWebSocketService {
       }
       const companyId = ev.companyId ?? this.latestCompanyId ?? undefined;
       this.twitterCxReportStore.invalidate(companyId);
-      if (companyId != null && ev.type === 'analysisCompleted') {
-        this.analysisService.rebuildTwitterCxReport(companyId).subscribe({
-          error: () => {
-            /* best-effort */
-          },
-        });
-      }
     };
 
     this.socket.on('analytics:lifecycle', handleLifecycle);

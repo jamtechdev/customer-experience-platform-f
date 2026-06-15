@@ -121,16 +121,56 @@ export class AnalysisService {
   getFeedbackByIds(
     companyId: number | undefined,
     ids: number[],
-    options?: { rootCauseId?: number }
-  ): Observable<ApiResponse<{ list: any[]; requested: number; returned: number }>> {
-    const capped = [...new Set(ids.filter((n) => Number.isFinite(n) && n > 0))].slice(0, 200);
-    let params = new HttpParams().set('ids', capped.join(','));
-    if (companyId != null) params = params.set('companyId', String(companyId));
-    if (options?.rootCauseId != null) params = params.set('rootCauseId', String(options.rootCauseId));
-    params = this.realtimeParams(params);
-    return this.http.get<ApiResponse<{ list: any[]; requested: number; returned: number }>>(
+    options?: { rootCauseId?: number; page?: number; limit?: number; includeIrrelevant?: boolean }
+  ): Observable<ApiResponse<{ list: any[]; requested: number; returned: number; total: number; page: number; limit: number }>> {
+    const unique = [...new Set(ids.filter((n) => Number.isFinite(n) && n > 0))];
+    const page = options?.page ?? 1;
+    const limit = options?.limit ?? 10;
+    const body = {
+      ids: unique,
+      companyId,
+      rootCauseId: options?.rootCauseId,
+      page,
+      limit,
+      includeIrrelevant: options?.includeIrrelevant === true,
+    };
+    return this.http.post<ApiResponse<{ list: any[]; requested: number; returned: number; total: number; page: number; limit: number }>>(
       `${this.baseUrl}/feedback-by-ids`,
-      { params }
+      body
+    ).pipe(
+      catchError((err: unknown) => {
+        if (!(err instanceof HttpErrorResponse) || err.status !== 404) {
+          return throwError(() => err);
+        }
+
+        let params = new HttpParams()
+          .set('ids', unique.join(','))
+          .set('page', String(page))
+          .set('limit', String(limit))
+          .set('includeIrrelevant', String(options?.includeIrrelevant === true));
+        if (companyId != null) params = params.set('companyId', String(companyId));
+        if (options?.rootCauseId != null) params = params.set('rootCauseId', String(options.rootCauseId));
+
+        const fallbackParams = params;
+        return this.http.get<ApiResponse<{ list: any[]; requested: number; returned: number; total: number; page: number; limit: number }>>(
+          `${this.baseUrl}/feedback-by-ids`,
+          { params: fallbackParams }
+        ).pipe(
+          catchError((fallbackErr: unknown) => {
+            if (
+              fallbackErr instanceof HttpErrorResponse &&
+              fallbackErr.status === 404 &&
+              options?.rootCauseId != null
+            ) {
+              return this.http.get<ApiResponse<{ list: any[]; requested: number; returned: number; total: number; page: number; limit: number }>>(
+                `${this.baseUrl}/root-causes/${options.rootCauseId}/content`,
+                { params: fallbackParams }
+              );
+            }
+            return throwError(() => fallbackErr);
+          })
+        );
+      })
     );
   }
 
@@ -144,25 +184,21 @@ export class AnalysisService {
     startDate?: Date;
     endDate?: Date;
     includeIrrelevant?: boolean;
-  }): Observable<ApiResponse<{ list: any[]; requested: number; returned: number }>> {
-    let params = new HttpParams();
-    if (options.companyId != null) params = params.set('companyId', String(options.companyId));
-    if (options.ids?.length) {
-      const ids = [...new Set(options.ids.filter((id) => Number.isFinite(id) && id > 0))]
-        .slice(0, this.drilldownIdLimit);
-      if (ids.length) params = params.set('ids', ids.join(','));
-    }
-    if (options.rootCauseId != null) params = params.set('rootCauseId', String(options.rootCauseId));
-    if (options.sentiment) params = params.set('sentiment', options.sentiment);
-    if (options.source) params = params.set('source', options.source);
-    if (options.journeyStage) params = params.set('journeyStage', options.journeyStage);
-    if (options.startDate) params = params.set('startDate', options.startDate.toISOString());
-    if (options.endDate) params = params.set('endDate', options.endDate.toISOString());
-    if (options.includeIrrelevant) params = params.set('includeIrrelevant', 'true');
-    params = this.realtimeParams(params);
-    return this.http.get<ApiResponse<{ list: any[]; requested: number; returned: number }>>(
+    page?: number;
+    limit?: number;
+  }): Observable<ApiResponse<{ list: any[]; requested: number; returned: number; total: number; page: number; limit: number }>> {
+    const body = {
+      ...options,
+      ids: options.ids ? [...new Set(options.ids.filter((id) => Number.isFinite(id) && id > 0))] : undefined,
+      startDate: options.startDate?.toISOString(),
+      endDate: options.endDate?.toISOString(),
+      page: options.page ?? 1,
+      limit: options.limit ?? 10,
+      includeIrrelevant: options.includeIrrelevant === true,
+    };
+    return this.http.post<ApiResponse<{ list: any[]; requested: number; returned: number; total: number; page: number; limit: number }>>(
       `${this.baseUrl}/drilldown`,
-      { params }
+      body
     );
   }
 

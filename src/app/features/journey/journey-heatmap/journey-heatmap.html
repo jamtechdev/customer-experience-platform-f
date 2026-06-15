@@ -75,21 +75,15 @@
     </mat-card>
   }
 
-  <div class="reference-overlay" *ngIf="drilldownOpen()" (click)="closeDrilldown()" role="dialog" aria-modal="true">
-    <div class="reference-modal" (click)="$event.stopPropagation()">
-      <h3>{{ t('sentiment.relatedContent') }} · {{ drilldownTitle() }}</h3>
-      <div *ngIf="drilldownLoading()" class="drilldown-loading">
-        <mat-progress-spinner mode="indeterminate" diameter="36"></mat-progress-spinner>
-      </div>
-      <p *ngIf="!drilldownLoading() && drilldownRows().length === 0">{{ t('sentiment.noRelatedRows') }}</p>
-      <ul class="drilldown-list" *ngIf="!drilldownLoading() && drilldownRows().length">
-        <li *ngFor="let row of drilldownRows()">
-          <strong>#{{ row.id }} · {{ row.sentiment }}</strong>
-          <p *ngIf="row.contentSummary">{{ row.contentSummary }}</p>
-          <p>{{ row.content }}</p>
-        </li>
-      </ul>
-      <button mat-raised-button color="primary" type="button" (click)="closeDrilldown()">{{ t('app.close') }}</button>
-    </div>
-  </div>
+  <app-related-feedback-modal
+    [open]="drilldownOpen()"
+    [loading]="drilldownLoading()"
+    [title]="drilldownTitle()"
+    [rows]="drilldownRows()"
+    [page]="drilldownPage()"
+    [pageSize]="drilldownPageSize"
+    [total]="drilldownTotal()"
+    (pageChange)="loadDrilldownPage($event)"
+    (closed)="closeDrilldown()">
+  </app-related-feedback-modal>
 </div>

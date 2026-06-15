@@ -11,6 +11,7 @@ import { AuthService } from '../../../core/services/auth.service';
 import { OllamaLoader } from '../../../core/components/ollama-loader/ollama-loader';
 import { twitterCxReportFailureMessage } from '../../../core/utils/twitter-cx-report-load';
 import { TranslationService } from '../../../core/services/translation.service';
+import { RelatedFeedbackModal, RelatedFeedbackRow } from '../../../core/components/related-feedback-modal/related-feedback-modal';
 
 interface StageRow {
   stageName: string;
@@ -37,6 +38,7 @@ type HeatmapSentiment = 'positive' | 'neutral' | 'negative';
     MatProgressSpinnerModule,
     MatSnackBarModule,
     OllamaLoader,
+    RelatedFeedbackModal,
   ],
   templateUrl: './journey-heatmap.html',
   styleUrl: './journey-heatmap.css',
@@ -54,7 +56,11 @@ export class JourneyHeatmap implements OnInit, OnDestroy {
   drilldownOpen = signal(false);
   drilldownLoading = signal(false);
   drilldownTitle = signal('');
-  drilldownRows = signal<Array<{ id: number; content: string; contentSummary?: string; source: string; date: string; sentiment: string }>>([]);
+  drilldownRows = signal<RelatedFeedbackRow[]>([]);
+  drilldownPage = signal(1);
+  drilldownTotal = signal(0);
+  readonly drilldownPageSize = 10;
+  private drilldownState: { stage: StageRow; label: HeatmapSentiment; ids: number[] } | null = null;
   Math = Math;
   readonly t = (key: string, params?: Record<string, string | number>): string =>
     this.translationService.translate(key, params);
@@ -169,26 +175,38 @@ export class JourneyHeatmap implements OnInit, OnDestroy {
   openRelated(stage: StageRow, label: HeatmapSentiment, ids: number[]): void {
     const unique = [...new Set((ids || []).map((id) => Number(id)).filter((id) => Number.isFinite(id) && id > 0))];
     if (!unique.length && stage.feedbackCount <= 0) return;
+    this.drilldownState = { stage, label, ids: unique };
     this.drilldownTitle.set(`${stage.stageName} · ${label}`);
     this.drilldownOpen.set(true);
+    this.loadDrilldownPage(1);
+  }
+
+  loadDrilldownPage(page: number): void {
+    const state = this.drilldownState;
+    if (!state) return;
+    this.drilldownPage.set(page);
     this.drilldownLoading.set(true);
     this.drilldownRows.set([]);
     const user = this.authService.currentUser();
     const companyId = user?.role === 'admin' ? undefined : (user?.settings?.companyId ?? 1);
     this.analysisService.getAnalyticsDrilldown({
       companyId,
-      ids: unique,
-      sentiment: label,
-      journeyStage: stage.stageName,
-      includeIrrelevant: true,
+      ids: state.ids,
+      sentiment: state.label,
+      journeyStage: state.stage.stageName,
+      includeIrrelevant: false,
+      page,
+      limit: this.drilldownPageSize,
     }).subscribe({
       next: (res) => {
         this.drilldownLoading.set(false);
         this.drilldownRows.set(res?.data?.list || []);
+        this.drilldownTotal.set(Number(res?.data?.total ?? res?.data?.returned ?? 0));
       },
       error: () => {
         this.drilldownLoading.set(false);
         this.drilldownRows.set([]);
+        this.drilldownTotal.set(0);
       },
     });
   }
@@ -201,5 +219,8 @@ export class JourneyHeatmap implements OnInit, OnDestroy {
   closeDrilldown(): void {
     this.drilldownOpen.set(false);
     this.drilldownRows.set([]);
+    this.drilldownTotal.set(0);
+    this.drilldownPage.set(1);
+    this.drilldownState = null;
   }
 }

@@ -48,6 +48,35 @@
               {{ savingEmail() ? 'Saving...' : 'Save email settings' }}
             </button>
           </div>
+          <div class="email-section">
+            <h3>Firebase notifications</h3>
+            <p class="hint">
+              Send browser push notifications through Firebase Cloud Messaging when an alert is created.
+            </p>
+            <p class="hint" *ngIf="!firebaseConfigured">
+              Firebase frontend config is missing. Set NG_APP_FIREBASE_API_KEY, NG_APP_FIREBASE_PROJECT_ID,
+              NG_APP_FIREBASE_MESSAGING_SENDER_ID, NG_APP_FIREBASE_APP_ID, and NG_APP_FIREBASE_VAPID_KEY.
+            </p>
+            <p class="hint" *ngIf="firebaseConfigured">
+              Status: {{ pushEnabled() ? 'enabled' : 'disabled' }} · Registered browser tokens: {{ pushTokenCount() }}
+            </p>
+            <button
+              mat-raised-button
+              color="primary"
+              type="button"
+              (click)="enableFirebaseNotifications()"
+              [disabled]="pushSaving() || !firebaseConfigured">
+              <mat-icon>notifications_active</mat-icon>
+              {{ pushSaving() ? 'Saving...' : 'Enable Firebase notifications' }}
+            </button>
+            <button
+              mat-stroked-button
+              type="button"
+              (click)="disableFirebaseNotifications()"
+              [disabled]="pushSaving() || !pushEnabled()">
+              Disable Firebase notifications
+            </button>
+          </div>
           <div class="actions">
             <button mat-raised-button color="primary" (click)="saveThresholds()" [disabled]="saving() || form.invalid">
               <mat-icon>save</mat-icon>
