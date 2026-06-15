@@ -48,6 +48,8 @@
               {{ savingEmail() ? 'Saving...' : 'Save email settings' }}
             </button>
           </div>
+          <!-- Firebase push notifications are disabled for this deployment. Email alerts remain active. -->
+          @if (false) {
           <div class="email-section">
             <h3>Firebase notifications</h3>
             <p class="hint">
@@ -95,6 +97,7 @@
               Disable Firebase notifications
             </button>
           </div>
+          }
           <div class="actions">
             <button mat-raised-button color="primary" (click)="saveThresholds()" [disabled]="saving() || form.invalid">
               <mat-icon>save</mat-icon>
