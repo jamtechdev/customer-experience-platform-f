@@ -39,21 +39,25 @@
           <mat-label>{{ t('reports.fromDate') }}</mat-label>
           <input
             matInput
-            type="date"
-            [value]="startDate()"
+            [matDatepicker]="reportStartPicker"
+            [ngModel]="dateStringToDate(startDate())"
             [disabled]="selectedPresetId() !== 'custom'"
-            (input)="startDate.set(($any($event.target).value) || null); onManualDate()"
+            (ngModelChange)="setStartDateFromPicker($event)"
           />
+          <mat-datepicker-toggle matIconSuffix [for]="reportStartPicker"></mat-datepicker-toggle>
+          <mat-datepicker #reportStartPicker></mat-datepicker>
         </mat-form-field>
         <mat-form-field appearance="outline">
           <mat-label>{{ t('reports.toDate') }}</mat-label>
           <input
             matInput
-            type="date"
-            [value]="endDate()"
+            [matDatepicker]="reportEndPicker"
+            [ngModel]="dateStringToDate(endDate())"
             [disabled]="selectedPresetId() !== 'custom'"
-            (input)="endDate.set(($any($event.target).value) || null); onManualDate()"
+            (ngModelChange)="setEndDateFromPicker($event)"
           />
+          <mat-datepicker-toggle matIconSuffix [for]="reportEndPicker"></mat-datepicker-toggle>
+          <mat-datepicker #reportEndPicker></mat-datepicker>
         </mat-form-field>
         <div class="export-actions">
           <button

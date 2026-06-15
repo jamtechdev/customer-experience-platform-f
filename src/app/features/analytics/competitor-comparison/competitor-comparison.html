@@ -20,12 +20,16 @@
 
         <mat-form-field appearance="outline">
           <mat-label>{{ t('reports.fromDate') }}</mat-label>
-          <input matInput type="date" [ngModel]="startDate()" (ngModelChange)="startDate.set($event); onManualDate()" name="compStart" />
+          <input matInput [matDatepicker]="compStartPicker" [ngModel]="dateStringToDate(startDate())" (ngModelChange)="setStartDateFromPicker($event)" name="compStart" />
+          <mat-datepicker-toggle matIconSuffix [for]="compStartPicker"></mat-datepicker-toggle>
+          <mat-datepicker #compStartPicker></mat-datepicker>
         </mat-form-field>
 
         <mat-form-field appearance="outline">
           <mat-label>{{ t('reports.toDate') }}</mat-label>
-          <input matInput type="date" [ngModel]="endDate()" (ngModelChange)="endDate.set($event); onManualDate()" name="compEnd" />
+          <input matInput [matDatepicker]="compEndPicker" [ngModel]="dateStringToDate(endDate())" (ngModelChange)="setEndDateFromPicker($event)" name="compEnd" />
+          <mat-datepicker-toggle matIconSuffix [for]="compEndPicker"></mat-datepicker-toggle>
+          <mat-datepicker #compEndPicker></mat-datepicker>
         </mat-form-field>
 
         <button mat-stroked-button color="primary" type="button" (click)="applyRangeAndReload()" [disabled]="loading()">
@@ -82,13 +86,10 @@
         <mat-card-title>{{ t('competitorPage.tableTitle') }}</mat-card-title>
       </mat-card-header>
       <mat-card-content>
-        <div *ngIf="!hasValidCompetitors()" class="empty-state-content mb-2">
-          <mat-icon>rule</mat-icon>
-          <p>
-            {{ t('competitorPage.validCompetitorHint') }}
-          </p>
+        <div *ngIf="!hasValidCompetitors()" class="no-data-found">
+          No data found
         </div>
-        <div class="table-container">
+        <div class="table-container" *ngIf="hasValidCompetitors()">
         <table mat-table [dataSource]="getAllData()" class="comparison-table">
           <ng-container matColumnDef="name">
             <th mat-header-cell *matHeaderCellDef>{{ t('competitorPage.company') }}</th>

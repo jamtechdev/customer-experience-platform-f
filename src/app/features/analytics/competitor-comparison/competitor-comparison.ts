@@ -8,6 +8,8 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
+import { MatDatepickerModule } from '@angular/material/datepicker';
+import { MatNativeDateModule } from '@angular/material/core';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { FormsModule } from '@angular/forms';
 import { AnalysisService } from '../../../core/services/analysis.service';
@@ -49,6 +51,8 @@ interface CompetitorData {
     MatFormFieldModule,
     MatInputModule,
     MatSelectModule,
+    MatDatepickerModule,
+    MatNativeDateModule,
     MatTooltipModule,
     OllamaLoader,
     RelatedFeedbackModal,
@@ -153,6 +157,33 @@ export class CompetitorComparison implements OnInit, OnDestroy {
 
   onManualDate(): void {
     this.selectedPresetId.set('custom');
+  }
+
+  dateStringToDate(value: string | null): Date | null {
+    if (!value) return null;
+    const [year, month, day] = value.split('-').map((part) => Number(part));
+    if (!year || !month || !day) return null;
+    return new Date(year, month - 1, day);
+  }
+
+  setStartDateFromPicker(value: Date | string | null): void {
+    this.startDate.set(this.dateToYmd(value));
+    this.onManualDate();
+  }
+
+  setEndDateFromPicker(value: Date | string | null): void {
+    this.endDate.set(this.dateToYmd(value));
+    this.onManualDate();
+  }
+
+  private dateToYmd(value: Date | string | null): string | null {
+    if (!value) return null;
+    if (typeof value === 'string') return value || null;
+    if (Number.isNaN(value.getTime())) return null;
+    const year = value.getFullYear();
+    const month = String(value.getMonth() + 1).padStart(2, '0');
+    const day = String(value.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
   }
 
   datesValid(): boolean {

@@ -280,7 +280,7 @@ export class SentimentAnalysis implements OnInit, OnDestroy {
   }
 
   refreshData(): void {
-    this.reloadAll();
+    this.applyRangeAndReload();
   }
 
   openNativeDatePicker(input: HTMLInputElement): void {
@@ -290,6 +290,33 @@ export class SentimentAnalysis implements OnInit, OnDestroy {
     } else {
       input.focus();
     }
+  }
+
+  dateStringToDate(value: string | null): Date | null {
+    if (!value) return null;
+    const [year, month, day] = value.split('-').map((part) => Number(part));
+    if (!year || !month || !day) return null;
+    return new Date(year, month - 1, day);
+  }
+
+  setStartDateFromPicker(value: Date | string | null): void {
+    this.startDate.set(this.dateToYmd(value));
+    this.onManualDate();
+  }
+
+  setEndDateFromPicker(value: Date | string | null): void {
+    this.endDate.set(this.dateToYmd(value));
+    this.onManualDate();
+  }
+
+  private dateToYmd(value: Date | string | null): string | null {
+    if (!value) return null;
+    if (typeof value === 'string') return value || null;
+    if (Number.isNaN(value.getTime())) return null;
+    const year = value.getFullYear();
+    const month = String(value.getMonth() + 1).padStart(2, '0');
+    const day = String(value.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
   }
 
   reRunAiEnrichment(): void {

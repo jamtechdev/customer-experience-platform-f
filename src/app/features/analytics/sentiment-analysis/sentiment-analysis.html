@@ -32,30 +32,16 @@
 
           <mat-form-field appearance="outline">
             <mat-label>{{ t('reports.fromDate') }}</mat-label>
-            <input #sentStartInput matInput type="date" [ngModel]="startDate()" (ngModelChange)="startDate.set($event); onManualDate()" name="sentStart" />
-            <button
-              mat-icon-button
-              matSuffix
-              class="date-picker-trigger"
-              type="button"
-              [attr.aria-label]="t('reports.fromDate')"
-              (click)="$event.preventDefault(); $event.stopPropagation(); openNativeDatePicker(sentStartInput)">
-              <mat-icon>calendar_today</mat-icon>
-            </button>
+            <input matInput [matDatepicker]="sentStartPicker" [ngModel]="dateStringToDate(startDate())" (ngModelChange)="setStartDateFromPicker($event)" name="sentStart" />
+            <mat-datepicker-toggle matIconSuffix [for]="sentStartPicker"></mat-datepicker-toggle>
+            <mat-datepicker #sentStartPicker></mat-datepicker>
           </mat-form-field>
 
           <mat-form-field appearance="outline">
             <mat-label>{{ t('reports.toDate') }}</mat-label>
-            <input #sentEndInput matInput type="date" [ngModel]="endDate()" (ngModelChange)="endDate.set($event); onManualDate()" name="sentEnd" />
-            <button
-              mat-icon-button
-              matSuffix
-              class="date-picker-trigger"
-              type="button"
-              [attr.aria-label]="t('reports.toDate')"
-              (click)="$event.preventDefault(); $event.stopPropagation(); openNativeDatePicker(sentEndInput)">
-              <mat-icon>calendar_today</mat-icon>
-            </button>
+            <input matInput [matDatepicker]="sentEndPicker" [ngModel]="dateStringToDate(endDate())" (ngModelChange)="setEndDateFromPicker($event)" name="sentEnd" />
+            <mat-datepicker-toggle matIconSuffix [for]="sentEndPicker"></mat-datepicker-toggle>
+            <mat-datepicker #sentEndPicker></mat-datepicker>
           </mat-form-field>
 
           <button mat-stroked-button color="primary" type="button" (click)="applyRangeAndReload()" [disabled]="initialLoading()">
