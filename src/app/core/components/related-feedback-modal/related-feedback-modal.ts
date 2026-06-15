@@ -138,12 +138,33 @@ export class RelatedFeedbackModal implements OnChanges, OnDestroy {
     return Number.isNaN(d.getTime()) ? String(value) : d.toLocaleString();
   }
 
+  repairTurkishText(value: string | null | undefined): string {
+    const text = String(value || '');
+    if (!text.includes('?')) return text;
+    return text
+      .replace(/uygulamas\?/gi, 'uygulaması')
+      .replace(/\?ifre/gi, 'şifre')
+      .replace(/i\?lem/gi, 'işlem')
+      .replace(/s\?rekli/gi, 'sürekli')
+      .replace(/m\?\?teri/gi, 'müşteri')
+      .replace(/\?ikayet/gi, 'şikayet')
+      .replace(/\?r[üu]n/gi, 'ürün')
+      .replace(/g\?r/gi, 'gör')
+      .replace(/d\?n/gi, 'dön')
+      .replace(/y\?net/gi, 'yönet')
+      .replace(/\?al\?\?m/gi, 'çalışm')
+      .replace(/yapam\?\s*yorum/gi, 'yapamıyorum')
+      .replace(/alam\?\s*yorum/gi, 'alamıyorum')
+      .replace(/edem\?\s*yorum/gi, 'edemiyorum')
+      .replace(/olam\?\s*yorum/gi, 'olamıyorum');
+  }
+
   originalText(row: RelatedFeedbackRow): string {
-    return String(row.referenceContent || row.content || '');
+    return this.repairTurkishText(row.referenceContent || row.content || '');
   }
 
   translationText(row: RelatedFeedbackRow): string {
-    return String(row.translatedContent || row.contentSummary || '').trim();
+    return this.repairTurkishText(row.translatedContent || row.contentSummary || '').trim();
   }
 
   translationMissingText(): string {
