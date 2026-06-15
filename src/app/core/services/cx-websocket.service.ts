@@ -23,6 +23,12 @@ export type AnalyticsLifecycleEvent = {
   details?: any;
 };
 
+export type AlertCreatedEvent = {
+  companyId?: number;
+  alert: any;
+  timestamp?: string | Date;
+};
+
 @Injectable({
   providedIn: 'root',
 })
@@ -37,6 +43,7 @@ export class CXWebSocketService {
 
   private importStatusSubject = new Subject<CSVImportStatusEvent>();
   private analyticsLifecycleSubject = new Subject<AnalyticsLifecycleEvent>();
+  private alertCreatedSubject = new Subject<AlertCreatedEvent>();
 
   onCSVImportStatus(): Observable<CSVImportStatusEvent> {
     return this.importStatusSubject.asObservable();
@@ -44,6 +51,10 @@ export class CXWebSocketService {
 
   onAnalyticsLifecycle(): Observable<AnalyticsLifecycleEvent> {
     return this.analyticsLifecycleSubject.asObservable();
+  }
+
+  onAlertCreated(): Observable<AlertCreatedEvent> {
+    return this.alertCreatedSubject.asObservable();
   }
 
   start(): void {
@@ -126,6 +137,14 @@ export class CXWebSocketService {
 
     this.socket.on('analytics:lifecycle', handleLifecycle);
     this.socket.on('dashboard:update', handleLifecycle);
+    this.socket.on('alert:new', (payload: any) => {
+      if (!payload?.alert) return;
+      this.alertCreatedSubject.next({
+        companyId: payload.companyId,
+        alert: payload.alert,
+        timestamp: payload.timestamp,
+      });
+    });
 
     // Keep company room in sync with auth changes
     this.authService.currentUser$.subscribe((u) => {

@@ -24,7 +24,17 @@
 
   <mat-menu #notificationsMenu="matMenu" panelClass="notification-menu-panel" [hasBackdrop]="false">
     <div class="notification-menu">
-      <div class="notification-header">{{ t('header.notifications') }}</div>
+      <div class="notification-header">
+        <span>{{ t('header.notifications') }}</span>
+        <button
+          *ngIf="alerts().length > 0"
+          mat-button
+          type="button"
+          class="clear-notifications-button"
+          (click)="onClearNotifications($event)">
+          {{ t('header.clearNotifications') }}
+        </button>
+      </div>
       <div *ngIf="alerts().length === 0" class="notification-empty">{{ t('header.noNotifications') }}</div>
       <div *ngIf="alerts().length > 0" class="notification-list" (wheel)="$event.stopPropagation()" (touchmove)="$event.stopPropagation()">
         <button

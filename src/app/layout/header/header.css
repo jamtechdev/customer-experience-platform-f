@@ -200,9 +200,21 @@
 }
 
 .notification-header {
-  padding: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px 12px 16px;
   font-weight: 600;
   border-bottom: 1px solid #e5e7eb;
+}
+
+.clear-notifications-button {
+  min-width: 0 !important;
+  padding: 0 8px !important;
+  color: var(--primary-dark, #047857) !important;
+  font-size: 12px;
+  font-weight: 700;
 }
 
 .notification-empty {
@@ -303,8 +315,20 @@
 @media (max-width: 600px) {
   .header-toolbar {
     min-height: 56px;
-    padding: 0 10px;
-    gap: 4px;
+    padding: 0 6px;
+    gap: 2px;
+  }
+
+  .menu-button,
+  .icon-button,
+  .user-menu-button {
+    width: 38px !important;
+    height: 38px !important;
+    padding: 0 !important;
+  }
+
+  .menu-button {
+    margin-right: 0;
   }
 
   .toolbar-title {
@@ -314,16 +338,73 @@
 
   .llm-status-badge {
     margin-left: 0;
-    padding: 2px 8px;
-    font-size: 0.7rem;
+    gap: 5px;
+    padding: 3px 8px;
+    font-size: 0;
+    max-width: 44px;
+    overflow: hidden;
+  }
+
+  .llm-status-badge::after {
+    content: 'AI';
+    font-size: 0.68rem;
+    letter-spacing: 0.02em;
+  }
+
+  .llm-status-badge .status-dot {
+    width: 7px;
+    height: 7px;
   }
 
   .spacer {
     flex: 1 1 auto;
+    min-width: 2px;
   }
 
   .role-badge {
     display: none;
+  }
+
+  .alert-count {
+    top: -3px;
+    right: -2px;
+    min-width: 16px;
+    height: 16px;
+    padding: 0 4px;
+    font-size: 0.6rem;
+    line-height: 16px;
+  }
+
+  .alert-dot {
+    top: 2px;
+    right: 3px;
+    width: 8px;
+    height: 8px;
+  }
+
+  .user-and-role {
+    gap: 0;
+  }
+
+  .user-avatar {
+    width: 34px;
+    height: 34px;
+    font-size: 0.78rem;
+  }
+}
+
+@media (max-width: 380px) {
+  .header-toolbar {
+    padding: 0 4px;
+  }
+
+  .llm-status-badge {
+    max-width: 34px;
+    padding: 3px 6px;
+  }
+
+  .llm-status-badge::after {
+    content: '';
   }
 }
 

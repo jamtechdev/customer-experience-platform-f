@@ -140,3 +140,38 @@
   color: var(--primary-color, #10b981);
 }
 
+@media (max-width: 600px) {
+  .lang-trigger {
+    height: 36px !important;
+    gap: 3px !important;
+    padding: 0 7px !important;
+    border-radius: 9px !important;
+  }
+
+  .lang-flag {
+    width: 18px;
+    height: 13px;
+    margin-right: 1px;
+    margin-left: 1px;
+  }
+
+  .lang-code {
+    font-size: 0.66rem;
+    letter-spacing: 0.02em;
+  }
+
+  .lang-chevron {
+    display: none !important;
+  }
+}
+
+@media (max-width: 380px) {
+  .lang-trigger {
+    padding: 0 6px !important;
+  }
+
+  .lang-code {
+    display: none;
+  }
+}
+

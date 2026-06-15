@@ -104,6 +104,7 @@
   "header": {
     "notificationsAria": "Notifications",
     "notifications": "Notifications",
+    "clearNotifications": "Clear all",
     "noNotifications": "No new notifications",
     "userFallbackName": "User",
     "ollamaConnected": "Ollama Connected",

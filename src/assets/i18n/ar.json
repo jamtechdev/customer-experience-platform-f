@@ -103,6 +103,7 @@
   "header": {
     "notificationsAria": "الإشعارات",
     "notifications": "الإشعارات",
+    "clearNotifications": "مسح الكل",
     "noNotifications": "لا توجد إشعارات جديدة",
     "userFallbackName": "مستخدم",
     "ollamaConnected": "Ollama متصل",

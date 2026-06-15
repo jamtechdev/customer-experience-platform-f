@@ -1,6 +1,7 @@
 import { Component, inject, output, OnDestroy, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
+import { Subscription } from 'rxjs';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
@@ -10,6 +11,7 @@ import { Alert, AlertService, normalizeAlertsPayload } from '../../core/services
 import { AnalysisService } from '../../core/services/analysis.service';
 import { LanguageSwitcher } from '../../core/components/language-switcher/language-switcher';
 import { TranslationService } from '../../core/services/translation.service';
+import { CXWebSocketService } from '../../core/services/cx-websocket.service';
 
 @Component({
   selector: 'app-header',
@@ -30,7 +32,10 @@ export class Header implements OnInit, OnDestroy {
   private translationService = inject(TranslationService);
   private alertService = inject(AlertService);
   private analysisService = inject(AnalysisService);
+  private websocket = inject(CXWebSocketService);
   private llmStatusTimer: ReturnType<typeof setInterval> | null = null;
+  private alertRefreshTimer: ReturnType<typeof setInterval> | null = null;
+  private alertSub?: Subscription;
   
   toggleSidenav = output<void>();
 
@@ -85,6 +90,34 @@ export class Header implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
+    this.refreshAlerts();
+    this.alertSub = this.websocket.onAlertCreated().subscribe((event) => {
+      const alert = event.alert as Alert | undefined;
+      if (!alert?.id) return;
+      const existing = this.alerts();
+      if (existing.some((item) => Number(item.id) === Number(alert.id))) return;
+      const next = [alert, ...existing].slice(0, 20);
+      this.alerts.set(next);
+      this.refreshNotificationBadge(next);
+    });
+    this.refreshLlmStatus();
+    this.llmStatusTimer = setInterval(() => this.refreshLlmStatus(), 30000);
+    this.alertRefreshTimer = setInterval(() => this.refreshAlerts(), 60000);
+  }
+
+  ngOnDestroy(): void {
+    if (this.llmStatusTimer) {
+      clearInterval(this.llmStatusTimer);
+      this.llmStatusTimer = null;
+    }
+    if (this.alertRefreshTimer) {
+      clearInterval(this.alertRefreshTimer);
+      this.alertRefreshTimer = null;
+    }
+    this.alertSub?.unsubscribe();
+  }
+
+  private refreshAlerts(): void {
     this.alertService.getAlerts(false).subscribe({
       next: (res) => {
         const { alerts } = normalizeAlertsPayload(res?.data as any);
@@ -98,15 +131,6 @@ export class Header implements OnInit, OnDestroy {
         this.alertCount.set(0);
       },
     });
-    this.refreshLlmStatus();
-    this.llmStatusTimer = setInterval(() => this.refreshLlmStatus(), 30000);
-  }
-
-  ngOnDestroy(): void {
-    if (this.llmStatusTimer) {
-      clearInterval(this.llmStatusTimer);
-      this.llmStatusTimer = null;
-    }
   }
 
   onToggleSidenav(): void {
@@ -127,6 +151,12 @@ export class Header implements OnInit, OnDestroy {
   }
 
   onNotificationsMenuOpened(): void {
+    this.refreshAlerts();
+  }
+
+  onClearNotifications(event?: Event): void {
+    event?.preventDefault();
+    event?.stopPropagation();
     this.markNotificationsSeen();
   }
 

@@ -103,6 +103,7 @@
   "header": {
     "notificationsAria": "Bildirimler",
     "notifications": "Bildirimler",
+    "clearNotifications": "Tümünü temizle",
     "noNotifications": "Yeni bildirim yok",
     "userFallbackName": "Kullanıcı",
     "ollamaConnected": "Ollama Bağlı",
