@@ -45,10 +45,26 @@ export class NotificationsPage implements OnInit, OnDestroy {
   deletingId = signal<number | null>(null);
   isMobile = signal(false);
   notifications = signal<NotificationItem[]>([]);
+  currentPage = signal(1);
+  readonly pageSize = 15;
 
   totalCount = computed(() => this.notifications().length);
   activeCount = computed(() => this.notifications().filter((item) => !item.acknowledged).length);
   acknowledgedCount = computed(() => this.notifications().filter((item) => item.acknowledged).length);
+  totalPages = computed(() => Math.max(1, Math.ceil(this.totalCount() / this.pageSize)));
+  paginatedNotifications = computed(() => {
+    const start = (this.currentPage() - 1) * this.pageSize;
+    return this.notifications().slice(start, start + this.pageSize);
+  });
+  showingStart = computed(() => this.totalCount() === 0 ? 0 : ((this.currentPage() - 1) * this.pageSize) + 1);
+  showingEnd = computed(() => Math.min(this.currentPage() * this.pageSize, this.totalCount()));
+  visiblePages = computed(() => {
+    const total = this.totalPages();
+    const current = this.currentPage();
+    const first = Math.max(1, current - 2);
+    const last = Math.min(total, current + 2);
+    return Array.from({ length: last - first + 1 }, (_, index) => first + index);
+  });
 
   ngOnInit(): void {
     this.updateMobileStatus();
@@ -71,6 +87,7 @@ export class NotificationsPage implements OnInit, OnDestroy {
         this.loading.set(false);
         if (!response.success) {
           this.notifications.set([]);
+          this.currentPage.set(1);
           this.notifyPageOpened([]);
           return;
         }
@@ -81,11 +98,13 @@ export class NotificationsPage implements OnInit, OnDestroy {
           createdAt: parseApiDate(alert.createdAt),
         }));
         this.notifications.set(items);
+        this.currentPage.set(1);
         this.notifyPageOpened(items);
       },
       error: () => {
         this.loading.set(false);
         this.notifications.set([]);
+        this.currentPage.set(1);
         this.notifyPageOpened([]);
         this.snackBar.open('Failed to load notifications', 'Close', { duration: 3000 });
       },
@@ -119,6 +138,7 @@ export class NotificationsPage implements OnInit, OnDestroy {
         if (response.success) {
           const next = this.notifications().filter((item) => item.id !== notification.id);
           this.notifications.set(next);
+          this.clampCurrentPage();
           this.notifyPageOpened(next);
           this.snackBar.open('Notification deleted', 'Close', { duration: 2000 });
         }
@@ -141,6 +161,7 @@ export class NotificationsPage implements OnInit, OnDestroy {
         this.clearingAll.set(false);
         if (response.success) {
           this.notifications.set([]);
+          this.currentPage.set(1);
           this.notifyPageOpened([]);
           this.snackBar.open('All notifications deleted', 'Close', { duration: 2500 });
         }
@@ -160,9 +181,26 @@ export class NotificationsPage implements OnInit, OnDestroy {
     return String(priority || 'low').toLowerCase();
   }
 
+  goToPage(page: number): void {
+    const next = Math.min(Math.max(1, page), this.totalPages());
+    this.currentPage.set(next);
+  }
+
+  previousPage(): void {
+    this.goToPage(this.currentPage() - 1);
+  }
+
+  nextPage(): void {
+    this.goToPage(this.currentPage() + 1);
+  }
+
   private updateMobileStatus(): void {
     if (typeof window === 'undefined') return;
     this.isMobile.set(window.innerWidth <= 640);
+  }
+
+  private clampCurrentPage(): void {
+    this.goToPage(this.currentPage());
   }
 
   private notifyPageOpened(notifications: NotificationItem[]): void {

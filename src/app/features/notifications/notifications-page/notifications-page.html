@@ -62,7 +62,7 @@
       <div *ngIf="!loading() && notifications().length > 0" class="notification-list">
         <article
           class="notification-item"
-          *ngFor="let notification of notifications()"
+          *ngFor="let notification of paginatedNotifications()"
           [class.unread]="!notification.acknowledged">
           <div class="priority-bar" [ngClass]="priorityClass(notification.priority)"></div>
           <div class="notification-main">
@@ -100,6 +100,40 @@
             </button>
           </div>
         </article>
+      </div>
+
+      <div *ngIf="!loading() && notifications().length > 0" class="pagination-bar">
+        <div class="pagination-summary">
+          Showing {{ showingStart() }}-{{ showingEnd() }} of {{ totalCount() }} notifications
+          <span>15 per page</span>
+        </div>
+        <div class="pagination-controls">
+          <button
+            mat-stroked-button
+            type="button"
+            (click)="previousPage()"
+            [disabled]="currentPage() === 1">
+            <mat-icon>chevron_left</mat-icon>
+            Previous
+          </button>
+          <button
+            *ngFor="let page of visiblePages()"
+            mat-button
+            type="button"
+            class="page-number"
+            [class.active]="page === currentPage()"
+            (click)="goToPage(page)">
+            {{ page }}
+          </button>
+          <button
+            mat-stroked-button
+            type="button"
+            (click)="nextPage()"
+            [disabled]="currentPage() === totalPages()">
+            Next
+            <mat-icon>chevron_right</mat-icon>
+          </button>
+        </div>
       </div>
     </mat-card-content>
   </mat-card>
