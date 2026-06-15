@@ -6,7 +6,8 @@
   <span class="toolbar-title">{{ t('app.title') }}</span>
   <span class="llm-status-badge" [class.connected]="llmConnected()" [class.disconnected]="!llmConnected()">
     <span class="status-dot"></span>
-    {{ llmStatusLabel() }}
+    <span class="llm-status-text">{{ llmStatusLabel() }}</span>
+    <span class="llm-status-compact">AI</span>
   </span>
 
   <span class="spacer"></span>

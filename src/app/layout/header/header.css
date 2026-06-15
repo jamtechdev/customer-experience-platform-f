@@ -51,6 +51,10 @@
   background: #ef4444;
 }
 
+.llm-status-compact {
+  display: none;
+}
+
 .llm-status-badge.connected .status-dot {
   background: #22c55e;
 }
@@ -339,16 +343,22 @@
   .llm-status-badge {
     margin-left: 0;
     gap: 5px;
-    padding: 3px 8px;
-    font-size: 0;
-    max-width: 44px;
-    overflow: hidden;
-  }
-
-  .llm-status-badge::after {
-    content: 'AI';
+    min-width: 42px;
+    height: 34px;
+    justify-content: center;
+    padding: 0 9px;
     font-size: 0.68rem;
     letter-spacing: 0.02em;
+  }
+
+  .llm-status-text {
+    display: none;
+  }
+
+  .llm-status-compact {
+    display: inline;
+    color: #fff;
+    font-weight: 800;
   }
 
   .llm-status-badge .status-dot {
@@ -399,12 +409,12 @@
   }
 
   .llm-status-badge {
-    max-width: 34px;
-    padding: 3px 6px;
+    min-width: 34px;
+    padding: 0 7px;
   }
 
-  .llm-status-badge::after {
-    content: '';
+  .llm-status-compact {
+    display: none;
   }
 }
 
