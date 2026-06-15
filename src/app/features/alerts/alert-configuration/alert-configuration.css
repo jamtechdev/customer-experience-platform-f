@@ -73,6 +73,50 @@ form {
   margin-top: 0.5rem;
 }
 
+.firebase-status {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  margin: 12px 0;
+  padding: 12px 14px;
+  border-radius: 12px;
+  font-size: 0.875rem;
+  line-height: 1.45;
+}
+
+.firebase-status mat-icon {
+  flex: 0 0 auto;
+  margin-top: 1px;
+}
+
+.firebase-status strong {
+  display: block;
+  margin-bottom: 2px;
+}
+
+.firebase-status p {
+  margin: 2px 0 0;
+}
+
+.firebase-status code {
+  padding: 1px 5px;
+  border-radius: 6px;
+  background: rgba(15, 23, 42, 0.08);
+  font-size: 0.82rem;
+}
+
+.firebase-status-warn {
+  border: 1px solid #fed7aa;
+  background: #fff7ed;
+  color: #9a3412;
+}
+
+.firebase-status-ok {
+  border: 1px solid #bbf7d0;
+  background: #f0fdf4;
+  color: #166534;
+}
+
 .actions {
   display: flex;
   grid-column: 1 / -1;

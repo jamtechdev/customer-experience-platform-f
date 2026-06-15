@@ -53,7 +53,8 @@ export class AlertConfiguration implements OnInit {
   pushEnabled = signal(false);
   pushSaving = signal(false);
   pushTokenCount = signal(0);
-  firebaseConfigured = this.firebaseNotificationService.isConfigured();
+  firebaseMissingKeys = signal<string[]>(this.firebaseNotificationService.missingConfigKeys());
+  firebaseConfigured = signal(this.firebaseMissingKeys().length === 0);
 
   constructor() {
     this.form = this.fb.group({
@@ -65,9 +66,16 @@ export class AlertConfiguration implements OnInit {
   }
 
   ngOnInit(): void {
+    this.refreshFirebaseConfigStatus();
     this.loadThresholds();
     this.loadAlertEmailSettings();
     this.loadAlertPushSettings();
+  }
+
+  refreshFirebaseConfigStatus(): void {
+    const missing = this.firebaseNotificationService.missingConfigKeys();
+    this.firebaseMissingKeys.set(missing);
+    this.firebaseConfigured.set(missing.length === 0);
   }
 
   loadAlertEmailSettings(): void {
@@ -115,8 +123,9 @@ export class AlertConfiguration implements OnInit {
   }
 
   async enableFirebaseNotifications(): Promise<void> {
-    if (!this.firebaseConfigured) {
-      this.snackBar.open('Firebase frontend config is missing. Set NG_APP_FIREBASE_* values first.', 'Close', { duration: 5000 });
+    this.refreshFirebaseConfigStatus();
+    if (!this.firebaseConfigured()) {
+      this.snackBar.open(`Firebase config missing: ${this.firebaseMissingKeys().join(', ')}`, 'Close', { duration: 7000 });
       return;
     }
     this.pushSaving.set(true);
