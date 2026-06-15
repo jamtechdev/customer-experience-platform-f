@@ -47,6 +47,7 @@ export class CsvMapping implements OnInit {
   loading = signal(true);
   preview = signal<CSVPreview | null>(null);
   validating = signal(false);
+  importStarted = signal(false);
 
   dataType = signal<'social_media' | 'app_review' | 'nps_survey' | 'complaint'>('social_media');
   validation = signal<ValidateMappingsResult | null>(null);
@@ -305,7 +306,14 @@ export class CsvMapping implements OnInit {
         if (!res.success || !res.data) {
           const msg = res.message || 'Import failed';
           this.snackBar.open(msg, 'Close', { duration: 8000 });
+          return;
         }
+
+        this.importStarted.set(true);
+        this.snackBar.open('Import started. Redirecting to Import History for live progress...', 'Close', {
+          duration: 5000,
+        });
+        this.router.navigate(['/app/data-sources/import-history']);
       },
       error: (err) => {
         this.validating.set(false);
@@ -343,12 +351,6 @@ export class CsvMapping implements OnInit {
         }
       },
     });
-
-    // Run import in background and show live progress in Import History page.
-    this.snackBar.open('Import started. Redirecting to Import History for live progress…', 'Close', {
-      duration: 5000,
-    });
-    this.router.navigate(['/app/data-sources/import-history']);
   }
 
 }

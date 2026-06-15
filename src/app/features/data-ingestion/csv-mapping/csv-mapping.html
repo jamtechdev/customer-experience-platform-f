@@ -93,7 +93,9 @@
             Import
           </button>
 
-          <a class="history-link" [routerLink]="['/app/data-sources/import-history']">Go to Import History</a>
+          @if (importStarted()) {
+            <a class="history-link" [routerLink]="['/app/data-sources/import-history']">Go to Import History</a>
+          }
         </div>
 
         @if (validation()) {
