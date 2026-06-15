@@ -244,6 +244,11 @@ export const routes: Routes = [
           }
         ]
       },
+      {
+        path: 'notifications',
+        loadComponent: () => import('./features/notifications/notifications-page/notifications-page').then(m => m.NotificationsPage),
+        data: { title: 'Notifications', breadcrumb: 'Notifications' }
+      },
       // Profile
       {
         path: 'profile',

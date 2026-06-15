@@ -49,6 +49,14 @@ export class AlertService {
     return this.http.post<ApiResponse<Alert>>(`${this.baseUrl}/${id}/acknowledge`, {});
   }
 
+  deleteAlert(id: number): Observable<ApiResponse<{ deletedId: number }>> {
+    return this.http.delete<ApiResponse<{ deletedId: number }>>(`${this.baseUrl}/${id}`);
+  }
+
+  deleteAllAlerts(): Observable<ApiResponse<{ deleted: number }>> {
+    return this.http.delete<ApiResponse<{ deleted: number }>>(`${this.baseUrl}/clear-all`);
+  }
+
   checkAlerts(companyId: number, thresholds?: Record<string, number>): Observable<ApiResponse<any[]>> {
     const body: { companyId: number; thresholds?: Record<string, number> } = { companyId };
     if (thresholds && Object.keys(thresholds).length > 0) body.thresholds = thresholds;

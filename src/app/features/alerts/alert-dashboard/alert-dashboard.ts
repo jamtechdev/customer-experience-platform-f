@@ -78,12 +78,11 @@ export class AlertDashboard implements OnInit, AfterViewInit, OnDestroy {
         if (response.success) {
           const { alerts: raw, aiNarrative } = normalizeAlertsPayload(response.data as any);
           this.aiNarrative.set(aiNarrative?.trim() ? aiNarrative : null);
-          this.alerts.set(
-            raw.map((a: any) => ({
+          const alerts = raw.map((a: any) => ({
               ...a,
               createdAt: parseApiDate(a.createdAt),
-            }))
-          );
+            }));
+          this.alerts.set(alerts);
         } else {
           this.alerts.set([]);
           this.aiNarrative.set(null);

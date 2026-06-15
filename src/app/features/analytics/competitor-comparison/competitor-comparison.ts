@@ -35,6 +35,7 @@ interface CompetitorData {
   npsScore: number;
   feedbackCount: number;
   feedbackIds?: number[];
+  rowType: 'company' | 'competitor';
 }
 
 @Component({
@@ -283,6 +284,7 @@ export class CompetitorComparison implements OnInit, OnDestroy {
               npsScore: data.company.npsScore || 0,
               feedbackCount: companyFeedbackCount,
               feedbackIds: Array.isArray(data.company.feedbackIds) ? data.company.feedbackIds : [],
+              rowType: 'company',
             });
           } else {
             this.companyData.set(null);
@@ -295,6 +297,7 @@ export class CompetitorComparison implements OnInit, OnDestroy {
               npsScore: c.npsScore || 0,
               feedbackCount: c.feedbackCount || 0,
               feedbackIds: Array.isArray(c.feedbackIds) ? c.feedbackIds : [],
+              rowType: 'competitor',
             })));
           } else {
             this.competitors.set([]);
@@ -386,12 +389,15 @@ export class CompetitorComparison implements OnInit, OnDestroy {
     return this.competitors().length > 0;
   }
 
+  isCompetitorRow(row: CompetitorData): boolean {
+    return row.rowType === 'competitor';
+  }
+
   t(key: string): string {
     return this.translationService.translate(key);
   }
 
   removeCompetitor(competitorId: number): void {
-    if (!this.isAdminUser()) return;
     const ok = window.confirm('Remove this competitor? Related feedback will remain but will no longer count for that competitor.');
     if (!ok) return;
     this.analysisService.deleteCompetitor(competitorId).subscribe({

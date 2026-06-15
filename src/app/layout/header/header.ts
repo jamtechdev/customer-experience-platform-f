@@ -36,6 +36,10 @@ export class Header implements OnInit, OnDestroy {
   private llmStatusTimer: ReturnType<typeof setInterval> | null = null;
   private alertRefreshTimer: ReturnType<typeof setInterval> | null = null;
   private alertSub?: Subscription;
+  private readonly alertPageOpenedHandler = (event: Event): void => {
+    const alerts = (event as CustomEvent<Alert[]>).detail;
+    this.markNotificationsOpened(Array.isArray(alerts) ? alerts : this.alerts());
+  };
   
   toggleSidenav = output<void>();
 
@@ -91,6 +95,9 @@ export class Header implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.refreshAlerts();
+    if (typeof window !== 'undefined') {
+      window.addEventListener('sentimenter-alerts-page-opened', this.alertPageOpenedHandler);
+    }
     this.alertSub = this.websocket.onAlertCreated().subscribe((event) => {
       const alert = event.alert as Alert | undefined;
       if (!alert?.id) return;
@@ -115,14 +122,21 @@ export class Header implements OnInit, OnDestroy {
       this.alertRefreshTimer = null;
     }
     this.alertSub?.unsubscribe();
+    if (typeof window !== 'undefined') {
+      window.removeEventListener('sentimenter-alerts-page-opened', this.alertPageOpenedHandler);
+    }
   }
 
-  private refreshAlerts(): void {
+  private refreshAlerts(markOpenedAfterLoad = false): void {
     this.alertService.getAlerts(false).subscribe({
       next: (res) => {
         const { alerts } = normalizeAlertsPayload(res?.data as any);
         this.alerts.set(alerts);
-        this.refreshNotificationBadge(alerts);
+        if (markOpenedAfterLoad) {
+          this.markNotificationsOpened(alerts);
+        } else {
+          this.refreshNotificationBadge(alerts);
+        }
       },
       error: () => {
         // If alerts endpoint fails, keep indicator green.
@@ -146,18 +160,18 @@ export class Header implements OnInit, OnDestroy {
   }
 
   onNotifications(): void {
-    this.markNotificationsSeen();
-    this.router.navigate(['/app/alerts/alert-dashboard']);
+    this.markNotificationsOpened();
+    this.router.navigate(['/app/notifications']);
   }
 
   onNotificationsMenuOpened(): void {
-    this.refreshAlerts();
+    this.refreshAlerts(true);
   }
 
   onClearNotifications(event?: Event): void {
     event?.preventDefault();
     event?.stopPropagation();
-    this.markNotificationsSeen();
+    this.clearNotifications();
   }
 
   private refreshNotificationBadge(alerts: Alert[] = this.alerts()): void {
@@ -167,7 +181,7 @@ export class Header implements OnInit, OnDestroy {
     this.alertIndicator.set(unseenAlerts.length > 0 ? 'red' : 'green');
   }
 
-  private markNotificationsSeen(alerts: Alert[] = this.alerts()): void {
+  private markNotificationsOpened(alerts: Alert[] = this.alerts()): void {
     if (!alerts.length) {
       this.alertCount.set(0);
       this.alertIndicator.set('green');
@@ -181,15 +195,19 @@ export class Header implements OnInit, OnDestroy {
       }
     });
     this.writeSeenAlertIds(seenIds);
+    this.alertCount.set(0);
+    this.alertIndicator.set('green');
+  }
+
+  private clearNotifications(alerts: Alert[] = this.alerts()): void {
+    this.markNotificationsOpened(alerts);
     alerts.forEach((alert) => {
       const id = Number(alert.id);
       if (!alert.acknowledged && Number.isFinite(id)) {
         this.alertService.acknowledgeAlert(id).subscribe({ error: () => undefined });
       }
     });
-    this.alerts.set(alerts.map((alert) => ({ ...alert, acknowledged: true })));
-    this.alertCount.set(0);
-    this.alertIndicator.set('green');
+    this.alerts.set([]);
   }
 
   private seenStorageKey(): string {

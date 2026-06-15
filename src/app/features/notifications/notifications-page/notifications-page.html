@@ -1,0 +1,106 @@
+<div class="notifications-container">
+  <section class="page-header">
+    <div>
+      <p class="eyebrow">Notification Center</p>
+      <h1>Notifications</h1>
+      <p class="subtitle">All system alerts are shown here. Opening this page automatically clears the bell count.</p>
+    </div>
+    <div class="header-actions">
+      <button mat-stroked-button color="primary" type="button" (click)="loadNotifications()" [disabled]="loading()">
+        <mat-icon>refresh</mat-icon>
+        Refresh
+      </button>
+      <button
+        mat-raised-button
+        color="warn"
+        type="button"
+        (click)="deleteAllNotifications()"
+        [disabled]="notifications().length === 0 || clearingAll()">
+        <mat-icon>delete_sweep</mat-icon>
+        {{ clearingAll() ? 'Deleting...' : 'Delete all' }}
+      </button>
+    </div>
+  </section>
+
+  <div class="summary-grid">
+    <mat-card class="summary-card">
+      <mat-card-content>
+        <mat-icon>notifications</mat-icon>
+        <span>Total</span>
+        <strong>{{ totalCount() }}</strong>
+      </mat-card-content>
+    </mat-card>
+    <mat-card class="summary-card active">
+      <mat-card-content>
+        <mat-icon>notifications_active</mat-icon>
+        <span>Unread</span>
+        <strong>{{ activeCount() }}</strong>
+      </mat-card-content>
+    </mat-card>
+    <mat-card class="summary-card read">
+      <mat-card-content>
+        <mat-icon>done_all</mat-icon>
+        <span>Read</span>
+        <strong>{{ acknowledgedCount() }}</strong>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <mat-card class="notifications-card">
+    <mat-card-content>
+      <div *ngIf="loading()" class="loading-state">
+        <mat-spinner diameter="42"></mat-spinner>
+        <span>Loading notifications...</span>
+      </div>
+
+      <div *ngIf="!loading() && notifications().length === 0" class="empty-state">
+        <mat-icon>notifications_none</mat-icon>
+        <h2>No notifications</h2>
+        <p>There are no notifications to show right now.</p>
+      </div>
+
+      <div *ngIf="!loading() && notifications().length > 0" class="notification-list">
+        <article
+          class="notification-item"
+          *ngFor="let notification of notifications()"
+          [class.unread]="!notification.acknowledged">
+          <div class="priority-bar" [ngClass]="priorityClass(notification.priority)"></div>
+          <div class="notification-main">
+            <div class="notification-topline">
+              <h2>{{ notification.title }}</h2>
+              <mat-chip [ngClass]="priorityClass(notification.priority)">
+                {{ notification.priority }}
+              </mat-chip>
+            </div>
+            <p>{{ notification.message }}</p>
+            <div class="notification-meta">
+              <span>{{ notification.type }}</span>
+              <span>{{ formatCreatedAt(notification.createdAt) }}</span>
+              <span>{{ notification.acknowledged ? 'Read' : 'Unread' }}</span>
+            </div>
+          </div>
+          <div class="notification-actions">
+            <button
+              mat-icon-button
+              color="primary"
+              type="button"
+              *ngIf="!notification.acknowledged"
+              (click)="acknowledgeNotification(notification)"
+              matTooltip="Mark as read">
+              <mat-icon>done</mat-icon>
+            </button>
+            <button
+              mat-icon-button
+              color="warn"
+              type="button"
+              (click)="deleteNotification(notification)"
+              [disabled]="deletingId() === notification.id"
+              matTooltip="Delete notification">
+              <mat-icon>{{ deletingId() === notification.id ? 'hourglass_empty' : 'delete' }}</mat-icon>
+            </button>
+          </div>
+        </article>
+      </div>
+    </mat-card-content>
+  </mat-card>
+</div>
