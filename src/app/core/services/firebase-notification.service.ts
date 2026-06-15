@@ -12,7 +12,12 @@ export class FirebaseNotificationService {
   private readonly tokenStorageKey = 'sentimenter_fcm_token';
   private initialized = false;
 
+  isEnabled(): boolean {
+    return environment.firebase.enabled;
+  }
+
   missingConfigKeys(): string[] {
+    if (!this.isEnabled()) return [];
     const cfg = environment.firebase;
     const required: Array<[string, string | undefined]> = [
       ['NG_APP_FIREBASE_API_KEY', cfg.apiKey],
@@ -28,7 +33,7 @@ export class FirebaseNotificationService {
   }
 
   isConfigured(): boolean {
-    return this.missingConfigKeys().length === 0;
+    return this.isEnabled() && this.missingConfigKeys().length === 0;
   }
 
   async enableAlertNotifications(): Promise<string | null> {

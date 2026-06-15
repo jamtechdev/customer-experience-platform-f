@@ -180,6 +180,7 @@ export const environment = {
   },
 
   firebase: {
+    enabled: getEnvBoolean('NG_APP_FIREBASE_NOTIFICATIONS_ENABLED', true),
     apiKey: getEnv('NG_APP_FIREBASE_API_KEY', ''),
     authDomain: getEnv('NG_APP_FIREBASE_AUTH_DOMAIN', ''),
     projectId: getEnv('NG_APP_FIREBASE_PROJECT_ID', ''),

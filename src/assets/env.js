@@ -9,3 +9,4 @@ window.__env__.NG_APP_FIREBASE_STORAGE_BUCKET = "sentment-9d430.firebasestorage.
 window.__env__.NG_APP_FIREBASE_MESSAGING_SENDER_ID = "114481129772";
 window.__env__.NG_APP_FIREBASE_APP_ID = "1:114481129772:web:f27f634ebe476348f32489";
 window.__env__.NG_APP_FIREBASE_VAPID_KEY = "BL-TfNyRPqUCQaRfq5TmbVhXaNRSRSzP_yuYUQ7Dbn41aZrnmPmtco6CD8fxWvh7S5JQfmVSXdiDzccjyfE4hbs";
+window.__env__.NG_APP_FIREBASE_NOTIFICATIONS_ENABLED = "false";

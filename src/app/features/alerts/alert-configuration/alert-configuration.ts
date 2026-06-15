@@ -53,8 +53,9 @@ export class AlertConfiguration implements OnInit {
   pushEnabled = signal(false);
   pushSaving = signal(false);
   pushTokenCount = signal(0);
+  firebaseEnabled = signal(this.firebaseNotificationService.isEnabled());
   firebaseMissingKeys = signal<string[]>(this.firebaseNotificationService.missingConfigKeys());
-  firebaseConfigured = signal(this.firebaseMissingKeys().length === 0);
+  firebaseConfigured = signal(this.firebaseEnabled() && this.firebaseMissingKeys().length === 0);
 
   constructor() {
     this.form = this.fb.group({
@@ -73,9 +74,11 @@ export class AlertConfiguration implements OnInit {
   }
 
   refreshFirebaseConfigStatus(): void {
+    const enabled = this.firebaseNotificationService.isEnabled();
     const missing = this.firebaseNotificationService.missingConfigKeys();
+    this.firebaseEnabled.set(enabled);
     this.firebaseMissingKeys.set(missing);
-    this.firebaseConfigured.set(missing.length === 0);
+    this.firebaseConfigured.set(enabled && missing.length === 0);
   }
 
   loadAlertEmailSettings(): void {
@@ -124,6 +127,10 @@ export class AlertConfiguration implements OnInit {
 
   async enableFirebaseNotifications(): Promise<void> {
     this.refreshFirebaseConfigStatus();
+    if (!this.firebaseEnabled()) {
+      this.snackBar.open('Firebase notifications are disabled by env. Email alerts remain available.', 'Close', { duration: 6000 });
+      return;
+    }
     if (!this.firebaseConfigured()) {
       this.snackBar.open(`Firebase config missing: ${this.firebaseMissingKeys().join(', ')}`, 'Close', { duration: 7000 });
       return;

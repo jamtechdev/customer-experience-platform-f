@@ -53,7 +53,14 @@
             <p class="hint">
               Send browser push notifications through Firebase Cloud Messaging when an alert is created.
             </p>
-            <div class="firebase-status firebase-status-warn" *ngIf="!firebaseConfigured()">
+            <div class="firebase-status firebase-status-off" *ngIf="!firebaseEnabled()">
+              <mat-icon>notifications_off</mat-icon>
+              <div>
+                <strong>Firebase push notifications are disabled by environment.</strong>
+                <p>Email alerts are still available. Set <code>NG_APP_FIREBASE_NOTIFICATIONS_ENABLED=true</code> to enable Firebase again.</p>
+              </div>
+            </div>
+            <div class="firebase-status firebase-status-warn" *ngIf="firebaseEnabled() && !firebaseConfigured()">
               <mat-icon>warning</mat-icon>
               <div>
                 <strong>Firebase frontend config is incomplete.</strong>
@@ -61,14 +68,14 @@
                 <p>Update <code>frontend/.env</code>, run <code>node scripts/generate-env.js</code>, then restart/deploy the frontend.</p>
               </div>
             </div>
-            <div class="firebase-status firebase-status-ok" *ngIf="firebaseConfigured()">
+            <div class="firebase-status firebase-status-ok" *ngIf="firebaseEnabled() && firebaseConfigured()">
               <mat-icon>verified</mat-icon>
               <div>
                 <strong>Firebase frontend config is ready.</strong>
                 <p>Enable notifications on this browser to register its push token.</p>
               </div>
             </div>
-            <p class="hint" *ngIf="firebaseConfigured()">
+            <p class="hint" *ngIf="firebaseEnabled() && firebaseConfigured()">
               Status: {{ pushEnabled() ? 'enabled' : 'disabled' }} · Registered browser tokens: {{ pushTokenCount() }}
             </p>
             <button
@@ -76,7 +83,7 @@
               color="primary"
               type="button"
               (click)="enableFirebaseNotifications()"
-              [disabled]="pushSaving() || !firebaseConfigured()">
+              [disabled]="pushSaving() || !firebaseEnabled() || !firebaseConfigured()">
               <mat-icon>notifications_active</mat-icon>
               {{ pushSaving() ? 'Saving...' : 'Enable Firebase notifications' }}
             </button>

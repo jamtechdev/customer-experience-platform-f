@@ -72,6 +72,7 @@ window.__env__.NG_APP_FIREBASE_STORAGE_BUCKET = ${JSON.stringify(frontendEnv.NG_
 window.__env__.NG_APP_FIREBASE_MESSAGING_SENDER_ID = ${JSON.stringify(frontendEnv.NG_APP_FIREBASE_MESSAGING_SENDER_ID || '')};
 window.__env__.NG_APP_FIREBASE_APP_ID = ${JSON.stringify(frontendEnv.NG_APP_FIREBASE_APP_ID || '')};
 window.__env__.NG_APP_FIREBASE_VAPID_KEY = ${JSON.stringify(frontendEnv.NG_APP_FIREBASE_VAPID_KEY || '')};
+window.__env__.NG_APP_FIREBASE_NOTIFICATIONS_ENABLED = ${JSON.stringify(frontendEnv.NG_APP_FIREBASE_NOTIFICATIONS_ENABLED || 'true')};
 `;
 
 fs.writeFileSync(outFile, contents, 'utf8');
