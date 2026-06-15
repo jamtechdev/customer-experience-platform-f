@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { Component, HostListener, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
 import { MatTableModule } from '@angular/material/table';
@@ -70,6 +70,13 @@ export class RoleManagement implements OnInit {
 
   openRoleDetails(role: Role): void {
     this.selectedRole.set(role);
+  }
+
+  @HostListener('document:keydown.escape', ['$event'])
+  onEscape(event: Event): void {
+    if (!this.selectedRole()) return;
+    event.preventDefault();
+    this.closeRoleDetails();
   }
 
   closeRoleDetails(): void {

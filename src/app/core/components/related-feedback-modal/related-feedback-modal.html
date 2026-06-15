@@ -7,7 +7,11 @@
   (click)="close()">
   <section class="related-modal" (click)="$event.stopPropagation()">
     <header class="related-header">
-      <div>
+      <div class="related-title">
+        <span class="related-kicker">
+          <mat-icon aria-hidden="true">table_view</mat-icon>
+          Drilldown data
+        </span>
         <h3>Related feedback</h3>
         <p *ngIf="title">{{ title }}</p>
       </div>
@@ -16,47 +20,64 @@
       </button>
     </header>
 
-    <div *ngIf="loading" class="related-loading">
-      <mat-progress-spinner mode="indeterminate" diameter="36"></mat-progress-spinner>
-      <span>Loading related data...</span>
-    </div>
+    <div class="related-content">
+      <div *ngIf="loading" class="related-loading">
+        <mat-progress-spinner mode="indeterminate" diameter="36"></mat-progress-spinner>
+        <span>Loading related data...</span>
+      </div>
 
-    <p *ngIf="!loading && rows.length === 0" class="related-empty">
-      No related feedback rows found for this selection.
-    </p>
+      <p *ngIf="!loading && rows.length === 0" class="related-empty">
+        No related feedback rows found for this selection.
+      </p>
 
-    <div *ngIf="!loading && rows.length > 0" class="related-table-wrap">
-      <table class="related-table">
-        <thead>
-          <tr>
-            <th>ID</th>
-            <th>Sentiment</th>
-            <th>Source</th>
-            <th>Summary</th>
-            <th>Original feedback</th>
-            <th>Why related</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr *ngFor="let row of rows">
-            <td>#{{ row.id }}</td>
-            <td>
-              <span class="sentiment-chip" [class]="(row.sentiment || 'unknown').toLowerCase()">
-                {{ row.sentiment || 'unknown' }}
-              </span>
-              <small *ngIf="row.score !== null && row.score !== undefined">Score: {{ row.score }}</small>
-            </td>
-            <td>
-              <div>{{ row.source || '-' }}</div>
-              <small>{{ row.author || 'unknown' }}</small>
-              <small>{{ displayDate(row.date) }}</small>
-            </td>
-            <td>{{ row.contentSummary || row.content || '-' }}</td>
-            <td><pre>{{ originalText(row) }}</pre></td>
-            <td>{{ row.relevanceReason || row.journeyStage || '-' }}</td>
-          </tr>
-        </tbody>
-      </table>
+      <div *ngIf="!loading && rows.length > 0" class="related-table-wrap">
+        <table class="related-table">
+          <colgroup>
+            <col class="col-id" />
+            <col class="col-sentiment" />
+            <col class="col-source" />
+            <col class="col-translation" />
+            <col class="col-original" />
+            <col class="col-related" />
+          </colgroup>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Sentiment</th>
+              <th>Source</th>
+              <th>Translation</th>
+              <th>Original feedback</th>
+              <th>Why related</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let row of rows">
+              <td data-label="ID" class="id-cell">#{{ row.id }}</td>
+              <td data-label="Sentiment" class="sentiment-cell">
+                <span class="sentiment-chip" [class]="(row.sentiment || 'unknown').toLowerCase()">
+                  {{ row.sentiment || 'unknown' }}
+                </span>
+                <small *ngIf="row.score !== null && row.score !== undefined">Score: {{ row.score }}</small>
+              </td>
+              <td data-label="Source" class="source-cell">
+                <div>{{ row.source || '-' }}</div>
+                <small *ngIf="row.author">{{ row.author }}</small>
+                <small>{{ displayDate(row.date) }}</small>
+              </td>
+              <td data-label="Translation" class="text-cell translation-cell">
+                <ng-container *ngIf="translationText(row); else missingTranslation">
+                  {{ translationText(row) }}
+                </ng-container>
+                <ng-template #missingTranslation>
+                  <span class="translation-missing">{{ translationMissingText() }}</span>
+                </ng-template>
+              </td>
+              <td data-label="Original" class="text-cell"><pre>{{ originalText(row) }}</pre></td>
+              <td data-label="Related" class="text-cell">{{ row.relevanceReason || row.journeyStage || '-' }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
     </div>
 
     <footer class="related-footer">

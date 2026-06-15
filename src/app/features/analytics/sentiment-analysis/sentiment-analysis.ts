@@ -99,6 +99,7 @@ export class SentimentAnalysis implements OnInit, OnDestroy {
       id: number;
       content: string;
       referenceContent?: string;
+      translatedContent?: string;
       source: string;
       date: string;
       author?: string;
@@ -120,6 +121,8 @@ export class SentimentAnalysis implements OnInit, OnDestroy {
     id?: number;
     content: string;
     referenceContent?: string;
+    translatedContent?: string;
+    contentSummary?: string;
     journeyStage?: string;
     relevanceReason?: string;
     isRelevant?: boolean;
@@ -505,6 +508,8 @@ export class SentimentAnalysis implements OnInit, OnDestroy {
       id: Number(row.id) || 0,
       content: this.humanizeFeedbackText(row.content || ''),
       referenceContent: row.referenceContent,
+      translatedContent: row.translatedContent || row.contentSummary,
+      contentSummary: row.contentSummary,
       journeyStage: row.journeyStage,
       relevanceReason: row.relevanceReason,
       isRelevant: row.isRelevant,

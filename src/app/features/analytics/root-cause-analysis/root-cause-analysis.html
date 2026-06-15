@@ -111,8 +111,14 @@
     (click)="closeRootCauseModal()">
     <div class="root-cause-modal" (click)="$event.stopPropagation()">
       <div class="root-cause-modal-header">
-        <h2 id="root-cause-modal-title">{{ cause.title }}</h2>
-        <button mat-icon-button type="button" [attr.aria-label]="t('app.close')" (click)="closeRootCauseModal()">
+        <div class="root-cause-modal-title">
+          <span class="modal-kicker">
+            <mat-icon aria-hidden="true">troubleshoot</mat-icon>
+            Root cause detail
+          </span>
+          <h2 id="root-cause-modal-title">{{ cause.title }}</h2>
+        </div>
+        <button class="modal-close-icon" mat-icon-button type="button" [attr.aria-label]="t('app.close')" (click)="closeRootCauseModal()">
           <mat-icon>close</mat-icon>
         </button>
       </div>
@@ -138,8 +144,10 @@
       </div>
 
       <div class="root-cause-modal-actions">
-        <button mat-stroked-button type="button" (click)="viewCauseRecords(cause)">{{ t('rootCausePage.viewRelatedTweets') }}</button>
-        <button mat-raised-button color="primary" type="button" (click)="closeRootCauseModal()">{{ t('app.close') }}</button>
+        <button class="modal-secondary-action" mat-stroked-button type="button" (click)="viewCauseRecords(cause)">
+          {{ t('rootCausePage.viewRelatedTweets') }}
+        </button>
+        <button class="modal-close-button" mat-raised-button type="button" (click)="closeRootCauseModal()">{{ t('app.close') }}</button>
       </div>
     </div>
   </div>

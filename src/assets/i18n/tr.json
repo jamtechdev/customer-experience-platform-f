@@ -448,7 +448,7 @@
     "subtitle": "Yolculuk aşaması, ilgililik ve referans tweetlerle marka ilgili geri bildirimler",
     "reRunAi": "AI zenginleştirmeyi yeniden çalıştır",
     "reRunningAi": "AI yeniden çalışıyor…",
-    "reRunConfirm": "Aralıktaki tüm geri bildirimler için AI zenginleştirmesi yeniden çalıştırılsın mı? Bu işlem duygu, yolculuk aşaması ve ilgililik bilgisini günceller ve birkaç dakika sürebilir. Bittikten sonra İçe Aktarma Geçmişi'nden CX raporunu yeniden oluşturun.",
+    "reRunConfirm": "Uyarı: Seçilen aralıktaki tüm geri bildirimler için AI zenginleştirmesi yeniden çalıştırılsın mı? Bu işlem OpenAI'yi yeniden çağırır, kaydedilmiş duygu, çeviri/İngilizce özet, yolculuk aşaması ve ilgililik bilgisini günceller ve birkaç dakika sürebilir. Devam edilsin mi?",
     "enrichmentComplete": "Zenginleştirme tamamlandı: {{total}} kayıttan {{succeeded}} başarılı, {{failed}} başarısız.",
     "enrichmentFinished": "Zenginleştirme tamamlandı.",
     "enrichmentFailed": "AI zenginleştirme başarısız. Seçili LLM yapılandırmasını kontrol edin.",

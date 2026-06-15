@@ -300,6 +300,7 @@ export class AnalysisService {
         id: number;
         content: string;
         referenceContent?: string;
+        translatedContent?: string;
         source: string;
         date: string;
         author?: string;

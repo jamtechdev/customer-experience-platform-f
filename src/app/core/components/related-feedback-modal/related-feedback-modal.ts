@@ -8,6 +8,7 @@ export interface RelatedFeedbackRow {
   id: number;
   content: string;
   referenceContent?: string;
+  translatedContent?: string | null;
   contentSummary?: string | null;
   relevanceReason?: string | null;
   source?: string | null;
@@ -81,5 +82,13 @@ export class RelatedFeedbackModal {
 
   originalText(row: RelatedFeedbackRow): string {
     return String(row.referenceContent || row.content || '');
+  }
+
+  translationText(row: RelatedFeedbackRow): string {
+    return String(row.translatedContent || row.contentSummary || '').trim();
+  }
+
+  translationMissingText(): string {
+    return 'Not available';
   }
 }
