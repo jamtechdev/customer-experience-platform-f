@@ -535,7 +535,7 @@ export class SentimentAnalysis implements OnInit, OnDestroy {
       id: Number(row.id) || 0,
       content: this.humanizeFeedbackText(row.content || ''),
       referenceContent: row.referenceContent,
-      translatedContent: row.translatedContent || row.contentSummary,
+      translatedContent: row.contentSummary || row.translatedContent,
       contentSummary: row.contentSummary,
       journeyStage: row.journeyStage,
       relevanceReason: row.relevanceReason,

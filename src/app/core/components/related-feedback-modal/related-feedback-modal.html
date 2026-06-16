@@ -36,7 +36,7 @@
             <col class="col-id" />
             <col class="col-sentiment" />
             <col class="col-source" />
-            <col class="col-translation" />
+            <col class="col-summary" />
             <col class="col-original" />
             <col class="col-related" />
           </colgroup>
@@ -45,7 +45,7 @@
               <th>ID</th>
               <th>Sentiment</th>
               <th>Source</th>
-              <th>Translation</th>
+              <th>AI summary</th>
               <th>Original feedback</th>
               <th>Why related</th>
             </tr>
@@ -64,12 +64,12 @@
                 <small *ngIf="row.author">{{ row.author }}</small>
                 <small>{{ displayDate(row.date) }}</small>
               </td>
-              <td data-label="Translation" class="text-cell translation-cell">
-                <ng-container *ngIf="translationText(row); else missingTranslation">
-                  {{ translationText(row) }}
+              <td data-label="AI summary" class="text-cell summary-cell">
+                <ng-container *ngIf="summaryText(row); else missingSummary">
+                  {{ summaryText(row) }}
                 </ng-container>
-                <ng-template #missingTranslation>
-                  <span class="translation-missing">{{ translationMissingText() }}</span>
+                <ng-template #missingSummary>
+                  <span class="summary-missing">{{ summaryMissingText() }}</span>
                 </ng-template>
               </td>
               <td data-label="Original" class="text-cell"><pre>{{ originalText(row) }}</pre></td>

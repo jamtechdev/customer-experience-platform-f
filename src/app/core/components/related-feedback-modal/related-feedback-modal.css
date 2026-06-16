@@ -139,7 +139,7 @@
 .col-id { width: 74px; }
 .col-sentiment { width: 128px; }
 .col-source { width: 156px; }
-.col-translation { width: 25%; }
+.col-summary { width: 25%; }
 .col-original { width: 31%; }
 .col-related { width: 21%; }
 
@@ -188,11 +188,11 @@
   overflow-wrap: anywhere;
 }
 
-.translation-cell {
+.summary-cell {
   color: var(--text-secondary, #4b5563);
 }
 
-.translation-missing {
+.summary-missing {
   display: inline-flex;
   max-width: 100%;
   color: var(--text-tertiary, #9ca3af);

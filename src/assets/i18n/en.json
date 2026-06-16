@@ -450,7 +450,7 @@
     "subtitle": "Brand-relevant feedback with journey stage, relevance, and reference tweets",
     "reRunAi": "Re-run AI enrichment",
     "reRunningAi": "Re-running AI…",
-    "reRunConfirm": "Warning: Re-run AI enrichment for all feedback in the selected range? This will call OpenAI again, update saved sentiment, translation/English summary, journey stage, and relevance, and may take several minutes. Continue?",
+    "reRunConfirm": "Warning: Re-run AI enrichment for all feedback in the selected range? This will call OpenAI again, process feedback in its original language, and update saved sentiment, same-language summary, journey stage, and relevance. This may take several minutes. Continue?",
     "enrichmentStarted": "AI enrichment started. This may take a few minutes.",
     "enrichmentInProgress": "AI enrichment is running. Results will refresh when it finishes.",
     "enrichmentComplete": "Enrichment complete: {{succeeded}} succeeded, {{failed}} failed of {{total}}.",

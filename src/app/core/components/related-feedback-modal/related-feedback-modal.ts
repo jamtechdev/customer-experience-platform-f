@@ -163,11 +163,11 @@ export class RelatedFeedbackModal implements OnChanges, OnDestroy {
     return this.repairTurkishText(row.referenceContent || row.content || '');
   }
 
-  translationText(row: RelatedFeedbackRow): string {
-    return this.repairTurkishText(row.translatedContent || row.contentSummary || '').trim();
+  summaryText(row: RelatedFeedbackRow): string {
+    return this.repairTurkishText(row.contentSummary || row.translatedContent || '').trim();
   }
 
-  translationMissingText(): string {
+  summaryMissingText(): string {
     return 'Not available';
   }
 }
