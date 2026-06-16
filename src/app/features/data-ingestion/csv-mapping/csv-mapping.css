@@ -90,6 +90,13 @@
   color: rgba(0, 0, 0, 0.55);
 }
 
+.field-hint {
+  flex-basis: 100%;
+  color: rgba(0, 0, 0, 0.58);
+  font-size: 12px;
+  line-height: 1.35;
+}
+
 .full {
   width: 100%;
 }

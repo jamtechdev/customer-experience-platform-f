@@ -1,7 +1,7 @@
 <div class="csv-mapping-container">
   <div class="header-section">
     <h1>CSV Column Mapping</h1>
-    <p class="subtitle">Match your CSV columns to system fields, validate data types, then import.</p>
+    <p class="subtitle">Map the original sentence/feedback text, date, and source columns before starting the import.</p>
   </div>
 
   @if (loading()) {
@@ -41,8 +41,9 @@
         </div>
 
         <p class="hint">
-          <strong>Flexible mapping:</strong>
-          No required field is enforced. Map only the CSV columns you want to import.
+          <strong>Required mapping:</strong>
+          For feedback files, map the original customer sentence/message to <strong>Content / sentence</strong>.
+          In Turkish exports this is usually the <strong>İleti</strong> column.
         </p>
 
         <p class="hint date-format-hint">
@@ -59,11 +60,14 @@
           @for (f of systemFieldsSorted(); track f.name) {
             <div class="mapping-row">
               <div class="col system">
-                <span class="field-name">{{ f.name }}</span>
+                <span class="field-name">{{ systemFieldLabel(f.name) }}</span>
                 @if (f.required || isRequiredField(f.name)) {
                   <span class="required">required</span>
                 }
                 <span class="field-type">{{ f.type }}</span>
+                @if (systemFieldHint(f.name)) {
+                  <span class="field-hint">{{ systemFieldHint(f.name) }}</span>
+                }
               </div>
               <div class="col csv">
                 <mat-form-field appearance="outline" class="full">
@@ -85,12 +89,12 @@
         <div class="actions">
           <button mat-stroked-button color="primary" (click)="validate()" [disabled]="validating()">
             <mat-icon>rule</mat-icon>
-            {{ validating() ? 'Validating…' : 'Validate' }}
+            {{ validating() && !importStarted() ? 'Validating…' : 'Validate mapping' }}
           </button>
 
-          <button mat-raised-button color="primary" (click)="startImport()" [disabled]="validating()">
+          <button mat-raised-button color="primary" (click)="startImport()" [disabled]="validating() || importStarted()">
             <mat-icon>play_arrow</mat-icon>
-            Import
+            {{ validating() ? 'Starting import…' : 'Start import' }}
           </button>
 
           @if (importStarted()) {
@@ -119,7 +123,7 @@
                       } @else {
                         Mapping
                       }
-                      — <strong>{{ e.field }}</strong>
+                      — <strong>{{ systemFieldLabel(e.field) }}</strong>
                     </div>
                     <div class="msg">{{ e.message }}</div>
                     @if (e.rowNumber > 0 && e.field && fieldSelections()[e.field]) {
@@ -159,7 +163,7 @@
                     } @else {
                       Mapping
                     }
-                    — <strong>{{ e.field }}</strong>
+                    — <strong>{{ systemFieldLabel(e.field) }}</strong>
                   </div>
                   <div class="msg">{{ e.message }}</div>
                   @if (e.value !== undefined && e.value !== null && e.value !== '') {

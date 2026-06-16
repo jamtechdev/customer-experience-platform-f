@@ -94,7 +94,9 @@ export class CsvMapping implements OnInit {
 
   headers = computed(() => this.preview()?.headers ?? []);
 
-  requiredSystemFields = computed<string[]>(() => []);
+  requiredSystemFields = computed<string[]>(() =>
+    this.dataType() === 'nps_survey' ? ['score', 'date'] : ['content', 'date', 'source']
+  );
 
   // Ensure required system fields always exist in `fieldSelections`.
   // Keep this outside lifecycle hooks so `effect()` is created within Angular's injection context.
@@ -149,12 +151,20 @@ export class CsvMapping implements OnInit {
         for (const f of res.data.systemFields ?? []) {
           selections[f.name] = null;
         }
+        for (const f of this.requiredSystemFields()) {
+          selections[f] = selections[f] ?? null;
+        }
 
         // apply suggested mappings (csvHeader -> systemField)
         const suggested = res.data.suggestedMappings ?? {};
         for (const [csvHeader, field] of Object.entries(suggested)) {
           if (selections[field] === undefined) continue;
           if (selections[field] == null) selections[field] = csvHeader;
+        }
+        for (const field of this.requiredSystemFields()) {
+          if (selections[field]) continue;
+          const fallback = this.bestHeaderForField(field, res.data, selections);
+          if (fallback) selections[field] = fallback;
         }
         this.fieldSelections.set(selections);
       },
@@ -226,7 +236,123 @@ export class CsvMapping implements OnInit {
       usedCsv.add(csvHeader);
       csvToField[csvHeader] = field;
     }
+    const missingRequired = this.requiredSystemFields().filter((field) => !Object.values(csvToField).includes(field));
+    if (missingRequired.length > 0) {
+      const friendly = missingRequired.map((field) => this.systemFieldLabel(field)).join(', ');
+      this.importError.set({
+        message: `Please map required field(s): ${friendly}`,
+        guidance: [
+          'Map the actual sentence/feedback text column to Content.',
+          'For this file, the Turkish message column is usually named "İleti".',
+          'Use Validate before Import to confirm the mapping.',
+        ],
+        errors: missingRequired.map((field) => ({
+          rowNumber: 0,
+          field,
+          message: `${this.systemFieldLabel(field)} is required for ${this.dataType() === 'nps_survey' ? 'NPS' : 'feedback'} imports.`,
+        })),
+      });
+      this.snackBar.open(`Please map required field(s): ${friendly}`, 'Close', { duration: 8000 });
+      return null;
+    }
     return csvToField;
+  }
+
+  private normalizeHeader(value: string): string {
+    return String(value || '')
+      .trim()
+      .toLocaleLowerCase('tr-TR')
+      .replace(/ı/g, 'i')
+      .replace(/ğ/g, 'g')
+      .replace(/ü/g, 'u')
+      .replace(/ş/g, 's')
+      .replace(/ö/g, 'o')
+      .replace(/ç/g, 'c')
+      .replace(/[^a-z0-9]+/g, '_')
+      .replace(/^_+|_+$/g, '');
+  }
+
+  private bestHeaderForField(
+    field: string,
+    preview: CSVPreview,
+    selections: Record<string, string | null>
+  ): string | null {
+    const taken = new Set(Object.values(selections).filter(Boolean) as string[]);
+    const headers = preview.headers.filter((header) => !taken.has(header));
+    const rows = preview.rows ?? [];
+    const synonyms: Record<string, string[]> = {
+      content: [
+        'ileti',
+        'mesaj',
+        'yorum',
+        'metin',
+        'icerik',
+        'content',
+        'text',
+        'message',
+        'comment',
+        'feedback',
+        'tweet',
+        'tweet_text',
+        'source_tweet',
+        'original_text',
+        'sentence',
+      ],
+      date: ['ileti_tarihi', 'yaratilma_tarihi', 'tarih', 'date', 'created_at', 'created', 'timestamp'],
+      source: ['site_turu', 'mecra', 'source', 'platform', 'channel'],
+      score: ['nps', 'nps_score', 'score', 'puan', 'degeri', 'mecra_degeri'],
+    };
+    const exact = new Set(synonyms[field] ?? []);
+    for (const header of headers) {
+      const normalized = this.normalizeHeader(header);
+      if (exact.has(normalized)) return header;
+    }
+    if (field !== 'content') return null;
+
+    let best: { header: string; score: number } | null = null;
+    for (const header of headers) {
+      const normalized = this.normalizeHeader(header);
+      if (/(id|rowid|date|tarih|source|site|mecra|rating|score|puan|about|konu)$/i.test(normalized)) continue;
+      const values = rows.map((row) => String(row?.[header] ?? '').trim()).filter(Boolean);
+      if (!values.length) continue;
+      const avgLength = values.reduce((sum, value) => sum + value.length, 0) / values.length;
+      const letterRatio =
+        values.reduce((sum, value) => sum + (/[a-zA-ZçğıöşüÇĞİÖŞÜ]/.test(value) ? 1 : 0), 0) / values.length;
+      const urlPenalty = values.some((value) => /^https?:\/\//i.test(value) || /^[a-f0-9]{16,}$/i.test(value)) ? 40 : 0;
+      const score = Math.min(avgLength, 240) * letterRatio - urlPenalty;
+      if (!best || score > best.score) best = { header, score };
+    }
+    return best && best.score >= 20 ? best.header : null;
+  }
+
+  systemFieldLabel(name: string): string {
+    const labels: Record<string, string> = {
+      content: 'Content / sentence',
+      date: 'Date',
+      source: 'Source',
+      score: 'NPS score',
+      author: 'Author',
+      rating: 'Rating',
+      sentiment: 'Sentiment',
+      company: 'Company',
+      companyName: 'Company name',
+      competitor: 'Competitor',
+      competitorId: 'Competitor ID',
+      cxRelated: 'CX related',
+      originalCustomerCx: 'Original customer CX',
+    };
+    return labels[name] ?? name;
+  }
+
+  systemFieldHint(name: string): string {
+    const hints: Record<string, string> = {
+      content: 'Map the original customer sentence/message here. For Turkish exports, this is usually "İleti".',
+      date: 'Map the message date. Auto date parsing supports Turkish and Excel formats.',
+      source: 'Map channel/platform/source, for example Twitter, Sikayetvar, App Store, or Site Türü.',
+      score: 'Map NPS score only for NPS survey imports.',
+      rating: 'Optional numeric/star rating. Leave unmapped if this column is not numeric.',
+    };
+    return hints[name] ?? '';
   }
 
   onSelectField(systemFieldName: string, csvHeader: string | null): void {
@@ -245,6 +371,7 @@ export class CsvMapping implements OnInit {
     if (!mappings) return;
     this.validating.set(true);
     this.validation.set(null);
+    this.importError.set(null);
     this.csvService
       .validateImport(importId, {
         mappings,
@@ -313,7 +440,9 @@ export class CsvMapping implements OnInit {
         this.snackBar.open('Import started. Redirecting to Import History for live progress...', 'Close', {
           duration: 5000,
         });
-        this.router.navigate(['/app/data-sources/import-history']);
+        this.router.navigate(['/app/data-sources/import-history'], {
+          queryParams: { importId },
+        });
       },
       error: (err) => {
         this.validating.set(false);
