@@ -4,49 +4,26 @@
     <p class="subtitle">{{ t('competitorPage.subtitle') }}</p>
   </div>
 
-  <mat-card class="filter-card">
-    <mat-card-content>
-      <div class="filters-row">
-        <mat-form-field appearance="outline">
-          <mat-label>{{ t('dashboard.period') }}</mat-label>
-          <mat-select [value]="selectedPresetId()" (selectionChange)="onPresetChange($event.value)">
-            <mat-option value="none">All data (no date filter)</mat-option>
-            @for (p of presets(); track p.id) {
-              <mat-option [value]="p.id">{{ p.label }}</mat-option>
-            }
-            <mat-option value="custom">{{ t('reports.customRange') }}</mat-option>
-          </mat-select>
-        </mat-form-field>
-
-        <mat-form-field appearance="outline">
-          <mat-label>{{ t('reports.fromDate') }}</mat-label>
-          <input matInput [matDatepicker]="compStartPicker" [ngModel]="dateStringToDate(startDate())" (ngModelChange)="setStartDateFromPicker($event)" name="compStart" />
-          <mat-datepicker-toggle matIconSuffix [for]="compStartPicker"></mat-datepicker-toggle>
-          <mat-datepicker #compStartPicker></mat-datepicker>
-        </mat-form-field>
-
-        <mat-form-field appearance="outline">
-          <mat-label>{{ t('reports.toDate') }}</mat-label>
-          <input matInput [matDatepicker]="compEndPicker" [ngModel]="dateStringToDate(endDate())" (ngModelChange)="setEndDateFromPicker($event)" name="compEnd" />
-          <mat-datepicker-toggle matIconSuffix [for]="compEndPicker"></mat-datepicker-toggle>
-          <mat-datepicker #compEndPicker></mat-datepicker>
-        </mat-form-field>
-
-        <button mat-stroked-button color="primary" type="button" (click)="applyRangeAndReload()" [disabled]="loading()">
-          {{ t('reports.applyRange') }}
-        </button>
-        <button
-          mat-stroked-button
-          type="button"
-          (click)="cleanupInvalidCompetitorNames()"
-          [disabled]="loading() || cleaningCompetitors()"
-          matTooltip="{{ t('competitorPage.cleanInvalidHint') }}">
-          <mat-icon>cleaning_services</mat-icon>
-          {{ t('competitorPage.cleanInvalid') }}
-        </button>
-      </div>
-    </mat-card-content>
-  </mat-card>
+  <app-report-date-range-filter
+    [wrapInCard]="true"
+    [presets]="presets()"
+    applyLabelKey="reports.applyRange"
+    [(selectedPresetId)]="selectedPresetId"
+    [(startDate)]="startDate"
+    [(endDate)]="endDate"
+    [applyDisabled]="loading()"
+    (apply)="applyRangeAndReload()">
+    <button
+      mat-stroked-button
+      type="button"
+      class="filter-extra-action"
+      (click)="cleanupInvalidCompetitorNames()"
+      [disabled]="loading() || cleaningCompetitors()"
+      matTooltip="{{ t('competitorPage.cleanInvalidHint') }}">
+      <mat-icon>cleaning_services</mat-icon>
+      {{ t('competitorPage.cleanInvalid') }}
+    </button>
+  </app-report-date-range-filter>
 
   <div *ngIf="loading()" class="loading-container">
     <app-ollama-loader

@@ -1,0 +1,99 @@
+.period-title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin-bottom: 8px;
+}
+
+.period-active {
+  font-weight: 600;
+  color: #475569;
+  margin-bottom: 12px;
+  line-height: 1.5;
+}
+
+.filters-row {
+  display: grid;
+  grid-template-columns: minmax(220px, 1.3fr) repeat(2, minmax(190px, 1fr)) repeat(3, max-content);
+  gap: 14px;
+  align-items: start;
+}
+
+.filter-card {
+  border: 1px solid #e5e7eb;
+  border-radius: 18px;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.05);
+  overflow: hidden;
+}
+
+.filter-card .mat-mdc-card-content {
+  padding: 18px;
+}
+
+.filters-row mat-form-field {
+  width: 100%;
+  min-width: 0;
+}
+
+.filters-row button[mat-stroked-button],
+.filters-row button[mat-flat-button],
+.filters-row a[mat-stroked-button],
+.filters-row .filter-extra-action {
+  min-height: 48px;
+  height: 48px;
+  align-self: start;
+  white-space: nowrap;
+  border-radius: 10px;
+  padding: 0 16px;
+}
+
+.date-picker-trigger {
+  min-height: 36px;
+  width: 36px;
+  height: 36px;
+  padding: 6px;
+  border-radius: 999px;
+}
+
+:host ::ng-deep .filters-row .mat-mdc-form-field-subscript-wrapper {
+  display: none;
+}
+
+:host ::ng-deep .filters-row .mat-mdc-text-field-wrapper {
+  background: #ffffff;
+}
+
+:host ::ng-deep .filters-row .mat-mdc-form-field-infix {
+  min-height: 48px;
+  padding-top: 14px;
+  padding-bottom: 10px;
+}
+
+:host ::ng-deep .filters-row .mat-mdc-select-value,
+:host ::ng-deep .filters-row input.mat-mdc-input-element {
+  color: #111827;
+  font-weight: 500;
+}
+
+:host ::ng-deep .filters-row input[type='date'].mat-mdc-input-element {
+  min-height: 24px;
+  cursor: pointer;
+}
+
+@media (max-width: 1100px) {
+  .filters-row {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .filters-row button[mat-stroked-button],
+  .filters-row button[mat-flat-button],
+  .filters-row [extraActions] {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 640px) {
+  .filters-row {
+    grid-template-columns: 1fr;
+  }
+}

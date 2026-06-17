@@ -22,11 +22,13 @@ import {
   buildClientReportDatePresets,
   toIsoRangeFromYmd,
   NO_DATE_FILTER_PRESET_ID,
+  datesValidYmd,
   type ReportDatePreset,
 } from '../../../core/utils/report-date-presets';
-import { twitterCxReportFailureMessage } from '../../../core/utils/twitter-cx-report-load';
 import { OllamaLoader } from '../../../core/components/ollama-loader/ollama-loader';
 import { RelatedFeedbackModal, RelatedFeedbackRow } from '../../../core/components/related-feedback-modal/related-feedback-modal';
+import { ReportDateRangeFilter } from '../../../core/components/report-date-range-filter/report-date-range-filter';
+import { twitterCxReportFailureMessage } from '../../../core/utils/twitter-cx-report-load';
 
 type SortDir = 'asc' | 'desc';
 
@@ -118,6 +120,7 @@ interface ActionPlanRow {
     MatSnackBarModule,
     OllamaLoader,
     RelatedFeedbackModal,
+    ReportDateRangeFilter,
   ],
   templateUrl: './arcelik-twitter-cx-report.html',
   styleUrl: './arcelik-twitter-cx-report.css',
@@ -337,37 +340,8 @@ export class ArcelikTwitterCxReport implements OnInit, OnDestroy {
     });
   }
 
-  applyPreset(p: ReportDatePreset): void {
-    this.selectedPresetId.set(p.id);
-    this.startDate.set(p.startDate.slice(0, 10));
-    this.endDate.set(p.endDate.slice(0, 10));
-  }
-
-  onPresetChange(id: string): void {
-    if (id === NO_DATE_FILTER_PRESET_ID) {
-      this.selectedPresetId.set(NO_DATE_FILTER_PRESET_ID);
-      this.startDate.set(null);
-      this.endDate.set(null);
-      return;
-    }
-    if (id === 'custom') {
-      this.selectedPresetId.set('custom');
-      return;
-    }
-    const p = this.presets().find((x) => x.id === id);
-    if (p) {
-      this.applyPreset(p);
-    }
-  }
-
-  onManualDate(): void {
-    this.selectedPresetId.set('custom');
-  }
-
   datesValid(): boolean {
-    const s = this.startDate();
-    const e = this.endDate();
-    return !!(s && e && s <= e);
+    return datesValidYmd(this.startDate(), this.endDate());
   }
 
   applyRangeAndReload(): void {

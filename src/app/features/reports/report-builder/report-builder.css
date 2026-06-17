@@ -30,6 +30,10 @@
   min-width: 180px;
 }
 
+.builder-date-filter {
+  grid-column: 1 / -1;
+}
+
 .export-actions {
   margin-top: 0rem;
   display: flex;

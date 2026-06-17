@@ -18,29 +18,17 @@
     </div>
     <mat-card class="period-card">
       <mat-card-content>
-        <div class="period-title">Report period</div>
-        <div class="period-active">
-          Active range: {{ dateRangeStartValue() || 'Earliest upload' }} → {{ dateRangeEndValue() || (today | date:'yyyy-MM-dd') }}
-        </div>
-        <div class="period-filters">
-          <mat-form-field appearance="outline">
-            <mat-label>Preset</mat-label>
-            <mat-select [value]="selectedPreset()" (selectionChange)="onPresetChange($event.value)">
-              <mat-option value="all_time">All time</mat-option>
-              <mat-option value="last_30_days">Last 30 days</mat-option>
-              <mat-option value="custom">Custom range</mat-option>
-            </mat-select>
-          </mat-form-field>
-          <mat-form-field appearance="outline">
-            <mat-label>From</mat-label>
-            <input matInput type="date" [ngModel]="dateRangeStartValue()" (ngModelChange)="onDateStartModelChange($event)" />
-          </mat-form-field>
-          <mat-form-field appearance="outline">
-            <mat-label>To</mat-label>
-            <input matInput type="date" [ngModel]="dateRangeEndValue()" (ngModelChange)="onDateEndModelChange($event)" />
-          </mat-form-field>
-          <button mat-flat-button color="primary" type="button" (click)="applyDateRange()">Apply</button>
-        </div>
+        <app-report-date-range-filter
+          mode="dashboard"
+          [showNoFilterOption]="false"
+          [periodTitle]="t('dashboard.reportPeriod')"
+          [activeRangeStartFallback]="t('dashboard.earliestUpload')"
+          [activeRangeEndFallback]="todayYmd()"
+          [applyFlat]="true"
+          [(selectedPresetId)]="selectedPresetId"
+          [(startDate)]="startDate"
+          [(endDate)]="endDate"
+          (apply)="applyDateRange()" />
       </mat-card-content>
     </mat-card>
   </div>

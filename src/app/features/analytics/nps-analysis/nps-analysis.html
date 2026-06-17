@@ -5,36 +5,14 @@
   </div>
 
   <div class="filters-section">
-    <mat-card class="filter-card">
-      <mat-card-content>
-        <div class="filters-row">
-          <mat-form-field appearance="outline">
-            <mat-label>{{ t('dashboard.period') }}</mat-label>
-            <mat-select [value]="selectedPresetId()" (selectionChange)="onPresetChange($event.value)">
-              <mat-option value="none">{{ t('reports.allData') }}</mat-option>
-              @for (p of presets(); track p.id) {
-                <mat-option [value]="p.id">{{ presetLabel(p) }}</mat-option>
-              }
-              <mat-option value="custom">{{ t('reports.customRange') }}</mat-option>
-            </mat-select>
-          </mat-form-field>
-
-          <mat-form-field appearance="outline">
-            <mat-label>{{ t('reports.fromDate') }}</mat-label>
-            <input matInput type="date" [ngModel]="startDate()" (ngModelChange)="startDate.set($event); onManualDate()" name="npsStart" />
-          </mat-form-field>
-
-          <mat-form-field appearance="outline">
-            <mat-label>{{ t('reports.toDate') }}</mat-label>
-            <input matInput type="date" [ngModel]="endDate()" (ngModelChange)="endDate.set($event); onManualDate()" name="npsEnd" />
-          </mat-form-field>
-
-          <button mat-stroked-button color="primary" type="button" (click)="applyRangeAndReload()" [disabled]="loading()">
-            {{ t('app.apply') }}
-          </button>
-        </div>
-      </mat-card-content>
-    </mat-card>
+    <app-report-date-range-filter
+      [wrapInCard]="true"
+      [presets]="presets()"
+      [(selectedPresetId)]="selectedPresetId"
+      [(startDate)]="startDate"
+      [(endDate)]="endDate"
+      [applyDisabled]="loading()"
+      (apply)="applyRangeAndReload()" />
   </div>
 
   <div *ngIf="loading()" class="loading-container">

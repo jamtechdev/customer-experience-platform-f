@@ -1,0 +1,21 @@
+<mat-form-field appearance="outline" class="date-picker-field">
+  <mat-label>{{ fieldLabel() }}</mat-label>
+  <input
+    #dateInput
+    matInput
+    type="date"
+    [ngModel]="value() ?? ''"
+    [disabled]="disabled()"
+    (ngModelChange)="onValueChange($event)"
+    (click)="openPicker(dateInput)" />
+  <button
+    mat-icon-button
+    matSuffix
+    class="date-picker-trigger"
+    type="button"
+    [disabled]="disabled()"
+    [attr.aria-label]="ariaLabel()"
+    (click)="$event.preventDefault(); $event.stopPropagation(); openPicker(dateInput)">
+    <mat-icon>calendar_today</mat-icon>
+  </button>
+</mat-form-field>

@@ -7,8 +7,6 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
-import { MatDatepickerModule } from '@angular/material/datepicker';
-import { MatNativeDateModule } from '@angular/material/core';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { ReportExportRecord, ReportService } from '../../../core/services/report.service';
 import { AuthService } from '../../../core/services/auth.service';
@@ -18,8 +16,10 @@ import {
   buildClientReportDatePresets,
   toIsoRangeFromYmd,
   NO_DATE_FILTER_PRESET_ID,
+  datesValidYmd,
   type ReportDatePreset,
 } from '../../../core/utils/report-date-presets';
+import { ReportDateRangeFilter } from '../../../core/components/report-date-range-filter/report-date-range-filter';
 
 type ReportType = 'executive' | 'full';
 type ReportFormat = 'pdf' | 'excel';
@@ -44,10 +44,9 @@ interface CreatedReportRecord {
     MatFormFieldModule,
     MatInputModule,
     MatSelectModule,
-    MatDatepickerModule,
-    MatNativeDateModule,
     MatProgressSpinnerModule,
     MatSnackBarModule,
+    ReportDateRangeFilter,
   ],
   templateUrl: './report-builder.html',
   styleUrl: './report-builder.css',
@@ -88,73 +87,8 @@ export class ReportBuilder implements OnInit {
     });
   }
 
-  applyPreset(p: ReportDatePreset): void {
-    this.selectedPresetId.set(p.id);
-    this.startDate.set(p.startDate.slice(0, 10));
-    this.endDate.set(p.endDate.slice(0, 10));
-  }
-
-  onPresetChange(id: string): void {
-    if (id === NO_DATE_FILTER_PRESET_ID) {
-      this.selectedPresetId.set(NO_DATE_FILTER_PRESET_ID);
-      this.startDate.set(null);
-      this.endDate.set(null);
-      return;
-    }
-    if (id === 'custom') {
-      this.selectedPresetId.set('custom');
-      return;
-    }
-    const p = this.presets().find((x) => x.id === id);
-    if (p) this.applyPreset(p);
-  }
-
-  presetLabel(p: ReportDatePreset): string {
-    const labels: Record<string, string> = {
-      all_time: 'reports.allTime',
-      last_7_days: 'reports.last7Days',
-      last_30_days: 'reports.last30Days',
-      last_calendar_month: 'reports.lastCalendarMonth',
-      ytd: 'reports.yearToDate',
-    };
-    return labels[p.id] ? this.t(labels[p.id]) : p.label;
-  }
-
-  onManualDate(): void {
-    this.selectedPresetId.set('custom');
-  }
-
-  dateStringToDate(value: string | null): Date | null {
-    if (!value) return null;
-    const [year, month, day] = value.split('-').map((part) => Number(part));
-    if (!year || !month || !day) return null;
-    return new Date(year, month - 1, day);
-  }
-
-  setStartDateFromPicker(value: Date | string | null): void {
-    this.startDate.set(this.dateToYmd(value));
-    this.onManualDate();
-  }
-
-  setEndDateFromPicker(value: Date | string | null): void {
-    this.endDate.set(this.dateToYmd(value));
-    this.onManualDate();
-  }
-
-  private dateToYmd(value: Date | string | null): string | null {
-    if (!value) return null;
-    if (typeof value === 'string') return value || null;
-    if (Number.isNaN(value.getTime())) return null;
-    const year = value.getFullYear();
-    const month = String(value.getMonth() + 1).padStart(2, '0');
-    const day = String(value.getDate()).padStart(2, '0');
-    return `${year}-${month}-${day}`;
-  }
-
   datesValid(): boolean {
-    const s = this.startDate();
-    const e = this.endDate();
-    return !!(s && e && s <= e);
+    return datesValidYmd(this.startDate(), this.endDate());
   }
 
   canCreateReport(): boolean {

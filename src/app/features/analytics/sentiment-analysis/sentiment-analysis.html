@@ -16,65 +16,34 @@
   </div>
 
   <div class="filters-section">
-    <mat-card class="filter-card">
-      <mat-card-content>
-        <div class="period-active">
-          Active range:
-          {{ startDate() || t('reports.allData') }}
-          →
-          {{ endDate() || t('reports.allData') }}
-        </div>
-        <div class="filters filters-row">
-          <mat-form-field appearance="outline">
-            <mat-label>{{ t('dashboard.period') }}</mat-label>
-            <mat-select [value]="selectedPresetId()" (selectionChange)="onPresetChange($event.value)">
-              <mat-option value="none">{{ t('reports.allData') }}</mat-option>
-              @for (p of presets(); track p.id) {
-                <mat-option [value]="p.id">{{ presetLabel(p) }}</mat-option>
-              }
-              <mat-option value="custom">{{ t('reports.customRange') }}</mat-option>
-            </mat-select>
-          </mat-form-field>
-
-          <mat-form-field appearance="outline">
-            <mat-label>{{ t('reports.fromDate') }}</mat-label>
-            <input
-              matInput
-              type="date"
-              [ngModel]="startDate() ?? ''"
-              (ngModelChange)="onStartDateChange($event)"
-              name="sentStart" />
-          </mat-form-field>
-
-          <mat-form-field appearance="outline">
-            <mat-label>{{ t('reports.toDate') }}</mat-label>
-            <input
-              matInput
-              type="date"
-              [ngModel]="endDate() ?? ''"
-              (ngModelChange)="onEndDateChange($event)"
-              name="sentEnd" />
-          </mat-form-field>
-
-          <button mat-stroked-button color="primary" type="button" (click)="applyRangeAndReload()" [disabled]="initialLoading()">
-            {{ t('app.apply') }}
-          </button>
-          <button mat-stroked-button color="primary" type="button" (click)="refreshData()" [disabled]="initialLoading()">
-            <mat-icon>refresh</mat-icon>
-            {{ t('app.refresh') }}
-          </button>
-          <button
-            mat-stroked-button
-            type="button"
-            (click)="exportSentimentRecords()"
-            [disabled]="exportLoading() || !datesValid()">
-            <mat-icon>download</mat-icon>
-            {{ t('sentiment.exportToExcel') }}
-          </button>
-        </div>
-      </mat-card-content>
-    </mat-card>
-     
+    <app-report-date-range-filter
+      [wrapInCard]="true"
+      [presets]="presets()"
+      [(selectedPresetId)]="selectedPresetId"
+      [(startDate)]="startDate"
+      [(endDate)]="endDate"
+      [applyDisabled]="initialLoading()"
+      (apply)="applyRangeAndReload()">
+      <button
+        mat-stroked-button
+        color="primary"
+        type="button"
+        class="filter-extra-action"
+        (click)="refreshData()"
+        [disabled]="initialLoading()">
+        <mat-icon>refresh</mat-icon>
+        {{ t('app.refresh') }}
+      </button>
+      <button
+        mat-stroked-button
+        type="button"
+        class="filter-extra-action"
+        (click)="exportSentimentRecords()"
+        [disabled]="exportLoading() || !datesValid()">
+        <mat-icon>download</mat-icon>
+        {{ t('sentiment.exportToExcel') }}
+      </button>
+    </app-report-date-range-filter>
   </div>
 
 

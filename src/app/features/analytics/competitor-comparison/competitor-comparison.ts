@@ -7,11 +7,8 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
-import { MatSelectModule } from '@angular/material/select';
-import { MatDatepickerModule } from '@angular/material/datepicker';
-import { MatNativeDateModule } from '@angular/material/core';
-import { MatTooltipModule } from '@angular/material/tooltip';
 import { FormsModule } from '@angular/forms';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { AnalysisService } from '../../../core/services/analysis.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
@@ -21,12 +18,14 @@ import {
   buildClientReportDatePresets,
   toIsoRangeFromYmd,
   NO_DATE_FILTER_PRESET_ID,
+  datesValidYmd,
   type ReportDatePreset,
 } from '../../../core/utils/report-date-presets';
 import { CXWebSocketService, type CSVImportStatusEvent } from '../../../core/services/cx-websocket.service';
 import { Subscription } from 'rxjs';
 import { OllamaLoader } from '../../../core/components/ollama-loader/ollama-loader';
 import { RelatedFeedbackModal, RelatedFeedbackRow } from '../../../core/components/related-feedback-modal/related-feedback-modal';
+import { ReportDateRangeFilter } from '../../../core/components/report-date-range-filter/report-date-range-filter';
 
 interface CompetitorData {
   id: number;
@@ -42,7 +41,6 @@ interface CompetitorData {
   selector: 'app-competitor-comparison',
   imports: [
     CommonModule,
-    FormsModule,
     MatCardModule,
     MatTableModule,
     MatButtonModule,
@@ -51,12 +49,11 @@ interface CompetitorData {
     MatSnackBarModule,
     MatFormFieldModule,
     MatInputModule,
-    MatSelectModule,
-    MatDatepickerModule,
-    MatNativeDateModule,
+    FormsModule,
     MatTooltipModule,
     OllamaLoader,
     RelatedFeedbackModal,
+    ReportDateRangeFilter,
   ],
   templateUrl: './competitor-comparison.html',
   styleUrl: './competitor-comparison.css',
@@ -133,64 +130,8 @@ export class CompetitorComparison implements OnInit, OnDestroy {
     });
   }
 
-  applyPreset(p: ReportDatePreset): void {
-    this.selectedPresetId.set(p.id);
-    this.startDate.set(p.startDate.slice(0, 10));
-    this.endDate.set(p.endDate.slice(0, 10));
-  }
-
-  onPresetChange(id: string): void {
-    if (id === NO_DATE_FILTER_PRESET_ID) {
-      this.selectedPresetId.set(NO_DATE_FILTER_PRESET_ID);
-      this.startDate.set(null);
-      this.endDate.set(null);
-      return;
-    }
-    if (id === 'custom') {
-      this.selectedPresetId.set('custom');
-      return;
-    }
-    const p = this.presets().find((x) => x.id === id);
-    if (p) {
-      this.applyPreset(p);
-    }
-  }
-
-  onManualDate(): void {
-    this.selectedPresetId.set('custom');
-  }
-
-  dateStringToDate(value: string | null): Date | null {
-    if (!value) return null;
-    const [year, month, day] = value.split('-').map((part) => Number(part));
-    if (!year || !month || !day) return null;
-    return new Date(year, month - 1, day);
-  }
-
-  setStartDateFromPicker(value: Date | string | null): void {
-    this.startDate.set(this.dateToYmd(value));
-    this.onManualDate();
-  }
-
-  setEndDateFromPicker(value: Date | string | null): void {
-    this.endDate.set(this.dateToYmd(value));
-    this.onManualDate();
-  }
-
-  private dateToYmd(value: Date | string | null): string | null {
-    if (!value) return null;
-    if (typeof value === 'string') return value || null;
-    if (Number.isNaN(value.getTime())) return null;
-    const year = value.getFullYear();
-    const month = String(value.getMonth() + 1).padStart(2, '0');
-    const day = String(value.getDate()).padStart(2, '0');
-    return `${year}-${month}-${day}`;
-  }
-
   datesValid(): boolean {
-    const s = this.startDate();
-    const e = this.endDate();
-    return !!(s && e && s <= e);
+    return datesValidYmd(this.startDate(), this.endDate());
   }
 
   applyRangeAndReload(): void {

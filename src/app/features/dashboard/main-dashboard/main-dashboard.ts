@@ -6,10 +6,6 @@ import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatSelectModule } from '@angular/material/select';
-import { MatInputModule } from '@angular/material/input';
-import { FormsModule } from '@angular/forms';
 import { DashboardService, DashboardStats, DashboardTrends } from '../../../core/services/dashboard.service';
 import { AnalysisService } from '../../../core/services/analysis.service';
 import { AuthService } from '../../../core/services/auth.service';
@@ -17,6 +13,8 @@ import { TranslationService } from '../../../core/services/translation.service';
 import { CXWebSocketService, type CSVImportStatusEvent } from '../../../core/services/cx-websocket.service';
 import { Subscription } from 'rxjs';
 import { RelatedFeedbackModal, RelatedFeedbackRow } from '../../../core/components/related-feedback-modal/related-feedback-modal';
+import { ReportDateRangeFilter } from '../../../core/components/report-date-range-filter/report-date-range-filter';
+import { applyDashboardDatePreset, toLocalYmd } from '../../../core/utils/report-date-presets';
 
 interface KPICard {
   title: string;
@@ -56,11 +54,8 @@ interface SentimentCategoryBar {
     MatIconModule,
     MatButtonModule,
     MatProgressSpinnerModule,
-    MatFormFieldModule,
-    MatSelectModule,
-    MatInputModule,
-    FormsModule,
-    RelatedFeedbackModal
+    RelatedFeedbackModal,
+    ReportDateRangeFilter,
   ],
   templateUrl: './main-dashboard.html',
   styleUrl: './main-dashboard.css',
@@ -88,7 +83,11 @@ export class MainDashboard implements OnInit, OnDestroy {
   readonly drilldownPageSize = 10;
   private drilldownSentiment?: 'positive' | 'neutral' | 'negative';
   Math = Math; // Expose Math for template
-  today = new Date();
+  todayYmd = computed(() => toLocalYmd(new Date()));
+
+  selectedPresetId = signal<string>('last_30_days');
+  startDate = signal<string | null>(null);
+  endDate = signal<string | null>(null);
 
   t = (key: string): string => this.translationService.translate(key);
 
@@ -235,7 +234,10 @@ export class MainDashboard implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
-    this.onPresetChange('last_30_days');
+    const initial = applyDashboardDatePreset('last_30_days');
+    this.startDate.set(initial.startDate);
+    this.endDate.set(initial.endDate);
+    this.selectedPresetId.set('last_30_days');
     this.loadDashboardData();
     this.importStatusSub = this.websocket.onCSVImportStatus().subscribe((payload: CSVImportStatusEvent) => {
       if (payload?.status === 'completed') {
@@ -246,64 +248,6 @@ export class MainDashboard implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.importStatusSub?.unsubscribe();
-  }
-
-  dateRangeStart = signal<Date | null>(null);
-  dateRangeEnd = signal<Date | null>(null);
-  selectedPreset = signal<'all_time' | 'last_30_days' | 'custom'>('last_30_days');
-
-  dateRangeStartValue(): string {
-    const d = this.dateRangeStart();
-    return d ? d.toISOString().slice(0, 10) : '';
-  }
-
-  dateRangeEndValue(): string {
-    const d = this.dateRangeEnd();
-    return d ? d.toISOString().slice(0, 10) : '';
-  }
-
-  onDateStartChange(event: Event): void {
-    const input = event.target as HTMLInputElement;
-    const val = input?.value;
-    this.dateRangeStart.set(val ? new Date(val) : null);
-    this.loadDashboardData();
-  }
-
-  onDateEndChange(event: Event): void {
-    const input = event.target as HTMLInputElement;
-    const val = input?.value;
-    this.dateRangeEnd.set(val ? new Date(val) : null);
-    this.loadDashboardData();
-  }
-
-  onDateStartModelChange(value: string | null): void {
-    this.dateRangeStart.set(value ? new Date(value) : null);
-    this.selectedPreset.set('custom');
-  }
-
-  onDateEndModelChange(value: string | null): void {
-    this.dateRangeEnd.set(value ? new Date(value) : null);
-    this.selectedPreset.set('custom');
-  }
-
-  clearDateRange(): void {
-    this.dateRangeStart.set(null);
-    this.dateRangeEnd.set(null);
-    this.loadDashboardData();
-  }
-
-  onPresetChange(value: 'all_time' | 'last_30_days' | 'custom'): void {
-    this.selectedPreset.set(value);
-    const today = new Date();
-    if (value === 'all_time') {
-      this.dateRangeStart.set(null);
-      this.dateRangeEnd.set(today);
-    } else if (value === 'last_30_days') {
-      const start = new Date(today);
-      start.setDate(today.getDate() - 29);
-      this.dateRangeStart.set(start);
-      this.dateRangeEnd.set(today);
-    }
   }
 
   applyDateRange(): void {
@@ -322,11 +266,13 @@ export class MainDashboard implements OnInit, OnDestroy {
     const companyId = user?.role === 'admin'
       ? undefined
       : (user?.settings?.companyId || 1);
-    const start = this.dateRangeStart();
-    const end = this.dateRangeEnd();
+    const startYmd = this.startDate();
+    const endYmd = this.endDate();
+    const start = startYmd ? new Date(`${startYmd}T00:00:00`) : undefined;
+    const end = endYmd ? new Date(`${endYmd}T23:59:59.999`) : undefined;
 
     this.backendUnavailable.set(false);
-    this.dashboardService.getStats(companyId, start ?? undefined, end ?? undefined).subscribe({
+    this.dashboardService.getStats(companyId, start, end).subscribe({
       next: (response) => {
         if (response.success && response.data) {
           const data = response.data;
@@ -504,8 +450,8 @@ export class MainDashboard implements OnInit, OnDestroy {
       .getAnalyticsDrilldown({
         companyId,
         sentiment: this.drilldownSentiment,
-        startDate: this.dateRangeStart() ?? undefined,
-        endDate: this.dateRangeEnd() ?? undefined,
+        startDate: this.startDate() ? new Date(`${this.startDate()}T00:00:00`) : undefined,
+        endDate: this.endDate() ? new Date(`${this.endDate()}T23:59:59.999`) : undefined,
         page,
         limit: this.drilldownPageSize,
       })

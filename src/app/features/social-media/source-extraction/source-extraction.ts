@@ -12,6 +12,7 @@ import { MatTableModule } from '@angular/material/table';
 import { FormsModule } from '@angular/forms';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { OllamaLoader } from '../../../core/components/ollama-loader/ollama-loader';
+import { DatePickerInput } from '../../../core/components/date-picker-input/date-picker-input';
 import { SourceExtractionService } from '../../../core/services/source-extraction.service';
 import { TranslationService } from '../../../core/services/translation.service';
 
@@ -41,6 +42,7 @@ interface ExtractedRecord {
     MatTableModule,
     MatSnackBarModule,
     OllamaLoader,
+    DatePickerInput,
   ],
   templateUrl: './source-extraction.html',
   styleUrl: './source-extraction.css',
@@ -57,7 +59,7 @@ export class SourceExtraction implements OnInit {
   company = '';
   competitor = '';
   content = '';
-  date = '';
+  date = signal<string | null>(null);
   rating = '';
   sourceFilter = '';
 
@@ -76,7 +78,7 @@ export class SourceExtraction implements OnInit {
   }
 
   addRecord(): void {
-    if (!this.content.trim() || !this.company.trim() || !this.date) {
+    if (!this.content.trim() || !this.company.trim() || !this.date()) {
       this.snackBar.open(this.t('sourceExtraction.requiredMessage'), this.t('app.close'), { duration: 2500 });
       return;
     }
@@ -85,7 +87,7 @@ export class SourceExtraction implements OnInit {
       company: this.company.trim(),
       competitor: this.competitor.trim(),
       content: this.content.trim(),
-      date: this.date,
+      date: this.date()!,
       rating: this.rating.trim(),
     };
     this.processing.set(true);
@@ -102,15 +104,6 @@ export class SourceExtraction implements OnInit {
         this.snackBar.open(this.t('sourceExtraction.saveFailed'), this.t('app.close'), { duration: 2500 });
       },
     });
-  }
-
-  openNativeDatePicker(input: HTMLInputElement): void {
-    const picker = input as HTMLInputElement & { showPicker?: () => void };
-    if (typeof picker.showPicker === 'function' && !input.disabled) {
-      picker.showPicker();
-    } else {
-      input.focus();
-    }
   }
 
   removeRecord(id: string): void {
@@ -225,7 +218,7 @@ export class SourceExtraction implements OnInit {
     this.company = '';
     this.competitor = '';
     this.content = '';
-    this.date = '';
+    this.date.set(null);
     this.rating = '';
   }
 }

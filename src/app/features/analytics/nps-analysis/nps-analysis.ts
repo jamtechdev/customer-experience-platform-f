@@ -5,7 +5,6 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatSelectModule } from '@angular/material/select';
 import { MatInputModule } from '@angular/material/input';
 import { FormsModule } from '@angular/forms';
 import { DashboardService } from '../../../core/services/dashboard.service';
@@ -18,12 +17,14 @@ import {
   buildClientReportDatePresets,
   toIsoRangeFromYmd,
   NO_DATE_FILTER_PRESET_ID,
+  datesValidYmd,
   type ReportDatePreset,
 } from '../../../core/utils/report-date-presets';
 import { CXWebSocketService, type CSVImportStatusEvent } from '../../../core/services/cx-websocket.service';
 import { Subscription } from 'rxjs';
 import { OllamaLoader } from '../../../core/components/ollama-loader/ollama-loader';
 import { RelatedFeedbackModal, RelatedFeedbackRow } from '../../../core/components/related-feedback-modal/related-feedback-modal';
+import { ReportDateRangeFilter } from '../../../core/components/report-date-range-filter/report-date-range-filter';
 
 interface NPSData {
   score: number;
@@ -39,17 +40,14 @@ interface NPSData {
   selector: 'app-nps-analysis',
   imports: [
     CommonModule,
-    FormsModule,
     MatCardModule,
     MatButtonModule,
     MatIconModule,
     MatProgressSpinnerModule,
-    MatFormFieldModule,
-    MatSelectModule,
-    MatInputModule,
     MatSnackBarModule,
     OllamaLoader,
-    RelatedFeedbackModal
+    RelatedFeedbackModal,
+    ReportDateRangeFilter,
   ],
   templateUrl: './nps-analysis.html',
   styleUrl: './nps-analysis.css',
@@ -119,48 +117,8 @@ export class NpsAnalysis implements OnInit, OnDestroy {
     });
   }
 
-  applyPreset(p: ReportDatePreset): void {
-    this.selectedPresetId.set(p.id);
-    this.startDate.set(p.startDate.slice(0, 10));
-    this.endDate.set(p.endDate.slice(0, 10));
-  }
-
-  onPresetChange(id: string): void {
-    if (id === NO_DATE_FILTER_PRESET_ID) {
-      this.selectedPresetId.set(NO_DATE_FILTER_PRESET_ID);
-      this.startDate.set(null);
-      this.endDate.set(null);
-      return;
-    }
-    if (id === 'custom') {
-      this.selectedPresetId.set('custom');
-      return;
-    }
-    const p = this.presets().find((x) => x.id === id);
-    if (p) {
-      this.applyPreset(p);
-    }
-  }
-
-  presetLabel(p: ReportDatePreset): string {
-    const labels: Record<string, string> = {
-      all_time: 'reports.allTime',
-      last_7_days: 'reports.last7Days',
-      last_30_days: 'reports.last30Days',
-      last_calendar_month: 'reports.lastCalendarMonth',
-      ytd: 'reports.yearToDate',
-    };
-    return labels[p.id] ? this.t(labels[p.id]) : p.label;
-  }
-
-  onManualDate(): void {
-    this.selectedPresetId.set('custom');
-  }
-
   datesValid(): boolean {
-    const s = this.startDate();
-    const e = this.endDate();
-    return !!(s && e && s <= e);
+    return datesValidYmd(this.startDate(), this.endDate());
   }
 
   applyRangeAndReload(): void {

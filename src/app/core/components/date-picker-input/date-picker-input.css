@@ -1,0 +1,21 @@
+.date-picker-field {
+  width: 100%;
+  min-width: 0;
+}
+
+.date-picker-trigger {
+  min-height: 36px;
+  width: 36px;
+  height: 36px;
+  padding: 6px;
+  border-radius: 999px;
+}
+
+:host ::ng-deep .date-picker-field .mat-mdc-form-field-subscript-wrapper {
+  display: none;
+}
+
+:host ::ng-deep .date-picker-field input[type='date'].mat-mdc-input-element {
+  min-height: 24px;
+  cursor: pointer;
+}

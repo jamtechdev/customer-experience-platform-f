@@ -60,6 +60,33 @@ export function toIsoRangeFromYmd(startYmd: string, endYmd: string): { startDate
   };
 }
 
+export function datesValidYmd(startYmd: string | null, endYmd: string | null): boolean {
+  return !!(startYmd && endYmd && startYmd <= endYmd);
+}
+
+export function toLocalYmd(date: Date): string {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+export function applyDashboardDatePreset(
+  id: string,
+  now: Date = new Date(),
+): { startDate: string | null; endDate: string | null } {
+  const today = toLocalYmd(now);
+  if (id === 'all_time') {
+    return { startDate: null, endDate: today };
+  }
+  if (id === 'last_30_days') {
+    const start = new Date(now);
+    start.setDate(now.getDate() - 29);
+    return { startDate: toLocalYmd(start), endDate: today };
+  }
+  return { startDate: null, endDate: today };
+}
+
 /** Inclusive day count between yyyy-mm-dd strings (UTC date parts). */
 export function inclusiveDaysBetweenYmd(startYmd: string, endYmd: string): number {
   const s = new Date(`${startYmd}T00:00:00.000Z`).getTime();

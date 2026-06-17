@@ -250,6 +250,8 @@
     "negative": "Negative",
     "lastUpdated": "Last Updated",
     "period": "Period",
+    "reportPeriod": "Report period",
+    "earliestUpload": "Earliest upload",
     "comparison": "Comparison"
     ,
     "backendUnavailable": "API server is not reachable. Start the backend to load live data.",
@@ -381,6 +383,7 @@
     "fullReport": "Full CX report",
     "fixedPeriod": "Fixed period",
     "allData": "All data (no date filter)",
+    "activeRange": "Active range",
     "allTime": "All time",
     "last7Days": "Last 7 days",
     "last30Days": "Last 30 days",

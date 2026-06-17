@@ -25,40 +25,16 @@
             <mat-option value="excel">Excel</mat-option>
           </mat-select>
         </mat-form-field>
-        <mat-form-field appearance="outline" class="full-width">
-          <mat-label>{{ t('reports.fixedPeriod') }}</mat-label>
-          <mat-select [value]="selectedPresetId()" (selectionChange)="onPresetChange($event.value)">
-            <mat-option value="none">{{ t('reports.allData') }}</mat-option>
-            @for (p of presets(); track p.id) {
-              <mat-option [value]="p.id">{{ presetLabel(p) }}</mat-option>
-            }
-            <mat-option value="custom">{{ t('reports.customRange') }}</mat-option>
-          </mat-select>
-        </mat-form-field>
-        <mat-form-field appearance="outline">
-          <mat-label>{{ t('reports.fromDate') }}</mat-label>
-          <input
-            matInput
-            [matDatepicker]="reportStartPicker"
-            [ngModel]="dateStringToDate(startDate())"
-            [disabled]="selectedPresetId() !== 'custom'"
-            (ngModelChange)="setStartDateFromPicker($event)"
-          />
-          <mat-datepicker-toggle matIconSuffix [for]="reportStartPicker"></mat-datepicker-toggle>
-          <mat-datepicker #reportStartPicker></mat-datepicker>
-        </mat-form-field>
-        <mat-form-field appearance="outline">
-          <mat-label>{{ t('reports.toDate') }}</mat-label>
-          <input
-            matInput
-            [matDatepicker]="reportEndPicker"
-            [ngModel]="dateStringToDate(endDate())"
-            [disabled]="selectedPresetId() !== 'custom'"
-            (ngModelChange)="setEndDateFromPicker($event)"
-          />
-          <mat-datepicker-toggle matIconSuffix [for]="reportEndPicker"></mat-datepicker-toggle>
-          <mat-datepicker #reportEndPicker></mat-datepicker>
-        </mat-form-field>
+        <app-report-date-range-filter
+          class="builder-date-filter"
+          [showActiveRange]="false"
+          [showApplyButton]="false"
+          [lockDatesUntilCustom]="true"
+          periodLabelKey="reports.fixedPeriod"
+          [presets]="presets()"
+          [(selectedPresetId)]="selectedPresetId"
+          [(startDate)]="startDate"
+          [(endDate)]="endDate" />
         <div class="export-actions">
           <button
             mat-raised-button

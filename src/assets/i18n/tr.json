@@ -249,6 +249,8 @@
     "negative": "Negatif",
     "lastUpdated": "Son Güncelleme",
     "period": "Dönem",
+    "reportPeriod": "Rapor dönemi",
+    "earliestUpload": "En eski yükleme",
     "comparison": "Karşılaştırma"
     ,
     "backendUnavailable": "API sunucusuna erişilemiyor. Canlı verileri görmek için arka uç servisini başlatın.",
@@ -380,6 +382,7 @@
     "fullReport": "Kapsamlı CX raporu",
     "fixedPeriod": "Sabit dönem",
     "allData": "Tüm veriler (tarih filtresi yok)",
+    "activeRange": "Aktif aralık",
     "allTime": "Tüm zamanlar",
     "last7Days": "Son 7 gün",
     "last30Days": "Son 30 gün",

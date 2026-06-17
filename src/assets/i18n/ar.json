@@ -249,6 +249,8 @@
     "negative": "سلبي",
     "lastUpdated": "آخر تحديث",
     "period": "الفترة",
+    "reportPeriod": "فترة التقرير",
+    "earliestUpload": "أقدم تحميل",
     "comparison": "المقارنة",
     "backendUnavailable": "تعذر الوصول إلى خادم واجهة API. يرجى تشغيل الخدمة الخلفية لعرض البيانات المباشرة.",
     "loadFailed": "تعذر تحميل بيانات لوحة التحكم من الخادم."
@@ -379,6 +381,7 @@
     "fullReport": "تقرير CX كامل",
     "fixedPeriod": "فترة ثابتة",
     "allData": "كل البيانات (بدون فلتر تاريخ)",
+    "activeRange": "النطاق النشط",
     "allTime": "كل الوقت",
     "last7Days": "آخر 7 أيام",
     "last30Days": "آخر 30 يومًا",

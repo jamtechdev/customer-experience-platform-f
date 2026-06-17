@@ -1,0 +1,79 @@
+<ng-template #filterTemplate>
+  @if (periodTitle()) {
+    <div class="period-title">{{ periodTitle() }}</div>
+  }
+  @if (showActiveRange()) {
+    <div class="period-active">
+      {{ t('reports.activeRange') }}:
+      {{ activeRangeStartLabel() }}
+      →
+      {{ activeRangeEndLabel() }}
+    </div>
+  }
+  <div class="filters-row">
+    <mat-form-field appearance="outline">
+      <mat-label>{{ t(periodLabelKey()) }}</mat-label>
+      <mat-select [value]="selectedPresetId()" (selectionChange)="onPresetChange($event.value)">
+        @if (mode() === 'dashboard') {
+          <mat-option value="all_time">{{ t('reports.allTime') }}</mat-option>
+          <mat-option value="last_30_days">{{ t('reports.last30Days') }}</mat-option>
+          <mat-option value="custom">{{ t('reports.customRange') }}</mat-option>
+        } @else {
+          @if (showNoFilterOption()) {
+            <mat-option [value]="'none'">{{ t('reports.allData') }}</mat-option>
+          }
+          @for (p of presets(); track p.id) {
+            <mat-option [value]="p.id">{{ presetLabel(p) }}</mat-option>
+          }
+          <mat-option value="custom">{{ t('reports.customRange') }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+
+    <app-date-picker-input
+      labelKey="reports.fromDate"
+      [disabled]="datesLocked()"
+      [value]="startDate()"
+      (valueChange)="onStartDateChange($event)" />
+
+    <app-date-picker-input
+      labelKey="reports.toDate"
+      [disabled]="datesLocked()"
+      [value]="endDate()"
+      (valueChange)="onEndDateChange($event)" />
+
+    @if (showApplyButton()) {
+      @if (applyFlat()) {
+        <button
+          mat-flat-button
+          color="primary"
+          type="button"
+          (click)="onApplyClick()"
+          [disabled]="applyDisabled()">
+          {{ t(applyLabelKey()) }}
+        </button>
+      } @else {
+        <button
+          mat-stroked-button
+          color="primary"
+          type="button"
+          (click)="onApplyClick()"
+          [disabled]="applyDisabled()">
+          {{ t(applyLabelKey()) }}
+        </button>
+      }
+    }
+
+    <ng-content select=".filter-extra-action"></ng-content>
+  </div>
+</ng-template>
+
+@if (wrapInCard()) {
+  <mat-card class="filter-card">
+    <mat-card-content>
+      <ng-container *ngTemplateOutlet="filterTemplate"></ng-container>
+    </mat-card-content>
+  </mat-card>
+} @else {
+  <ng-container *ngTemplateOutlet="filterTemplate"></ng-container>
+}
