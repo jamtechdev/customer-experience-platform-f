@@ -27,6 +27,12 @@
   margin-bottom: 20px;
 }
 
+.period-active {
+  font-weight: 600;
+  color: #475569;
+  margin-bottom: 12px;
+}
+
 .filters {
   display: grid;
   grid-template-columns: minmax(220px, 1.3fr) repeat(2, minmax(170px, 1fr)) repeat(3, max-content);
@@ -77,6 +83,10 @@
 :host ::ng-deep .filters input.mat-mdc-input-element {
   color: #111827;
   font-weight: 500;
+}
+
+:host ::ng-deep .filters input[type='date'].mat-mdc-input-element {
+  min-height: 24px;
 }
 
 .loading-container {

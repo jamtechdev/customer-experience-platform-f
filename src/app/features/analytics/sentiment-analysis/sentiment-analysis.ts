@@ -6,9 +6,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatSelectModule } from '@angular/material/select';
-import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatInputModule } from '@angular/material/input';
-import { MatNativeDateModule } from '@angular/material/core';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatDialogModule } from '@angular/material/dialog';
@@ -64,8 +62,6 @@ interface SentimentReferenceRow {
     MatFormFieldModule,
     MatSelectModule,
     MatInputModule,
-    MatDatepickerModule,
-    MatNativeDateModule,
     MatProgressSpinnerModule,
     MatChipsModule,
     MatSnackBarModule,
@@ -283,40 +279,14 @@ export class SentimentAnalysis implements OnInit, OnDestroy {
     this.applyRangeAndReload();
   }
 
-  openNativeDatePicker(input: HTMLInputElement): void {
-    const picker = input as HTMLInputElement & { showPicker?: () => void };
-    if (typeof picker.showPicker === 'function' && !input.disabled) {
-      picker.showPicker();
-    } else {
-      input.focus();
-    }
-  }
-
-  dateStringToDate(value: string | null): Date | null {
-    if (!value) return null;
-    const [year, month, day] = value.split('-').map((part) => Number(part));
-    if (!year || !month || !day) return null;
-    return new Date(year, month - 1, day);
-  }
-
-  setStartDateFromPicker(value: Date | string | null): void {
-    this.startDate.set(this.dateToYmd(value));
+  onStartDateChange(value: string): void {
+    this.startDate.set(value?.trim() ? value : null);
     this.onManualDate();
   }
 
-  setEndDateFromPicker(value: Date | string | null): void {
-    this.endDate.set(this.dateToYmd(value));
+  onEndDateChange(value: string): void {
+    this.endDate.set(value?.trim() ? value : null);
     this.onManualDate();
-  }
-
-  private dateToYmd(value: Date | string | null): string | null {
-    if (!value) return null;
-    if (typeof value === 'string') return value || null;
-    if (Number.isNaN(value.getTime())) return null;
-    const year = value.getFullYear();
-    const month = String(value.getMonth() + 1).padStart(2, '0');
-    const day = String(value.getDate()).padStart(2, '0');
-    return `${year}-${month}-${day}`;
   }
 
   reRunAiEnrichment(): void {

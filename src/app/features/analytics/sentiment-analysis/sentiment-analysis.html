@@ -18,6 +18,12 @@
   <div class="filters-section">
     <mat-card class="filter-card">
       <mat-card-content>
+        <div class="period-active">
+          Active range:
+          {{ startDate() || t('reports.allData') }}
+          →
+          {{ endDate() || t('reports.allData') }}
+        </div>
         <div class="filters filters-row">
           <mat-form-field appearance="outline">
             <mat-label>{{ t('dashboard.period') }}</mat-label>
@@ -32,16 +38,22 @@
 
           <mat-form-field appearance="outline">
             <mat-label>{{ t('reports.fromDate') }}</mat-label>
-            <input matInput [matDatepicker]="sentStartPicker" [ngModel]="dateStringToDate(startDate())" (ngModelChange)="setStartDateFromPicker($event)" name="sentStart" />
-            <mat-datepicker-toggle matIconSuffix [for]="sentStartPicker"></mat-datepicker-toggle>
-            <mat-datepicker #sentStartPicker></mat-datepicker>
+            <input
+              matInput
+              type="date"
+              [ngModel]="startDate() ?? ''"
+              (ngModelChange)="onStartDateChange($event)"
+              name="sentStart" />
           </mat-form-field>
 
           <mat-form-field appearance="outline">
             <mat-label>{{ t('reports.toDate') }}</mat-label>
-            <input matInput [matDatepicker]="sentEndPicker" [ngModel]="dateStringToDate(endDate())" (ngModelChange)="setEndDateFromPicker($event)" name="sentEnd" />
-            <mat-datepicker-toggle matIconSuffix [for]="sentEndPicker"></mat-datepicker-toggle>
-            <mat-datepicker #sentEndPicker></mat-datepicker>
+            <input
+              matInput
+              type="date"
+              [ngModel]="endDate() ?? ''"
+              (ngModelChange)="onEndDateChange($event)"
+              name="sentEnd" />
           </mat-form-field>
 
           <button mat-stroked-button color="primary" type="button" (click)="applyRangeAndReload()" [disabled]="initialLoading()">
