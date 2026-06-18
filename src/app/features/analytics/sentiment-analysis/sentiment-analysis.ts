@@ -88,6 +88,7 @@ export class SentimentAnalysis implements OnInit, OnDestroy {
 
   /** Full-page loader — shown at most once per session when no cached stats exist. */
   initialLoading = signal(false);
+  refreshing = signal(false);
   exportLoading = signal(false);
   tableExportLoading = signal(false);
   reanalyzing = signal(false);
@@ -235,7 +236,8 @@ export class SentimentAnalysis implements OnInit, OnDestroy {
   }
 
   refreshData(): void {
-    this.applyRangeAndReload();
+    this.refreshing.set(true);
+    this.reloadAll(this.filtersApplied(), true);
   }
 
   datesValid(): boolean {
@@ -402,10 +404,84 @@ export class SentimentAnalysis implements OnInit, OnDestroy {
     );
   }
 
-  private reloadAll(withFilters: boolean = this.filtersApplied()): void {
-    this.loadSentimentStats(withFilters);
-    this.loadSentimentPatterns(withFilters);
-    this.loadFeedbackList(withFilters);
+  private reloadAll(withFilters: boolean = this.filtersApplied(), showRefreshToast = false): void {
+    const companyId = this.getCompanyId();
+    const { start, end } = resolveOptionalApiDateRange(withFilters, this.startDate(), this.endDate());
+    const rel = this.filterIsRelevant();
+    const isRelevant = rel === 'true' ? true : rel === 'false' ? false : undefined;
+
+    const showInitialLoader = !this.hasCompletedInitialLoad && !this.stats();
+    if (showInitialLoader) {
+      this.initialLoading.set(true);
+    }
+
+    forkJoin({
+      stats: this.analysisService.getSentimentStats(companyId, start, end),
+      patterns: this.analysisService.getSentimentPatterns(companyId, start, end),
+      feedback: this.analysisService.getFeedbackWithSentiment(companyId, start, end, this.page(), this.pageSize(), {
+        journeyStage: this.filterJourneyStage() || undefined,
+        isRelevant,
+        includeIrrelevant: rel === 'all',
+        search: this.filterSearch().trim() || undefined,
+      }),
+    }).subscribe({
+      next: ({ stats: statsRes, patterns: patternsRes, feedback: feedbackRes }) => {
+        const data = statsRes?.data ?? {};
+        const total = data.total ?? (data.positive || 0) + (data.negative || 0) + (data.neutral || 0);
+        this.stats.set({
+          positive: data.positive ?? 0,
+          negative: data.negative ?? 0,
+          neutral: data.neutral ?? 0,
+          total,
+          averageScore: data.averageScore ?? 0,
+        });
+        this.sentimentInterpretation.set(
+          typeof data.interpretation === 'string' ? data.interpretation.trim() : ''
+        );
+
+        const patterns = patternsRes?.data?.patterns ?? [];
+        this.serverPatterns.set(
+          patterns.map((p) => ({
+            sentiment: (p.sentiment || '') as SentimentReferenceRow['sentiment'],
+            patterns: p.patterns || '—',
+          }))
+        );
+
+        if (feedbackRes?.success && feedbackRes?.data) {
+          const list = (feedbackRes.data.list || []).map((row: any) => ({
+            ...row,
+            content: this.humanizeFeedbackText(row.content),
+            date: normalizeApiDateToIso(row.date),
+            sentiment: row.sentiment,
+          }));
+          this.feedbackList.set(list);
+          this.feedbackTotal.set(feedbackRes.data.total ?? list.length);
+        } else {
+          this.feedbackList.set([]);
+          this.feedbackTotal.set(0);
+        }
+
+        this.hasCompletedInitialLoad = true;
+        this.initialLoading.set(false);
+        this.refreshing.set(false);
+        if (showRefreshToast) {
+          this.snackBar.open(this.t('app.refreshed'), this.t('app.close'), { duration: 2500 });
+        }
+      },
+      error: () => {
+        this.stats.set({ positive: 0, negative: 0, neutral: 0, total: 0, averageScore: 0 });
+        this.sentimentInterpretation.set('');
+        this.serverPatterns.set([]);
+        this.feedbackList.set([]);
+        this.feedbackTotal.set(0);
+        this.hasCompletedInitialLoad = true;
+        this.initialLoading.set(false);
+        this.refreshing.set(false);
+        if (showRefreshToast) {
+          this.snackBar.open(this.t('app.refreshFailed'), this.t('app.close'), { duration: 4000 });
+        }
+      },
+    });
   }
 
   loadSentimentPatterns(withFilters: boolean = this.filtersApplied()): void {

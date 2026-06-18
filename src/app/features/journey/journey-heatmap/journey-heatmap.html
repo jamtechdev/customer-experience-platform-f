@@ -43,6 +43,9 @@
               @if (importedCsvRows()) {
                 {{ t('heatmap.csvImported', { total: importedCsvRows()!.toLocaleString() }) }} ·
               }
+              @if (rowsSaved() && rowsSaved() !== cohortTotal()) {
+                {{ t('heatmap.rowsSaved', { total: rowsSaved()!.toLocaleString() }) }} ·
+              }
               {{ t('heatmap.cohortTotal', { total: cohortTotal()!.toLocaleString() }) }}
               · {{ t('heatmap.mappedTotal', { total: heatmapMappedTotal().toLocaleString() }) }}
             </span>

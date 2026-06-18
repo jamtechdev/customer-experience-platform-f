@@ -1,9 +1,10 @@
-import { Component, inject, OnDestroy, OnInit, signal } from '@angular/core';
+import { Component, computed, inject, OnDestroy, OnInit, signal } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { CommonModule } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatButtonModule } from '@angular/material/button';
+import { MatIconModule } from '@angular/material/icon';
 import { TwitterCxReportStore } from '../../../core/services/twitter-cx-report.store';
 import { AuthService } from '../../../core/services/auth.service';
 import { AnalysisService } from '../../../core/services/analysis.service';
@@ -20,6 +21,11 @@ interface DatasetProfileRow {
   feedbackIds?: number[];
 }
 
+const BANNER_METRICS = new Set([
+  'CSV file rows (latest import)',
+  'Rows saved in database',
+]);
+
 @Component({
   selector: 'app-dataset-profile',
   standalone: true,
@@ -28,6 +34,7 @@ interface DatasetProfileRow {
     MatCardModule,
     MatSnackBarModule,
     MatButtonModule,
+    MatIconModule,
     OllamaLoader,
     RelatedFeedbackModal,
   ],
@@ -57,6 +64,25 @@ export class DatasetProfile implements OnInit, OnDestroy {
   rows = signal<DatasetProfileRow[]>([]);
   importedCsvRows = signal<number | null>(null);
   rowsSaved = signal<number | null>(null);
+  cohortTotal = signal<number | null>(null);
+
+  displayRows = computed(() =>
+    this.rows().filter((row) => !BANNER_METRICS.has(row.metric) && row.metric !== 'Date span')
+  );
+
+  dateSpanRow = computed(() => this.rows().find((r) => r.metric === 'Date span') ?? null);
+
+  scopeBannerText = computed(() => {
+    const csv = this.importedCsvRows();
+    const saved = this.rowsSaved();
+    const cohort = this.cohortTotal();
+    if (!saved && !cohort) return '';
+    return this.t('datasetProfile.scopeLine', {
+      csv: csv ? csv.toLocaleString() : '—',
+      saved: saved ? saved.toLocaleString() : '—',
+      cohort: cohort ? cohort.toLocaleString() : '—',
+    });
+  });
 
   ngOnInit(): void {
     this.loadProfile();
@@ -84,6 +110,9 @@ export class DatasetProfile implements OnInit, OnDestroy {
           this.rows.set(res.data?.datasetProfileRows ? res.data.datasetProfileRows : []);
           this.importedCsvRows.set(Number(res.data?.dataset?.importedCsvRows ?? 0) || null);
           this.rowsSaved.set(Number(res.data?.dataset?.total ?? 0) || null);
+          this.cohortTotal.set(
+            Number(res.data?.sentiment?.total ?? res.data?.dataset?.primaryCohortSize ?? 0) || null
+          );
         }
         this.loading.set(false);
       },
@@ -93,6 +122,14 @@ export class DatasetProfile implements OnInit, OnDestroy {
         this.snackBar.open(twitterCxReportFailureMessage(), this.t('app.close'), { duration: 6000 });
       },
     });
+  }
+
+  metricIcon(metric: string): string {
+    const m = metric.toLowerCase();
+    if (m.includes('total')) return 'dataset';
+    if (m.includes('cx-related') || m.includes('original')) return 'forum';
+    if (m.includes('brand')) return 'support_agent';
+    return 'analytics';
   }
 
   isCountRow(row: DatasetProfileRow): boolean {

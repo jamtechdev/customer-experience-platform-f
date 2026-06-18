@@ -140,12 +140,17 @@ export class DashboardReports implements OnInit, OnDestroy {
     if (!scope) return '';
     const cohort = scope.cohortTotal.toLocaleString();
     if (scope.importedCsvRows != null && scope.importedCsvRows > 0) {
+      const saved =
+        scope.savedRows != null && scope.savedRows > 0
+          ? scope.savedRows.toLocaleString()
+          : '—';
       return this.t('reports.dashboardScopeLine', {
         csv: scope.importedCsvRows.toLocaleString(),
+        saved,
         cohort,
       });
     }
-    return this.t('reports.dashboardScopeCsvOnly', { csv: '—', cohort });
+    return this.t('reports.dashboardScopeCsvOnly', { cohort });
   });
 
   ngOnInit(): void {

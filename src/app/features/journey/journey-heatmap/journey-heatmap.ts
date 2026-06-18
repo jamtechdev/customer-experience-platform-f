@@ -58,6 +58,7 @@ export class JourneyHeatmap implements OnInit, OnDestroy {
   stages = signal<StageRow[]>([]);
   cohortTotal = signal<number | null>(null);
   importedCsvRows = signal<number | null>(null);
+  rowsSaved = signal<number | null>(null);
   error = signal<string | null>(null);
   drilldownOpen = signal(false);
   drilldownLoading = signal(false);
@@ -124,11 +125,12 @@ export class JourneyHeatmap implements OnInit, OnDestroy {
         }
         this.error.set(null);
         this.cohortTotal.set(
-          Number(res.data?.dataset?.total ?? res.data?.sentiment?.total ?? 0) || null
+          Number(res.data?.sentiment?.total ?? res.data?.dataset?.primaryCohortSize ?? 0) || null
         );
         this.importedCsvRows.set(
           Number(res.data?.dataset?.importedCsvRows ?? 0) || null
         );
+        this.rowsSaved.set(Number(res.data?.dataset?.total ?? 0) || null);
         if (res.success && Array.isArray(res.data?.heatmapPct)) {
           this.stages.set(
             res.data.heatmapPct.map((r: any) => this.mapHeatmapRow(r))

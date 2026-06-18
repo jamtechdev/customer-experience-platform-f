@@ -5,8 +5,6 @@ import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatChipsModule } from '@angular/material/chips';
-import { MatTableModule } from '@angular/material/table';
 import { TwitterCxReportStore } from '../../../core/services/twitter-cx-report.store';
 import { AnalysisService } from '../../../core/services/analysis.service';
 import { AuthService } from '../../../core/services/auth.service';
@@ -15,6 +13,7 @@ import { OllamaLoader } from '../../../core/components/ollama-loader/ollama-load
 import { twitterCxReportFailureMessage } from '../../../core/utils/twitter-cx-report-load';
 import { RelatedFeedbackModal, RelatedFeedbackRow } from '../../../core/components/related-feedback-modal/related-feedback-modal';
 import { alignLinkedCountInText, drilldownModalTotal } from '../../../core/utils/drilldown-display';
+import { TranslationService } from '../../../core/services/translation.service';
 
 interface JourneyStage {
   id: number;
@@ -38,8 +37,6 @@ interface JourneyStage {
     MatButtonModule,
     MatIconModule,
     MatProgressSpinnerModule,
-    MatChipsModule,
-    MatTableModule,
     MatSnackBarModule,
     OllamaLoader,
     RelatedFeedbackModal
@@ -52,6 +49,9 @@ export class JourneyMap implements OnInit, OnDestroy {
   private analysisService = inject(AnalysisService);
   private authService = inject(AuthService);
   private snackBar = inject(MatSnackBar);
+  private translationService = inject(TranslationService);
+  readonly t = (key: string, params?: Record<string, string | number>): string =>
+    this.translationService.translate(key, params);
   drilldownOpen = signal(false);
   drilldownLoading = signal(false);
   drilldownTitle = signal('');

@@ -9,6 +9,7 @@
   <div class="filters-section">
     <app-report-date-range-filter
       [wrapInCard]="true"
+      [lockDatesUntilCustom]="true"
       [presets]="presets()"
       [(selectedPresetId)]="selectedPresetId"
       [(startDate)]="startDate"
@@ -21,9 +22,9 @@
         type="button"
         class="filter-extra-action cx-action-btn"
         (click)="refreshData()"
-        [disabled]="initialLoading() || reanalyzing()">
-        <mat-icon>refresh</mat-icon>
-        {{ (initialLoading() || reanalyzing()) ? 'Refreshing…' : t('app.refresh') }}
+        [disabled]="initialLoading() || refreshing() || reanalyzing()">
+        <mat-icon [class.spin-icon]="refreshing()">refresh</mat-icon>
+        {{ (initialLoading() || refreshing() || reanalyzing()) ? t('app.refreshing') : t('app.refresh') }}
       </button>
       <button
         mat-raised-button
@@ -45,6 +46,11 @@
       [title]="t('sentiment.loadingStatsTitle')"
       [subtitle]="t('sentiment.loadingStatsSubtitle')">
     </app-ollama-loader>
+  </div>
+
+  <div *ngIf="refreshing() && !initialLoading()" class="ai-processing-inline" role="status" aria-live="polite">
+    <mat-progress-spinner mode="indeterminate" diameter="18"></mat-progress-spinner>
+    <span>{{ t('app.refreshing') }}</span>
   </div>
 
   <div *ngIf="reanalyzing()" class="ai-processing-inline" role="status" aria-live="polite">

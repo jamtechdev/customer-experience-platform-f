@@ -1,65 +1,85 @@
 <div class="journey-container">
-  <div class="header-section">
-    <h1>Customer Journey Map</h1>
-    <p class="subtitle">Map customer touchpoints and identify satisfaction points</p>
-  </div>
+  <header class="page-header">
+    <div>
+      <h1>{{ t('journeyMap.title') }}</h1>
+      <p class="subtitle">{{ t('journeyMap.subtitle') }}</p>
+    </div>
+    <button mat-raised-button color="primary" type="button" class="cx-action-btn" (click)="loadJourneyData()" [disabled]="loading()">
+      <mat-icon>refresh</mat-icon>
+      {{ loading() ? t('app.loading') : t('app.refresh') }}
+    </button>
+  </header>
 
-  <div *ngIf="loading()" class="loading-container">
-    <app-ollama-loader
-      title="Loading customer journey map"
-      subtitle="Reading saved journey stages, satisfaction points, and pain points from the AI report">
-    </app-ollama-loader>
-  </div>
-
-  <div *ngIf="!loading() && journeyStages().length === 0" class="empty-hint">
-    No journey map data yet. Import CSV feedback with sentiment labels, wait for the post-import report build, or trigger rebuild from Import history.
-  </div>
-
-  <div *ngIf="!loading() && journeyStages().length > 0" class="journey-stages">
-    <mat-card class="section-card">
-      <mat-card-header>
-        <mat-card-title>Journey map with satisfaction and dissatisfaction points</mat-card-title>
-      </mat-card-header>
+  @if (loading()) {
+    <div class="loading-container">
+      <app-ollama-loader
+        [title]="t('journeyMap.loadingTitle')"
+        [subtitle]="t('journeyMap.loadingSubtitle')">
+      </app-ollama-loader>
+    </div>
+  } @else if (journeyStages().length === 0) {
+    <mat-card class="empty-card">
       <mat-card-content>
-        <div class="table-wrapper">
-          <table mat-table [dataSource]="journeyStages()" class="journey-table report-mat-table">
-            <ng-container matColumnDef="stage">
-              <th mat-header-cell *matHeaderCellDef>Journey stage</th>
-              <td mat-cell *matCellDef="let row"><strong>{{ row.name }}</strong></td>
-            </ng-container>
-            <ng-container matColumnDef="satisfaction">
-              <th mat-header-cell *matHeaderCellDef>Main satisfaction points</th>
-              <td mat-cell *matCellDef="let row">
-                <div>{{ satisfactionDisplay(row) }}</div>
-                <button
-                  *ngIf="satisfactionDrilldownIds(row).length"
-                  mat-button
-                  type="button"
-                  (click)="openReferences(row.name, 'satisfaction', satisfactionDrilldownIds(row))">
-                  View references ({{ satisfactionDrilldownIds(row).length }})
-                </button>
-              </td>
-            </ng-container>
-            <ng-container matColumnDef="dissatisfaction">
-              <th mat-header-cell *matHeaderCellDef>Main dissatisfaction points</th>
-              <td mat-cell *matCellDef="let row">
-                <div>{{ dissatisfactionDisplay(row) }}</div>
-                <button
-                  *ngIf="dissatisfactionDrilldownIds(row).length"
-                  mat-button
-                  type="button"
-                  (click)="openReferences(row.name, 'dissatisfaction', dissatisfactionDrilldownIds(row))">
-                  View references ({{ dissatisfactionDrilldownIds(row).length }})
-                </button>
-              </td>
-            </ng-container>
-            <tr mat-header-row *matHeaderRowDef="['stage','satisfaction','dissatisfaction']"></tr>
-            <tr mat-row *matRowDef="let row; columns: ['stage','satisfaction','dissatisfaction']"></tr>
-          </table>
-        </div>
+        <mat-icon>map</mat-icon>
+        <p>{{ t('journeyMap.empty') }}</p>
       </mat-card-content>
     </mat-card>
-  </div>
+  } @else {
+    <div class="journey-timeline" role="list">
+      @for (row of journeyStages(); track row.name; let i = $index) {
+        <article class="stage-card" role="listitem">
+          <div class="stage-rail">
+            <span class="stage-index">{{ i + 1 }}</span>
+            @if (i < journeyStages().length - 1) {
+              <span class="stage-connector" aria-hidden="true"></span>
+            }
+          </div>
+          <div class="stage-body">
+            <div class="stage-head">
+              <h2>{{ row.name }}</h2>
+              @if (row.feedbackCount > 0) {
+                <span class="stage-count">n={{ row.feedbackCount | number }}</span>
+              }
+            </div>
+            <div class="stage-columns">
+              <section class="insight-block positive">
+                <div class="insight-label">
+                  <mat-icon>sentiment_satisfied</mat-icon>
+                  {{ t('journeyMap.satisfaction') }}
+                </div>
+                <p>{{ satisfactionDisplay(row) }}</p>
+                @if (satisfactionDrilldownIds(row).length) {
+                  <button
+                    mat-stroked-button
+                    type="button"
+                    class="ref-btn"
+                    (click)="openReferences(row.name, 'satisfaction', satisfactionDrilldownIds(row))">
+                    {{ t('journeyMap.viewRefs', { count: satisfactionDrilldownIds(row).length }) }}
+                  </button>
+                }
+              </section>
+              <section class="insight-block negative">
+                <div class="insight-label">
+                  <mat-icon>sentiment_dissatisfied</mat-icon>
+                  {{ t('journeyMap.dissatisfaction') }}
+                </div>
+                <p>{{ dissatisfactionDisplay(row) }}</p>
+                @if (dissatisfactionDrilldownIds(row).length) {
+                  <button
+                    mat-stroked-button
+                    type="button"
+                    class="ref-btn"
+                    (click)="openReferences(row.name, 'dissatisfaction', dissatisfactionDrilldownIds(row))">
+                    {{ t('journeyMap.viewRefs', { count: dissatisfactionDrilldownIds(row).length }) }}
+                  </button>
+                }
+              </section>
+            </div>
+          </div>
+        </article>
+      }
+    </div>
+  }
 </div>
 
 <app-related-feedback-modal
