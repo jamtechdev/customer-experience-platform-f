@@ -525,15 +525,20 @@
   },
   "heatmap": {
     "title": "Journey Satisfaction Heatmap",
-    "subtitle": "Satisfaction and dissatisfaction by journey stage. Green = satisfaction, red = pain areas.",
+    "subtitle": "Satisfaction and dissatisfaction by journey stage. Cells show message counts; color intensity reflects share within the row.",
     "load": "Load Heatmap",
     "loadingTitle": "Loading journey satisfaction heatmap",
     "loadingSubtitle": "Reading saved stage-level positive, neutral, and negative sentiment from the AI report",
     "noStages": "No journey stages with data. Configure journey stages in Admin, upload feedback, run analysis, then click Load Heatmap.",
     "sectionTitle": "Journey satisfaction heatmap",
-    "sectionSubtitle": "Stage-level sentiment heatmap (%).",
-    "insight": "The experience is most conversation-heavy in Usage and Purchase, with Delivery showing the weakest satisfaction balance.",
-    "intensity": "(% intensity)"
+    "sectionSubtitle": "Stage-level sentiment counts (click a cell to view related messages).",
+    "insight": "Each row sums to the messages mapped to that journey stage. Row totals together match your primary CSV cohort.",
+    "intensity": "Row % intensity",
+    "cohortScope": "Dataset scope",
+    "cohortTotal": "Primary cohort: {{total}} messages",
+    "mappedTotal": "Mapped to stages: {{total}}",
+    "countHint": "Large number = message count. Small % = share within that stage. Clicking a cell opens exactly that many rows.",
+    "stageCol": "Stage (n)"
   },
   "metrics": {
     "nps": {

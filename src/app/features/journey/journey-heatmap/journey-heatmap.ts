@@ -19,6 +19,9 @@ interface StageRow {
   satisfactionScore: number;
   dissatisfactionScore: number;
   feedbackCount: number;
+  positiveCount: number;
+  neutralCount: number;
+  negativeCount: number;
   feedbackIds: number[];
   positiveFeedbackIds: number[];
   neutralFeedbackIds: number[];
@@ -53,6 +56,7 @@ export class JourneyHeatmap implements OnInit, OnDestroy {
   private refreshSub?: Subscription;
   loading = signal(false);
   stages = signal<StageRow[]>([]);
+  cohortTotal = signal<number | null>(null);
   error = signal<string | null>(null);
   drilldownOpen = signal(false);
   drilldownLoading = signal(false);
@@ -82,6 +86,8 @@ export class JourneyHeatmap implements OnInit, OnDestroy {
     const total = this.stages().length;
     return total === 0 ? 0 : Math.ceil(total / this.pageSize);
   });
+
+  heatmapMappedTotal = computed(() => this.stages().reduce((sum, row) => sum + row.feedbackCount, 0));
 
   ngOnInit(): void {
     this.loadHeatmap(false);
@@ -116,20 +122,12 @@ export class JourneyHeatmap implements OnInit, OnDestroy {
           return;
         }
         this.error.set(null);
+        this.cohortTotal.set(
+          Number(res.data?.dataset?.total ?? res.data?.sentiment?.total ?? 0) || null
+        );
         if (res.success && Array.isArray(res.data?.heatmapPct)) {
           this.stages.set(
-            res.data.heatmapPct.map((r: any) => ({
-              stageName: r.stage ?? 'Unknown',
-              satisfactionScore: Number(r.positive ?? 0) / 100,
-              dissatisfactionScore: Number(r.negative ?? 0) / 100,
-              feedbackCount: Number(r.total ?? 0),
-              feedbackIds: this.toFeedbackIds(r.feedbackIds),
-              positiveFeedbackIds: this.toFeedbackIds(r.positiveFeedbackIds),
-              neutralFeedbackIds: this.toFeedbackIds(r.neutralFeedbackIds),
-              negativeFeedbackIds: this.toFeedbackIds(r.negativeFeedbackIds),
-              painPoints: [],
-              satisfactionPoints: [],
-            }))
+            res.data.heatmapPct.map((r: any) => this.mapHeatmapRow(r))
           );
           this.page.set(1);
         } else {
@@ -164,10 +162,37 @@ export class JourneyHeatmap implements OnInit, OnDestroy {
   }
 
   getPositiveHeatClass(score: number): string {
-    if (score >= 0.7) return 'heat-pos-high';
-    if (score >= 0.4) return 'heat-pos-mid';
+    if (score >= 70) return 'heat-pos-high';
+    if (score >= 40) return 'heat-pos-mid';
     if (score > 0) return 'heat-pos-low';
     return 'heat-none';
+  }
+
+  positivePct(row: StageRow): number {
+    if (!row.feedbackCount) return 0;
+    return (row.positiveCount / row.feedbackCount) * 100;
+  }
+
+  negativePct(row: StageRow): number {
+    if (!row.feedbackCount) return 0;
+    return (row.negativeCount / row.feedbackCount) * 100;
+  }
+
+  neutralPct(row: StageRow): number {
+    if (!row.feedbackCount) return 0;
+    return (row.neutralCount / row.feedbackCount) * 100;
+  }
+
+  sentimentIds(row: StageRow, label: HeatmapSentiment): number[] {
+    if (label === 'positive') return row.positiveFeedbackIds;
+    if (label === 'negative') return row.negativeFeedbackIds;
+    return row.neutralFeedbackIds;
+  }
+
+  sentimentCount(row: StageRow, label: HeatmapSentiment): number {
+    if (label === 'positive') return row.positiveCount;
+    if (label === 'negative') return row.negativeCount;
+    return row.neutralCount;
   }
 
   getNeutralHeatClass(pct: number): string {
@@ -177,15 +202,24 @@ export class JourneyHeatmap implements OnInit, OnDestroy {
     return 'heat-none';
   }
 
-  getNegativeHeatClass(score: number): string {
-    if (score >= 0.6) return 'heat-neg-high';
-    if (score >= 0.3) return 'heat-neg-mid';
-    if (score > 0) return 'heat-neg-low';
+  getNegativeHeatClass(pct: number): string {
+    if (pct >= 60) return 'heat-neg-high';
+    if (pct >= 30) return 'heat-neg-mid';
+    if (pct > 0) return 'heat-neg-low';
     return 'heat-none';
   }
 
-  neutralPct(row: StageRow): number {
-    return Math.max(0, 100 - ((row.satisfactionScore + row.dissatisfactionScore) * 100));
+  openRelated(stage: StageRow, label: HeatmapSentiment): void {
+    const ids = this.sentimentIds(stage, label);
+    const unique = [...new Set(ids.map((id) => Number(id)).filter((id) => Number.isFinite(id) && id > 0))];
+    const displayCount = this.sentimentCount(stage, label);
+    if (!unique.length && displayCount <= 0) return;
+    this.drilldownState = { stage, label, ids: unique };
+    this.drilldownIds = unique;
+    this.drilldownTotal.set(unique.length || displayCount);
+    this.drilldownTitle.set(`${stage.stageName} · ${label} (${this.drilldownTotal().toLocaleString()} messages)`);
+    this.drilldownOpen.set(true);
+    this.loadDrilldownPage(1);
   }
 
   goPrevPage(): void {
@@ -197,17 +231,6 @@ export class JourneyHeatmap implements OnInit, OnDestroy {
     if (total === 0) return;
     const maxPage = Math.ceil(total / this.pageSize);
     this.page.update((p) => Math.min(maxPage, p + 1));
-  }
-
-  openRelated(stage: StageRow, label: HeatmapSentiment, ids: number[]): void {
-    const unique = [...new Set((ids || []).map((id) => Number(id)).filter((id) => Number.isFinite(id) && id > 0))];
-    if (!unique.length && stage.feedbackCount <= 0) return;
-    this.drilldownState = { stage, label, ids: unique };
-    this.drilldownIds = unique;
-    this.drilldownTotal.set(drilldownModalTotal(this.drilldownIds));
-    this.drilldownTitle.set(`${stage.stageName} · ${label}`);
-    this.drilldownOpen.set(true);
-    this.loadDrilldownPage(1);
   }
 
   loadDrilldownPage(page: number): void {
@@ -233,6 +256,37 @@ export class JourneyHeatmap implements OnInit, OnDestroy {
         this.drilldownTotal.set(0);
       },
     });
+  }
+
+  private mapHeatmapRow(r: Record<string, unknown>): StageRow {
+    const total = Number(r['total'] ?? 0);
+    const posIds = this.toFeedbackIds(r['positiveFeedbackIds']);
+    const neuIds = this.toFeedbackIds(r['neutralFeedbackIds']);
+    const negIds = this.toFeedbackIds(r['negativeFeedbackIds']);
+    const posPct = Number(r['positive'] ?? 0);
+    const neuPct = Number(r['neutral'] ?? 0);
+    const negPct = Number(r['negative'] ?? 0);
+    const positiveCount =
+      Number(r['positiveCount'] ?? 0) || posIds.length || (total ? Math.round((posPct / 100) * total) : 0);
+    const neutralCount =
+      Number(r['neutralCount'] ?? 0) || neuIds.length || (total ? Math.round((neuPct / 100) * total) : 0);
+    const negativeCount =
+      Number(r['negativeCount'] ?? 0) || negIds.length || (total ? Math.round((negPct / 100) * total) : 0);
+    return {
+      stageName: String(r['stage'] ?? 'Unknown'),
+      satisfactionScore: posPct / 100,
+      dissatisfactionScore: negPct / 100,
+      feedbackCount: total,
+      positiveCount,
+      neutralCount,
+      negativeCount,
+      feedbackIds: this.toFeedbackIds(r['feedbackIds']),
+      positiveFeedbackIds: posIds,
+      neutralFeedbackIds: neuIds,
+      negativeFeedbackIds: negIds,
+      painPoints: [],
+      satisfactionPoints: [],
+    };
   }
 
   private toFeedbackIds(value: unknown): number[] {

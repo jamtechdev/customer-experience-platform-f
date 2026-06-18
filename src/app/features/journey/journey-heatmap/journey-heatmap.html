@@ -35,42 +35,61 @@
         <mat-card-subtitle>{{ t('heatmap.sectionSubtitle') }}</mat-card-subtitle>
       </mat-card-header>
       <mat-card-content>
+        @if (cohortTotal()) {
+          <div class="data-scope-banner">
+            <strong>{{ t('heatmap.cohortScope') }}</strong>
+            <span>
+              {{ t('heatmap.cohortTotal', { total: cohortTotal()!.toLocaleString() }) }}
+              · {{ t('heatmap.mappedTotal', { total: heatmapMappedTotal().toLocaleString() }) }}
+            </span>
+            <span class="scope-note">{{ t('heatmap.countHint') }}</span>
+          </div>
+        }
         <p class="subtitle">{{ t('heatmap.insight') }}</p>
         <div class="heatmap-pct-wrap">
-          <div class="heatmap-pct-grid" role="grid" aria-label="Journey satisfaction heatmap percent">
-            <div class="heatmap-pct-corner"></div>
+          <div class="heatmap-pct-grid" role="grid" aria-label="Journey satisfaction heatmap counts">
+            <div class="heatmap-pct-corner">{{ t('heatmap.stageCol') }}</div>
             <div class="heatmap-pct-hdr">{{ t('dashboard.positive') }}</div>
             <div class="heatmap-pct-hdr">{{ t('dashboard.neutral') }}</div>
             <div class="heatmap-pct-hdr">{{ t('dashboard.negative') }}</div>
             @for (row of pagedStages(); track row.stageName) {
-              <div class="heatmap-pct-stage">{{ row.stageName }}</div>
+              <div class="heatmap-pct-stage">
+                <span class="stage-name">{{ row.stageName }}</span>
+                <span class="stage-total">n={{ row.feedbackCount | number }}</span>
+              </div>
               <button
                 class="heatmap-pct-cell count-link"
                 type="button"
-                [ngClass]="getPositiveHeatClass(row.satisfactionScore)"
-                (click)="openRelated(row, 'positive', row.positiveFeedbackIds)">
-                {{ (row.satisfactionScore * 100).toFixed(0) }}
+                [ngClass]="getPositiveHeatClass(positivePct(row))"
+                (click)="openRelated(row, 'positive')"
+                [attr.aria-label]="row.stageName + ' positive ' + row.positiveCount">
+                <span class="cell-count">{{ row.positiveCount | number }}</span>
+                <span class="cell-pct">{{ positivePct(row).toFixed(0) }}%</span>
               </button>
               <button
                 class="heatmap-pct-cell count-link"
                 type="button"
                 [ngClass]="getNeutralHeatClass(neutralPct(row))"
-                (click)="openRelated(row, 'neutral', row.neutralFeedbackIds)">
-                {{ neutralPct(row).toFixed(0) }}
+                (click)="openRelated(row, 'neutral')"
+                [attr.aria-label]="row.stageName + ' neutral ' + row.neutralCount">
+                <span class="cell-count">{{ row.neutralCount | number }}</span>
+                <span class="cell-pct">{{ neutralPct(row).toFixed(0) }}%</span>
               </button>
               <button
                 class="heatmap-pct-cell count-link"
                 type="button"
-                [ngClass]="getNegativeHeatClass(row.dissatisfactionScore)"
-                (click)="openRelated(row, 'negative', row.negativeFeedbackIds)">
-                {{ (row.dissatisfactionScore * 100).toFixed(0) }}
+                [ngClass]="getNegativeHeatClass(negativePct(row))"
+                (click)="openRelated(row, 'negative')"
+                [attr.aria-label]="row.stageName + ' negative ' + row.negativeCount">
+                <span class="cell-count">{{ row.negativeCount | number }}</span>
+                <span class="cell-pct">{{ negativePct(row).toFixed(0) }}%</span>
               </button>
             }
           </div>
           <div class="heatmap-legend-scale">
-            <span>0</span>
+            <span>0%</span>
             <div class="heatmap-legend-bar"></div>
-            <span>80</span>
+            <span>80%</span>
             <span class="heatmap-legend-cap">{{ t('heatmap.intensity') }}</span>
           </div>
         </div>
