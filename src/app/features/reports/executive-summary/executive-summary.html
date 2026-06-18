@@ -36,6 +36,19 @@
           </app-ollama-loader>
         </div>
       } @else if (data()) {
+        <div class="data-scope-banner" *ngIf="cohortDateSpan() || importedRowCount()">
+          <mat-icon>dataset</mat-icon>
+          <div>
+            <strong>Dataset scope</strong>
+            <p>
+              <span *ngIf="cohortDateSpan()">Period: {{ cohortDateSpan() }} · </span>
+              <span *ngIf="importedRowCount()">CSV imported rows: {{ importedRowCount()!.toLocaleString() }} · </span>
+              Analyzed in database: {{ totalTweetVolume().toLocaleString() }}
+            </p>
+            <p class="scope-note">All counts below use the same uploaded dataset. CX-related and brand/support are overlapping subsets — they do not add up to total.</p>
+          </div>
+        </div>
+
         <mat-card class="ai-summary-card" *ngIf="data()!.aiSummary">
           <mat-card-content>
             <div class="summary-head">
@@ -46,66 +59,94 @@
           </mat-card-content>
         </mat-card>
 
-        <div class="summary-grid">
-          <mat-card class="summary-card">
-            <mat-card-content>
-              <div class="summary-head">
-                <mat-icon>grid_view</mat-icon>
-                <span>{{ t('reports.totalTweets') }}</span>
-              </div>
-              <div class="summary-value">{{ totalTweetVolume().toLocaleString() }}</div>
-            </mat-card-content>
-          </mat-card>
+        <div class="kpi-section">
+          <div class="kpi-section-head">
+            <h3>Volume overview</h3>
+            <span class="nps-pill">Social NPS proxy: {{ displayNpsScore().toFixed(1) }}</span>
+          </div>
+          <div class="summary-grid">
+            <mat-card class="summary-card">
+              <mat-card-content>
+                <div class="summary-head">
+                  <mat-icon>grid_view</mat-icon>
+                  <span>{{ t('reports.totalTweets') }}</span>
+                </div>
+                <div class="summary-value">{{ totalTweetVolume().toLocaleString() }}</div>
+                <div class="summary-note">All rows matching company + date filter</div>
+              </mat-card-content>
+            </mat-card>
 
-          <mat-card class="summary-card">
-            <mat-card-content>
-              <div class="summary-head">
-                <mat-icon>filter_alt</mat-icon>
-                <span>{{ t('reports.cxRelated') }}</span>
-              </div>
-              <div class="summary-value">{{ cxRelatedVolume().toLocaleString() }}</div>
-            </mat-card-content>
-          </mat-card>
+            <mat-card class="summary-card">
+              <mat-card-content>
+                <div class="summary-head">
+                  <mat-icon>filter_alt</mat-icon>
+                  <span>{{ t('reports.cxRelated') }}</span>
+                </div>
+                <div class="summary-value">{{ cxRelatedVolume().toLocaleString() }}</div>
+                <div class="summary-note">AI / cohort relevance subset</div>
+              </mat-card-content>
+            </mat-card>
 
-          <mat-card class="summary-card">
-            <mat-card-content>
-              <div class="summary-head">
-                <mat-icon>campaign</mat-icon>
-                <span>{{ t('reports.brandSupport') }}</span>
-              </div>
-              <div class="summary-value">{{ brandSupportVolume().toLocaleString() }}</div>
-            </mat-card-content>
-          </mat-card>
+            <mat-card class="summary-card">
+              <mat-card-content>
+                <div class="summary-head">
+                  <mat-icon>campaign</mat-icon>
+                  <span>{{ t('reports.brandSupport') }}</span>
+                </div>
+                <div class="summary-value">{{ brandSupportVolume().toLocaleString() }}</div>
+                <div class="summary-note">Brand or support-authored traffic</div>
+              </mat-card-content>
+            </mat-card>
 
-          <mat-card class="summary-card summary-card-highlight">
-            <mat-card-content>
-              <div class="summary-head">
-                <mat-icon>person</mat-icon>
-                <span>{{ t('reports.originalCustomerCx') }}</span>
-              </div>
-              <div class="summary-value">{{ originalCustomerCxVolume().toLocaleString() }}</div>
-              <div class="summary-note">{{ t('reports.originalCustomerCxNote') }}</div>
-            </mat-card-content>
-          </mat-card>
+            <mat-card class="summary-card summary-card-highlight">
+              <mat-card-content>
+                <div class="summary-head">
+                  <mat-icon>person</mat-icon>
+                  <span>{{ t('reports.originalCustomerCx') }}</span>
+                </div>
+                <div class="summary-value">{{ originalCustomerCxVolume().toLocaleString() }}</div>
+                <div class="summary-note">{{ t('reports.originalCustomerCxNote') }}</div>
+              </mat-card-content>
+            </mat-card>
+          </div>
         </div>
 
-        <ul class="narrative-list">
-          <li>
-            {{ t('reports.executiveNarrativeVolume', { total: totalTweetVolume().toLocaleString(), cx: cxRelatedVolume().toLocaleString(), brand: brandSupportVolume().toLocaleString() }) }}
-          </li>
-          <li>
-            {{ executiveSentimentNarrative() }}
-          </li>
-          <li>
-            {{ t('reports.executiveNarrativePain') }}
-          </li>
-          <li>
-            {{ t('reports.executiveNarrativeProduct') }}
-          </li>
-          <li>
-            {{ t('reports.executiveNarrativePositive') }}
-          </li>
-        </ul>
+        <mat-card class="sentiment-panel" *ngIf="sentimentTotal() > 0">
+          <mat-card-content>
+            <div class="sentiment-panel-head">
+              <h3>Sentiment mix (primary cohort)</h3>
+              <span>{{ sentimentTotal().toLocaleString() }} labeled messages</span>
+            </div>
+            <div class="sentiment-bar">
+              <div class="bar-seg positive" [style.width.%]="sentimentBar('positive')"></div>
+              <div class="bar-seg neutral" [style.width.%]="sentimentBar('neutral')"></div>
+              <div class="bar-seg negative" [style.width.%]="sentimentBar('negative')"></div>
+            </div>
+            <div class="sentiment-legend">
+              <span class="legend-item positive">Positive {{ sentimentPct('positive').toFixed(1) }}%</span>
+              <span class="legend-item neutral">Neutral {{ sentimentPct('neutral').toFixed(1) }}%</span>
+              <span class="legend-item negative">Negative {{ sentimentPct('negative').toFixed(1) }}%</span>
+            </div>
+          </mat-card-content>
+        </mat-card>
+
+        <mat-card class="insights-panel">
+          <mat-card-content>
+            <h3>Executive insights</h3>
+            <ul class="narrative-list" *ngIf="narrativeBullets().length; else fallbackNarrative">
+              <li *ngFor="let line of narrativeBullets()">{{ line }}</li>
+            </ul>
+            <ng-template #fallbackNarrative>
+              <ul class="narrative-list">
+                <li>
+                  {{ t('reports.executiveNarrativeVolume', { total: totalTweetVolume().toLocaleString(), cx: cxRelatedVolume().toLocaleString(), brand: brandSupportVolume().toLocaleString() }) }}
+                </li>
+                <li>{{ executiveSentimentNarrative() }}</li>
+                <li *ngIf="cohortDateSpan()">Data span: {{ cohortDateSpan() }}</li>
+              </ul>
+            </ng-template>
+          </mat-card-content>
+        </mat-card>
       } @else {
         <p class="empty-text">{{ t('reports.noDataSelectedPeriod') }}</p>
       }

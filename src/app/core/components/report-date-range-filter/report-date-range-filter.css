@@ -17,13 +17,14 @@
   grid-template-columns: minmax(220px, 1.3fr) repeat(2, minmax(190px, 1fr)) repeat(3, max-content);
   gap: 14px;
   align-items: start;
+  overflow: visible;
 }
 
 .filter-card {
   border: 1px solid #e5e7eb;
   border-radius: 18px;
   box-shadow: 0 8px 24px rgba(15, 23, 42, 0.05);
-  overflow: hidden;
+  overflow: visible;
 }
 
 .filter-card .mat-mdc-card-content {

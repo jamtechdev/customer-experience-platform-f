@@ -35,7 +35,6 @@
           <colgroup>
             <col class="col-id" />
             <col class="col-sentiment" />
-            <col class="col-source" />
             <col class="col-summary" />
             <col class="col-original" />
             <col class="col-related" />
@@ -44,7 +43,6 @@
             <tr>
               <th>ID</th>
               <th>Sentiment</th>
-              <th>Source</th>
               <th>AI summary</th>
               <th>Original feedback</th>
               <th>Why related</th>
@@ -58,11 +56,6 @@
                   {{ row.sentiment || 'unknown' }}
                 </span>
                 <small *ngIf="row.score !== null && row.score !== undefined">Score: {{ row.score }}</small>
-              </td>
-              <td data-label="Source" class="source-cell">
-                <div>{{ row.source || '-' }}</div>
-                <small *ngIf="row.author">{{ row.author }}</small>
-                <small>{{ displayDate(row.date) }}</small>
               </td>
               <td data-label="AI summary" class="text-cell summary-cell">
                 <ng-container *ngIf="summaryText(row); else missingSummary">

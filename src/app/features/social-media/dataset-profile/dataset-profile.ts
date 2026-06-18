@@ -18,6 +18,7 @@ interface DatasetProfileRow {
   metric: string;
   value: string;
   comment: string;
+  feedbackIds?: number[];
 }
 
 @Component({
@@ -55,6 +56,7 @@ export class DatasetProfile implements OnInit, OnDestroy {
   drilldownPage = signal(1);
   drilldownTotal = signal(0);
   readonly drilldownPageSize = 10;
+  private drilldownIds: number[] = [];
 
   rows = signal<DatasetProfileRow[]>([]);
 
@@ -99,22 +101,25 @@ export class DatasetProfile implements OnInit, OnDestroy {
 
   openProfileDrilldown(row: DatasetProfileRow): void {
     if (!this.isCountRow(row)) return;
+    const ids = row.feedbackIds?.filter((id) => Number.isFinite(id) && id > 0) ?? [];
+    if (!ids.length) return;
     this.drilldownTitle.set(row.metric);
     this.drilldownOpen.set(true);
+    this.drilldownIds = [...new Set(ids)];
     this.loadDrilldownPage(1);
   }
 
   loadDrilldownPage(page: number): void {
+    if (!this.drilldownIds.length) return;
     const user = this.authService.currentUser();
     const companyId = user?.role === 'admin' ? undefined : (user?.settings?.companyId ?? 1);
     this.drilldownPage.set(page);
     this.drilldownLoading.set(true);
     this.drilldownRows.set([]);
-    this.analysisService.getAnalyticsDrilldown({
-      companyId,
+    this.analysisService.getFeedbackByIds(companyId, this.drilldownIds, {
       page,
       limit: this.drilldownPageSize,
-      includeIrrelevant: false,
+      includeIrrelevant: true,
     }).subscribe({
       next: (res) => {
         this.drilldownLoading.set(false);
@@ -134,5 +139,6 @@ export class DatasetProfile implements OnInit, OnDestroy {
     this.drilldownRows.set([]);
     this.drilldownPage.set(1);
     this.drilldownTotal.set(0);
+    this.drilldownIds = [];
   }
 }

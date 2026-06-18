@@ -32,11 +32,11 @@
               <td mat-cell *matCellDef="let row">
                 <div>{{ row.satisfactionPoints[0] || '-' }}</div>
                 <button
-                  *ngIf="row.satisfactionReferenceIds?.length"
+                  *ngIf="satisfactionDrilldownIds(row).length"
                   mat-button
                   type="button"
-                  (click)="openReferences(row.name, 'satisfaction', row.satisfactionReferenceIds)">
-                  View references ({{ row.satisfactionReferenceIds.length }})
+                  (click)="openReferences(row.name, 'satisfaction', satisfactionDrilldownIds(row))">
+                  View references ({{ satisfactionDrilldownIds(row).length }})
                 </button>
               </td>
             </ng-container>
@@ -45,11 +45,11 @@
               <td mat-cell *matCellDef="let row">
                 <div>{{ row.painPoints[0] || '-' }}</div>
                 <button
-                  *ngIf="row.dissatisfactionReferenceIds?.length"
+                  *ngIf="dissatisfactionDrilldownIds(row).length"
                   mat-button
                   type="button"
-                  (click)="openReferences(row.name, 'dissatisfaction', row.dissatisfactionReferenceIds)">
-                  View references ({{ row.dissatisfactionReferenceIds.length }})
+                  (click)="openReferences(row.name, 'dissatisfaction', dissatisfactionDrilldownIds(row))">
+                  View references ({{ dissatisfactionDrilldownIds(row).length }})
                 </button>
               </td>
             </ng-container>

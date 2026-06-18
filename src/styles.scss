@@ -188,6 +188,16 @@ input[type="date"] {
   color: var(--text-primary);
   min-width: 0;
   color-scheme: light;
+  cursor: pointer;
+}
+
+/* Allow native date picker popups to render outside Material field shells */
+.mat-mdc-form-field:has(input[type="date"]) .mat-mdc-text-field-wrapper,
+.mat-mdc-form-field:has(input[type="date"]) .mat-mdc-form-field-infix,
+app-date-picker-input,
+.filters-row,
+.filter-card {
+  overflow: visible;
 }
 
 .date-picker-trigger.mat-mdc-icon-button {

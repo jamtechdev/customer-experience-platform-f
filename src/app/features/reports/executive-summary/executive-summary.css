@@ -174,6 +174,113 @@
   color: #6b7280;
 }
 
+.data-scope-banner {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  padding: 14px 16px;
+  margin-bottom: 16px;
+  border-radius: 12px;
+  border: 1px solid #bfdbfe;
+  background: linear-gradient(135deg, #eff6ff 0%, #f8fafc 100%);
+  color: #1e3a5f;
+}
+
+.data-scope-banner mat-icon {
+  color: #2563eb;
+  margin-top: 2px;
+}
+
+.data-scope-banner p {
+  margin: 4px 0 0;
+  line-height: 1.45;
+  color: #334155;
+}
+
+.data-scope-banner .scope-note {
+  font-size: 0.85rem;
+  color: #64748b;
+}
+
+.kpi-section {
+  margin-bottom: 16px;
+}
+
+.kpi-section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.kpi-section-head h3,
+.sentiment-panel-head h3,
+.insights-panel h3 {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.nps-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: #ecfdf5;
+  color: #047857;
+  font-weight: 700;
+  font-size: 0.875rem;
+  border: 1px solid #a7f3d0;
+}
+
+.sentiment-panel,
+.insights-panel {
+  margin-bottom: 16px;
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+  box-shadow: none;
+}
+
+.sentiment-panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+  color: #64748b;
+  font-size: 0.875rem;
+}
+
+.sentiment-bar {
+  display: flex;
+  height: 14px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: #e5e7eb;
+}
+
+.bar-seg.positive { background: #22c55e; }
+.bar-seg.neutral { background: #f59e0b; }
+.bar-seg.negative { background: #ef4444; }
+
+.sentiment-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 10px;
+  font-size: 0.875rem;
+}
+
+.legend-item.positive { color: #15803d; }
+.legend-item.neutral { color: #b45309; }
+.legend-item.negative { color: #b91c1c; }
+
+.insights-panel .narrative-list {
+  margin-top: 8px;
+}
+
 @media (max-width: 1024px) {
   .report-period-row {
     grid-template-columns: repeat(2, minmax(220px, 1fr));

@@ -130,11 +130,11 @@ export class ExecutiveSummary implements OnInit {
     }
     this.exporting.set(true);
     const companyId = this.authService.currentUser()?.settings?.companyId ?? 1;
-    const { startDate: sd, endDate: ed } =
+    const { startDate: sd, endDate: ed, displayRange } =
       this.selectedPresetId() === NO_DATE_FILTER_PRESET_ID
         ? this.exportAllDataRange()
-        : toIsoRangeFromYmd(this.startDate()!, this.endDate()!);
-    this.reportService.exportDashboardToPdf({ companyId, startDate: sd, endDate: ed }).subscribe({
+        : { ...toIsoRangeFromYmd(this.startDate()!, this.endDate()!), displayRange: undefined };
+    this.reportService.exportDashboardToPdf({ companyId, startDate: sd, endDate: ed, displayRange }).subscribe({
       next: (blob) => {
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
@@ -152,41 +152,102 @@ export class ExecutiveSummary implements OnInit {
     });
   }
 
-  private exportAllDataRange(): { startDate: string; endDate: string } {
+  private exportAllDataRange(): { startDate: string; endDate: string; displayRange?: string } {
+    const span = this.cohortDateSpan();
     const allTime = this.presets().find((p) => p.id === 'all_time');
-    if (allTime) {
-      return { startDate: allTime.startDate, endDate: allTime.endDate };
+    if (allTime && allTime.startDate && allTime.endDate) {
+      return {
+        startDate: allTime.startDate,
+        endDate: allTime.endDate,
+        displayRange: span || 'All imported data',
+      };
+    }
+    if (span && span.includes(' to ')) {
+      const [from, to] = span.split(' to ').map((s) => s.trim());
+      if (from && to) {
+        return {
+          startDate: new Date(`${from}T00:00:00.000Z`).toISOString(),
+          endDate: new Date(`${to}T23:59:59.999Z`).toISOString(),
+          displayRange: span,
+        };
+      }
     }
     const fallbackEnd = new Date();
     fallbackEnd.setHours(23, 59, 59, 999);
     return {
-      startDate: new Date('1970-01-01T00:00:00.000Z').toISOString(),
+      startDate: new Date('2020-01-01T00:00:00.000Z').toISOString(),
       endDate: fallbackEnd.toISOString(),
+      displayRange: span || 'All imported data',
     };
   }
 
+  importedRowCount(): number | null {
+    const imported = this.data()?.cohort?.importedRows;
+    return imported != null && imported > 0 ? imported : null;
+  }
+
+  countsAreConsistent(): boolean {
+    const total = this.totalTweetVolume();
+    const cx = this.cxRelatedVolume();
+    const original = this.originalCustomerCxVolume();
+    return cx <= total && original <= total && this.brandSupportVolume() <= total;
+  }
+
+  sentimentTotal(): number {
+    return this.data()?.sentiment?.total ?? this.data()?.kpis.totalFeedback ?? 0;
+  }
+
+  sentimentBar(kind: 'positive' | 'neutral' | 'negative'): number {
+    const s = this.data()?.sentiment;
+    const total = this.sentimentTotal();
+    if (!s || !total) return 0;
+    return (s[kind] / total) * 100;
+  }
+
   totalTweetVolume(): number {
+    const cohort = this.data()?.cohort;
+    if (cohort && cohort.total > 0) return cohort.total;
     return this.data()?.kpis.totalFeedback ?? 0;
   }
 
   originalCustomerCxVolume(): number {
-    return this.data()?.nps.total ?? 0;
+    const cohort = this.data()?.cohort;
+    if (cohort && cohort.originalCustomerCx > 0) return cohort.originalCustomerCx;
+    if (cohort && cohort.primaryCohortSize > 0) return cohort.primaryCohortSize;
+    return this.totalTweetVolume();
   }
 
   cxRelatedVolume(): number {
-    const original = this.originalCustomerCxVolume();
-    return original > 0 ? original : this.totalTweetVolume();
+    const cohort = this.data()?.cohort;
+    if (cohort && cohort.cxRelated > 0) return cohort.cxRelated;
+    return this.totalTweetVolume();
   }
 
   brandSupportVolume(): number {
-    const total = this.totalTweetVolume();
-    const original = this.originalCustomerCxVolume();
-    return Math.max(total - original, 0);
+    const cohort = this.data()?.cohort;
+    if (cohort) return Math.max(cohort.brandSupport, 0);
+    return 0;
+  }
+
+  cohortDateSpan(): string | null {
+    return this.data()?.cohort?.dateSpan ?? null;
+  }
+
+  narrativeBullets(): string[] {
+    const bullets = this.data()?.cohort?.executiveSummaryBullets;
+    if (bullets?.length) return bullets;
+    return [];
+  }
+
+  displayNpsScore(): number {
+    const cohortNps = this.data()?.cohort?.socialNpsProxy;
+    if (cohortNps != null && Number.isFinite(cohortNps)) return cohortNps;
+    return Number(this.data()?.nps.score ?? 0);
   }
 
   sentimentPct(kind: 'positive' | 'neutral' | 'negative'): number {
+    const total = this.sentimentTotal();
     const s = this.data()?.sentiment;
-    const total = (s?.positive ?? 0) + (s?.neutral ?? 0) + (s?.negative ?? 0);
     if (!total || !s) return 0;
     return (s[kind] / total) * 100;
   }
@@ -196,7 +257,7 @@ export class ExecutiveSummary implements OnInit {
       positive: this.sentimentPct('positive').toFixed(1),
       neutral: this.sentimentPct('neutral').toFixed(1),
       negative: this.sentimentPct('negative').toFixed(1),
-      nps: Number(this.data()?.nps.score ?? 0).toFixed(1),
+      nps: this.displayNpsScore().toFixed(1),
     });
   }
 }

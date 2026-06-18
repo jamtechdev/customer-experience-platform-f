@@ -44,13 +44,25 @@
             <div class="heatmap-pct-hdr">{{ t('dashboard.negative') }}</div>
             @for (row of pagedStages(); track row.stageName) {
               <div class="heatmap-pct-stage">{{ row.stageName }}</div>
-              <button class="heatmap-pct-cell count-link" type="button" (click)="openRelated(row, 'positive', row.positiveFeedbackIds)">
+              <button
+                class="heatmap-pct-cell count-link"
+                type="button"
+                [ngClass]="getPositiveHeatClass(row.satisfactionScore)"
+                (click)="openRelated(row, 'positive', row.positiveFeedbackIds)">
                 {{ (row.satisfactionScore * 100).toFixed(0) }}
               </button>
-              <button class="heatmap-pct-cell count-link" type="button" (click)="openRelated(row, 'neutral', row.neutralFeedbackIds)">
-                {{ Math.max(0, 100 - ((row.satisfactionScore + row.dissatisfactionScore) * 100)).toFixed(0) }}
+              <button
+                class="heatmap-pct-cell count-link"
+                type="button"
+                [ngClass]="getNeutralHeatClass(neutralPct(row))"
+                (click)="openRelated(row, 'neutral', row.neutralFeedbackIds)">
+                {{ neutralPct(row).toFixed(0) }}
               </button>
-              <button class="heatmap-pct-cell count-link" type="button" (click)="openRelated(row, 'negative', row.negativeFeedbackIds)">
+              <button
+                class="heatmap-pct-cell count-link"
+                type="button"
+                [ngClass]="getNegativeHeatClass(row.dissatisfactionScore)"
+                (click)="openRelated(row, 'negative', row.negativeFeedbackIds)">
                 {{ (row.dissatisfactionScore * 100).toFixed(0) }}
               </button>
             }

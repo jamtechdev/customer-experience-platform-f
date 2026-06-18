@@ -14,6 +14,8 @@ import { RelatedFeedbackModal, RelatedFeedbackRow } from '../../../core/componen
 export interface ProcessImprovementRow {
   text: string;
   referenceFeedbackIds: number[];
+  linkedFeedbackIds: number[];
+  linkedCount: number;
 }
 
 @Component({
@@ -84,6 +86,19 @@ export class ProcessEnhancement implements OnInit, OnDestroy {
                 items.map((p) => ({
                   text: p.text,
                   referenceFeedbackIds: Array.isArray(p.referenceFeedbackIds) ? p.referenceFeedbackIds : [],
+                  linkedFeedbackIds: Array.isArray((p as { linkedFeedbackIds?: number[] }).linkedFeedbackIds)
+                    ? (p as { linkedFeedbackIds?: number[] }).linkedFeedbackIds!
+                    : Array.isArray(p.referenceFeedbackIds)
+                      ? p.referenceFeedbackIds
+                      : [],
+                  linkedCount:
+                    typeof (p as { linkedCount?: number }).linkedCount === 'number'
+                      ? (p as { linkedCount?: number }).linkedCount!
+                      : Array.isArray((p as { linkedFeedbackIds?: number[] }).linkedFeedbackIds)
+                        ? (p as { linkedFeedbackIds?: number[] }).linkedFeedbackIds!.length
+                        : Array.isArray(p.referenceFeedbackIds)
+                          ? p.referenceFeedbackIds.length
+                          : 0,
                 }))
               );
             } else {
@@ -91,6 +106,8 @@ export class ProcessEnhancement implements OnInit, OnDestroy {
                 (res.data.processImprovements ?? []).map((text) => ({
                   text,
                   referenceFeedbackIds: [],
+                  linkedFeedbackIds: [],
+                  linkedCount: 0,
                 }))
               );
             }
@@ -111,12 +128,16 @@ export class ProcessEnhancement implements OnInit, OnDestroy {
   }
 
   openReferences(row: ProcessImprovementRow): void {
-    const ids = row.referenceFeedbackIds ?? [];
+    const ids = row.linkedFeedbackIds?.length ? row.linkedFeedbackIds : row.referenceFeedbackIds ?? [];
     if (!ids.length) return;
-    this.drilldownTitle.set('Process improvement · reference tweets');
+    this.drilldownTitle.set(row.text);
     this.drilldownOpen.set(true);
     this.drilldownIds = [...new Set(ids.map((id) => Number(id)).filter((id) => Number.isFinite(id) && id > 0))];
     this.loadDrilldownPage(1);
+  }
+
+  referenceCount(row: ProcessImprovementRow): number {
+    return row.linkedCount > 0 ? row.linkedCount : row.linkedFeedbackIds.length || row.referenceFeedbackIds.length;
   }
 
   loadDrilldownPage(page: number): void {
@@ -128,7 +149,7 @@ export class ProcessEnhancement implements OnInit, OnDestroy {
     this.analysisService.getFeedbackByIds(companyId, this.drilldownIds, {
       page,
       limit: this.drilldownPageSize,
-      includeIrrelevant: false,
+      includeIrrelevant: true,
     }).subscribe({
       next: (res) => {
         this.drilldownLoading.set(false);

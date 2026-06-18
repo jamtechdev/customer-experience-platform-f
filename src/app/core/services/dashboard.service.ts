@@ -92,6 +92,7 @@ export interface ExecutiveDashboardData {
     positive: number;
     negative: number;
     neutral: number;
+    total?: number;
   };
   nps: {
     score: number;
@@ -119,6 +120,21 @@ export interface ExecutiveDashboardData {
   }>;
   aiSummary?: string;
   lastUpdated: string;
+  cohort?: {
+    total: number;
+    cxRelated: number;
+    brandSupport: number;
+    originalCustomerCx: number;
+    primaryCohortSize: number;
+    socialNpsProxy: number;
+    dateSpan?: string;
+    executiveSummaryBullets: string[];
+    importedRows?: number;
+    sentimentPositive?: number;
+    sentimentNegative?: number;
+    sentimentNeutral?: number;
+    sentimentTotal?: number;
+  } | null;
 }
 
 @Injectable({

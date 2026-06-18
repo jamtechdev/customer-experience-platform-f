@@ -1,13 +1,20 @@
-<mat-form-field appearance="outline" class="date-picker-field">
+<mat-form-field
+  appearance="outline"
+  class="date-picker-field"
+  (click)="onFieldClick($event, dateInput)">
   <mat-label>{{ fieldLabel() }}</mat-label>
   <input
     #dateInput
     matInput
     type="date"
+    class="date-picker-native-input"
     [ngModel]="value() ?? ''"
     [disabled]="disabled()"
+    [attr.aria-label]="ariaLabel()"
+    readonly
+    tabindex="0"
     (ngModelChange)="onValueChange($event)"
-    (click)="openPicker(dateInput)" />
+    (keydown)="onInputKeydown($event, dateInput)" />
   <button
     mat-icon-button
     matSuffix
@@ -15,7 +22,7 @@
     type="button"
     [disabled]="disabled()"
     [attr.aria-label]="ariaLabel()"
-    (click)="$event.preventDefault(); $event.stopPropagation(); openPicker(dateInput)">
+    (click)="onTriggerClick($event, dateInput)">
     <mat-icon>calendar_today</mat-icon>
   </button>
 </mat-form-field>

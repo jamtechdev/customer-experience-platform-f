@@ -17,12 +17,12 @@
         <li *ngFor="let row of processImprovements()" class="improvement-row">
           <span>{{ row.text }}</span>
           <button
-            *ngIf="row.referenceFeedbackIds.length"
+            *ngIf="referenceCount(row) > 0"
             mat-stroked-button
             type="button"
             class="ref-btn"
             (click)="openReferences(row)">
-            View references ({{ row.referenceFeedbackIds.length }})
+            View references ({{ referenceCount(row) }})
           </button>
         </li>
       </ul>

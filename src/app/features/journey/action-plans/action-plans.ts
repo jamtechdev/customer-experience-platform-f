@@ -80,6 +80,8 @@ export class ActionPlans implements OnInit, OnDestroy {
       impact: string;
       horizon: string;
       referenceFeedbackIds?: number[];
+      linkedFeedbackIds?: number[];
+      linkedCount?: number;
     }>
   >([]);
   filteredReportPlanRows = computed(() => {
@@ -154,6 +156,12 @@ export class ActionPlans implements OnInit, OnDestroy {
               impact: x.impact ?? '',
               horizon: x.horizon ?? '',
               referenceFeedbackIds: Array.isArray(x.referenceFeedbackIds) ? x.referenceFeedbackIds : [],
+              linkedFeedbackIds: Array.isArray(x.linkedFeedbackIds)
+                ? x.linkedFeedbackIds
+                : Array.isArray(x.referenceFeedbackIds)
+                  ? x.referenceFeedbackIds
+                  : [],
+              linkedCount: typeof x.linkedCount === 'number' ? x.linkedCount : (x.referenceFeedbackIds?.length ?? 0),
             }))
           );
           const mapped = this.reportPlanRows().map((x, idx) => ({
@@ -192,13 +200,18 @@ export class ActionPlans implements OnInit, OnDestroy {
     this.page.set(1);
   }
 
-  openReferences(row: { action: string; referenceFeedbackIds?: number[] }): void {
-    const ids = row.referenceFeedbackIds ?? [];
+  openReferences(row: { action: string; referenceFeedbackIds?: number[]; linkedFeedbackIds?: number[]; linkedCount?: number }): void {
+    const ids = row.linkedFeedbackIds?.length ? row.linkedFeedbackIds : row.referenceFeedbackIds ?? [];
     if (!ids.length) return;
-    this.drilldownTitle.set(row.action.slice(0, 80));
+    this.drilldownTitle.set(row.action.slice(0, 120));
     this.drilldownOpen.set(true);
     this.drilldownIds = [...new Set(ids.map((id) => Number(id)).filter((id) => Number.isFinite(id) && id > 0))];
     this.loadDrilldownPage(1);
+  }
+
+  referenceCount(row: { linkedCount?: number; linkedFeedbackIds?: number[]; referenceFeedbackIds?: number[] }): number {
+    if (row.linkedCount && row.linkedCount > 0) return row.linkedCount;
+    return row.linkedFeedbackIds?.length || row.referenceFeedbackIds?.length || 0;
   }
 
   loadDrilldownPage(page: number): void {
@@ -208,12 +221,10 @@ export class ActionPlans implements OnInit, OnDestroy {
     this.drilldownRows.set([]);
     const user = this.authService.currentUser();
     const companyId = user?.role === 'admin' ? undefined : (user?.settings?.companyId ?? 1);
-    this.analysisService.getAnalyticsDrilldown({
-      companyId,
-      ids: this.drilldownIds,
-      includeIrrelevant: false,
+    this.analysisService.getFeedbackByIds(companyId, this.drilldownIds, {
       page,
       limit: this.drilldownPageSize,
+      includeIrrelevant: true,
     }).subscribe({
       next: (res) => {
         this.drilldownLoading.set(false);

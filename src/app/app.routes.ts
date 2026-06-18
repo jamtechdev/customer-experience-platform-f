@@ -203,11 +203,6 @@ export const routes: Routes = [
             data: { title: 'Social Media Analysis', breadcrumb: 'Social Media' }
           },
           {
-            path: 'source-extraction',
-            loadComponent: () => import('./features/social-media/source-extraction/source-extraction').then(m => m.SourceExtraction),
-            data: { title: 'Source Extraction', breadcrumb: 'Source Extraction' }
-          },
-          {
             path: 'dataset-profile',
             loadComponent: () => import('./features/social-media/dataset-profile/dataset-profile').then(m => m.DatasetProfile),
             data: { title: 'Dataset profile', breadcrumb: 'Dataset profile' }

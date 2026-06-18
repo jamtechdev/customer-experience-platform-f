@@ -25,6 +25,8 @@ interface JourneyStage {
   satisfactionPoints: string[];
   satisfactionReferenceIds: number[];
   dissatisfactionReferenceIds: number[];
+  satisfactionFeedbackIds: number[];
+  dissatisfactionFeedbackIds: number[];
 }
 
 @Component({
@@ -127,6 +129,16 @@ export class JourneyMap implements OnInit, OnDestroy {
                 dissatisfactionReferenceIds: Array.isArray(r?.dissatisfactionReferenceIds)
                   ? r.dissatisfactionReferenceIds
                   : [],
+                satisfactionFeedbackIds: Array.isArray(r?.satisfactionFeedbackIds)
+                  ? r.satisfactionFeedbackIds
+                  : Array.isArray(r?.satisfactionReferenceIds)
+                    ? r.satisfactionReferenceIds
+                    : [],
+                dissatisfactionFeedbackIds: Array.isArray(r?.dissatisfactionFeedbackIds)
+                  ? r.dissatisfactionFeedbackIds
+                  : Array.isArray(r?.dissatisfactionReferenceIds)
+                    ? r.dissatisfactionReferenceIds
+                    : [],
               }))
             );
             this.page.set(1);
@@ -186,6 +198,14 @@ export class JourneyMap implements OnInit, OnDestroy {
     this.loadDrilldownPage(1);
   }
 
+  satisfactionDrilldownIds(row: JourneyStage): number[] {
+    return row.satisfactionFeedbackIds?.length ? row.satisfactionFeedbackIds : row.satisfactionReferenceIds;
+  }
+
+  dissatisfactionDrilldownIds(row: JourneyStage): number[] {
+    return row.dissatisfactionFeedbackIds?.length ? row.dissatisfactionFeedbackIds : row.dissatisfactionReferenceIds;
+  }
+
   loadDrilldownPage(page: number): void {
     if (!this.drilldownIds.length) return;
     this.drilldownPage.set(page);
@@ -195,7 +215,7 @@ export class JourneyMap implements OnInit, OnDestroy {
     this.analysisService.getFeedbackByIds(companyId, this.drilldownIds, {
       page,
       limit: this.drilldownPageSize,
-      includeIrrelevant: false,
+      includeIrrelevant: true,
     }).subscribe({
       next: (res) => {
         this.drilldownLoading.set(false);

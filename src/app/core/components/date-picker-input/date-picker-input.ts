@@ -49,6 +49,26 @@ export class DatePickerInput {
     this.value.set(next?.trim() ? next : null);
   }
 
+  onFieldClick(event: MouseEvent, input: HTMLInputElement): void {
+    if (this.disabled()) return;
+    const target = event.target as HTMLElement;
+    if (target.closest('button.date-picker-trigger')) return;
+    this.openPicker(input);
+  }
+
+  onTriggerClick(event: MouseEvent, input: HTMLInputElement): void {
+    event.preventDefault();
+    event.stopPropagation();
+    this.openPicker(input);
+  }
+
+  onInputKeydown(event: KeyboardEvent, input: HTMLInputElement): void {
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      this.openPicker(input);
+    }
+  }
+
   openPicker(input: HTMLInputElement): void {
     openNativeDatePicker(input);
   }

@@ -61,6 +61,7 @@ export class JourneyHeatmap implements OnInit, OnDestroy {
   drilldownTotal = signal(0);
   readonly drilldownPageSize = 10;
   private drilldownState: { stage: StageRow; label: HeatmapSentiment; ids: number[] } | null = null;
+  private drilldownIds: number[] = [];
   Math = Math;
   readonly t = (key: string, params?: Record<string, string | number>): string =>
     this.translationService.translate(key, params);
@@ -161,6 +162,31 @@ export class JourneyHeatmap implements OnInit, OnDestroy {
     return 'heat-none';
   }
 
+  getPositiveHeatClass(score: number): string {
+    if (score >= 0.7) return 'heat-pos-high';
+    if (score >= 0.4) return 'heat-pos-mid';
+    if (score > 0) return 'heat-pos-low';
+    return 'heat-none';
+  }
+
+  getNeutralHeatClass(pct: number): string {
+    if (pct >= 60) return 'heat-neu-high';
+    if (pct >= 35) return 'heat-neu-mid';
+    if (pct > 0) return 'heat-neu-low';
+    return 'heat-none';
+  }
+
+  getNegativeHeatClass(score: number): string {
+    if (score >= 0.6) return 'heat-neg-high';
+    if (score >= 0.3) return 'heat-neg-mid';
+    if (score > 0) return 'heat-neg-low';
+    return 'heat-none';
+  }
+
+  neutralPct(row: StageRow): number {
+    return Math.max(0, 100 - ((row.satisfactionScore + row.dissatisfactionScore) * 100));
+  }
+
   goPrevPage(): void {
     this.page.update((p) => Math.max(1, p - 1));
   }
@@ -176,27 +202,23 @@ export class JourneyHeatmap implements OnInit, OnDestroy {
     const unique = [...new Set((ids || []).map((id) => Number(id)).filter((id) => Number.isFinite(id) && id > 0))];
     if (!unique.length && stage.feedbackCount <= 0) return;
     this.drilldownState = { stage, label, ids: unique };
+    this.drilldownIds = unique;
     this.drilldownTitle.set(`${stage.stageName} · ${label}`);
     this.drilldownOpen.set(true);
     this.loadDrilldownPage(1);
   }
 
   loadDrilldownPage(page: number): void {
-    const state = this.drilldownState;
-    if (!state) return;
+    if (!this.drilldownIds.length) return;
     this.drilldownPage.set(page);
     this.drilldownLoading.set(true);
     this.drilldownRows.set([]);
     const user = this.authService.currentUser();
     const companyId = user?.role === 'admin' ? undefined : (user?.settings?.companyId ?? 1);
-    this.analysisService.getAnalyticsDrilldown({
-      companyId,
-      ids: state.ids,
-      sentiment: state.label,
-      journeyStage: state.stage.stageName,
-      includeIrrelevant: false,
+    this.analysisService.getFeedbackByIds(companyId, this.drilldownIds, {
       page,
       limit: this.drilldownPageSize,
+      includeIrrelevant: true,
     }).subscribe({
       next: (res) => {
         this.drilldownLoading.set(false);
@@ -222,5 +244,6 @@ export class JourneyHeatmap implements OnInit, OnDestroy {
     this.drilldownTotal.set(0);
     this.drilldownPage.set(1);
     this.drilldownState = null;
+    this.drilldownIds = [];
   }
 }

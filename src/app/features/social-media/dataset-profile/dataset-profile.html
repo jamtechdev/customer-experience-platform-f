@@ -2,6 +2,7 @@
   <mat-card class="section-card">
     <mat-card-header>
       <mat-card-title>{{ t('nav.datasetProfile') }}</mat-card-title>
+      <mat-card-subtitle>Imported volume, cohort scope, and how each metric is calculated</mat-card-subtitle>
     </mat-card-header>
     <mat-card-content>
       <div *ngIf="loading()" class="loading-container">
@@ -10,8 +11,25 @@
           [subtitle]="t('socialMediaPage.datasetLoadingSubtitle')">
         </app-ollama-loader>
       </div>
-      <div *ngIf="!loading()" class="table-wrap">
-        <table mat-table [dataSource]="rows()" class="report-table">
+      <div *ngIf="!loading()">
+        <div class="metric-grid" *ngIf="rows().length">
+          <article class="metric-card" *ngFor="let row of rows()" [class.metric-card--span]="!isCountRow(row)">
+            <span class="metric-label">{{ row.metric }}</span>
+            <button
+              *ngIf="isCountRow(row); else plainMetric"
+              class="metric-value metric-value--link"
+              type="button"
+              (click)="openProfileDrilldown(row)">
+              {{ row.value }}
+            </button>
+            <ng-template #plainMetric>
+              <span class="metric-value">{{ row.value }}</span>
+            </ng-template>
+            <p class="metric-comment">{{ row.comment }}</p>
+          </article>
+        </div>
+        <div class="table-wrap">
+          <table mat-table [dataSource]="rows()" class="report-table">
           <ng-container matColumnDef="metric">
             <th mat-header-cell *matHeaderCellDef>{{ t('socialMediaPage.metric') }}</th>
             <td mat-cell *matCellDef="let row">{{ row.metric }}</td>
@@ -37,6 +55,7 @@
           <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
           <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
         </table>
+        </div>
       </div>
     </mat-card-content>
   </mat-card>

@@ -251,7 +251,7 @@ export interface TwitterCxReportDto {
     originalCustomerCx: number;
     primaryCohortSize: number;
   };
-  datasetProfileRows: Array<{ metric: string; value: string; comment: string }>;
+  datasetProfileRows: Array<{ metric: string; value: string; comment: string; feedbackIds?: number[] }>;
   sentiment: { positive: number; negative: number; neutral: number; total: number; averageScore: number };
   socialNpsProxy: number;
   npsInterpretation: string;
@@ -283,11 +283,18 @@ export interface TwitterCxReportDto {
     dissatisfactionSummary?: string;
     satisfactionReferenceIds?: number[];
     dissatisfactionReferenceIds?: number[];
+    satisfactionFeedbackIds?: number[];
+    dissatisfactionFeedbackIds?: number[];
     feedbackCount?: number;
   }>;
   actionPlan: Array<{ priority: string; action: string; owner: string; impact: string; horizon: string }>;
   processImprovements: string[];
-  processImprovementItems?: Array<{ text: string; referenceFeedbackIds?: number[] }>;
+  processImprovementItems?: Array<{
+    text: string;
+    referenceFeedbackIds?: number[];
+    linkedFeedbackIds?: number[];
+    linkedCount?: number;
+  }>;
   managementTakeaways: string[];
   cohortTagsUsed: boolean;
   /** Present when served from snapshot / live rebuild path (UI may ignore). */
