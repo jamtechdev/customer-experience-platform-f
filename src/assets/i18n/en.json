@@ -391,7 +391,7 @@
     "builderSubtitle": "Create custom reports and export to PDF or Excel.",
     "builderTitle": "Build report",
     "builderHelp": "Choose report type, format, and reporting period, then export.",
-    "builderHint": "Choose All data or a fixed/custom period, then create the report.",
+    "builderHint": "Executive PDF is compact (no blank pages). Full report includes journey, root causes, and action plans.",
     "reportType": "Report type",
     "fullReport": "Full CX report",
     "fixedPeriod": "Fixed period",

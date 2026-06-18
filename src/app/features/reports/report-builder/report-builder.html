@@ -1,75 +1,117 @@
-<div class="report-builder-container">
-  <div class="header-section">
-    <h1>{{ t('nav.reportBuilder') }}</h1>
-    <p class="subtitle">{{ t('reports.builderSubtitle') }}</p>
-  </div>
-
-  <mat-card>
-    <mat-card-header>
-      <mat-card-title>{{ t('reports.builderTitle') }}</mat-card-title>
-      <mat-card-subtitle>{{ t('reports.builderHelp') }}</mat-card-subtitle>
-    </mat-card-header>
-    <mat-card-content>
-      <div class="builder-form">
-        <mat-form-field appearance="outline">
-          <mat-label>{{ t('reports.reportType') }}</mat-label>
-          <mat-select [value]="reportType()" (valueChange)="reportType.set($event)">
-            <mat-option value="executive">{{ t('nav.executiveSummary') }}</mat-option>
-            <mat-option value="full">{{ t('reports.fullReport') }}</mat-option>
-          </mat-select>
-        </mat-form-field>
-        <mat-form-field appearance="outline">
-          <mat-label>{{ t('reports.format') }}</mat-label>
-          <mat-select [value]="reportFormat()" (valueChange)="reportFormat.set($event)">
-            <mat-option value="pdf">PDF</mat-option>
-            <mat-option value="excel">Excel</mat-option>
-          </mat-select>
-        </mat-form-field>
-        <app-report-date-range-filter
-          class="builder-date-filter"
-          [showActiveRange]="false"
-          [showApplyButton]="false"
-          [lockDatesUntilCustom]="true"
-          periodLabelKey="reports.fixedPeriod"
-          [presets]="presets()"
-          [(selectedPresetId)]="selectedPresetId"
-          [(startDate)]="startDate"
-          [(endDate)]="endDate" />
-        <div class="export-actions">
-          <button
-            mat-raised-button
-            color="primary"
-            type="button"
-            (click)="createReport()"
-            [disabled]="exporting() || !canCreateReport()">
-            <mat-icon>add_circle</mat-icon>
-            {{ exporting() ? t('reports.exporting') : t('reports.create') }}
-          </button>
-        </div>
+<div class="report-builder-page">
+  <header class="page-hero">
+    <div class="hero-text">
+      <div class="hero-badge">
+        <mat-icon>description</mat-icon>
+        <span>Export center</span>
       </div>
-      <mat-card class="created-reports-card">
-        <mat-card-header>
-          <mat-card-title>{{ t('reports.createdReports') }} ({{ createdReports().length }})</mat-card-title>
-          <mat-card-subtitle>{{ t('reports.createdReportsSubtitle') }}</mat-card-subtitle>
-        </mat-card-header>
-        <mat-card-content>
-          @if (createdReports().length === 0) {
-            <p class="hint">{{ t('reports.noReportCreated') }}</p>
-          } @else {
-            <div class="created-list">
-              @for (r of createdReports(); track r.id) {
-                <div class="created-item">
-                  <strong>{{ r.type | titlecase }}</strong>
-                  <span>{{ r.format | uppercase }}</span>
-                  <span>{{ r.range }}</span>
-                  <span>{{ r.createdAt | date:'yyyy-MM-dd HH:mm:ss' }}</span>
-                </div>
+      <h1>{{ t('nav.reportBuilder') }}</h1>
+      <p class="subtitle">{{ t('reports.builderSubtitle') }}</p>
+    </div>
+  </header>
+
+  <div class="builder-grid">
+    <mat-card class="builder-card">
+      <mat-card-header>
+        <mat-card-title>{{ t('reports.builderTitle') }}</mat-card-title>
+        <mat-card-subtitle>{{ t('reports.builderHelp') }}</mat-card-subtitle>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="builder-form">
+          <mat-form-field appearance="outline" class="field-block">
+            <mat-label>{{ t('reports.reportType') }}</mat-label>
+            <mat-select [value]="reportType()" (valueChange)="reportType.set($event)">
+              <mat-option value="executive">{{ t('nav.executiveSummary') }}</mat-option>
+              <mat-option value="full">{{ t('reports.fullReport') }}</mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <div class="format-toggle" role="group" [attr.aria-label]="t('reports.format')">
+            <button
+              type="button"
+              class="format-btn"
+              [class.active]="reportFormat() === 'pdf'"
+              (click)="reportFormat.set('pdf')">
+              <mat-icon>picture_as_pdf</mat-icon>
+              PDF
+            </button>
+            <button
+              type="button"
+              class="format-btn"
+              [class.active]="reportFormat() === 'excel'"
+              (click)="reportFormat.set('excel')">
+              <mat-icon>table_chart</mat-icon>
+              Excel
+            </button>
+          </div>
+
+          <app-report-date-range-filter
+            class="builder-date-filter"
+            [showActiveRange]="false"
+            [showApplyButton]="false"
+            [lockDatesUntilCustom]="true"
+            periodLabelKey="reports.fixedPeriod"
+            [presets]="presets()"
+            [(selectedPresetId)]="selectedPresetId"
+            [(startDate)]="startDate"
+            [(endDate)]="endDate" />
+
+          <div class="export-actions">
+            <button
+              mat-raised-button
+              color="primary"
+              type="button"
+              class="cx-action-btn create-btn"
+              (click)="createReport()"
+              [disabled]="exporting() || !canCreateReport()">
+              @if (exporting()) {
+                <mat-spinner diameter="18"></mat-spinner>
+                {{ t('reports.exporting') }}
+              } @else {
+                <ng-container>
+                  <mat-icon>download</mat-icon>
+                  {{ t('reports.create') }}
+                </ng-container>
               }
-            </div>
-          }
-        </mat-card-content>
-      </mat-card>
-      <p class="hint">{{ t('reports.builderHint') }}</p>
-    </mat-card-content>
-  </mat-card>
+            </button>
+          </div>
+        </div>
+
+        <p class="hint">{{ t('reports.builderHint') }}</p>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card class="history-card">
+      <mat-card-header>
+        <mat-card-title>{{ t('reports.createdReports') }}</mat-card-title>
+        <mat-card-subtitle>{{ t('reports.createdReportsSubtitle') }}</mat-card-subtitle>
+      </mat-card-header>
+      <mat-card-content>
+        @if (createdReports().length === 0) {
+          <div class="empty-state">
+            <mat-icon>folder_open</mat-icon>
+            <p>{{ t('reports.noReportCreated') }}</p>
+          </div>
+        } @else {
+          <div class="created-list">
+            @for (r of createdReports(); track r.id) {
+              <article class="created-item">
+                <div class="created-icon" [class.excel]="r.format === 'excel'">
+                  <mat-icon>{{ r.format === 'pdf' ? 'picture_as_pdf' : 'table_chart' }}</mat-icon>
+                </div>
+                <div class="created-body">
+                  <strong>{{ r.type === 'executive' ? t('nav.executiveSummary') : t('reports.fullReport') }}</strong>
+                  <span class="created-meta">{{ r.range }}</span>
+                </div>
+                <div class="created-side">
+                  <span class="format-chip">{{ r.format | uppercase }}</span>
+                  <span class="created-date">{{ r.createdAt | date:'dd MMM yyyy, HH:mm' }}</span>
+                </div>
+              </article>
+            }
+          </div>
+        }
+      </mat-card-content>
+    </mat-card>
+  </div>
 </div>

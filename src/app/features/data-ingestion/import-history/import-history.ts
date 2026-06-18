@@ -19,6 +19,11 @@ import { formatApiDate } from '../../../core/utils/api-date';
 import { TwitterCxReportStore } from '../../../core/services/twitter-cx-report.store';
 import { CxReportRebuildService } from '../../../core/services/cx-report-rebuild.service';
 
+/** Draft uploads (mapped but not imported) stay out of history until import starts. */
+function isHistoryVisibleImport(row: CSVImport): boolean {
+  return row.status !== 'pending';
+}
+
 @Component({
   selector: 'app-import-history',
   standalone: true,
@@ -70,20 +75,22 @@ export class ImportHistory implements OnInit, OnDestroy {
       if (importId == null || !status) return;
 
       this.imports.update((list) =>
-        list.map((row) => {
-          if (row.id !== importId) return row;
-          const next: CSVImport = {
-            ...row,
-            status,
-            errorMessage: payload?.errorMessage ?? row.errorMessage,
-            errorDetails: payload?.errorDetails ?? row.errorDetails,
-          };
-          if (status === 'completed') {
-            next.errorMessage = payload?.errorMessage;
-            next.errorDetails = payload?.errorDetails;
-          }
-          return next;
-        })
+        list
+          .map((row) => {
+            if (row.id !== importId) return row;
+            const next: CSVImport = {
+              ...row,
+              status,
+              errorMessage: payload?.errorMessage ?? row.errorMessage,
+              errorDetails: payload?.errorDetails ?? row.errorDetails,
+            };
+            if (status === 'completed') {
+              next.errorMessage = payload?.errorMessage;
+              next.errorDetails = payload?.errorDetails;
+            }
+            return next;
+          })
+          .filter(isHistoryVisibleImport)
       );
       this.syncRefreshTimer();
     });
@@ -103,7 +110,7 @@ export class ImportHistory implements OnInit, OnDestroy {
   }
 
   private syncRefreshTimer(): void {
-    const hasActive = this.imports().some((r) => r.status === 'pending' || this.isProcessing(r) || this.isAiFinalizing(r));
+    const hasActive = this.imports().some((r) => this.isProcessing(r) || this.isAiFinalizing(r));
     if (hasActive && !this.refreshTimer) {
       // Fallback: in case websocket is delayed/missed, keep DB in sync.
       this.refreshTimer = setInterval(() => this.loadImports(), 3000);
@@ -132,7 +139,7 @@ export class ImportHistory implements OnInit, OnDestroy {
     this.csvService.getImports().subscribe({
       next: (res) => {
         if (res.success && res.data) {
-          this.imports.set(res.data);
+          this.imports.set(res.data.filter(isHistoryVisibleImport));
         } else {
           this.imports.set([]);
         }
