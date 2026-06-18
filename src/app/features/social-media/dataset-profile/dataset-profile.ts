@@ -12,6 +12,7 @@ import { drilldownModalTotal } from '../../../core/utils/drilldown-display';
 import { twitterCxReportFailureMessage } from '../../../core/utils/twitter-cx-report-load';
 import { OllamaLoader } from '../../../core/components/ollama-loader/ollama-loader';
 import { TranslationService } from '../../../core/services/translation.service';
+import { resolveAppCompanyId } from '../../../core/utils/company-scope';
 import { RelatedFeedbackModal, RelatedFeedbackRow } from '../../../core/components/related-feedback-modal/related-feedback-modal';
 
 interface DatasetProfileRow {
@@ -94,8 +95,7 @@ export class DatasetProfile implements OnInit, OnDestroy {
   }
 
   loadProfile(): void {
-    const user = this.authService.currentUser();
-    const companyId = user?.role === 'admin' ? undefined : (user?.settings?.companyId ?? 1);
+    const companyId = resolveAppCompanyId(this.authService.currentUser());
     this.loading.set(true);
     this.twitterCxReportStore.loadTwitterCxReport(companyId).subscribe({
       next: (res) => {
@@ -150,7 +150,7 @@ export class DatasetProfile implements OnInit, OnDestroy {
   loadDrilldownPage(page: number): void {
     if (!this.drilldownIds.length) return;
     const user = this.authService.currentUser();
-    const companyId = user?.role === 'admin' ? undefined : (user?.settings?.companyId ?? 1);
+    const companyId = resolveAppCompanyId(this.authService.currentUser());
     this.drilldownPage.set(page);
     this.drilldownLoading.set(true);
     this.drilldownRows.set([]);

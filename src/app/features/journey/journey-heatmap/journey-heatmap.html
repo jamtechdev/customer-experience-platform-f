@@ -1,12 +1,19 @@
-<div class="heatmap-container">
-  <div class="header-section">
-    <h1>{{ t('heatmap.title') }}</h1>
-    <p class="subtitle">{{ t('heatmap.subtitle') }}</p>
-    <p class="page-purpose">{{ t('heatmap.purpose') }}</p>
-    <button mat-raised-button color="primary" class="cx-action-btn" (click)="loadHeatmap(false, true)" [disabled]="loading()">
+<div class="heatmap-page">
+  <header class="page-hero">
+    <div class="hero-text">
+      <div class="hero-badge">
+        <mat-icon>map</mat-icon>
+        <span>Journey analytics</span>
+      </div>
+      <h1>{{ t('heatmap.title') }}</h1>
+      <p class="subtitle">{{ t('heatmap.subtitle') }}</p>
+      <p class="page-purpose">{{ t('heatmap.purpose') }}</p>
+    </div>
+    <button mat-raised-button color="primary" type="button" class="cx-action-btn" (click)="loadHeatmap(false, true)" [disabled]="loading()">
+      <mat-icon>refresh</mat-icon>
       {{ loading() ? t('app.loading') : t('heatmap.load') }}
     </button>
-  </div>
+  </header>
 
   @if (loading()) {
     <div class="loading-container">
@@ -16,58 +23,68 @@
       </app-ollama-loader>
     </div>
   } @else if (error()) {
-    <mat-card class="error-card">
+    <mat-card class="state-card error-card">
       <mat-card-content>
+        <mat-icon>error_outline</mat-icon>
+        <h2>{{ t('app.error') }}</h2>
         <p>{{ error() }}</p>
-        <button mat-raised-button (click)="loadHeatmap(false, true)">{{ t('app.retry') }}</button>
+        <button mat-raised-button color="primary" type="button" class="cx-action-btn" (click)="loadHeatmap(false, true)">
+          {{ t('app.retry') }}
+        </button>
       </mat-card-content>
     </mat-card>
   } @else if (stages().length === 0) {
-    <mat-card class="empty-card">
+    <mat-card class="state-card empty-card">
       <mat-card-content>
+        <mat-icon>insights</mat-icon>
         <p>{{ t('heatmap.noStages') }}</p>
-        <button mat-raised-button color="primary" (click)="loadHeatmap(false, true)">{{ t('heatmap.load') }}</button>
+        <button mat-raised-button color="primary" type="button" class="cx-action-btn" (click)="loadHeatmap(false, true)">
+          {{ t('heatmap.load') }}
+        </button>
       </mat-card-content>
     </mat-card>
   } @else {
-    <mat-card class="section-card">
+    @if (scopeStats().length) {
+      <div class="scope-kpi-row">
+        @for (stat of scopeStats(); track stat.labelKey) {
+          <article class="scope-kpi-card">
+            <mat-icon>{{ stat.icon }}</mat-icon>
+            <div>
+              <span class="scope-kpi-label">{{ t(stat.labelKey) }}</span>
+              <strong class="scope-kpi-value">{{ stat.value | number }}</strong>
+            </div>
+          </article>
+        }
+      </div>
+    }
+
+    <mat-card class="heatmap-card">
       <mat-card-header>
         <mat-card-title>{{ t('heatmap.sectionTitle') }}</mat-card-title>
         <mat-card-subtitle>{{ t('heatmap.sectionSubtitle') }}</mat-card-subtitle>
       </mat-card-header>
       <mat-card-content>
-        @if (cohortTotal()) {
-          <div class="data-scope-banner">
-            <strong>{{ t('heatmap.cohortScope') }}</strong>
-            <span>
-              @if (importedCsvRows()) {
-                {{ t('heatmap.csvImported', { total: importedCsvRows()!.toLocaleString() }) }} ·
-              }
-              @if (rowsSaved() && rowsSaved() !== cohortTotal()) {
-                {{ t('heatmap.rowsSaved', { total: rowsSaved()!.toLocaleString() }) }} ·
-              }
-              {{ t('heatmap.cohortTotal', { total: cohortTotal()!.toLocaleString() }) }}
-              · {{ t('heatmap.mappedTotal', { total: heatmapMappedTotal().toLocaleString() }) }}
-            </span>
-            <span class="scope-note">{{ t('heatmap.countHint') }}</span>
-          </div>
-        }
-        <p class="subtitle">{{ t('heatmap.insight') }}</p>
-        <div class="heatmap-pct-wrap">
+        <p class="insight-line">{{ t('heatmap.countHint') }}</p>
+
+        <div class="heatmap-layout">
           <div class="heatmap-pct-grid" role="grid" aria-label="Journey satisfaction heatmap counts">
             <div class="heatmap-pct-corner">{{ t('heatmap.stageCol') }}</div>
-            <div class="heatmap-pct-hdr">
+            <div class="heatmap-pct-hdr positive-hdr">
+              <mat-icon>sentiment_satisfied</mat-icon>
               <span>{{ t('dashboard.positive') }}</span>
               <small>{{ t('heatmap.colCountPct') }}</small>
             </div>
-            <div class="heatmap-pct-hdr">
+            <div class="heatmap-pct-hdr neutral-hdr">
+              <mat-icon>sentiment_neutral</mat-icon>
               <span>{{ t('dashboard.neutral') }}</span>
               <small>{{ t('heatmap.colCountPct') }}</small>
             </div>
-            <div class="heatmap-pct-hdr">
+            <div class="heatmap-pct-hdr negative-hdr">
+              <mat-icon>sentiment_dissatisfied</mat-icon>
               <span>{{ t('dashboard.negative') }}</span>
               <small>{{ t('heatmap.colCountPct') }}</small>
             </div>
+
             @for (row of pagedStages(); track row.stageName) {
               <div class="heatmap-pct-stage">
                 <span class="stage-name">{{ row.stageName }}</span>
@@ -102,22 +119,29 @@
               </button>
             }
           </div>
-          <div class="heatmap-legend-scale">
-            <span>0%</span>
-            <div class="heatmap-legend-bar"></div>
-            <span>80%</span>
-            <span class="heatmap-legend-cap">{{ t('heatmap.intensity') }}</span>
+
+          <aside class="heatmap-legend-panel">
+            <h3>{{ t('heatmap.intensity') }}</h3>
+            <div class="legend-swatches">
+              <div class="legend-row"><span class="swatch pos"></span> Positive</div>
+              <div class="legend-row"><span class="swatch neu"></span> Neutral</div>
+              <div class="legend-row"><span class="swatch neg"></span> Negative</div>
+            </div>
+            <p class="legend-tip">Click any cell to open the exact messages behind that count.</p>
+          </aside>
+        </div>
+
+        @if (totalPages() > 1) {
+          <div class="pagination">
+            <button mat-stroked-button type="button" (click)="goPrevPage()" [disabled]="page() <= 1">
+              {{ t('app.previous') }}
+            </button>
+            <span class="pagination-label">{{ t('sentiment.pageOf', { page: page(), total: totalPages() }) }}</span>
+            <button mat-stroked-button type="button" (click)="goNextPage()" [disabled]="page() >= totalPages()">
+              {{ t('app.next') }}
+            </button>
           </div>
-        </div>
-        <div *ngIf="totalPages() > 1" class="pagination">
-          <button mat-button type="button" (click)="goPrevPage()" [disabled]="page() <= 1">
-            {{ t('app.previous') }}
-          </button>
-          <span class="pagination-label">{{ t('sentiment.pageOf', { page: page(), total: totalPages() }) }}</span>
-          <button mat-button type="button" (click)="goNextPage()" [disabled]="page() >= totalPages()">
-            {{ t('app.next') }}
-          </button>
-        </div>
+        }
       </mat-card-content>
     </mat-card>
   }

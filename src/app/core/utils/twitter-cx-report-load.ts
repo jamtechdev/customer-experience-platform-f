@@ -27,6 +27,9 @@ export function twitterCxReportFailureMessage(apiMessage?: string): string {
   if (apiMessage === 'stale_response') {
     return 'The report changed while this page was loading. Refreshing the latest data now.';
   }
+  if (apiMessage?.toLowerCase().includes('company scope')) {
+    return 'Company access is not configured on your account. Sign out and sign in again, or ask an admin to link your user to a company.';
+  }
   return 'Could not load the CX report. Check that feedback has been imported, then try again.';
 }
 

@@ -14,6 +14,7 @@ import { twitterCxReportFailureMessage } from '../../../core/utils/twitter-cx-re
 import { RelatedFeedbackModal, RelatedFeedbackRow } from '../../../core/components/related-feedback-modal/related-feedback-modal';
 import { alignLinkedCountInText, drilldownModalTotal } from '../../../core/utils/drilldown-display';
 import { TranslationService } from '../../../core/services/translation.service';
+import { resolveAppCompanyId } from '../../../core/utils/company-scope';
 
 interface JourneyStage {
   id: number;
@@ -93,8 +94,7 @@ export class JourneyMap implements OnInit, OnDestroy {
 
   loadJourneyData(): void {
     this.loading.set(true);
-    const user = this.authService.currentUser();
-    const companyId = user?.role === 'admin' ? undefined : (user?.settings?.companyId ?? 1);
+    const companyId = resolveAppCompanyId(this.authService.currentUser());
     this.twitterCxReportStore.loadTwitterCxReport(companyId, undefined, undefined, undefined, false).subscribe({
       next: (response) => {
         if (response.message === 'stale_response') {
@@ -266,8 +266,7 @@ export class JourneyMap implements OnInit, OnDestroy {
     return `Flow progress: ${n}/3 of the first three stages have feedback. Map CSV touchpoints or categories to each stage so the journey completes through step three.`;
   }
 
-  private listCompanyId(): number | undefined {
-    const user = this.authService.currentUser();
-    return user?.role === 'admin' ? undefined : (user?.settings?.companyId ?? 1);
+  private listCompanyId(): number {
+    return resolveAppCompanyId(this.authService.currentUser());
   }
 }

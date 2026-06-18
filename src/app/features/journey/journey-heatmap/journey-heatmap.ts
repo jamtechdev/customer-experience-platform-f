@@ -3,6 +3,7 @@ import { Subscription } from 'rxjs';
 import { CommonModule } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
+import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { TwitterCxReportStore } from '../../../core/services/twitter-cx-report.store';
@@ -12,6 +13,7 @@ import { OllamaLoader } from '../../../core/components/ollama-loader/ollama-load
 import { twitterCxReportFailureMessage } from '../../../core/utils/twitter-cx-report-load';
 import { TranslationService } from '../../../core/services/translation.service';
 import { drilldownModalTotal } from '../../../core/utils/drilldown-display';
+import { resolveAppCompanyId } from '../../../core/utils/company-scope';
 import { RelatedFeedbackModal, RelatedFeedbackRow } from '../../../core/components/related-feedback-modal/related-feedback-modal';
 
 interface StageRow {
@@ -39,6 +41,7 @@ type HeatmapSentiment = 'positive' | 'neutral' | 'negative';
     CommonModule,
     MatCardModule,
     MatButtonModule,
+    MatIconModule,
     MatProgressSpinnerModule,
     MatSnackBarModule,
     OllamaLoader,
@@ -91,6 +94,21 @@ export class JourneyHeatmap implements OnInit, OnDestroy {
 
   heatmapMappedTotal = computed(() => this.stages().reduce((sum, row) => sum + row.feedbackCount, 0));
 
+  scopeStats = computed(() => {
+    const csv = this.importedCsvRows();
+    const saved = this.rowsSaved();
+    const mapped = this.heatmapMappedTotal();
+    if (csv != null && csv > 0 && saved === csv && mapped === csv) {
+      return [{ icon: 'dataset', labelKey: 'heatmap.scopeUnified', value: csv }];
+    }
+    const items: Array<{ icon: string; labelKey: string; value: number | null }> = [
+      { icon: 'upload_file', labelKey: 'heatmap.scopeCsv', value: csv },
+      { icon: 'storage', labelKey: 'heatmap.scopeSaved', value: saved },
+      { icon: 'grid_view', labelKey: 'heatmap.scopeMapped', value: mapped },
+    ];
+    return items.filter((item) => item.value != null && item.value > 0);
+  });
+
   ngOnInit(): void {
     this.loadHeatmap(false);
     this.refreshSub = this.twitterCxReportStore.onRefresh$.subscribe(() => this.loadHeatmap(false));
@@ -101,8 +119,7 @@ export class JourneyHeatmap implements OnInit, OnDestroy {
   }
 
   loadHeatmap(forceLive: boolean = false, refreshFromServer: boolean = false): void {
-    const user = this.authService.currentUser();
-    const companyId = user?.role === 'admin' ? undefined : (user?.settings?.companyId ?? 1);
+    const companyId = resolveAppCompanyId(this.authService.currentUser());
     if (refreshFromServer && !forceLive) {
       this.twitterCxReportStore.clearCachedReport(companyId);
     }
@@ -125,7 +142,7 @@ export class JourneyHeatmap implements OnInit, OnDestroy {
         }
         this.error.set(null);
         this.cohortTotal.set(
-          Number(res.data?.sentiment?.total ?? res.data?.dataset?.primaryCohortSize ?? 0) || null
+          Number(res.data?.dataset?.total ?? res.data?.sentiment?.total ?? 0) || null
         );
         this.importedCsvRows.set(
           Number(res.data?.dataset?.importedCsvRows ?? 0) || null
@@ -244,8 +261,7 @@ export class JourneyHeatmap implements OnInit, OnDestroy {
     this.drilldownPage.set(page);
     this.drilldownLoading.set(true);
     this.drilldownRows.set([]);
-    const user = this.authService.currentUser();
-    const companyId = user?.role === 'admin' ? undefined : (user?.settings?.companyId ?? 1);
+    const companyId = resolveAppCompanyId(this.authService.currentUser());
     this.analysisService.getFeedbackByIds(companyId, this.drilldownIds, {
       page,
       limit: this.drilldownPageSize,
