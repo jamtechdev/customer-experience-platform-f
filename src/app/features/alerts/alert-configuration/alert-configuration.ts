@@ -1,3 +1,4 @@
+import { PageHeaderCard } from '../../../core/components/page-header-card/page-header-card';
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators, FormsModule } from '@angular/forms';
@@ -19,6 +20,7 @@ import { FirebaseNotificationService } from '../../../core/services/firebase-not
   selector: 'app-alert-configuration',
   standalone: true,
   imports: [
+    PageHeaderCard,
     CommonModule,
     ReactiveFormsModule,
     FormsModule,

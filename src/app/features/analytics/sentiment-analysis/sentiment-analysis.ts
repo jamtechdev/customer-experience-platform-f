@@ -1,3 +1,4 @@
+import { PageHeaderCard } from '../../../core/components/page-header-card/page-header-card';
 import { Component, computed, inject, OnDestroy, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
@@ -55,6 +56,7 @@ interface SentimentReferenceRow {
 @Component({
   selector: 'app-sentiment-analysis',
   imports: [
+    PageHeaderCard,
     CommonModule,
     FormsModule,
     MatCardModule,

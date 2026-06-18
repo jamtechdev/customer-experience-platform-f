@@ -5,11 +5,13 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { TranslationService } from '../../../../core/services/translation.service';
 import { AuthService } from '../../../../core/services/auth.service';
 import { DashboardService, AdminDashboardStats } from '../../../../core/services/dashboard.service';
+import { PageHeaderCard } from '../../../../core/components/page-header-card/page-header-card';
 
 @Component({
   selector: 'app-admin-dashboard',
   standalone: true,
-  imports: [CommonModule, RouterModule, MatProgressSpinnerModule],
+  imports: [
+    PageHeaderCard,CommonModule, RouterModule, MatProgressSpinnerModule],
   templateUrl: './admin-dashboard.html',
   styleUrl: './admin-dashboard.css',
 })

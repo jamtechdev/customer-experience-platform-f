@@ -1,32 +1,32 @@
 <div class="import-history-container" [class.embedded]="embedded">
-  <div class="header-section">
-    <div>
-      <h1>{{ embedded ? 'Recent import history' : 'Import History' }}</h1>
-      <p class="subtitle">{{ embedded ? 'Track uploaded files, mapping status, AI processing, and validation results.' : 'View past CSV uploads and their status' }}</p>
-    </div>
-    <div class="header-actions">
-      <button mat-raised-button color="primary" class="cx-action-btn" (click)="goToUpload()" *ngIf="!embedded">
-        <mat-icon>upload_file</mat-icon>
-        Upload CSV
-      </button>
-      <button mat-raised-button color="primary" class="cx-action-btn" (click)="refreshAll()" [disabled]="refreshing()">
-        <mat-icon>refresh</mat-icon>
-        {{ refreshing() ? 'Refreshing…' : 'Refresh' }}
-      </button>
-      <button
-        mat-raised-button
-        color="warn"
-        type="button"
-        class="cx-action-btn"
-        (click)="bulkDeleteSelectedImports()"
-        [disabled]="bulkDeleting()"
-        *ngIf="isAdminUser() && selectedImportIds().size > 0"
-      >
-        <mat-icon>delete_sweep</mat-icon>
-        Delete selected
-      </button>
-    </div>
-  </div>
+  @if (!embedded) {
+    <app-page-header-card
+      title="Import History"
+      subtitle="View past CSV uploads and their status"
+      icon="history">
+      <div actions class="header-actions">
+        <button mat-raised-button color="primary" class="cx-action-btn" (click)="goToUpload()">
+          <mat-icon>upload_file</mat-icon>
+          Upload CSV
+        </button>
+        <button mat-raised-button color="primary" class="cx-action-btn" (click)="refreshAll()" [disabled]="refreshing()">
+          <mat-icon>refresh</mat-icon>
+          {{ refreshing() ? 'Refreshing…' : 'Refresh' }}
+        </button>
+        <button
+          mat-raised-button
+          color="warn"
+          type="button"
+          class="cx-action-btn"
+          (click)="bulkDeleteSelectedImports()"
+          [disabled]="bulkDeleting()"
+          *ngIf="isAdminUser() && selectedImportIds().size > 0">
+          <mat-icon>delete_sweep</mat-icon>
+          Delete selected
+        </button>
+      </div>
+    </app-page-header-card>
+  }
 
   <mat-card>
     <mat-card-content>

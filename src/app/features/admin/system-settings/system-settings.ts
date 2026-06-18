@@ -1,3 +1,4 @@
+import { PageHeaderCard } from '../../../core/components/page-header-card/page-header-card';
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { CommonModule } from '@angular/common';
@@ -14,6 +15,7 @@ import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 @Component({
   selector: 'app-system-settings',
   imports: [
+    PageHeaderCard,
     CommonModule,
     ReactiveFormsModule,
     MatCardModule,

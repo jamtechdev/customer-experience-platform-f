@@ -1,3 +1,4 @@
+import { PageHeaderCard } from '../../../core/components/page-header-card/page-header-card';
 import { Component, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatButtonModule } from '@angular/material/button';
@@ -23,6 +24,7 @@ interface NotificationItem {
 @Component({
   selector: 'app-notifications-page',
   imports: [
+    PageHeaderCard,
     CommonModule,
     MatButtonModule,
     MatCardModule,

@@ -14,6 +14,7 @@ import { OllamaLoader } from '../../../core/components/ollama-loader/ollama-load
 import { TranslationService } from '../../../core/services/translation.service';
 import { resolveAppCompanyId } from '../../../core/utils/company-scope';
 import { RelatedFeedbackModal, RelatedFeedbackRow } from '../../../core/components/related-feedback-modal/related-feedback-modal';
+import { PageHeaderCard } from '../../../core/components/page-header-card/page-header-card';
 
 interface DatasetProfileRow {
   metric: string;
@@ -31,6 +32,7 @@ const BANNER_METRICS = new Set([
   selector: 'app-dataset-profile',
   standalone: true,
   imports: [
+    PageHeaderCard,
     CommonModule,
     MatCardModule,
     MatSnackBarModule,

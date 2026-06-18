@@ -1,8 +1,9 @@
 <div class="roles-container">
-  <div class="header-section">
-    <h1>Role Management</h1>
-    <p class="subtitle">Manage user roles and permissions</p>
-  </div>
+  <app-page-header-card
+    title="Role Management"
+    subtitle="Manage user roles and permissions"
+    icon="admin_panel_settings">
+  </app-page-header-card>
 
   <div *ngIf="loading()" class="loading-container">
     <mat-spinner></mat-spinner>

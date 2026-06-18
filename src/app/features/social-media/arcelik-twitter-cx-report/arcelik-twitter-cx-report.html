@@ -1,8 +1,11 @@
 <div class="arc-report-page arc-report-doc">
-  <div class="header-section">
-    <h1>{{ reportTitleDisplay() }}</h1>
-    <p class="subtitle">{{ reportSubtitleDisplay() }}</p>
-    @if (loading()) {
+  <app-page-header-card
+    [title]="reportTitleDisplay()"
+    [subtitle]="reportSubtitleDisplay()"
+    icon="analytics">
+  </app-page-header-card>
+
+  @if (loading()) {
       <div class="loading-block" aria-busy="true">
         <app-ollama-loader
           title="Preparing Twitter CX report"
@@ -16,7 +19,6 @@
     @if (!loading() && reportBundle() && !hasData()) {
       <p class="body-text muted">{{ reportBundle()?.executiveSummaryBullets?.[0] || 'No sentiment-labeled rows in the primary cohort for this filter.' }}</p>
     }
-  </div>
 
   <app-report-date-range-filter
     [wrapInCard]="true"

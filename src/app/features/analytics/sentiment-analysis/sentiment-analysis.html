@@ -1,10 +1,9 @@
 <div class="sentiment-container">
-  <div class="header-section">
-    <div>
-      <h1>{{ t('nav.sentimentAnalysis') }}</h1>
-      <p class="subtitle">{{ t('sentiment.subtitle') }}</p>
-    </div>
-  </div>
+  <app-page-header-card
+    [title]="t('nav.sentimentAnalysis')"
+    [subtitle]="t('sentiment.subtitle')"
+    icon="sentiment_satisfied">
+  </app-page-header-card>
 
   <div class="filters-section">
     <app-report-date-range-filter

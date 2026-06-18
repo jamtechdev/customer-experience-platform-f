@@ -1,3 +1,4 @@
+import { PageHeaderCard } from '../../../core/components/page-header-card/page-header-card';
 import { Component, inject, OnDestroy, OnInit, signal } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { CommonModule } from '@angular/common';
@@ -11,9 +12,9 @@ import { OllamaLoader } from '../../../core/components/ollama-loader/ollama-load
 import { twitterCxReportFailureMessage } from '../../../core/utils/twitter-cx-report-load';
 import { RelatedFeedbackModal, RelatedFeedbackRow } from '../../../core/components/related-feedback-modal/related-feedback-modal';
 import {
-  drilldownIdCount,
   formatProcessImprovementText,
-  drilldownModalTotal,
+  effectiveLinkedCount,
+  resolveDrilldownIds,
 } from '../../../core/utils/drilldown-display';
 
 export interface ProcessImprovementRow {
@@ -27,6 +28,7 @@ export interface ProcessImprovementRow {
   selector: 'app-process-enhancement',
   standalone: true,
   imports: [
+    PageHeaderCard,
     CommonModule,
     MatCardModule,
     MatButtonModule,
@@ -55,6 +57,7 @@ export class ProcessEnhancement implements OnInit, OnDestroy {
   drilldownTotal = signal(0);
   readonly drilldownPageSize = 10;
   private drilldownIds: number[] = [];
+  private rootCauseFeedbackByIndex: number[][] = [];
 
   ngOnInit(): void {
     this.loadProcessData();
@@ -85,26 +88,32 @@ export class ProcessEnhancement implements OnInit, OnDestroy {
             return;
           }
           if (res.success && res.data) {
+            const rootCauses = res.data.rootCauses ?? [];
+            this.rootCauseFeedbackByIndex = rootCauses.map((rc) =>
+              Array.isArray(rc.feedbackIds) ? rc.feedbackIds.filter((id) => Number.isFinite(Number(id)) && Number(id) > 0) : []
+            );
             const items = res.data.processImprovementItems;
             if (items?.length) {
               this.processImprovements.set(
-                items.map((p) => ({
-                  text: p.text,
-                  referenceFeedbackIds: Array.isArray(p.referenceFeedbackIds) ? p.referenceFeedbackIds : [],
-                  linkedFeedbackIds: Array.isArray((p as { linkedFeedbackIds?: number[] }).linkedFeedbackIds)
+                items.map((p, index) => {
+                  const rcIds = this.rootCauseFeedbackByIndex[index] ?? [];
+                  const linkedFeedbackIds = Array.isArray((p as { linkedFeedbackIds?: number[] }).linkedFeedbackIds)
                     ? (p as { linkedFeedbackIds?: number[] }).linkedFeedbackIds!
                     : Array.isArray(p.referenceFeedbackIds)
                       ? p.referenceFeedbackIds
-                      : [],
-                  linkedCount:
+                      : [];
+                  const mergedIds = rcIds.length >= linkedFeedbackIds.length ? rcIds : linkedFeedbackIds;
+                  const linkedCount =
                     typeof (p as { linkedCount?: number }).linkedCount === 'number'
                       ? (p as { linkedCount?: number }).linkedCount!
-                      : Array.isArray((p as { linkedFeedbackIds?: number[] }).linkedFeedbackIds)
-                        ? (p as { linkedFeedbackIds?: number[] }).linkedFeedbackIds!.length
-                        : Array.isArray(p.referenceFeedbackIds)
-                          ? p.referenceFeedbackIds.length
-                          : 0,
-                }))
+                      : mergedIds.length;
+                  return {
+                    text: p.text,
+                    referenceFeedbackIds: mergedIds,
+                    linkedFeedbackIds: mergedIds,
+                    linkedCount,
+                  };
+                })
               );
             } else {
               this.processImprovements.set(
@@ -133,17 +142,17 @@ export class ProcessEnhancement implements OnInit, OnDestroy {
   }
 
   openReferences(row: ProcessImprovementRow): void {
-    const ids = row.linkedFeedbackIds?.length ? row.linkedFeedbackIds : row.referenceFeedbackIds ?? [];
+    const ids = resolveDrilldownIds(row.linkedFeedbackIds, row.referenceFeedbackIds);
     if (!ids.length) return;
     this.drilldownTitle.set(row.text);
     this.drilldownOpen.set(true);
-    this.drilldownIds = [...new Set(ids.map((id) => Number(id)).filter((id) => Number.isFinite(id) && id > 0))];
-    this.drilldownTotal.set(drilldownModalTotal(this.drilldownIds));
+    this.drilldownIds = ids;
+    this.drilldownTotal.set(effectiveLinkedCount(row.linkedCount, row.linkedFeedbackIds, row.referenceFeedbackIds));
     this.loadDrilldownPage(1);
   }
 
   referenceCount(row: ProcessImprovementRow): number {
-    return drilldownIdCount(row.linkedFeedbackIds, row.referenceFeedbackIds);
+    return effectiveLinkedCount(row.linkedCount, row.linkedFeedbackIds, row.referenceFeedbackIds);
   }
 
   displayText(row: ProcessImprovementRow): string {
@@ -165,7 +174,7 @@ export class ProcessEnhancement implements OnInit, OnDestroy {
       next: (res) => {
         this.drilldownLoading.set(false);
         if (res?.data?.list) this.drilldownRows.set(res.data.list);
-        this.drilldownTotal.set(drilldownModalTotal(this.drilldownIds));
+        this.drilldownTotal.set(res?.data?.total ?? this.drilldownIds.length);
       },
       error: () => {
         this.drilldownLoading.set(false);

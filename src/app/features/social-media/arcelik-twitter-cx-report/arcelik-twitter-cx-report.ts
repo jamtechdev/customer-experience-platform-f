@@ -1,3 +1,4 @@
+import { PageHeaderCard } from '../../../core/components/page-header-card/page-header-card';
 import { Component, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -107,6 +108,7 @@ interface ActionPlanRow {
   selector: 'app-arcelik-twitter-cx-report',
   standalone: true,
   imports: [
+    PageHeaderCard,
     CommonModule,
     FormsModule,
     MatCardModule,

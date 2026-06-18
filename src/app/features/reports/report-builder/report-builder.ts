@@ -1,3 +1,4 @@
+import { PageHeaderCard } from '../../../core/components/page-header-card/page-header-card';
 import { Component, inject, signal, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -36,6 +37,7 @@ interface CreatedReportRecord {
 @Component({
   selector: 'app-report-builder',
   imports: [
+    PageHeaderCard,
     CommonModule,
     FormsModule,
     MatCardModule,

@@ -1,3 +1,4 @@
+import { PageHeaderCard } from '../../../core/components/page-header-card/page-header-card';
 import { Component, computed, inject, OnDestroy, OnInit, signal } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { CommonModule } from '@angular/common';
@@ -21,11 +22,12 @@ import { formatApiDate, toInputDateValue } from '../../../core/utils/api-date';
 import { OllamaLoader } from '../../../core/components/ollama-loader/ollama-loader';
 import { twitterCxReportFailureMessage } from '../../../core/utils/twitter-cx-report-load';
 import { RelatedFeedbackModal, RelatedFeedbackRow } from '../../../core/components/related-feedback-modal/related-feedback-modal';
-import { drilldownIdCount, alignLinkedCountInText, drilldownModalTotal } from '../../../core/utils/drilldown-display';
+import { effectiveLinkedCount, alignLinkedCountInText, resolveDrilldownIds } from '../../../core/utils/drilldown-display';
 
 @Component({
   selector: 'app-action-plans',
   imports: [
+    PageHeaderCard,
     CommonModule,
     ReactiveFormsModule,
     MatCardModule,
@@ -149,21 +151,33 @@ export class ActionPlans implements OnInit, OnDestroy {
           return;
         }
         if (response.success && Array.isArray(response.data?.actionPlan)) {
+          const rootCauses = response.data.rootCauses ?? [];
           this.reportPlanRows.set(
-            response.data.actionPlan.map((x: any) => ({
-              priority: x.priority ?? '',
-              action: x.action ?? '',
-              owner: x.owner ?? '',
-              impact: x.impact ?? '',
-              horizon: x.horizon ?? '',
-              referenceFeedbackIds: Array.isArray(x.referenceFeedbackIds) ? x.referenceFeedbackIds : [],
-              linkedFeedbackIds: Array.isArray(x.linkedFeedbackIds)
+            response.data.actionPlan.map((x: any, index: number) => {
+              const rcIds = Array.isArray(rootCauses[index]?.feedbackIds)
+                ? rootCauses[index].feedbackIds.filter((id: number) => Number.isFinite(Number(id)) && Number(id) > 0)
+                : [];
+              const linkedFeedbackIds = Array.isArray(x.linkedFeedbackIds)
                 ? x.linkedFeedbackIds
                 : Array.isArray(x.referenceFeedbackIds)
                   ? x.referenceFeedbackIds
-                  : [],
-              linkedCount: typeof x.linkedCount === 'number' ? x.linkedCount : (x.referenceFeedbackIds?.length ?? 0),
-            }))
+                  : [];
+              const mergedIds = rcIds.length >= linkedFeedbackIds.length ? rcIds : linkedFeedbackIds;
+              const linkedCount =
+                typeof x.linkedCount === 'number' && x.linkedCount > mergedIds.length
+                  ? x.linkedCount
+                  : mergedIds.length;
+              return {
+                priority: x.priority ?? '',
+                action: x.action ?? '',
+                owner: x.owner ?? '',
+                impact: x.impact ?? '',
+                horizon: x.horizon ?? '',
+                referenceFeedbackIds: mergedIds,
+                linkedFeedbackIds: mergedIds,
+                linkedCount,
+              };
+            })
           );
           const mapped = this.reportPlanRows().map((x, idx) => ({
             id: idx + 1,
@@ -202,17 +216,17 @@ export class ActionPlans implements OnInit, OnDestroy {
   }
 
   openReferences(row: { action: string; referenceFeedbackIds?: number[]; linkedFeedbackIds?: number[]; linkedCount?: number }): void {
-    const ids = row.linkedFeedbackIds?.length ? row.linkedFeedbackIds : row.referenceFeedbackIds ?? [];
+    const ids = resolveDrilldownIds(row.linkedFeedbackIds, row.referenceFeedbackIds);
     if (!ids.length) return;
-    this.drilldownTitle.set(row.action.slice(0, 120));
+    this.drilldownTitle.set(row.action);
     this.drilldownOpen.set(true);
-    this.drilldownIds = [...new Set(ids.map((id) => Number(id)).filter((id) => Number.isFinite(id) && id > 0))];
-    this.drilldownTotal.set(drilldownModalTotal(this.drilldownIds));
+    this.drilldownIds = ids;
+    this.drilldownTotal.set(effectiveLinkedCount(row.linkedCount, row.linkedFeedbackIds, row.referenceFeedbackIds));
     this.loadDrilldownPage(1);
   }
 
   referenceCount(row: { linkedCount?: number; linkedFeedbackIds?: number[]; referenceFeedbackIds?: number[] }): number {
-    return drilldownIdCount(row.linkedFeedbackIds, row.referenceFeedbackIds);
+    return effectiveLinkedCount(row.linkedCount, row.linkedFeedbackIds, row.referenceFeedbackIds);
   }
 
   displayAction(row: { action: string; linkedFeedbackIds?: number[]; referenceFeedbackIds?: number[] }): string {
@@ -235,7 +249,7 @@ export class ActionPlans implements OnInit, OnDestroy {
       next: (res) => {
         this.drilldownLoading.set(false);
         if (res?.data?.list) this.drilldownRows.set(res.data.list);
-        this.drilldownTotal.set(drilldownModalTotal(this.drilldownIds));
+        this.drilldownTotal.set(res?.data?.total ?? this.drilldownIds.length);
       },
       error: () => {
         this.drilldownLoading.set(false);

@@ -15,6 +15,7 @@ import { TranslationService } from '../../../core/services/translation.service';
 import { drilldownModalTotal } from '../../../core/utils/drilldown-display';
 import { resolveAppCompanyId } from '../../../core/utils/company-scope';
 import { RelatedFeedbackModal, RelatedFeedbackRow } from '../../../core/components/related-feedback-modal/related-feedback-modal';
+import { PageHeaderCard } from '../../../core/components/page-header-card/page-header-card';
 
 interface StageRow {
   stageName: string;
@@ -38,6 +39,7 @@ type HeatmapSentiment = 'positive' | 'neutral' | 'negative';
   selector: 'app-journey-heatmap',
   standalone: true,
   imports: [
+    PageHeaderCard,
     CommonModule,
     MatCardModule,
     MatButtonModule,

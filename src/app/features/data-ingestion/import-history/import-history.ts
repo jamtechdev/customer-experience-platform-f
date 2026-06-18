@@ -1,3 +1,4 @@
+import { PageHeaderCard } from '../../../core/components/page-header-card/page-header-card';
 import { Component, Input, inject, OnInit, OnDestroy, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
@@ -28,6 +29,7 @@ function isHistoryVisibleImport(row: CSVImport): boolean {
   selector: 'app-import-history',
   standalone: true,
   imports: [
+    PageHeaderCard,
     CommonModule,
     MatCardModule,
     MatTableModule,

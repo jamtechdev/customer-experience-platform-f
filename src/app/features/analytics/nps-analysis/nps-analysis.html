@@ -1,8 +1,9 @@
 <div class="nps-container">
-  <div class="header-section">
-    <h1>{{ t('nav.npsAnalysis') }}</h1>
-    <p class="subtitle">{{ t('npsPage.subtitle') }}</p>
-  </div>
+  <app-page-header-card
+    [title]="t('nav.npsAnalysis')"
+    [subtitle]="t('npsPage.subtitle')"
+    icon="trending_up">
+  </app-page-header-card>
 
   <div class="filters-section">
     <app-report-date-range-filter

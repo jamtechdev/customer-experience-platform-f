@@ -1,3 +1,4 @@
+import { PageHeaderCard } from '../../../core/components/page-header-card/page-header-card';
 import { Component, inject, OnDestroy, OnInit, signal, computed } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { CommonModule } from '@angular/common';
@@ -33,6 +34,7 @@ interface PlatformData {
 @Component({
   selector: 'app-social-analysis',
   imports: [
+    PageHeaderCard,
     CommonModule,
     MatCardModule,
     MatTableModule,

@@ -4,6 +4,28 @@ export function drilldownIdCount(linked?: number[], reference?: number[]): numbe
   return normalizeDrilldownIds(ids).length;
 }
 
+/** Prefer explicit linkedCount from API when ID arrays were capped in legacy snapshots. */
+export function effectiveLinkedCount(
+  linkedCount?: number,
+  linked?: number[],
+  reference?: number[]
+): number {
+  const idCount = drilldownIdCount(linked, reference);
+  if (typeof linkedCount === 'number' && linkedCount > 0) {
+    return Math.max(linkedCount, idCount);
+  }
+  return idCount;
+}
+
+export function resolveDrilldownIds(
+  linked?: number[],
+  reference?: number[],
+  fallback?: number[]
+): number[] {
+  const ids = linked?.length ? linked : reference?.length ? reference : fallback ?? [];
+  return normalizeDrilldownIds(ids);
+}
+
 export function normalizeDrilldownIds(ids?: number[]): number[] {
   return [...new Set((ids ?? []).map((id) => Number(id)).filter((id) => Number.isFinite(id) && id > 0))];
 }

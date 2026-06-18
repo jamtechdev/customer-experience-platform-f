@@ -1,8 +1,9 @@
 <div class="profile-container">
-  <div class="profile-header">
-    <h1>{{ t('nav.profile') }}</h1>
-    <p class="subtitle">{{ t('profile.subtitle') }}</p>
-  </div>
+  <app-page-header-card
+    [title]="t('nav.profile')"
+    [subtitle]="t('profile.subtitle')"
+    icon="person">
+  </app-page-header-card>
 
   <div class="profile-content">
     <!-- User Information Card -->

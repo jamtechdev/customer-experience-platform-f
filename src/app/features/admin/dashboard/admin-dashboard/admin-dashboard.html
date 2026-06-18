@@ -1,20 +1,17 @@
 <div class="admin-dashboard-container">
-  <div class="admin-header">
-    <div class="header-content">
-      <div>
-        <h1>{{ t('admin') || 'Admin' }} {{ t('dashboard') }}</h1>
-        <p class="subtitle">System Management & Analytics</p>
-      </div>
-      <div class="user-info">
-        @if (currentUser(); as user) {
-          <span>{{ (user.firstName || '') + (user.lastName ? ' ' + user.lastName : '') || 'N/A' }}</span>
-        } @else {
-          <span>N/A</span>
-        }
-        <button class="btn-logout" (click)="authService.logout()">{{ t('logout') }}</button>
-      </div>
+  <app-page-header-card
+    [title]="(t('admin') || 'Admin') + ' ' + t('dashboard')"
+    subtitle="System Management & Analytics"
+    icon="admin_panel_settings">
+    <div actions class="user-info">
+      @if (currentUser(); as user) {
+        <span>{{ (user.firstName || '') + (user.lastName ? ' ' + user.lastName : '') || 'N/A' }}</span>
+      } @else {
+        <span>N/A</span>
+      }
+      <button class="btn-logout" (click)="authService.logout()">{{ t('logout') }}</button>
     </div>
-  </div>
+  </app-page-header-card>
 
   <div class="admin-content">
     <div class="quick-actions">

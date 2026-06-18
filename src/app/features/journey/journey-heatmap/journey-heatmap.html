@@ -1,19 +1,42 @@
 <div class="heatmap-page">
-  <header class="page-hero">
-    <div class="hero-text">
-      <div class="hero-badge">
-        <mat-icon>map</mat-icon>
-        <span>Journey analytics</span>
+  <app-page-header-card
+    badge="Journey analytics"
+    [title]="t('heatmap.title')"
+    [subtitle]="t('heatmap.subtitle')"
+    icon="grid_view">
+    <div headerExtra class="heatmap-header-extra">
+      <div class="hero-hints">
+        <span class="hint-chip">
+          <mat-icon>linear_scale</mat-icon>
+          Awareness → Usage
+        </span>
+        <span class="hint-chip">
+          <mat-icon>tag</mat-icon>
+          Count + %
+        </span>
+        <span class="hint-chip positive">
+          <mat-icon>sentiment_satisfied</mat-icon>
+          Green = positive
+        </span>
+        <span class="hint-chip negative">
+          <mat-icon>sentiment_dissatisfied</mat-icon>
+          Red = pain
+        </span>
       </div>
-      <h1>{{ t('heatmap.title') }}</h1>
-      <p class="subtitle">{{ t('heatmap.subtitle') }}</p>
-      <p class="page-purpose">{{ t('heatmap.purpose') }}</p>
+      <p class="hero-purpose">{{ t('heatmap.purpose') }}</p>
     </div>
-    <button mat-raised-button color="primary" type="button" class="cx-action-btn" (click)="loadHeatmap(false, true)" [disabled]="loading()">
-      <mat-icon>refresh</mat-icon>
+    <button
+      actions
+      mat-raised-button
+      color="primary"
+      type="button"
+      class="cx-action-btn hero-refresh-btn"
+      (click)="loadHeatmap(false, true)"
+      [disabled]="loading()">
+      <mat-icon>{{ loading() ? 'hourglass_top' : 'refresh' }}</mat-icon>
       {{ loading() ? t('app.loading') : t('heatmap.load') }}
     </button>
-  </header>
+  </app-page-header-card>
 
   @if (loading()) {
     <div class="loading-container">

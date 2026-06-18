@@ -1,10 +1,11 @@
 <div class="dashboard-reports-container">
-  <section class="hero">
-    <div class="hero-copy">
-      <h1>{{ t('reports.dashboardReportsTitle') }}</h1>
-      <p>{{ t('reports.dashboardReportsSubtitle') }}</p>
-    </div>
-    @if (!(loading() || loadingTrends())) {
+  <app-page-header-card
+    [title]="t('reports.dashboardReportsTitle')"
+    [subtitle]="t('reports.dashboardReportsSubtitle')"
+    icon="bar_chart">
+  </app-page-header-card>
+
+  @if (!(loading() || loadingTrends())) {
     <app-report-date-range-filter
       [wrapInCard]="true"
       periodLabelKey="reports.fixedPeriod"
@@ -22,8 +23,7 @@
         {{ t('nav.csvUpload') }}
       </a>
     </app-report-date-range-filter>
-    }
-  </section>
+  }
 
   @if (loading() || loadingTrends()) {
     <section class="section">

@@ -1,21 +1,19 @@
 <div class="dashboard-container">
-  <div class="dashboard-header">
-    <div class="header-top">
-      <div>
-        <h1>{{ t('dashboard.title') }}</h1>
-        <p class="subtitle">{{ t('dashboard.subtitle') }}</p>
-      </div>
-      <div class="header-actions">
-        <a mat-stroked-button routerLink="/app/data-sources/csv-upload" class="action-btn">
-          <mat-icon>upload</mat-icon>
-          {{ t('nav.csvUpload') }}
-        </a>
-        <button mat-raised-button color="primary" type="button" (click)="downloadSampleCsv()">
-          <mat-icon>download</mat-icon>
-          {{ t('dashboard.downloadSample') }}
-        </button>
-      </div>
+  <app-page-header-card
+    [title]="t('dashboard.title')"
+    [subtitle]="t('dashboard.subtitle')"
+    icon="dashboard">
+    <div actions class="header-actions">
+      <a mat-stroked-button routerLink="/app/data-sources/csv-upload" class="action-btn">
+        <mat-icon>upload</mat-icon>
+        {{ t('nav.csvUpload') }}
+      </a>
+      <button mat-raised-button color="primary" type="button" (click)="downloadSampleCsv()">
+        <mat-icon>download</mat-icon>
+        {{ t('dashboard.downloadSample') }}
+      </button>
     </div>
+  </app-page-header-card>
     <mat-card class="period-card">
       <mat-card-content>
         <app-report-date-range-filter
@@ -31,7 +29,6 @@
           (apply)="applyDateRange()" />
       </mat-card-content>
     </mat-card>
-  </div>
 
   <div *ngIf="loading()" class="loading-container">
     <mat-spinner diameter="50"></mat-spinner>

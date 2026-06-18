@@ -1,3 +1,4 @@
+import { PageHeaderCard } from '../../../core/components/page-header-card/page-header-card';
 import { Component, inject, OnDestroy, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
@@ -41,6 +42,7 @@ interface CompetitorData {
 @Component({
   selector: 'app-competitor-comparison',
   imports: [
+    PageHeaderCard,
     CommonModule,
     MatCardModule,
     MatTableModule,

@@ -1,15 +1,14 @@
 <div class="csv-upload-container">
-  <div class="upload-hero">
-    <div>
-      <p class="eyebrow">Upload + history</p>
-      <h1>{{ t('csv.uploadTitle') }}</h1>
-      <p class="subtitle">{{ t('csv.uploadSubtitle') }}</p>
-    </div>
-    <div class="hero-chip">
+  <app-page-header-card
+    badge="Upload + history"
+    [title]="t('csv.uploadTitle')"
+    [subtitle]="t('csv.uploadSubtitle')"
+    icon="upload_file">
+    <div actions class="hero-chip">
       <mat-icon>auto_awesome</mat-icon>
       AI-ready import flow
     </div>
-  </div>
+  </app-page-header-card>
 
   <div class="upload-grid">
     <mat-card class="upload-card">

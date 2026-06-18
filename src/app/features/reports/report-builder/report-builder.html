@@ -1,14 +1,10 @@
 <div class="report-builder-page">
-  <header class="page-hero">
-    <div class="hero-text">
-      <div class="hero-badge">
-        <mat-icon>description</mat-icon>
-        <span>Export center</span>
-      </div>
-      <h1>{{ t('nav.reportBuilder') }}</h1>
-      <p class="subtitle">{{ t('reports.builderSubtitle') }}</p>
-    </div>
-  </header>
+  <app-page-header-card
+    badge="Export center"
+    [title]="t('nav.reportBuilder')"
+    [subtitle]="t('reports.builderSubtitle')"
+    icon="description">
+  </app-page-header-card>
 
   <div class="builder-grid">
     <mat-card class="builder-card">

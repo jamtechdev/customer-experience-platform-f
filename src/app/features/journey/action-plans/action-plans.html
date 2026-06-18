@@ -1,8 +1,9 @@
 <div class="action-plans-container">
-  <div class="header-section">
-    <h1>Action plan</h1>
-    <p class="subtitle">Prioritized actions with owner, impact and timeline</p>
-  </div>
+  <app-page-header-card
+    title="Action plan"
+    subtitle="Prioritized actions with owner, impact and timeline"
+    icon="assignment_turned_in">
+  </app-page-header-card>
 
   @if (loading()) {
     <div class="loading-container">

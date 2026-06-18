@@ -1,3 +1,4 @@
+import { PageHeaderCard } from '../../core/components/page-header-card/page-header-card';
 import { Component, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
@@ -16,6 +17,7 @@ import { LanguageSwitcher } from '../../core/components/language-switcher/langua
   selector: 'app-profile',
   standalone: true,
   imports: [
+    PageHeaderCard,
     CommonModule,
     MatCardModule,
     MatFormFieldModule,

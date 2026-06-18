@@ -1,3 +1,4 @@
+import { PageHeaderCard } from '../../../core/components/page-header-card/page-header-card';
 import { Component, inject, OnDestroy, OnInit, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
@@ -48,6 +49,7 @@ interface SentimentCategoryBar {
 @Component({
   selector: 'app-main-dashboard',
   imports: [
+    PageHeaderCard,
     CommonModule,
     RouterLink,
     MatCardModule,

@@ -1,14 +1,20 @@
 <div class="dataset-profile-container">
-  <header class="page-header">
-    <div>
-      <h1>{{ t('nav.datasetProfile') }}</h1>
-      <p class="page-subtitle">Counts from your latest CSV import. Subsets overlap and do not add to total.</p>
-    </div>
-    <button mat-raised-button color="primary" type="button" class="cx-action-btn" (click)="loadProfile()" [disabled]="loading()">
+  <app-page-header-card
+    [title]="t('nav.datasetProfile')"
+    subtitle="Counts from your latest CSV import. Subsets overlap and do not add to total."
+    icon="dataset">
+    <button
+      actions
+      mat-raised-button
+      color="primary"
+      type="button"
+      class="cx-action-btn"
+      (click)="loadProfile()"
+      [disabled]="loading()">
       <mat-icon>refresh</mat-icon>
       {{ loading() ? t('app.loading') : t('app.refresh') }}
     </button>
-  </header>
+  </app-page-header-card>
 
   <mat-card class="section-card">
     <mat-card-content>

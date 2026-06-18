@@ -1,11 +1,10 @@
 <div class="notifications-container">
-  <section class="page-header">
-    <div>
-      <p class="eyebrow">Notification Center</p>
-      <h1>Notifications</h1>
-      <p class="subtitle">All system alerts are shown here. Opening this page automatically clears the bell count.</p>
-    </div>
-    <div class="header-actions">
+  <app-page-header-card
+    badge="Notification Center"
+    title="Notifications"
+    subtitle="All system alerts are shown here. Opening this page automatically clears the bell count."
+    icon="notifications">
+    <div actions class="header-actions">
       <button mat-stroked-button color="primary" type="button" (click)="loadNotifications()" [disabled]="loading()">
         <mat-icon>refresh</mat-icon>
         Refresh
@@ -20,7 +19,7 @@
         {{ clearingAll() ? 'Deleting...' : 'Delete all' }}
       </button>
     </div>
-  </section>
+  </app-page-header-card>
 
   <div class="summary-grid">
     <mat-card class="summary-card">

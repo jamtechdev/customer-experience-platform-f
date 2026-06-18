@@ -1,14 +1,20 @@
 <div class="journey-container">
-  <header class="page-header">
-    <div>
-      <h1>{{ t('journeyMap.title') }}</h1>
-      <p class="subtitle">{{ t('journeyMap.subtitle') }}</p>
-    </div>
-    <button mat-raised-button color="primary" type="button" class="cx-action-btn" (click)="loadJourneyData()" [disabled]="loading()">
+  <app-page-header-card
+    [title]="t('journeyMap.title')"
+    [subtitle]="t('journeyMap.subtitle')"
+    icon="map">
+    <button
+      actions
+      mat-raised-button
+      color="primary"
+      type="button"
+      class="cx-action-btn"
+      (click)="loadJourneyData()"
+      [disabled]="loading()">
       <mat-icon>refresh</mat-icon>
       {{ loading() ? t('app.loading') : t('app.refresh') }}
     </button>
-  </header>
+  </app-page-header-card>
 
   @if (loading()) {
     <div class="loading-container">
@@ -48,13 +54,13 @@
                   {{ t('journeyMap.satisfaction') }}
                 </div>
                 <p>{{ satisfactionDisplay(row) }}</p>
-                @if (satisfactionDrilldownIds(row).length) {
+                @if (satisfactionReferenceTotal(row) > 0) {
                   <button
                     mat-stroked-button
                     type="button"
                     class="ref-btn"
-                    (click)="openReferences(row.name, 'satisfaction', satisfactionDrilldownIds(row))">
-                    {{ t('journeyMap.viewRefs', { count: satisfactionDrilldownIds(row).length }) }}
+                    (click)="openReferences(row.name, 'satisfaction', satisfactionDrilldownIds(row), satisfactionReferenceTotal(row))">
+                    {{ t('journeyMap.viewRefs', { count: satisfactionReferenceTotal(row) }) }}
                   </button>
                 }
               </section>
@@ -64,13 +70,13 @@
                   {{ t('journeyMap.dissatisfaction') }}
                 </div>
                 <p>{{ dissatisfactionDisplay(row) }}</p>
-                @if (dissatisfactionDrilldownIds(row).length) {
+                @if (dissatisfactionReferenceTotal(row) > 0) {
                   <button
                     mat-stroked-button
                     type="button"
                     class="ref-btn"
-                    (click)="openReferences(row.name, 'dissatisfaction', dissatisfactionDrilldownIds(row))">
-                    {{ t('journeyMap.viewRefs', { count: dissatisfactionDrilldownIds(row).length }) }}
+                    (click)="openReferences(row.name, 'dissatisfaction', dissatisfactionDrilldownIds(row), dissatisfactionReferenceTotal(row))">
+                    {{ t('journeyMap.viewRefs', { count: dissatisfactionReferenceTotal(row) }) }}
                   </button>
                 }
               </section>

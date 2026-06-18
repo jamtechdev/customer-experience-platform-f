@@ -21,10 +21,12 @@ import {
   datesValidYmd,
   type ReportDatePreset,
 } from '../../../core/utils/report-date-presets';
+import { PageHeaderCard } from '../../../core/components/page-header-card/page-header-card';
 
 @Component({
   selector: 'app-executive-summary',
   imports: [
+    PageHeaderCard,
     CommonModule,
     MatCardModule,
     MatButtonModule,
@@ -224,26 +226,31 @@ export class ExecutiveSummary implements OnInit, OnDestroy {
 
   totalTweetVolume(): number {
     const cohort = this.data()?.cohort;
+    const imported = cohort?.importedRows;
+    if (imported != null && imported > 0) return imported;
     if (cohort && cohort.total > 0) return cohort.total;
     return this.data()?.kpis.totalFeedback ?? 0;
   }
 
   originalCustomerCxVolume(): number {
     const cohort = this.data()?.cohort;
-    if (cohort && cohort.originalCustomerCx > 0) return cohort.originalCustomerCx;
-    if (cohort && cohort.primaryCohortSize > 0) return cohort.primaryCohortSize;
-    return this.totalTweetVolume();
+    const total = this.totalTweetVolume();
+    if (cohort && cohort.originalCustomerCx > 0) return Math.min(cohort.originalCustomerCx, total);
+    if (cohort && cohort.primaryCohortSize > 0) return Math.min(cohort.primaryCohortSize, total);
+    return total;
   }
 
   cxRelatedVolume(): number {
     const cohort = this.data()?.cohort;
-    if (cohort && cohort.cxRelated > 0) return cohort.cxRelated;
-    return this.totalTweetVolume();
+    const total = this.totalTweetVolume();
+    if (cohort && cohort.cxRelated > 0) return Math.min(cohort.cxRelated, total);
+    return total;
   }
 
   brandSupportVolume(): number {
     const cohort = this.data()?.cohort;
-    if (cohort) return Math.max(cohort.brandSupport, 0);
+    const total = this.totalTweetVolume();
+    if (cohort) return Math.min(Math.max(cohort.brandSupport, 0), total);
     return 0;
   }
 

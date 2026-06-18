@@ -1,3 +1,4 @@
+import { PageHeaderCard } from '../../../core/components/page-header-card/page-header-card';
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
@@ -22,6 +23,7 @@ interface Report {
 @Component({
   selector: 'app-report-list',
   imports: [
+    PageHeaderCard,
     CommonModule,
     MatCardModule,
     MatTableModule,

@@ -1,8 +1,9 @@
 <div class="csv-mapping-container">
-  <div class="header-section">
-    <h1>CSV Column Mapping</h1>
-    <p class="subtitle">Map the original sentence/feedback text, date, and source columns before starting the import.</p>
-  </div>
+  <app-page-header-card
+    title="CSV Column Mapping"
+    subtitle="Map the original sentence/feedback text, date, and source columns before starting the import."
+    icon="view_column">
+  </app-page-header-card>
 
   @if (loading()) {
     <div class="loading">

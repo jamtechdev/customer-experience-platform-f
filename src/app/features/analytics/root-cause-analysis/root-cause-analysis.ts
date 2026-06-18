@@ -1,3 +1,4 @@
+import { PageHeaderCard } from '../../../core/components/page-header-card/page-header-card';
 import { Component, HostListener, inject, OnDestroy, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
@@ -46,6 +47,7 @@ interface RootCauseChartRow {
 @Component({
   selector: 'app-root-cause-analysis',
   imports: [
+    PageHeaderCard,
     CommonModule,
     MatCardModule,
     MatTableModule,

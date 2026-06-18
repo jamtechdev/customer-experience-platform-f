@@ -1,4 +1,10 @@
 <div class="process-enhancement-container">
+  <app-page-header-card
+    title="Process enhancement"
+    subtitle="AI-written process improvements and management takeaways from your CX report"
+    icon="auto_fix_high">
+  </app-page-header-card>
+
   <div *ngIf="loading()" class="loading-container">
     <app-ollama-loader
       title="Loading process improvements"

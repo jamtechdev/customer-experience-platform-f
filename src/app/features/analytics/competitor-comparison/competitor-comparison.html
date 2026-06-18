@@ -1,8 +1,9 @@
 <div class="competitor-container">
-  <div class="header-section">
-    <h1>{{ t('competitorPage.title') }}</h1>
-    <p class="subtitle">{{ t('competitorPage.subtitle') }}</p>
-  </div>
+  <app-page-header-card
+    [title]="t('competitorPage.title')"
+    [subtitle]="t('competitorPage.subtitle')"
+    icon="groups">
+  </app-page-header-card>
 
   <app-report-date-range-filter
     [wrapInCard]="true"

@@ -1,3 +1,4 @@
+import { PageHeaderCard } from '../../../core/components/page-header-card/page-header-card';
 import { Component, computed, inject, OnDestroy, OnInit, signal } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { CommonModule } from '@angular/common';
@@ -43,6 +44,7 @@ function isSourceChannelName(value: string): boolean {
 @Component({
   selector: 'app-touchpoint-manager',
   imports: [
+    PageHeaderCard,
     CommonModule,
     ReactiveFormsModule,
     MatCardModule,

@@ -1,8 +1,9 @@
 <div class="alerts-container">
-  <div class="header-section">
-    <h1>Alerts Dashboard</h1>
-    <p class="subtitle">Monitor important CX events and trends</p>
-  </div>
+  <app-page-header-card
+    title="Alerts Dashboard"
+    subtitle="Monitor important CX events and trends"
+    icon="warning">
+  </app-page-header-card>
 
   <div *ngIf="loading()" class="loading-container">
     <app-ollama-loader

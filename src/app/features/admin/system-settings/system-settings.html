@@ -1,8 +1,9 @@
 <div class="settings-container">
-  <div class="header-section">
-    <h1>System Settings</h1>
-    <p class="subtitle">Configure system-wide settings and thresholds</p>
-  </div>
+  <app-page-header-card
+    title="System Settings"
+    subtitle="Configure system-wide settings and thresholds"
+    icon="settings">
+  </app-page-header-card>
 
   <div *ngIf="loading()" class="loading-container">
     <mat-spinner></mat-spinner>

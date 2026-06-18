@@ -1,3 +1,4 @@
+import { PageHeaderCard } from '../../../core/components/page-header-card/page-header-card';
 import { Component, ElementRef, ViewChild, inject, signal, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
@@ -25,6 +26,7 @@ const DEFAULT_FORMAT: CSVFormat = {
 @Component({
   selector: 'app-csv-upload',
   imports: [
+    PageHeaderCard,
     CommonModule,
     MatCardModule,
     MatButtonModule,

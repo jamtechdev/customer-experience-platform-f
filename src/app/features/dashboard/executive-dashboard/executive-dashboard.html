@@ -1,12 +1,13 @@
 <div class="executive-dashboard-container">
-  <div class="dashboard-header">
-    <h1>{{ t('dashboard.title') }}</h1>
-    <p class="subtitle">{{ t('dashboard.welcome') }}</p>
-    <button mat-raised-button color="primary" (click)="downloadReport()" class="download-btn">
+  <app-page-header-card
+    [title]="t('dashboard.title')"
+    [subtitle]="t('dashboard.welcome')"
+    icon="dashboard">
+    <button actions mat-raised-button color="primary" (click)="downloadReport()" class="download-btn">
       <mat-icon>download</mat-icon>
       <span>{{ t('reports.download') }}</span>
     </button>
-  </div>
+  </app-page-header-card>
 
   <div *ngIf="loading()" class="loading-container">
     <mat-spinner diameter="50"></mat-spinner>

@@ -9,6 +9,7 @@ import { MatChipsModule } from '@angular/material/chips';
 import { AdminService } from '../../../core/services/admin.service';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { getRoleLabel } from '../../../core/models/user.model';
+import { PageHeaderCard } from '../../../core/components/page-header-card/page-header-card';
 
 interface Role {
   id?: string;
@@ -20,6 +21,7 @@ interface Role {
 @Component({
   selector: 'app-role-management',
   imports: [
+    PageHeaderCard,
     CommonModule,
     MatCardModule,
     MatTableModule,

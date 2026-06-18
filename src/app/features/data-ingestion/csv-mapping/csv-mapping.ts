@@ -1,3 +1,4 @@
+import { PageHeaderCard } from '../../../core/components/page-header-card/page-header-card';
 import { Component, OnInit, inject, signal, computed, effect, untracked } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
@@ -22,6 +23,7 @@ import { AuthService } from '../../../core/services/auth.service';
 @Component({
   selector: 'app-csv-mapping',
   imports: [
+    PageHeaderCard,
     CommonModule,
     RouterModule,
     FormsModule,

@@ -1,10 +1,10 @@
 <div class="root-cause-container">
-  <div class="header-section header-with-action">
-    <div>
-      <h1>{{ t('rootCausePage.title') }}</h1>
-      <p class="subtitle">{{ t('rootCausePage.subtitle') }}</p>
-    </div>
+  <app-page-header-card
+    [title]="t('rootCausePage.title')"
+    [subtitle]="t('rootCausePage.subtitle')"
+    icon="psychology">
     <button
+      actions
       mat-stroked-button
       color="primary"
       type="button"
@@ -13,7 +13,7 @@
       <mat-icon>refresh</mat-icon>
       {{ reanalyzing() ? t('rootCausePage.analyzing') : t('rootCausePage.rerun') }}
     </button>
-  </div>
+  </app-page-header-card>
 
   <div *ngIf="loading()" class="loading-container">
     <app-ollama-loader

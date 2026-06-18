@@ -89,10 +89,12 @@
 }
 
 .related-header p {
-  max-width: min(760px, 72vw);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  max-width: min(960px, 100%);
+  overflow: visible;
+  text-overflow: unset;
+  white-space: normal;
+  word-break: break-word;
+  line-height: 1.45;
 }
 
 .related-content {
