@@ -1,22 +1,50 @@
+:host {
+  display: block;
+  width: 100%;
+  min-width: 0;
+}
+
 .period-title {
   font-size: 0.95rem;
   font-weight: 700;
   color: #0f172a;
-  margin-bottom: 8px;
+  margin: 0 0 10px;
+  line-height: 1.35;
 }
 
 .period-active {
-  font-weight: 600;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 6px 10px;
+  margin: 0 0 14px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  line-height: 1.45;
+}
+
+.period-active-label {
+  font-weight: 700;
   color: #475569;
-  margin-bottom: 12px;
-  line-height: 1.5;
+  font-size: 0.82rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.period-active-value {
+  font-weight: 600;
+  color: #0f172a;
+  font-size: 0.9rem;
 }
 
 .filters-row {
-  display: grid;
-  grid-template-columns: minmax(220px, 1.3fr) repeat(2, minmax(190px, 1fr)) repeat(3, max-content);
-  gap: 14px;
-  align-items: start;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 12px 14px;
+  width: 100%;
   overflow: visible;
 }
 
@@ -28,21 +56,29 @@
 }
 
 .filter-card .mat-mdc-card-content {
-  padding: 18px;
+  padding: 18px 20px;
 }
 
 .filters-row mat-form-field {
-  width: 100%;
-  min-width: 0;
+  flex: 1 1 220px;
+  min-width: min(100%, 220px);
+  max-width: 100%;
+}
+
+.filters-row app-date-picker-input {
+  flex: 1 1 190px;
+  min-width: min(100%, 190px);
 }
 
 .filters-row button[mat-stroked-button],
 .filters-row button[mat-flat-button],
+.filters-row button[mat-raised-button],
 .filters-row a[mat-stroked-button],
 .filters-row .filter-extra-action {
+  flex: 0 0 auto;
   min-height: 48px;
   height: 48px;
-  align-self: start;
+  align-self: flex-end;
   white-space: nowrap;
   border-radius: 10px;
   padding: 0 16px;
@@ -61,16 +97,29 @@
 
 :host ::ng-deep .filters-row .mat-mdc-form-field-subscript-wrapper {
   display: none;
+  min-height: 0;
 }
 
 :host ::ng-deep .filters-row .mat-mdc-text-field-wrapper {
   background: #ffffff;
 }
 
+:host ::ng-deep .filters-row .mat-mdc-form-field-flex {
+  align-items: center;
+}
+
 :host ::ng-deep .filters-row .mat-mdc-form-field-infix {
   min-height: 48px;
-  padding-top: 14px;
-  padding-bottom: 10px;
+  padding-top: 12px !important;
+  padding-bottom: 12px !important;
+}
+
+:host ::ng-deep .filters-row .mdc-floating-label {
+  top: 22px !important;
+}
+
+:host ::ng-deep .filters-row .mdc-floating-label--float-above {
+  transform: translateY(-120%) scale(0.75) !important;
 }
 
 :host ::ng-deep .filters-row .mat-mdc-select-value,
@@ -84,20 +133,17 @@
   cursor: pointer;
 }
 
-@media (max-width: 1100px) {
+@media (max-width: 768px) {
   .filters-row {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    flex-direction: column;
+    align-items: stretch;
   }
 
-  .filters-row button[mat-stroked-button],
-  .filters-row button[mat-flat-button],
-  .filters-row [extraActions] {
-    grid-column: 1 / -1;
-  }
-}
-
-@media (max-width: 640px) {
-  .filters-row {
-    grid-template-columns: 1fr;
+  .filters-row mat-form-field,
+  .filters-row app-date-picker-input,
+  .filters-row button,
+  .filters-row .filter-extra-action {
+    width: 100%;
+    flex: 1 1 auto;
   }
 }

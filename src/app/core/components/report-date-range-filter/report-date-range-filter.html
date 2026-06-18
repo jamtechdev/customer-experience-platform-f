@@ -2,12 +2,10 @@
   @if (periodTitle()) {
     <div class="period-title">{{ periodTitle() }}</div>
   }
-  @if (showActiveRange()) {
+  @if (showActiveRangeBanner()) {
     <div class="period-active">
-      {{ t('reports.activeRange') }}:
-      {{ activeRangeStartLabel() }}
-      →
-      {{ activeRangeEndLabel() }}
+      <span class="period-active-label">{{ t('reports.activeRange') }}</span>
+      <span class="period-active-value">{{ activeRangeSummary() }}</span>
     </div>
   }
   <div class="filters-row">

@@ -31,62 +31,18 @@
 }
 
 .report-period-row {
-  display: grid;
-  grid-template-columns: minmax(220px, 1.1fr) repeat(2, minmax(210px, 1fr)) minmax(130px, auto) minmax(150px, auto);
-  align-items: start;
-  gap: 14px;
   width: 100%;
-  margin: 4px 0 20px;
-  padding: 16px;
-  border: 1px solid #e5e7eb;
+  margin: 0 0 20px;
+  padding: 18px 20px;
+  border: 1px solid #e2e8f0;
   border-radius: 14px;
   background: #f8fafc;
+  overflow: visible;
 }
 
-.report-period-row mat-form-field {
+.report-period-row .exec-date-filter {
+  display: block;
   width: 100%;
-  min-width: 0;
-}
-
-.report-period-row button {
-  min-height: 48px;
-  height: 48px;
-  align-self: start;
-  white-space: nowrap;
-  border-radius: 10px;
-  padding: 0 16px;
-}
-
-.report-period-row .date-picker-trigger {
-  min-height: 36px;
-  height: 36px;
-  width: 36px;
-  padding: 6px;
-  align-self: center;
-}
-
-:host ::ng-deep .report-period-row .mat-mdc-form-field-subscript-wrapper {
-  display: none;
-}
-
-:host ::ng-deep .report-period-row .mat-mdc-text-field-wrapper {
-  background: #ffffff;
-}
-
-:host ::ng-deep .report-period-row .mat-mdc-form-field-infix {
-  min-height: 48px;
-  padding-top: 14px;
-  padding-bottom: 10px;
-}
-
-:host ::ng-deep .report-period-row .mat-mdc-select-value,
-:host ::ng-deep .report-period-row input.mat-mdc-input-element {
-  color: #111827;
-  font-weight: 500;
-}
-
-:host ::ng-deep .report-period-row .mat-mdc-floating-label {
-  color: #5f6b7a;
 }
 
 .loading {
@@ -282,14 +238,6 @@
 }
 
 @media (max-width: 1024px) {
-  .report-period-row {
-    grid-template-columns: repeat(2, minmax(220px, 1fr));
-  }
-
-  .report-period-row button {
-    width: 100%;
-  }
-
   .summary-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -305,15 +253,10 @@
   }
 
   .report-period-row {
-    grid-template-columns: 1fr;
-    padding: 12px;
+    padding: 14px 16px;
   }
 
   .summary-grid {
     grid-template-columns: 1fr;
-  }
-
-  .report-period-row mat-form-field {
-    width: 100%;
   }
 }

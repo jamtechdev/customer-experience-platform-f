@@ -13,6 +13,7 @@ import { OllamaLoader } from '../../../core/components/ollama-loader/ollama-load
 import { ReportDateRangeFilter } from '../../../core/components/report-date-range-filter/report-date-range-filter';
 import { TwitterCxReportStore } from '../../../core/services/twitter-cx-report.store';
 import { Subscription } from 'rxjs';
+import { resolveAppCompanyId } from '../../../core/utils/company-scope';
 import {
   buildClientReportDatePresets,
   toIsoRangeFromYmd,
@@ -56,7 +57,7 @@ export class ExecutiveSummary implements OnInit, OnDestroy {
   selectedPresetId = signal<string>(NO_DATE_FILTER_PRESET_ID);
   startDate = signal<string | null>(null);
   endDate = signal<string | null>(null);
-  private filtersApplied = signal(false);
+  filtersApplied = signal(false);
   private manualReloadTimer: ReturnType<typeof setTimeout> | null = null;
 
   ngOnInit(): void {
@@ -108,8 +109,7 @@ export class ExecutiveSummary implements OnInit, OnDestroy {
 
   loadSummary(withFilters: boolean = this.filtersApplied()): void {
     this.loading.set(true);
-    const user = this.authService.currentUser();
-    const companyId = user?.role === 'admin' ? undefined : (user?.settings?.companyId ?? 1);
+    const companyId = resolveAppCompanyId(this.authService.currentUser());
     let startDate: Date | undefined;
     let endDate: Date | undefined;
     if (withFilters) {
@@ -139,12 +139,20 @@ export class ExecutiveSummary implements OnInit, OnDestroy {
       return;
     }
     this.exporting.set(true);
-    const companyId = this.authService.currentUser()?.settings?.companyId ?? 1;
+    const companyId = resolveAppCompanyId(this.authService.currentUser());
     const { startDate: sd, endDate: ed, displayRange } =
       this.selectedPresetId() === NO_DATE_FILTER_PRESET_ID
         ? this.exportAllDataRange()
         : { ...toIsoRangeFromYmd(this.startDate()!, this.endDate()!), displayRange: undefined };
-    this.reportService.exportDashboardToPdf({ companyId, startDate: sd, endDate: ed, displayRange }).subscribe({
+    this.reportService
+      .exportDashboardToPdf({
+        companyId,
+        startDate: sd,
+        endDate: ed,
+        displayRange,
+        reportType: 'executive',
+      })
+      .subscribe({
       next: (blob) => {
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');

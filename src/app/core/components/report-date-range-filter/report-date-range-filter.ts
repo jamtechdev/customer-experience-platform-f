@@ -67,6 +67,13 @@ export class ReportDateRangeFilter {
   /** Date fields only appear when the user picks a custom range. */
   readonly showDatePickers = computed(() => this.selectedPresetId() === 'custom');
 
+  readonly showActiveRangeBanner = computed(() => {
+    if (!this.showActiveRange()) return false;
+    const id = this.selectedPresetId();
+    if (id === NO_DATE_FILTER_PRESET_ID) return false;
+    return true;
+  });
+
   readonly t = (key: string, params?: Record<string, string | number>): string =>
     this.translationService.translate(key, params);
 
@@ -76,6 +83,21 @@ export class ReportDateRangeFilter {
 
   activeRangeEndLabel(): string {
     return this.endDate() || this.activeRangeEndFallback() || this.t('reports.allData');
+  }
+
+  activeRangeSummary(): string {
+    const id = this.selectedPresetId();
+    if (id === NO_DATE_FILTER_PRESET_ID) return this.t('reports.allData');
+    if (id === 'all_time') return this.t('reports.allTime');
+    const preset = this.presets().find((p) => p.id === id);
+    if (preset) return this.presetLabel(preset);
+    if (id === 'custom') {
+      const start = this.activeRangeStartLabel();
+      const end = this.activeRangeEndLabel();
+      if (start === end) return start;
+      return `${start} → ${end}`;
+    }
+    return `${this.activeRangeStartLabel()} → ${this.activeRangeEndLabel()}`;
   }
 
   datesValid(): boolean {
