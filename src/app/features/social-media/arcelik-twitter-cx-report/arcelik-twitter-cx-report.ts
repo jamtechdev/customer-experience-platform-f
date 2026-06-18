@@ -27,6 +27,7 @@ import {
 } from '../../../core/utils/report-date-presets';
 import { OllamaLoader } from '../../../core/components/ollama-loader/ollama-loader';
 import { RelatedFeedbackModal, RelatedFeedbackRow } from '../../../core/components/related-feedback-modal/related-feedback-modal';
+import { drilldownModalTotal } from '../../../core/utils/drilldown-display';
 import { ReportDateRangeFilter } from '../../../core/components/report-date-range-filter/report-date-range-filter';
 import { twitterCxReportFailureMessage } from '../../../core/utils/twitter-cx-report-load';
 
@@ -482,6 +483,7 @@ export class ArcelikTwitterCxReport implements OnInit, OnDestroy {
     this.drilldownTitle.set(title);
     this.drilldownOpen.set(true);
     this.drilldownIds = feedbackIds;
+    this.drilldownTotal.set(drilldownModalTotal(this.drilldownIds));
     this.loadDrilldownPage(1);
   }
 
@@ -501,7 +503,7 @@ export class ArcelikTwitterCxReport implements OnInit, OnDestroy {
         this.drilldownLoading.set(false);
         if (res.success && Array.isArray(res.data?.list)) {
           this.drilldownRows.set(res.data.list);
-          this.drilldownTotal.set(Number(res.data?.total ?? res.data?.returned ?? 0));
+          this.drilldownTotal.set(drilldownModalTotal(this.drilldownIds));
         } else {
           this.snackBar.open(res.message || 'Could not load related records', 'Close', { duration: 5000 });
           this.closeDrilldown();

@@ -15,6 +15,7 @@ import { OllamaLoader } from '../../../core/components/ollama-loader/ollama-load
 import { CXWebSocketService } from '../../../core/services/cx-websocket.service';
 import { TranslationService } from '../../../core/services/translation.service';
 import { RelatedFeedbackModal, RelatedFeedbackRow } from '../../../core/components/related-feedback-modal/related-feedback-modal';
+import { drilldownModalTotal } from '../../../core/utils/drilldown-display';
 
 interface PlatformData {
   platform: string;
@@ -218,7 +219,7 @@ export class SocialAnalysis implements OnInit, OnDestroy {
       next: (res) => {
         this.drilldownLoading.set(false);
         this.drilldownRows.set(res?.data?.list || []);
-        this.drilldownTotal.set(Number(res?.data?.total ?? res?.data?.returned ?? 0));
+        this.drilldownTotal.set(this.drilldownRequestedCount() || drilldownModalTotal(state.ids));
       },
       error: () => {
         this.drilldownLoading.set(false);

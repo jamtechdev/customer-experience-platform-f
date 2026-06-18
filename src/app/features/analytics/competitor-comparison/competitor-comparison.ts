@@ -25,6 +25,7 @@ import { CXWebSocketService, type CSVImportStatusEvent } from '../../../core/ser
 import { Subscription } from 'rxjs';
 import { OllamaLoader } from '../../../core/components/ollama-loader/ollama-loader';
 import { RelatedFeedbackModal, RelatedFeedbackRow } from '../../../core/components/related-feedback-modal/related-feedback-modal';
+import { drilldownModalTotal } from '../../../core/utils/drilldown-display';
 import { ReportDateRangeFilter } from '../../../core/components/report-date-range-filter/report-date-range-filter';
 
 interface CompetitorData {
@@ -291,6 +292,7 @@ export class CompetitorComparison implements OnInit, OnDestroy {
     this.drilldownTitle.set(row.name);
     this.drilldownOpen.set(true);
     this.drilldownIds = ids;
+    this.drilldownTotal.set(drilldownModalTotal(this.drilldownIds));
     this.loadDrilldownPage(1);
   }
 
@@ -308,7 +310,7 @@ export class CompetitorComparison implements OnInit, OnDestroy {
       next: (res) => {
         this.drilldownLoading.set(false);
         this.drilldownRows.set(res?.data?.list || []);
-        this.drilldownTotal.set(Number(res?.data?.total ?? res?.data?.returned ?? 0));
+        this.drilldownTotal.set(drilldownModalTotal(this.drilldownIds));
       },
       error: () => {
         this.drilldownLoading.set(false);

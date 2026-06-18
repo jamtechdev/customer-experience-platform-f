@@ -11,6 +11,7 @@ import { AuthService } from '../../../core/services/auth.service';
 import { OllamaLoader } from '../../../core/components/ollama-loader/ollama-loader';
 import { twitterCxReportFailureMessage } from '../../../core/utils/twitter-cx-report-load';
 import { TranslationService } from '../../../core/services/translation.service';
+import { drilldownModalTotal } from '../../../core/utils/drilldown-display';
 import { RelatedFeedbackModal, RelatedFeedbackRow } from '../../../core/components/related-feedback-modal/related-feedback-modal';
 
 interface StageRow {
@@ -203,6 +204,7 @@ export class JourneyHeatmap implements OnInit, OnDestroy {
     if (!unique.length && stage.feedbackCount <= 0) return;
     this.drilldownState = { stage, label, ids: unique };
     this.drilldownIds = unique;
+    this.drilldownTotal.set(drilldownModalTotal(this.drilldownIds));
     this.drilldownTitle.set(`${stage.stageName} · ${label}`);
     this.drilldownOpen.set(true);
     this.loadDrilldownPage(1);
@@ -223,7 +225,7 @@ export class JourneyHeatmap implements OnInit, OnDestroy {
       next: (res) => {
         this.drilldownLoading.set(false);
         this.drilldownRows.set(res?.data?.list || []);
-        this.drilldownTotal.set(Number(res?.data?.total ?? res?.data?.returned ?? 0));
+        this.drilldownTotal.set(drilldownModalTotal(this.drilldownIds));
       },
       error: () => {
         this.drilldownLoading.set(false);

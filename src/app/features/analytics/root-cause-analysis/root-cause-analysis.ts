@@ -15,6 +15,7 @@ import { CXWebSocketService, type CSVImportStatusEvent } from '../../../core/ser
 import { Subscription } from 'rxjs';
 import { OllamaLoader } from '../../../core/components/ollama-loader/ollama-loader';
 import { RelatedFeedbackModal, RelatedFeedbackRow } from '../../../core/components/related-feedback-modal/related-feedback-modal';
+import { drilldownModalTotal } from '../../../core/utils/drilldown-display';
 
 interface RootCauseStructuredInsights {
   painPointTitle?: string;
@@ -366,6 +367,7 @@ export class RootCauseAnalysis implements OnInit, OnDestroy {
     this.drilldownTitle.set(row.cause);
     this.drilldownOpen.set(true);
     this.drilldownState = { row, allowRelink };
+    this.drilldownTotal.set(drilldownModalTotal(row.feedbackIds));
     this.loadDrilldownPage(1);
   }
 
@@ -391,7 +393,7 @@ export class RootCauseAnalysis implements OnInit, OnDestroy {
             return;
           }
           this.drilldownRows.set(res.data.list);
-          this.drilldownTotal.set(Number(res.data?.total ?? res.data?.returned ?? 0));
+          this.drilldownTotal.set(drilldownModalTotal(state.row.feedbackIds));
         } else {
           this.snackBar.open(res.message || 'Could not load related records', 'Close', { duration: 5000 });
           this.closeDrilldown();

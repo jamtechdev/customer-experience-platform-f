@@ -474,6 +474,7 @@ export class SentimentAnalysis implements OnInit, OnDestroy {
     if (!bar.count) return;
     this.drilldownTitle.set(`${bar.label} feedback (${bar.count})`);
     this.drilldownBar = bar;
+    this.drilldownTotal.set(bar.count);
     this.drilldownOpen.set(true);
     this.loadDrilldownPage(1);
   }
@@ -508,7 +509,7 @@ export class SentimentAnalysis implements OnInit, OnDestroy {
               date: normalizeApiDateToIso(row.date),
             }))
           );
-          this.drilldownTotal.set(Number(response?.data?.total ?? 0));
+          this.drilldownTotal.set(bar.count);
         },
         error: () => {
           this.drilldownLoading.set(false);

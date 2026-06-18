@@ -18,6 +18,7 @@ import { AuthService } from '../../../core/services/auth.service';
 import { OllamaLoader } from '../../../core/components/ollama-loader/ollama-loader';
 import { twitterCxReportFailureMessage } from '../../../core/utils/twitter-cx-report-load';
 import { RelatedFeedbackModal, RelatedFeedbackRow } from '../../../core/components/related-feedback-modal/related-feedback-modal';
+import { drilldownModalTotal } from '../../../core/utils/drilldown-display';
 
 const SOURCE_CHANNEL_NAMES = new Set([
   'twitter',
@@ -212,6 +213,7 @@ export class TouchpointManager implements OnInit, OnDestroy {
     this.drilldownTitle.set(row.name);
     this.drilldownOpen.set(true);
     this.drilldownIds = ids;
+    this.drilldownTotal.set(drilldownModalTotal(this.drilldownIds));
     this.loadDrilldownPage(1);
   }
 
@@ -232,7 +234,7 @@ export class TouchpointManager implements OnInit, OnDestroy {
       next: (res) => {
         this.drilldownLoading.set(false);
         this.drilldownRows.set(res?.data?.list || []);
-        this.drilldownTotal.set(Number(res?.data?.total ?? res?.data?.returned ?? 0));
+        this.drilldownTotal.set(drilldownModalTotal(this.drilldownIds));
       },
       error: () => {
         this.drilldownLoading.set(false);
