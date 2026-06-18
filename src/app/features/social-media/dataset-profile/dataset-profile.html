@@ -5,6 +5,20 @@
       <mat-card-subtitle>All counts come from your latest CSV import and AI report cohort — use CSV Imports as the single data entry point.</mat-card-subtitle>
     </mat-card-header>
     <mat-card-content>
+      @if (importedCsvRows() || rowsSaved()) {
+        <div class="data-scope-banner">
+          <strong>Dataset scope (latest CSV import)</strong>
+          <span>
+            @if (importedCsvRows()) {
+              CSV file rows: {{ importedCsvRows()!.toLocaleString() }} ·
+            }
+            @if (rowsSaved()) {
+              Saved in database: {{ rowsSaved()!.toLocaleString() }}
+            }
+          </span>
+          <span class="scope-note">All metrics below use the latest completed CSV import. Subsets (CX-related, brand) overlap — they do not add up to total.</span>
+        </div>
+      }
       <div *ngIf="loading()" class="loading-container">
         <app-ollama-loader
           [title]="t('socialMediaPage.datasetLoadingTitle')"

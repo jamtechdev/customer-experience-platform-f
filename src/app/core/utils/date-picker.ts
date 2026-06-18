@@ -10,4 +10,5 @@ export function openNativeDatePicker(input: HTMLInputElement): void {
       // showPicker can throw if not triggered by user gesture in some browsers
     }
   }
+  input.click();
 }

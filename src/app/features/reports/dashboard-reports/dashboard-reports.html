@@ -37,6 +37,12 @@
   } @else {
   <section class="section">
     <h2 class="section-title">{{ t('reports.currentStatus') }}</h2>
+    @if (currentStats()?.scope && scopeBannerText()) {
+      <div class="data-scope-banner">
+        <strong>{{ t('reports.dashboardScopeTitle') }}</strong>
+        <span>{{ scopeBannerText() }}</span>
+      </div>
+    }
     @if (currentStats()) {
       <div class="status-grid">
         <mat-card class="status-card kpi">
@@ -44,6 +50,7 @@
             <mat-icon>forum</mat-icon>
             <div class="status-label">{{ t('dashboard.totalFeedback') }}</div>
             <div class="status-value">{{ currentStats()!.sentiment.total | number }}</div>
+            <p class="muted small count-hint">💬 n={{ currentStats()!.sentiment.total | number }} {{ t('reports.countSymbolMessages') }}</p>
           </mat-card-content>
         </mat-card>
         <mat-card class="status-card kpi">
@@ -54,6 +61,7 @@
             <p class="muted small" *ngIf="hasNpsBaseData()">
               {{ t('reports.npsBreakdownLine', { promoters: currentStats()!.nps.promoters, passives: currentStats()!.nps.passives, detractors: currentStats()!.nps.detractors }) }}
             </p>
+            <p class="muted small count-hint" *ngIf="hasNpsBaseData()">📊 {{ t('reports.countSymbolSample') }}={{ currentStats()!.nps.total | number }}</p>
             <p class="muted small" *ngIf="!hasNpsBaseData()">{{ t('reports.noNpsRecords') }}</p>
           </mat-card-content>
         </mat-card>
@@ -117,6 +125,7 @@
             <h3>History table</h3>
             <p class="muted">
               {{ selectedPresetId() === 'none' ? 'Showing latest 90 days in selected period.' : 'Showing selected date range.' }}
+              · {{ t('reports.historyTableHint') }}
             </p>
           </div>
         </div>
@@ -131,12 +140,12 @@
               <thead>
                 <tr>
                   <th>Period</th>
-                  <th>Total feedback</th>
-                  <th>Positive</th>
-                  <th>Neutral</th>
-                  <th>Negative</th>
+                  <th>💬 Total feedback (n)</th>
+                  <th>😊 Positive</th>
+                  <th>😐 Neutral</th>
+                  <th>😞 Negative</th>
                   <th>Avg score</th>
-                  <th>NPS</th>
+                  <th>📊 NPS (n)</th>
                 </tr>
               </thead>
               <tbody>

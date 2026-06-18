@@ -55,6 +55,8 @@ export class DatasetProfile implements OnInit, OnDestroy {
   private drilldownIds: number[] = [];
 
   rows = signal<DatasetProfileRow[]>([]);
+  importedCsvRows = signal<number | null>(null);
+  rowsSaved = signal<number | null>(null);
 
   ngOnInit(): void {
     this.loadProfile();
@@ -80,6 +82,8 @@ export class DatasetProfile implements OnInit, OnDestroy {
           this.snackBar.open(twitterCxReportFailureMessage(res.message), this.t('app.close'), { duration: 7000 });
         } else {
           this.rows.set(res.data?.datasetProfileRows ? res.data.datasetProfileRows : []);
+          this.importedCsvRows.set(Number(res.data?.dataset?.importedCsvRows ?? 0) || null);
+          this.rowsSaved.set(Number(res.data?.dataset?.total ?? 0) || null);
         }
         this.loading.set(false);
       },

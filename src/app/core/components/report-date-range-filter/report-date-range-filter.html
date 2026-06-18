@@ -30,17 +30,17 @@
       </mat-select>
     </mat-form-field>
 
-    <app-date-picker-input
-      labelKey="reports.fromDate"
-      [disabled]="datesLocked()"
-      [value]="startDate()"
-      (valueChange)="onStartDateChange($event)" />
+    @if (showDatePickers()) {
+      <app-date-picker-input
+        labelKey="reports.fromDate"
+        [value]="startDate()"
+        (valueChange)="onStartDateChange($event)" />
 
-    <app-date-picker-input
-      labelKey="reports.toDate"
-      [disabled]="datesLocked()"
-      [value]="endDate()"
-      (valueChange)="onEndDateChange($event)" />
+      <app-date-picker-input
+        labelKey="reports.toDate"
+        [value]="endDate()"
+        (valueChange)="onEndDateChange($event)" />
+    }
 
     @if (showApplyButton()) {
       <button

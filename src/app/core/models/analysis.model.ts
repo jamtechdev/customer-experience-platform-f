@@ -250,6 +250,10 @@ export interface TwitterCxReportDto {
     brandSupport: number;
     originalCustomerCx: number;
     primaryCohortSize: number;
+    /** Rows in the uploaded CSV file (latest import). */
+    importedCsvRows?: number;
+    /** Active CSV import used for this report scope. */
+    activeCsvImportId?: number;
   };
   datasetProfileRows: Array<{ metric: string; value: string; comment: string; feedbackIds?: number[] }>;
   sentiment: { positive: number; negative: number; neutral: number; total: number; averageScore: number };
@@ -267,6 +271,9 @@ export interface TwitterCxReportDto {
     neutral: number;
     negative: number;
     total: number;
+    positiveCount?: number;
+    neutralCount?: number;
+    negativeCount?: number;
     feedbackIds?: number[];
     positiveFeedbackIds?: number[];
     neutralFeedbackIds?: number[];

@@ -38,6 +38,25 @@
   grid-column: 1 / -1;
 }
 
+.data-scope-banner {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px 14px;
+  margin-bottom: 16px;
+  border-radius: 10px;
+  background: #ecfdf5;
+  border: 1px solid #bbf7d0;
+  font-size: 0.85rem;
+  color: #065f46;
+}
+
+.data-scope-banner .scope-note {
+  font-size: 0.78rem;
+  color: #047857;
+  opacity: 0.95;
+}
+
 .metric-label {
   display: block;
   font-size: 0.78rem;

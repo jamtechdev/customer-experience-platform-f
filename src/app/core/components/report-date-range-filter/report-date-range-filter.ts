@@ -64,6 +64,9 @@ export class ReportDateRangeFilter {
     () => this.lockDatesUntilCustom() && this.selectedPresetId() !== 'custom',
   );
 
+  /** Date fields only appear when the user picks a custom range. */
+  readonly showDatePickers = computed(() => this.selectedPresetId() === 'custom');
+
   readonly t = (key: string, params?: Record<string, string | number>): string =>
     this.translationService.translate(key, params);
 

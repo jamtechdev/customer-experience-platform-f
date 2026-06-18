@@ -105,8 +105,12 @@ export class DashboardReports implements OnInit, OnDestroy {
         neutralPct: total > 0 && sentiment ? (sentiment.neutral / total) * 100 : null,
         negativePct: total > 0 && sentiment ? (sentiment.negative / total) * 100 : null,
         averageScore: sentiment?.averageScore ?? null,
-        npsScore: nps && nps.count > 0 ? nps.npsScore : null,
-        npsCount: nps?.count ?? 0,
+        npsScore: total > 0 && sentiment
+          ? Math.round(((sentiment.positive / total) - (sentiment.negative / total)) * 100 * 10) / 10
+          : nps && nps.count > 0
+            ? nps.npsScore
+            : null,
+        npsCount: total,
       };
     });
   });
@@ -129,6 +133,19 @@ export class DashboardReports implements OnInit, OnDestroy {
     if (list.length === 0) return -100;
     const values = list.map((t) => t.npsScore);
     return Math.min(-100, Math.floor(Math.min(...values) / 10) * 10);
+  });
+
+  scopeBannerText = computed(() => {
+    const scope = this.currentStats()?.scope;
+    if (!scope) return '';
+    const cohort = scope.cohortTotal.toLocaleString();
+    if (scope.importedCsvRows != null && scope.importedCsvRows > 0) {
+      return this.t('reports.dashboardScopeLine', {
+        csv: scope.importedCsvRows.toLocaleString(),
+        cohort,
+      });
+    }
+    return this.t('reports.dashboardScopeCsvOnly', { csv: '—', cohort });
   });
 
   ngOnInit(): void {

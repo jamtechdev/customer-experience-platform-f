@@ -2,7 +2,8 @@
   <div class="header-section">
     <h1>{{ t('heatmap.title') }}</h1>
     <p class="subtitle">{{ t('heatmap.subtitle') }}</p>
-    <button mat-raised-button color="primary" (click)="loadHeatmap(false, true)" [disabled]="loading()">
+    <p class="page-purpose">{{ t('heatmap.purpose') }}</p>
+    <button mat-raised-button color="primary" class="cx-action-btn" (click)="loadHeatmap(false, true)" [disabled]="loading()">
       {{ loading() ? t('app.loading') : t('heatmap.load') }}
     </button>
   </div>
@@ -39,6 +40,9 @@
           <div class="data-scope-banner">
             <strong>{{ t('heatmap.cohortScope') }}</strong>
             <span>
+              @if (importedCsvRows()) {
+                {{ t('heatmap.csvImported', { total: importedCsvRows()!.toLocaleString() }) }} ·
+              }
               {{ t('heatmap.cohortTotal', { total: cohortTotal()!.toLocaleString() }) }}
               · {{ t('heatmap.mappedTotal', { total: heatmapMappedTotal().toLocaleString() }) }}
             </span>
@@ -49,9 +53,18 @@
         <div class="heatmap-pct-wrap">
           <div class="heatmap-pct-grid" role="grid" aria-label="Journey satisfaction heatmap counts">
             <div class="heatmap-pct-corner">{{ t('heatmap.stageCol') }}</div>
-            <div class="heatmap-pct-hdr">{{ t('dashboard.positive') }}</div>
-            <div class="heatmap-pct-hdr">{{ t('dashboard.neutral') }}</div>
-            <div class="heatmap-pct-hdr">{{ t('dashboard.negative') }}</div>
+            <div class="heatmap-pct-hdr">
+              <span>{{ t('dashboard.positive') }}</span>
+              <small>{{ t('heatmap.colCountPct') }}</small>
+            </div>
+            <div class="heatmap-pct-hdr">
+              <span>{{ t('dashboard.neutral') }}</span>
+              <small>{{ t('heatmap.colCountPct') }}</small>
+            </div>
+            <div class="heatmap-pct-hdr">
+              <span>{{ t('dashboard.negative') }}</span>
+              <small>{{ t('heatmap.colCountPct') }}</small>
+            </div>
             @for (row of pagedStages(); track row.stageName) {
               <div class="heatmap-pct-stage">
                 <span class="stage-name">{{ row.stageName }}</span>

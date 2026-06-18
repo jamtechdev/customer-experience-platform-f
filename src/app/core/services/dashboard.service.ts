@@ -69,6 +69,10 @@ export interface DashboardStats {
     sentimentBenchmark: 'below_industry_average' | 'within_expected_range';
     topPriority: string;
   };
+  scope?: {
+    importedCsvRows: number | null;
+    cohortTotal: number;
+  } | null;
 }
 
 export interface ExecutiveDashboardData {
