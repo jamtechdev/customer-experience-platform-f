@@ -17,6 +17,7 @@ import { Subscription, firstValueFrom } from 'rxjs';
 import { CXWebSocketService, type CSVImportStatusEvent } from '../../../core/services/cx-websocket.service';
 import { formatApiDate } from '../../../core/utils/api-date';
 import { TwitterCxReportStore } from '../../../core/services/twitter-cx-report.store';
+import { CxReportRebuildService } from '../../../core/services/cx-report-rebuild.service';
 
 @Component({
   selector: 'app-import-history',
@@ -43,6 +44,7 @@ export class ImportHistory implements OnInit, OnDestroy {
   private authService = inject(AuthService);
   private websocket = inject(CXWebSocketService);
   private twitterCxReportStore = inject(TwitterCxReportStore);
+  private rebuildService = inject(CxReportRebuildService);
   private snackBar = inject(MatSnackBar);
   private router = inject(Router);
   private importStatusSub?: Subscription;
@@ -89,6 +91,7 @@ export class ImportHistory implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.importStatusSub?.unsubscribe();
+    this.rebuildService.stopPolling();
     if (this.refreshTimer) {
       clearInterval(this.refreshTimer);
       this.refreshTimer = null;
@@ -144,6 +147,21 @@ export class ImportHistory implements OnInit, OnDestroy {
         this.refreshing.set(false);
         this.syncRefreshTimer();
       },
+    });
+  }
+
+  /** Single refresh: reload import list and rebuild CX report snapshot (keeps CSV data). */
+  refreshAll(): void {
+    if (this.refreshing()) return;
+    this.refreshing.set(true);
+    this.loadImports();
+    this.rebuildService.rebuildWithPolling().subscribe({
+      next: () => {
+        this.twitterCxReportStore.invalidate(this.authService.currentUser()?.settings?.companyId);
+        this.loadImports();
+      },
+      error: () => this.refreshing.set(false),
+      complete: () => this.refreshing.set(false),
     });
   }
 

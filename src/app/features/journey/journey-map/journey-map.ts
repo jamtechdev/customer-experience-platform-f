@@ -14,6 +14,7 @@ import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { OllamaLoader } from '../../../core/components/ollama-loader/ollama-loader';
 import { twitterCxReportFailureMessage } from '../../../core/utils/twitter-cx-report-load';
 import { RelatedFeedbackModal, RelatedFeedbackRow } from '../../../core/components/related-feedback-modal/related-feedback-modal';
+import { alignLinkedCountInText, drilldownModalTotal } from '../../../core/utils/drilldown-display';
 
 interface JourneyStage {
   id: number;
@@ -195,6 +196,7 @@ export class JourneyMap implements OnInit, OnDestroy {
     this.drilldownTitle.set(`${stageName} · ${polarity}`);
     this.drilldownOpen.set(true);
     this.drilldownIds = [...new Set(ids.map((id) => Number(id)).filter((id) => Number.isFinite(id) && id > 0))];
+    this.drilldownTotal.set(drilldownModalTotal(this.drilldownIds));
     this.loadDrilldownPage(1);
   }
 
@@ -204,6 +206,20 @@ export class JourneyMap implements OnInit, OnDestroy {
 
   dissatisfactionDrilldownIds(row: JourneyStage): number[] {
     return row.dissatisfactionFeedbackIds?.length ? row.dissatisfactionFeedbackIds : row.dissatisfactionReferenceIds;
+  }
+
+  satisfactionDisplay(row: JourneyStage): string {
+    const n = this.satisfactionDrilldownIds(row).length;
+    if (!n) return '-';
+    const raw = row.satisfactionPoints[0] || '';
+    return alignLinkedCountInText(raw, n) || `Positive signals at ${row.name} — ${n} linked feedback row(s).`;
+  }
+
+  dissatisfactionDisplay(row: JourneyStage): string {
+    const n = this.dissatisfactionDrilldownIds(row).length;
+    if (!n) return '-';
+    const raw = row.painPoints[0] || '';
+    return alignLinkedCountInText(raw, n) || `Negative themes at ${row.name} — ${n} linked feedback row(s).`;
   }
 
   loadDrilldownPage(page: number): void {
@@ -220,7 +236,7 @@ export class JourneyMap implements OnInit, OnDestroy {
       next: (res) => {
         this.drilldownLoading.set(false);
         if (res?.data?.list) this.drilldownRows.set(res.data.list);
-        this.drilldownTotal.set(Number(res?.data?.total ?? res?.data?.returned ?? 0));
+        this.drilldownTotal.set(drilldownModalTotal(this.drilldownIds));
       },
       error: () => {
         this.drilldownLoading.set(false);

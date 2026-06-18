@@ -10,6 +10,11 @@ import { AuthService } from '../../../core/services/auth.service';
 import { OllamaLoader } from '../../../core/components/ollama-loader/ollama-loader';
 import { twitterCxReportFailureMessage } from '../../../core/utils/twitter-cx-report-load';
 import { RelatedFeedbackModal, RelatedFeedbackRow } from '../../../core/components/related-feedback-modal/related-feedback-modal';
+import {
+  drilldownIdCount,
+  formatProcessImprovementText,
+  drilldownModalTotal,
+} from '../../../core/utils/drilldown-display';
 
 export interface ProcessImprovementRow {
   text: string;
@@ -133,11 +138,17 @@ export class ProcessEnhancement implements OnInit, OnDestroy {
     this.drilldownTitle.set(row.text);
     this.drilldownOpen.set(true);
     this.drilldownIds = [...new Set(ids.map((id) => Number(id)).filter((id) => Number.isFinite(id) && id > 0))];
+    this.drilldownTotal.set(drilldownModalTotal(this.drilldownIds));
     this.loadDrilldownPage(1);
   }
 
   referenceCount(row: ProcessImprovementRow): number {
-    return row.linkedCount > 0 ? row.linkedCount : row.linkedFeedbackIds.length || row.referenceFeedbackIds.length;
+    return drilldownIdCount(row.linkedFeedbackIds, row.referenceFeedbackIds);
+  }
+
+  displayText(row: ProcessImprovementRow): string {
+    const count = this.referenceCount(row);
+    return formatProcessImprovementText(row.text, count);
   }
 
   loadDrilldownPage(page: number): void {
@@ -154,7 +165,7 @@ export class ProcessEnhancement implements OnInit, OnDestroy {
       next: (res) => {
         this.drilldownLoading.set(false);
         if (res?.data?.list) this.drilldownRows.set(res.data.list);
-        this.drilldownTotal.set(Number(res?.data?.total ?? res?.data?.returned ?? 0));
+        this.drilldownTotal.set(drilldownModalTotal(this.drilldownIds));
       },
       error: () => {
         this.drilldownLoading.set(false);

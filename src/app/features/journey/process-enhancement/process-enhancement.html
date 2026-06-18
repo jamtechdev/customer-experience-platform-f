@@ -15,7 +15,7 @@
     <mat-card-content>
       <ul class="list" *ngIf="processImprovements().length > 0">
         <li *ngFor="let row of processImprovements()" class="improvement-row">
-          <span>{{ row.text }}</span>
+          <span>{{ displayText(row) }}</span>
           <button
             *ngIf="referenceCount(row) > 0"
             mat-stroked-button

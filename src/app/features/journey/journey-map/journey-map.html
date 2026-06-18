@@ -30,7 +30,7 @@
             <ng-container matColumnDef="satisfaction">
               <th mat-header-cell *matHeaderCellDef>Main satisfaction points</th>
               <td mat-cell *matCellDef="let row">
-                <div>{{ row.satisfactionPoints[0] || '-' }}</div>
+                <div>{{ satisfactionDisplay(row) }}</div>
                 <button
                   *ngIf="satisfactionDrilldownIds(row).length"
                   mat-button
@@ -43,7 +43,7 @@
             <ng-container matColumnDef="dissatisfaction">
               <th mat-header-cell *matHeaderCellDef>Main dissatisfaction points</th>
               <td mat-cell *matCellDef="let row">
-                <div>{{ row.painPoints[0] || '-' }}</div>
+                <div>{{ dissatisfactionDisplay(row) }}</div>
                 <button
                   *ngIf="dissatisfactionDrilldownIds(row).length"
                   mat-button

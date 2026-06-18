@@ -39,7 +39,7 @@
             </ng-container>
             <ng-container matColumnDef="action">
               <th mat-header-cell *matHeaderCellDef>Action</th>
-              <td mat-cell *matCellDef="let row" class="wrap-cell action-text">{{ row.action }}</td>
+              <td mat-cell *matCellDef="let row" class="wrap-cell action-text">{{ displayAction(row) }}</td>
             </ng-container>
             <ng-container matColumnDef="owner">
               <th mat-header-cell *matHeaderCellDef>Owner</th>

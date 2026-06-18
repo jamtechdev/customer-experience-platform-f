@@ -208,6 +208,11 @@ export const routes: Routes = [
             data: { title: 'Dataset profile', breadcrumb: 'Dataset profile' }
           },
           {
+            path: 'source-extraction',
+            redirectTo: '/app/data-sources/csv-upload',
+            pathMatch: 'full'
+          },
+          {
             path: 'methodology',
             loadComponent: () => import('./features/social-media/methodology/methodology').then(m => m.Methodology),
             data: { title: 'Scope and method', breadcrumb: 'Scope and method' }

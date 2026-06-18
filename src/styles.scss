@@ -96,6 +96,32 @@
   --z-tooltip: 700;
 }
 
+/* Unified action buttons — same size, weight, and primary styling across pages */
+.cx-action-btn.mat-mdc-button-base {
+  min-height: 40px !important;
+  height: 40px !important;
+  padding: 0 18px !important;
+  border-radius: 10px !important;
+  font-weight: 600 !important;
+  font-size: 0.875rem !important;
+  letter-spacing: 0.01em;
+  line-height: 1 !important;
+}
+
+.cx-action-btn .mat-icon,
+.cx-action-btn mat-icon {
+  width: 18px;
+  height: 18px;
+  font-size: 18px;
+  margin-right: 6px;
+}
+
+.filters-row .cx-action-btn,
+.header-actions .cx-action-btn,
+.filter-extra-action.cx-action-btn {
+  flex-shrink: 0;
+}
+
 /* Dark Theme Variables */
 [data-theme="dark"] {
   --primary-color: #10b981;

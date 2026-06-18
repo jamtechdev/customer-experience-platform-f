@@ -1,0 +1,23 @@
+<section class="rebuild-panel" [class.rebuild-panel--compact]="compact">
+  <div class="rebuild-copy">
+    <div class="rebuild-title-row">
+      <mat-icon aria-hidden="true">sync</mat-icon>
+      <strong>{{ t('csv.rebuildReportTitle') }}</strong>
+      <mat-chip *ngIf="status() !== 'none'" [color]="statusChipColor()">{{ statusLabel() }}</mat-chip>
+    </div>
+    <p class="rebuild-subtitle">{{ t('csv.rebuildReportSubtitle') }}</p>
+    <p class="rebuild-error" *ngIf="status() === 'failed' && errorMessage()">{{ errorMessage() }}</p>
+  </div>
+  <div class="rebuild-actions">
+    <button
+      mat-raised-button
+      color="primary"
+      type="button"
+      (click)="rebuildReport()"
+      [disabled]="rebuilding()">
+      <mat-spinner *ngIf="rebuilding()" diameter="18" class="btn-spinner"></mat-spinner>
+      <mat-icon *ngIf="!rebuilding()">autorenew</mat-icon>
+      {{ rebuilding() ? t('csv.rebuildReportRunning') : t('csv.rebuildReportButton') }}
+    </button>
+  </div>
+</section>

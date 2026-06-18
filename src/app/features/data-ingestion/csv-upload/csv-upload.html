@@ -34,7 +34,7 @@
             </div>
             <p class="upload-text">{{ t('csv.dragDrop') }}</p>
             <p class="upload-hint">CSV/XLSX accepted. Columns are validated before import.</p>
-            <button mat-raised-button color="primary" (click)="fileInput.click()">
+            <button mat-raised-button color="primary" class="cx-action-btn" (click)="fileInput.click()">
               <mat-icon>folder_open</mat-icon>
               {{ t('csv.browseFiles') }}
             </button>
@@ -97,9 +97,9 @@
             mat-raised-button
             color="primary"
             type="button"
+            class="cx-action-btn upload-button"
             (click)="uploadFile()"
-            [disabled]="!canUploadSelectedFile()"
-            class="upload-button">
+            [disabled]="!canUploadSelectedFile()">
             <mat-icon>upload</mat-icon>
             {{ t('csv.uploadButton') }}
           </button>

@@ -43,25 +43,15 @@
       (valueChange)="onEndDateChange($event)" />
 
     @if (showApplyButton()) {
-      @if (applyFlat()) {
-        <button
-          mat-flat-button
-          color="primary"
-          type="button"
-          (click)="onApplyClick()"
-          [disabled]="applyDisabled()">
-          {{ t(applyLabelKey()) }}
-        </button>
-      } @else {
-        <button
-          mat-stroked-button
-          color="primary"
-          type="button"
-          (click)="onApplyClick()"
-          [disabled]="applyDisabled()">
-          {{ t(applyLabelKey()) }}
-        </button>
-      }
+      <button
+        mat-raised-button
+        color="primary"
+        type="button"
+        class="cx-action-btn"
+        (click)="onApplyClick()"
+        [disabled]="applyDisabled()">
+        {{ t(applyLabelKey()) }}
+      </button>
     }
 
     <ng-content select=".filter-extra-action"></ng-content>

@@ -2,13 +2,12 @@ import { Component, inject, OnDestroy, OnInit, signal } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { CommonModule } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
-import { MatTableModule } from '@angular/material/table';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatButtonModule } from '@angular/material/button';
 import { TwitterCxReportStore } from '../../../core/services/twitter-cx-report.store';
 import { AuthService } from '../../../core/services/auth.service';
 import { AnalysisService } from '../../../core/services/analysis.service';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { drilldownModalTotal } from '../../../core/utils/drilldown-display';
 import { twitterCxReportFailureMessage } from '../../../core/utils/twitter-cx-report-load';
 import { OllamaLoader } from '../../../core/components/ollama-loader/ollama-loader';
 import { TranslationService } from '../../../core/services/translation.service';
@@ -27,9 +26,7 @@ interface DatasetProfileRow {
   imports: [
     CommonModule,
     MatCardModule,
-    MatTableModule,
     MatSnackBarModule,
-    MatProgressSpinnerModule,
     MatButtonModule,
     OllamaLoader,
     RelatedFeedbackModal,
@@ -45,7 +42,6 @@ export class DatasetProfile implements OnInit, OnDestroy {
   private translationService = inject(TranslationService);
   private refreshSub?: Subscription;
 
-  readonly displayedColumns = ['metric', 'value', 'comment'];
   readonly t = (key: string, params?: Record<string, string | number>): string =>
     this.translationService.translate(key, params);
   loading = signal(false);
@@ -106,6 +102,7 @@ export class DatasetProfile implements OnInit, OnDestroy {
     this.drilldownTitle.set(row.metric);
     this.drilldownOpen.set(true);
     this.drilldownIds = [...new Set(ids)];
+    this.drilldownTotal.set(drilldownModalTotal(this.drilldownIds));
     this.loadDrilldownPage(1);
   }
 
@@ -124,7 +121,7 @@ export class DatasetProfile implements OnInit, OnDestroy {
       next: (res) => {
         this.drilldownLoading.set(false);
         this.drilldownRows.set(res?.data?.list || []);
-        this.drilldownTotal.set(Number(res?.data?.total ?? res?.data?.returned ?? 0));
+        this.drilldownTotal.set(drilldownModalTotal(this.drilldownIds));
       },
       error: () => {
         this.drilldownLoading.set(false);

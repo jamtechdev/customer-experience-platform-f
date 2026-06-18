@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { Component, inject, OnDestroy, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
@@ -11,6 +11,8 @@ import { AuthService } from '../../../core/services/auth.service';
 import { TranslationService } from '../../../core/services/translation.service';
 import { OllamaLoader } from '../../../core/components/ollama-loader/ollama-loader';
 import { ReportDateRangeFilter } from '../../../core/components/report-date-range-filter/report-date-range-filter';
+import { TwitterCxReportStore } from '../../../core/services/twitter-cx-report.store';
+import { Subscription } from 'rxjs';
 import {
   buildClientReportDatePresets,
   toIsoRangeFromYmd,
@@ -34,12 +36,14 @@ import {
   templateUrl: './executive-summary.html',
   styleUrl: './executive-summary.css',
 })
-export class ExecutiveSummary implements OnInit {
+export class ExecutiveSummary implements OnInit, OnDestroy {
   private dashboardService = inject(DashboardService);
   private reportService = inject(ReportService);
   private authService = inject(AuthService);
   private snackBar = inject(MatSnackBar);
   private translationService = inject(TranslationService);
+  private twitterCxReportStore = inject(TwitterCxReportStore);
+  private reportRefreshSub?: Subscription;
 
   readonly t = (key: string, params?: Record<string, string | number>): string =>
     this.translationService.translate(key, params);
@@ -57,6 +61,12 @@ export class ExecutiveSummary implements OnInit {
 
   ngOnInit(): void {
     this.loadPresets();
+    this.reportRefreshSub = this.twitterCxReportStore.onRefresh$.subscribe(() => this.loadSummary(this.filtersApplied()));
+  }
+
+  ngOnDestroy(): void {
+    this.reportRefreshSub?.unsubscribe();
+    if (this.manualReloadTimer) clearTimeout(this.manualReloadTimer);
   }
 
   private loadPresets(): void {

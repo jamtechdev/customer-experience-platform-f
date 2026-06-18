@@ -75,25 +75,11 @@
   line-height: 1.45;
 }
 
-.table-wrap {
-  overflow-x: auto;
-  border: 1px solid #e5e7eb;
-  border-radius: 12px;
-}
-
-.report-table {
-  width: 100%;
-  min-width: 760px;
-}
-
-:host ::ng-deep .report-table .mat-mdc-header-cell {
-  background: #b8d4f2 !important;
-  color: #0f172a !important;
-  font-weight: 700 !important;
-}
-
-:host ::ng-deep .report-table .mat-mdc-cell {
-  border-bottom: 1px solid #e2e8f0;
+.empty-hint {
+  margin: 0;
+  color: #64748b;
+  line-height: 1.5;
+  padding: 12px 0;
 }
 
 @media (max-width: 768px) {

@@ -1,0 +1,74 @@
+.rebuild-panel {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 16px;
+  padding: 16px 18px;
+  border: 1px solid rgba(5, 150, 105, 0.22);
+  border-radius: 16px;
+  background: linear-gradient(135deg, rgba(236, 253, 245, 0.95), rgba(255, 255, 255, 0.98));
+}
+
+.rebuild-panel--compact {
+  padding: 12px 14px;
+  margin-bottom: 12px;
+}
+
+.rebuild-copy {
+  flex: 1 1 280px;
+  min-width: 0;
+}
+
+.rebuild-title-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  color: #065f46;
+}
+
+.rebuild-title-row mat-icon {
+  width: 20px;
+  height: 20px;
+  font-size: 20px;
+}
+
+.rebuild-subtitle {
+  margin: 8px 0 0;
+  color: #475569;
+  font-size: 0.9rem;
+  line-height: 1.45;
+  max-width: 52rem;
+}
+
+.rebuild-error {
+  margin: 8px 0 0;
+  color: #b91c1c;
+  font-size: 0.85rem;
+}
+
+.rebuild-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.rebuild-actions button {
+  min-width: 220px;
+}
+
+.btn-spinner {
+  display: inline-block;
+  margin-right: 8px;
+  vertical-align: middle;
+}
+
+@media (max-width: 768px) {
+  .rebuild-actions,
+  .rebuild-actions button {
+    width: 100%;
+    min-width: 0;
+  }
+}

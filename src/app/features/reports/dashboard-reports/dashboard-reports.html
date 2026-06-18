@@ -17,7 +17,7 @@
       [(endDate)]="endDate"
       [applyDisabled]="loading() && loadingTrends()"
       (apply)="applyRangeAndReload()">
-      <a mat-stroked-button color="primary" routerLink="/app/data-sources/csv-upload" class="filter-extra-action">
+      <a mat-raised-button color="primary" routerLink="/app/data-sources/csv-upload" class="filter-extra-action cx-action-btn">
         <mat-icon>upload_file</mat-icon>
         {{ t('nav.csvUpload') }}
       </a>

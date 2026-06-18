@@ -21,6 +21,7 @@ import { formatApiDate, toInputDateValue } from '../../../core/utils/api-date';
 import { OllamaLoader } from '../../../core/components/ollama-loader/ollama-loader';
 import { twitterCxReportFailureMessage } from '../../../core/utils/twitter-cx-report-load';
 import { RelatedFeedbackModal, RelatedFeedbackRow } from '../../../core/components/related-feedback-modal/related-feedback-modal';
+import { drilldownIdCount, alignLinkedCountInText, drilldownModalTotal } from '../../../core/utils/drilldown-display';
 
 @Component({
   selector: 'app-action-plans',
@@ -206,12 +207,17 @@ export class ActionPlans implements OnInit, OnDestroy {
     this.drilldownTitle.set(row.action.slice(0, 120));
     this.drilldownOpen.set(true);
     this.drilldownIds = [...new Set(ids.map((id) => Number(id)).filter((id) => Number.isFinite(id) && id > 0))];
+    this.drilldownTotal.set(drilldownModalTotal(this.drilldownIds));
     this.loadDrilldownPage(1);
   }
 
   referenceCount(row: { linkedCount?: number; linkedFeedbackIds?: number[]; referenceFeedbackIds?: number[] }): number {
-    if (row.linkedCount && row.linkedCount > 0) return row.linkedCount;
-    return row.linkedFeedbackIds?.length || row.referenceFeedbackIds?.length || 0;
+    return drilldownIdCount(row.linkedFeedbackIds, row.referenceFeedbackIds);
+  }
+
+  displayAction(row: { action: string; linkedFeedbackIds?: number[]; referenceFeedbackIds?: number[] }): string {
+    const count = this.referenceCount(row);
+    return alignLinkedCountInText(row.action, count, 'linked feedback row(s)');
   }
 
   loadDrilldownPage(page: number): void {
@@ -229,7 +235,7 @@ export class ActionPlans implements OnInit, OnDestroy {
       next: (res) => {
         this.drilldownLoading.set(false);
         if (res?.data?.list) this.drilldownRows.set(res.data.list);
-        this.drilldownTotal.set(Number(res?.data?.total ?? res?.data?.returned ?? 0));
+        this.drilldownTotal.set(drilldownModalTotal(this.drilldownIds));
       },
       error: () => {
         this.drilldownLoading.set(false);

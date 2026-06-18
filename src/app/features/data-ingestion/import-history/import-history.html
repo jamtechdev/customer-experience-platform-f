@@ -5,11 +5,11 @@
       <p class="subtitle">{{ embedded ? 'Track uploaded files, mapping status, AI processing, and validation results.' : 'View past CSV uploads and their status' }}</p>
     </div>
     <div class="header-actions">
-      <button mat-stroked-button (click)="goToUpload()" *ngIf="!embedded">
+      <button mat-raised-button color="primary" class="cx-action-btn" (click)="goToUpload()" *ngIf="!embedded">
         <mat-icon>upload_file</mat-icon>
         Upload CSV
       </button>
-      <button mat-raised-button color="primary" (click)="loadImports()">
+      <button mat-raised-button color="primary" class="cx-action-btn" (click)="refreshAll()" [disabled]="refreshing()">
         <mat-icon>refresh</mat-icon>
         {{ refreshing() ? 'Refreshing…' : 'Refresh' }}
       </button>
@@ -17,6 +17,7 @@
         mat-raised-button
         color="warn"
         type="button"
+        class="cx-action-btn"
         (click)="bulkDeleteSelectedImports()"
         [disabled]="bulkDeleting()"
         *ngIf="isAdminUser() && selectedImportIds().size > 0"

@@ -1,18 +1,9 @@
 <div class="sentiment-container">
-  <div class="header-section header-with-action">
+  <div class="header-section">
     <div>
       <h1>{{ t('nav.sentimentAnalysis') }}</h1>
       <p class="subtitle">{{ t('sentiment.subtitle') }}</p>
     </div>
-    <button
-      mat-stroked-button
-      color="primary"
-      type="button"
-      (click)="reRunAiEnrichment()"
-      [disabled]="reanalyzing() || initialLoading()">
-      <mat-icon>psychology</mat-icon>
-      {{ reanalyzing() ? t('sentiment.reRunningAi') : t('sentiment.reRunAi') }}
-    </button>
   </div>
 
   <div class="filters-section">
@@ -25,19 +16,20 @@
       [applyDisabled]="initialLoading()"
       (apply)="applyRangeAndReload()">
       <button
-        mat-stroked-button
+        mat-raised-button
         color="primary"
         type="button"
-        class="filter-extra-action"
+        class="filter-extra-action cx-action-btn"
         (click)="refreshData()"
-        [disabled]="initialLoading()">
+        [disabled]="initialLoading() || reanalyzing()">
         <mat-icon>refresh</mat-icon>
-        {{ t('app.refresh') }}
+        {{ (initialLoading() || reanalyzing()) ? 'Refreshing…' : t('app.refresh') }}
       </button>
       <button
-        mat-stroked-button
+        mat-raised-button
+        color="primary"
         type="button"
-        class="filter-extra-action"
+        class="filter-extra-action cx-action-btn"
         (click)="exportSentimentRecords()"
         [disabled]="exportLoading() || !datesValid()">
         <mat-icon>download</mat-icon>
