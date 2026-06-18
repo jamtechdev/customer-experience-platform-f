@@ -72,7 +72,7 @@ export interface DashboardStats {
   scope?: {
     importedCsvRows: number | null;
     savedRows: number | null;
-    cohortTotal: number;
+    feedbackTotal: number;
   } | null;
 }
 

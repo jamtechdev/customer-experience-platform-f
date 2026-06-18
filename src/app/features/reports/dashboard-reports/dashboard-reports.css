@@ -434,6 +434,22 @@
   color: #065f46;
 }
 
+.single-total-note {
+  margin: 12px 0 0;
+  padding: 10px 14px;
+  border-radius: 10px;
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  font-size: 0.84rem;
+  color: #065f46;
+  line-height: 1.45;
+}
+
+.status-card--primary-total {
+  border: 1px solid #86efac;
+  background: linear-gradient(180deg, #ffffff 0%, #f0fdf4 100%);
+}
+
 .count-hint {
   margin-top: 4px;
 }

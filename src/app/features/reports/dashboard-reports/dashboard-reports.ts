@@ -93,26 +93,59 @@ export class DashboardReports implements OnInit, OnDestroy {
     const sentimentByPeriod = new Map(this.sentimentTrends().map((point) => [point.period, point]));
     const npsByPeriod = new Map(this.npsTrends().map((point) => [point.period, point]));
     const periods = Array.from(new Set([...sentimentByPeriod.keys(), ...npsByPeriod.keys()]));
+    const canonicalTotal = this.unifiedFeedbackTotal();
+    const alignToCard =
+      this.selectedPresetId() === NO_DATE_FILTER_PRESET_ID &&
+      !this.filtersApplied() &&
+      canonicalTotal != null &&
+      canonicalTotal > 0;
 
-    return periods.map((period) => {
+    let rows = periods.map((period) => {
       const sentiment = sentimentByPeriod.get(period);
       const nps = npsByPeriod.get(period);
-      const total = sentiment?.total ?? 0;
+      let total = sentiment?.total ?? 0;
+      let positive = sentiment?.positive ?? 0;
+      let neutral = sentiment?.neutral ?? 0;
+      let negative = sentiment?.negative ?? 0;
+
+      if (alignToCard && total !== canonicalTotal && this.currentStats()?.sentiment) {
+        const s = this.currentStats()!.sentiment;
+        total = canonicalTotal!;
+        positive = s.positive;
+        neutral = s.neutral;
+        negative = s.negative;
+      }
+
       return {
         period,
         total,
-        positivePct: total > 0 && sentiment ? (sentiment.positive / total) * 100 : null,
-        neutralPct: total > 0 && sentiment ? (sentiment.neutral / total) * 100 : null,
-        negativePct: total > 0 && sentiment ? (sentiment.negative / total) * 100 : null,
-        averageScore: sentiment?.averageScore ?? null,
-        npsScore: total > 0 && sentiment
-          ? Math.round(((sentiment.positive / total) - (sentiment.negative / total)) * 100 * 10) / 10
-          : nps && nps.count > 0
-            ? nps.npsScore
-            : null,
+        positivePct: total > 0 ? (positive / total) * 100 : null,
+        neutralPct: total > 0 ? (neutral / total) * 100 : null,
+        negativePct: total > 0 ? (negative / total) * 100 : null,
+        averageScore:
+          alignToCard && total === canonicalTotal && this.currentStats()?.sentiment
+            ? this.currentStats()!.sentiment.averageScore
+            : sentiment?.averageScore ?? null,
+        npsScore:
+          total > 0
+            ? Math.round(((positive / total) - (negative / total)) * 100 * 10) / 10
+            : nps && nps.count > 0
+              ? nps.npsScore
+              : null,
         npsCount: total,
       };
     });
+
+    return rows;
+  });
+
+  /** Single total = CSV rows saved from latest import. */
+  unifiedFeedbackTotal = computed(() => {
+    const scope = this.currentStats()?.scope;
+    const fromScope = scope?.feedbackTotal ?? scope?.savedRows;
+    if (fromScope != null && fromScope > 0) return fromScope;
+    const total = this.currentStats()?.sentiment?.total;
+    return total != null && total > 0 ? total : null;
   });
 
   maxSentimentTotal = computed(() => {
@@ -136,21 +169,9 @@ export class DashboardReports implements OnInit, OnDestroy {
   });
 
   scopeBannerText = computed(() => {
-    const scope = this.currentStats()?.scope;
-    if (!scope) return '';
-    const cohort = scope.cohortTotal.toLocaleString();
-    if (scope.importedCsvRows != null && scope.importedCsvRows > 0) {
-      const saved =
-        scope.savedRows != null && scope.savedRows > 0
-          ? scope.savedRows.toLocaleString()
-          : '—';
-      return this.t('reports.dashboardScopeLine', {
-        csv: scope.importedCsvRows.toLocaleString(),
-        saved,
-        cohort,
-      });
-    }
-    return this.t('reports.dashboardScopeCsvOnly', { cohort });
+    const total = this.unifiedFeedbackTotal();
+    if (!total) return '';
+    return this.t('reports.dashboardSingleTotalHint', { count: total.toLocaleString() });
   });
 
   ngOnInit(): void {

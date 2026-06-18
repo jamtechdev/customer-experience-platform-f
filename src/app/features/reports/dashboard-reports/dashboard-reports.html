@@ -37,20 +37,14 @@
   } @else {
   <section class="section">
     <h2 class="section-title">{{ t('reports.currentStatus') }}</h2>
-    @if (currentStats()?.scope && scopeBannerText()) {
-      <div class="data-scope-banner">
-        <strong>{{ t('reports.dashboardScopeTitle') }}</strong>
-        <span>{{ scopeBannerText() }}</span>
-      </div>
-    }
     @if (currentStats()) {
       <div class="status-grid">
-        <mat-card class="status-card kpi">
+        <mat-card class="status-card kpi status-card--primary-total">
           <mat-card-content>
             <mat-icon>forum</mat-icon>
             <div class="status-label">{{ t('dashboard.totalFeedback') }}</div>
             <div class="status-value">{{ currentStats()!.sentiment.total | number }}</div>
-            <p class="muted small count-hint">💬 n={{ currentStats()!.sentiment.total | number }} {{ t('reports.countSymbolMessages') }}</p>
+            <p class="muted small count-hint">{{ t('reports.totalFeedbackNote') }}</p>
           </mat-card-content>
         </mat-card>
         <mat-card class="status-card kpi">
@@ -61,7 +55,6 @@
             <p class="muted small" *ngIf="hasNpsBaseData()">
               {{ t('reports.npsBreakdownLine', { promoters: currentStats()!.nps.promoters, passives: currentStats()!.nps.passives, detractors: currentStats()!.nps.detractors }) }}
             </p>
-            <p class="muted small count-hint" *ngIf="hasNpsBaseData()">📊 {{ t('reports.countSymbolSample') }}={{ currentStats()!.nps.total | number }}</p>
             <p class="muted small" *ngIf="!hasNpsBaseData()">{{ t('reports.noNpsRecords') }}</p>
           </mat-card-content>
         </mat-card>
@@ -94,6 +87,9 @@
           </mat-card-content>
         </mat-card>
       </div>
+      @if (scopeBannerText()) {
+        <p class="single-total-note">{{ scopeBannerText() }}</p>
+      }
     } @else {
       <div class="empty-hint">{{ t('reports.noCurrentData') }}</div>
     }
@@ -140,12 +136,11 @@
               <thead>
                 <tr>
                   <th>Period</th>
-                  <th>💬 Total feedback (n)</th>
                   <th>😊 Positive</th>
                   <th>😐 Neutral</th>
                   <th>😞 Negative</th>
                   <th>Avg score</th>
-                  <th>📊 NPS (n)</th>
+                  <th>📊 NPS</th>
                 </tr>
               </thead>
               <tbody>
@@ -154,12 +149,11 @@
                     <td>
                       <strong>{{ formatPeriodLabel(row.period) }}</strong>
                     </td>
-                    <td>{{ row.total | number }}</td>
                     <td><span class="pill positive">{{ row.positivePct === null ? '—' : (row.positivePct | number:'1.1-1') + '%' }}</span></td>
                     <td><span class="pill neutral">{{ row.neutralPct === null ? '—' : (row.neutralPct | number:'1.1-1') + '%' }}</span></td>
                     <td><span class="pill negative">{{ row.negativePct === null ? '—' : (row.negativePct | number:'1.1-1') + '%' }}</span></td>
                     <td>{{ row.averageScore === null ? '—' : (row.averageScore | number:'1.2-2') }}</td>
-                    <td>{{ row.npsScore === null ? '—' : (row.npsScore | number:'1.1-1') + ' (n=' + row.npsCount + ')' }}</td>
+                    <td>{{ row.npsScore === null ? '—' : (row.npsScore | number:'1.1-1') }}</td>
                   </tr>
                 }
               </tbody>
