@@ -162,6 +162,94 @@
   width: 190px;
 }
 
+.dense-table .mat-column-interpretation {
+  width: 44%;
+}
+
+.count-cell-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+}
+
+.count-value {
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: #111827;
+  line-height: 1.1;
+}
+
+.view-records-link {
+  min-height: 28px;
+  padding: 0 6px;
+  font-size: 0.82rem;
+}
+
+.interpretation-cell,
+.wrap-cell {
+  white-space: normal;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+  line-height: 1.5;
+  vertical-align: top;
+  padding-top: 12px;
+  padding-bottom: 12px;
+}
+
+.coverage-kpis {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.coverage-kpi {
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+  padding: 14px 16px;
+  background: linear-gradient(180deg, #ffffff, #f9fafb);
+}
+
+.coverage-kpi-label {
+  display: block;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #6b7280;
+  margin-bottom: 6px;
+}
+
+.coverage-kpi-value {
+  font-size: clamp(1.35rem, 2vw, 1.75rem);
+  font-weight: 800;
+  color: #111827;
+}
+
+.coverage-kpi-total {
+  border-color: rgba(239, 68, 68, 0.25);
+  background: linear-gradient(180deg, #fff5f5, #ffffff);
+}
+
+.coverage-kpi-total .coverage-kpi-value {
+  color: #dc2626;
+}
+
+.coverage-kpi-themed .coverage-kpi-value {
+  color: #0f5f93;
+}
+
+.coverage-kpi-uncategorized .coverage-kpi-value {
+  color: #b45309;
+}
+
+@media (max-width: 768px) {
+  .coverage-kpis {
+    grid-template-columns: 1fr;
+  }
+}
+
 
 
 /* Matplotlib-style figure used in report section 6 */

@@ -134,7 +134,13 @@
         <div class="list-card-header">
           <div>
             <mat-card-title>{{ t('sentiment.allFeedbackTitle') }}</mat-card-title>
-            <mat-card-subtitle>{{ t('sentiment.feedbackTotalLine', { total: feedbackTotal() }) }}</mat-card-subtitle>
+            <mat-card-subtitle>
+              {{ t('sentiment.feedbackTableSubtitle', {
+                shown: feedbackTotal(),
+                total: stats()?.total ?? 0,
+                negative: stats()?.negative ?? 0
+              }) }}
+            </mat-card-subtitle>
           </div>
           <button
             mat-stroked-button

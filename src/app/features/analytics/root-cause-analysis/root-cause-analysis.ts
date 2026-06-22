@@ -13,7 +13,7 @@ import { AuthService } from '../../../core/services/auth.service';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { TranslationService } from '../../../core/services/translation.service';
 import { CXWebSocketService, type CSVImportStatusEvent } from '../../../core/services/cx-websocket.service';
-import { Subscription } from 'rxjs';
+import { Subscription, forkJoin } from 'rxjs';
 import { OllamaLoader } from '../../../core/components/ollama-loader/ollama-loader';
 import { RelatedFeedbackModal, RelatedFeedbackRow } from '../../../core/components/related-feedback-modal/related-feedback-modal';
 import { drilldownModalTotal } from '../../../core/utils/drilldown-display';
@@ -93,6 +93,7 @@ export class RootCauseAnalysis implements OnInit, OnDestroy {
   totalItems = 0;
   emptyHint = signal<string | null>(null);
   coverage = signal<RootCauseCoverage | null>(null);
+  sentimentNegativeTotal = signal(0);
 
   ngOnInit(): void {
     this.loadRootCauses();
@@ -137,7 +138,7 @@ export class RootCauseAnalysis implements OnInit, OnDestroy {
 
   /** Re-runs server-side extraction on negative feedback (creates additional rows; refreshes list). */
   runRootCauseAnalysis(): void {
-    const companyId = this.currentCompanyId();
+    const companyId = this.resolveCompanyId();
     const ok = window.confirm(
       'Run root cause analysis now? This analyzes negative/relevant feedback, may call OpenAI if enabled, and will replace saved root-cause rows.'
     );
@@ -169,19 +170,24 @@ export class RootCauseAnalysis implements OnInit, OnDestroy {
 
   loadRootCauses(showLoading = true): void {
     if (showLoading) this.loading.set(true);
-    const companyId = this.listCompanyId();
-    this.analysisService.getRootCauses(companyId).subscribe({
-      next: (response) => {
+    const companyId = this.resolveCompanyId();
+    forkJoin({
+      rootCauses: this.analysisService.getRootCauses(companyId),
+      sentiment: this.analysisService.getSentimentStats(companyId),
+    }).subscribe({
+      next: ({ rootCauses: response, sentiment: sentimentRes }) => {
         const payload = response.data;
         const rawList = Array.isArray(payload)
           ? payload
           : Array.isArray((payload as { list?: unknown[] })?.list)
             ? (payload as { list: unknown[] }).list
             : [];
-        const nextCoverage =
+        const apiCoverage =
           payload && !Array.isArray(payload) && (payload as { coverage?: RootCauseCoverage }).coverage
             ? (payload as { coverage: RootCauseCoverage }).coverage
             : null;
+        const sentimentNegative = Number(sentimentRes?.data?.negative ?? 0) || 0;
+        this.sentimentNegativeTotal.set(sentimentNegative);
 
         if (response.success && rawList.length >= 0) {
           const mapped = rawList.map((item: any) => ({
@@ -204,7 +210,7 @@ export class RootCauseAnalysis implements OnInit, OnDestroy {
           }));
           this.rootCauses.set(mapped);
           this.totalItems = mapped.length;
-          this.coverage.set(nextCoverage);
+          this.coverage.set(this.mergeCoverage(apiCoverage, mapped, sentimentNegative));
           this.emptyHint.set(
             mapped.length === 0
               ? 'No root causes yet. They are created after CSV import and will appear here automatically.'
@@ -216,7 +222,14 @@ export class RootCauseAnalysis implements OnInit, OnDestroy {
         } else {
           this.rootCauses.set([]);
           this.totalItems = 0;
-          this.coverage.set(nextCoverage);
+          this.coverage.set(
+            apiCoverage ?? {
+              totalNegative: sentimentNegative,
+              categorizedUnique: 0,
+              uncategorized: sentimentNegative,
+              themedPainPoints: 0,
+            }
+          );
           this.emptyHint.set('No root causes yet. They will appear automatically after analysis finishes.');
         }
         this.loading.set(false);
@@ -303,24 +316,63 @@ export class RootCauseAnalysis implements OnInit, OnDestroy {
         id: c.id,
         cause: this.painPointTitle(c),
         count: c.frequency || 0,
-        interpretation: this.painPointSummary(c),
+        interpretation: this.painPointFullSummary(c),
         feedbackIds: c.feedbackIds?.length ? c.feedbackIds : [],
         isUncategorized: this.isUncategorizedCause(c),
       }))
-      .sort((a, b) => b.count - a.count);
+      .sort((a, b) => {
+        if (a.isUncategorized !== b.isUncategorized) return a.isUncategorized ? 1 : -1;
+        return b.count - a.count;
+      });
 
     const themed = rows.filter((row) => !row.isUncategorized).slice(0, 11);
     const uncategorized = rows.find((row) => row.isUncategorized);
-    return uncategorized ? [...themed, uncategorized] : rows.slice(0, 12);
+    if (uncategorized) return [...themed, uncategorized];
+
+    const stats = this.coverage();
+    if (stats && stats.uncategorized > 0) {
+      return [
+        ...themed,
+        {
+          cause: this.t('rootCausePage.uncategorizedTitle'),
+          count: stats.uncategorized,
+          interpretation: this.t('rootCausePage.uncategorizedSummary', { count: stats.uncategorized }),
+          feedbackIds: [],
+          isUncategorized: true,
+        },
+      ];
+    }
+    return rows.slice(0, 12);
+  }
+
+  totalNegativeKpi(): number {
+    const stats = this.coverage();
+    return stats?.totalNegative || this.sentimentNegativeTotal() || 0;
+  }
+
+  themedNegativeKpi(): number {
+    const stats = this.coverage();
+    if (stats) return stats.categorizedUnique;
+    return this.rootCauses()
+      .filter((c) => !this.isUncategorizedCause(c))
+      .reduce((sum, c) => sum + (c.frequency || 0), 0);
+  }
+
+  uncategorizedNegativeKpi(): number {
+    const total = this.totalNegativeKpi();
+    const themed = this.themedNegativeKpi();
+    const stats = this.coverage();
+    if (stats?.uncategorized != null && stats.uncategorized > 0) return stats.uncategorized;
+    return Math.max(0, total - themed);
   }
 
   coverageSummary(): string | null {
-    const stats = this.coverage();
-    if (!stats || stats.totalNegative <= 0) return null;
+    const total = this.totalNegativeKpi();
+    if (total <= 0) return null;
     return this.t('rootCausePage.coverageSummary', {
-      totalNegative: stats.totalNegative,
-      categorized: stats.categorizedUnique,
-      uncategorized: stats.uncategorized,
+      totalNegative: total,
+      categorized: this.themedNegativeKpi(),
+      uncategorized: this.uncategorizedNegativeKpi(),
     });
   }
 
@@ -355,6 +407,14 @@ export class RootCauseAnalysis implements OnInit, OnDestroy {
     );
   }
 
+  painPointFullSummary(cause: RootCause): string {
+    return (cause.structuredInsights?.summary?.trim() || cause.description || 'No summary available.')
+      .replace(/https?:\/\/[^\s]+/gi, ' ')
+      .replace(/@\w+/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+  }
+
   painPointExamples(cause: RootCause): string[] {
     return (cause.structuredInsights?.examples || []).filter((x) => !!x?.trim()).slice(0, 3);
   }
@@ -369,7 +429,7 @@ export class RootCauseAnalysis implements OnInit, OnDestroy {
   }
 
   relinkRecords(row: RootCauseChartRow, causeId?: number): void {
-    const companyId = this.currentCompanyId();
+    const companyId = this.resolveCompanyId();
     const id = causeId ?? row.id ?? this.rootCauses().find((c) => this.painPointTitle(c) === row.cause)?.id;
     if (!id) {
       this.snackBar.open('Cannot re-link: root cause id missing.', 'Close', { duration: 4000 });
@@ -393,6 +453,14 @@ export class RootCauseAnalysis implements OnInit, OnDestroy {
 
   openRelatedRecords(row: RootCauseChartRow, allowRelink = true): void {
     if (!row.feedbackIds?.length) {
+      if (row.isUncategorized) {
+        this.snackBar.open(
+          'Re-run root cause analysis to load uncategorized negative tweets, or review all negatives from Sentiment Analysis.',
+          'Close',
+          { duration: 6000 }
+        );
+        return;
+      }
       if (allowRelink && row.id) {
         this.relinkRecords(row);
       } else {
@@ -463,8 +531,37 @@ export class RootCauseAnalysis implements OnInit, OnDestroy {
     return this.authService.currentUser()?.settings?.companyId || 1;
   }
 
+  private resolveCompanyId(): number | undefined {
+    const user = this.authService.currentUser();
+    if (user?.role === 'admin') return user?.settings?.companyId ?? 1;
+    return user?.settings?.companyId ?? 1;
+  }
+
   private listCompanyId(): number | undefined {
     const user = this.authService.currentUser();
     return user?.role === 'admin' ? undefined : (user?.settings?.companyId || 1);
+  }
+
+  private mergeCoverage(
+    apiCoverage: RootCauseCoverage | null,
+    causes: RootCause[],
+    sentimentNegative: number
+  ): RootCauseCoverage {
+    const themedIds = new Set<number>();
+    let themedPainPoints = 0;
+    for (const cause of causes) {
+      if (this.isUncategorizedCause(cause)) continue;
+      themedPainPoints++;
+      for (const id of cause.feedbackIds || []) themedIds.add(id);
+    }
+    const totalNegative = Math.max(apiCoverage?.totalNegative ?? 0, sentimentNegative);
+    const categorizedUnique = apiCoverage?.categorizedUnique ?? themedIds.size;
+    const uncategorized = Math.max(0, totalNegative - categorizedUnique);
+    return {
+      totalNegative,
+      categorizedUnique,
+      uncategorized: apiCoverage?.uncategorized ?? uncategorized,
+      themedPainPoints: apiCoverage?.themedPainPoints ?? themedPainPoints,
+    };
   }
 }
