@@ -761,6 +761,7 @@
     "loadingThemesTitle": "جارٍ تحميل موضوعات السبب الجذري",
     "loadingThemesSubtitle": "قراءة الموضوعات والأعداد والتفسيرات المحفوظة من قاعدة البيانات",
     "distributionSubtitle": "توزيع الأسباب الجذرية عبر تغريدات العملاء السلبية الأصلية.",
+    "coverageSummary": "{{totalNegative}} تغريدة سلبية إجمالاً · {{categorized}} مرتبطة بنقاط ألم موضوعية · {{uncategorized}} غير مصنفة",
     "chartLabel": "مخطط شريطي للأسباب الجذرية",
     "viewRecords": "عرض السجلات",
     "relinkRecords": "إعادة ربط السجلات",

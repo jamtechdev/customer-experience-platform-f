@@ -80,6 +80,18 @@ export interface RecommendationFeedback {
   submittedAt: Date;
 }
 
+export interface RootCauseCoverageStats {
+  totalNegative: number;
+  categorizedUnique: number;
+  uncategorized: number;
+  themedPainPoints: number;
+}
+
+export interface RootCauseListResponse {
+  list: Array<Record<string, unknown>>;
+  coverage: RootCauseCoverageStats;
+}
+
 // Root Cause Analysis
 export interface RootCauseAnalysis {
   id: string;

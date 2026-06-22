@@ -5,6 +5,7 @@ import { catchError, switchMap, retry } from 'rxjs/operators';
 import {
   SentimentAnalysisResult,
   RootCauseAnalysis,
+  RootCauseListResponse,
   Recommendation,
   ApiResponse,
   TwitterCxReportDto,
@@ -345,7 +346,7 @@ export class AnalysisService {
     return this.http.post<ApiResponse<RootCauseAnalysis[]>>(`${this.baseUrl}/root-cause`, { companyId, limit });
   }
 
-  getRootCauses(companyId?: number): Observable<ApiResponse<RootCauseAnalysis[]>> {
+  getRootCauses(companyId?: number): Observable<ApiResponse<RootCauseListResponse | RootCauseAnalysis[]>> {
     let params = new HttpParams();
     if (companyId) params = params.set('companyId', companyId.toString());
     params = this.realtimeParams(params);

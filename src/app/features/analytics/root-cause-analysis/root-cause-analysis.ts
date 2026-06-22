@@ -42,6 +42,7 @@ interface RootCauseChartRow {
   count: number;
   interpretation: string;
   feedbackIds: number[];
+  isUncategorized?: boolean;
 }
 
 @Component({
@@ -91,6 +92,7 @@ export class RootCauseAnalysis implements OnInit, OnDestroy {
   pageIndex = 0;
   totalItems = 0;
   emptyHint = signal<string | null>(null);
+  coverage = signal<RootCauseCoverage | null>(null);
 
   ngOnInit(): void {
     this.loadRootCauses();
@@ -170,8 +172,19 @@ export class RootCauseAnalysis implements OnInit, OnDestroy {
     const companyId = this.listCompanyId();
     this.analysisService.getRootCauses(companyId).subscribe({
       next: (response) => {
-        if (response.success && Array.isArray(response.data)) {
-          const mapped = (response.data || []).map((item: any) => ({
+        const payload = response.data;
+        const rawList = Array.isArray(payload)
+          ? payload
+          : Array.isArray((payload as { list?: unknown[] })?.list)
+            ? (payload as { list: unknown[] }).list
+            : [];
+        const nextCoverage =
+          payload && !Array.isArray(payload) && (payload as { coverage?: RootCauseCoverage }).coverage
+            ? (payload as { coverage: RootCauseCoverage }).coverage
+            : null;
+
+        if (response.success && rawList.length >= 0) {
+          const mapped = rawList.map((item: any) => ({
             id: Number(item.id) || 0,
             title: typeof item.title === 'string' ? item.title : '',
             category: typeof item.category === 'string' ? item.category : '',
@@ -191,6 +204,7 @@ export class RootCauseAnalysis implements OnInit, OnDestroy {
           }));
           this.rootCauses.set(mapped);
           this.totalItems = mapped.length;
+          this.coverage.set(nextCoverage);
           this.emptyHint.set(
             mapped.length === 0
               ? 'No root causes yet. They are created after CSV import and will appear here automatically.'
@@ -202,6 +216,7 @@ export class RootCauseAnalysis implements OnInit, OnDestroy {
         } else {
           this.rootCauses.set([]);
           this.totalItems = 0;
+          this.coverage.set(nextCoverage);
           this.emptyHint.set('No root causes yet. They will appear automatically after analysis finishes.');
         }
         this.loading.set(false);
@@ -283,16 +298,35 @@ export class RootCauseAnalysis implements OnInit, OnDestroy {
   }
 
   rootCauseRows(): RootCauseChartRow[] {
-    return this.rootCauses()
+    const rows = this.rootCauses()
       .map((c) => ({
         id: c.id,
         cause: this.painPointTitle(c),
         count: c.frequency || 0,
         interpretation: this.painPointSummary(c),
         feedbackIds: c.feedbackIds?.length ? c.feedbackIds : [],
+        isUncategorized: this.isUncategorizedCause(c),
       }))
-      .sort((a, b) => b.count - a.count)
-      .slice(0, 12);
+      .sort((a, b) => b.count - a.count);
+
+    const themed = rows.filter((row) => !row.isUncategorized).slice(0, 11);
+    const uncategorized = rows.find((row) => row.isUncategorized);
+    return uncategorized ? [...themed, uncategorized] : rows.slice(0, 12);
+  }
+
+  coverageSummary(): string | null {
+    const stats = this.coverage();
+    if (!stats || stats.totalNegative <= 0) return null;
+    return this.t('rootCausePage.coverageSummary', {
+      totalNegative: stats.totalNegative,
+      categorized: stats.categorizedUnique,
+      uncategorized: stats.uncategorized,
+    });
+  }
+
+  private isUncategorizedCause(cause: RootCause): boolean {
+    const title = this.painPointTitle(cause).toLocaleLowerCase('tr-TR');
+    return title.includes('uncategorized') || title.includes('other negative feedback');
   }
 
   rootCauseMaxEffective(): number {

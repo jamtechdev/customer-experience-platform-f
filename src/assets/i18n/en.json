@@ -808,6 +808,7 @@
     "loadingThemesTitle": "Loading root cause themes",
     "loadingThemesSubtitle": "Reading saved themes, counts, and interpretations from the database",
     "distributionSubtitle": "Root-cause distribution across negative original customer tweets.",
+    "coverageSummary": "{{totalNegative}} negative tweets total · {{categorized}} linked to themed pain points · {{uncategorized}} uncategorized",
     "chartLabel": "Root cause bar chart",
     "viewRecords": "View records",
     "relinkRecords": "Re-link records",

@@ -762,6 +762,7 @@
     "loadingThemesTitle": "Kök neden temaları yükleniyor",
     "loadingThemesSubtitle": "Kaydedilmiş temalar, sayılar ve yorumlar veritabanından okunuyor",
     "distributionSubtitle": "Negatif orijinal müşteri tweetlerinde kök neden dağılımı.",
+    "coverageSummary": "Toplam {{totalNegative}} negatif tweet · {{categorized}} temalı sorun noktasına bağlı · {{uncategorized}} sınıflandırılmamış",
     "chartLabel": "Kök neden çubuk grafiği",
     "viewRecords": "Kayıtları görüntüle",
     "relinkRecords": "Kayıtları yeniden bağla",
