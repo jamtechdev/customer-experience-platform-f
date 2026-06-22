@@ -371,16 +371,6 @@ export class RootCauseAnalysis implements OnInit, OnDestroy {
       .reduce((sum, r) => sum + r.count, 0);
   }
 
-  showsReconciliation(): boolean {
-    const total = this.totalNegativeKpi();
-    if (total <= 0) return false;
-    return this.uncategorizedNegativeKpi() > 0 || this.themedRowsSum() < total;
-  }
-
-  themedPainPointRows(): number {
-    return this.rootCauseRows().filter((row) => !row.isUncategorized).length;
-  }
-
   totalNegativeKpi(): number {
     const stats = this.coverage();
     return stats?.sentiment?.negative ?? stats?.totalNegative ?? 0;

@@ -42,19 +42,6 @@
             <span class="coverage-badge-hint">{{ t('rootCausePage.badgeUncategorizedHint') }}</span>
           </div>
         </div>
-
-        <div class="reconciliation-alert" *ngIf="showsReconciliation()">
-          <mat-icon aria-hidden="true">info</mat-icon>
-          <div>
-            <strong>{{ t('rootCausePage.clientReconciliationTitle') }}</strong>
-            <p>{{ t('rootCausePage.clientReconciliationBody', {
-              total: totalNegativeKpi(),
-              themed: themedNegativeKpi(),
-              uncategorized: uncategorizedNegativeKpi(),
-              rows: themedPainPointRows()
-            }) }}</p>
-          </div>
-        </div>
       </mat-card-content>
     </mat-card>
 
@@ -188,14 +175,6 @@
               [class.table-row-uncategorized]="row.isUncategorized">
             </tr>
           </table>
-
-          <div class="table-totals-footer" *ngIf="showsReconciliation()">
-            <span>{{ t('rootCausePage.tableFooterSum', {
-              themed: themedNegativeKpi(),
-              uncategorized: uncategorizedNegativeKpi(),
-              total: totalNegativeKpi()
-            }) }}</span>
-          </div>
         </div>
       </mat-card-content>
     </mat-card>

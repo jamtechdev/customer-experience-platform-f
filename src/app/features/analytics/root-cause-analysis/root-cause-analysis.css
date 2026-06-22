@@ -272,28 +272,6 @@
   color: #b45309;
 }
 
-.reconciliation-alert {
-  display: flex;
-  gap: 12px;
-  align-items: flex-start;
-  padding: 14px 16px;
-  border-radius: 14px;
-  border: 1px solid rgba(15, 95, 147, 0.22);
-  background: linear-gradient(180deg, #eff6ff, #ffffff);
-  color: #1e3a5f;
-}
-
-.reconciliation-alert mat-icon {
-  color: #0f5f93;
-  margin-top: 2px;
-}
-
-.reconciliation-alert p {
-  margin: 6px 0 0;
-  line-height: 1.5;
-  color: #334155;
-}
-
 .table-header-badges {
   display: flex;
   flex-wrap: wrap;
@@ -322,15 +300,6 @@
 .chip-total {
   --mdc-chip-label-text-color: #dc2626;
   background: rgba(220, 38, 38, 0.1) !important;
-}
-
-.table-totals-footer {
-  padding: 14px 16px;
-  border-top: 1px solid #e5e7eb;
-  background: #f8fafc;
-  font-weight: 700;
-  color: #111827;
-  text-align: right;
 }
 
 .mpl-bar-uncategorized {
