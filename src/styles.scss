@@ -3,9 +3,7 @@
 /* Angular Material Theme */
 @import '@angular/material/prebuilt-themes/indigo-pink.css';
 
-/* Material Icons */
-@import url('https://fonts.googleapis.com/icon?family=Material+Icons');
-@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap');
+/* Material Icons + Roboto are loaded from index.html to avoid build-time font inlining. */
 
 /* ============================================
    Sentimenter CX - Global Styles

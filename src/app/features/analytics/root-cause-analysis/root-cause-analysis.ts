@@ -13,10 +13,12 @@ import { AuthService } from '../../../core/services/auth.service';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { TranslationService } from '../../../core/services/translation.service';
 import { CXWebSocketService, type CSVImportStatusEvent } from '../../../core/services/cx-websocket.service';
-import { Subscription, forkJoin } from 'rxjs';
+import { forkJoin, of, Subscription } from 'rxjs';
+import { catchError } from 'rxjs/operators';
 import { OllamaLoader } from '../../../core/components/ollama-loader/ollama-loader';
 import { RelatedFeedbackModal, RelatedFeedbackRow } from '../../../core/components/related-feedback-modal/related-feedback-modal';
 import { drilldownModalTotal } from '../../../core/utils/drilldown-display';
+import { RootCauseCoverageStats } from '../../../core/models/analysis.model';
 
 interface RootCauseStructuredInsights {
   painPointTitle?: string;
@@ -43,6 +45,7 @@ interface RootCauseChartRow {
   interpretation: string;
   feedbackIds: number[];
   isUncategorized?: boolean;
+  badge?: 'themed' | 'uncategorized' | 'total';
 }
 
 @Component({
@@ -92,8 +95,7 @@ export class RootCauseAnalysis implements OnInit, OnDestroy {
   pageIndex = 0;
   totalItems = 0;
   emptyHint = signal<string | null>(null);
-  coverage = signal<RootCauseCoverage | null>(null);
-  sentimentNegativeTotal = signal(0);
+  coverage = signal<RootCauseCoverageStats | null>(null);
 
   ngOnInit(): void {
     this.loadRootCauses();
@@ -173,7 +175,7 @@ export class RootCauseAnalysis implements OnInit, OnDestroy {
     const companyId = this.resolveCompanyId();
     forkJoin({
       rootCauses: this.analysisService.getRootCauses(companyId),
-      sentiment: this.analysisService.getSentimentStats(companyId),
+      sentiment: this.analysisService.getSentimentStats(companyId).pipe(catchError(() => of(null))),
     }).subscribe({
       next: ({ rootCauses: response, sentiment: sentimentRes }) => {
         const payload = response.data;
@@ -183,11 +185,13 @@ export class RootCauseAnalysis implements OnInit, OnDestroy {
             ? (payload as { list: unknown[] }).list
             : [];
         const apiCoverage =
-          payload && !Array.isArray(payload) && (payload as { coverage?: RootCauseCoverage }).coverage
-            ? (payload as { coverage: RootCauseCoverage }).coverage
+          payload && !Array.isArray(payload) && (payload as { coverage?: RootCauseCoverageStats }).coverage
+            ? (payload as { coverage: RootCauseCoverageStats }).coverage
             : null;
-        const sentimentNegative = Number(sentimentRes?.data?.negative ?? 0) || 0;
-        this.sentimentNegativeTotal.set(sentimentNegative);
+        const sentimentData =
+          sentimentRes?.success && sentimentRes.data && typeof sentimentRes.data === 'object'
+            ? (sentimentRes.data as { positive?: number; negative?: number; neutral?: number; total?: number })
+            : null;
 
         if (response.success && rawList.length >= 0) {
           const mapped = rawList.map((item: any) => ({
@@ -210,7 +214,7 @@ export class RootCauseAnalysis implements OnInit, OnDestroy {
           }));
           this.rootCauses.set(mapped);
           this.totalItems = mapped.length;
-          this.coverage.set(this.mergeCoverage(apiCoverage, mapped, sentimentNegative));
+          this.coverage.set(this.resolveCoverage(apiCoverage, mapped, sentimentData));
           this.emptyHint.set(
             mapped.length === 0
               ? 'No root causes yet. They are created after CSV import and will appear here automatically.'
@@ -222,14 +226,7 @@ export class RootCauseAnalysis implements OnInit, OnDestroy {
         } else {
           this.rootCauses.set([]);
           this.totalItems = 0;
-          this.coverage.set(
-            apiCoverage ?? {
-              totalNegative: sentimentNegative,
-              categorizedUnique: 0,
-              uncategorized: sentimentNegative,
-              themedPainPoints: 0,
-            }
-          );
+          this.coverage.set(this.resolveCoverage(apiCoverage, [], sentimentData));
           this.emptyHint.set('No root causes yet. They will appear automatically after analysis finishes.');
         }
         this.loading.set(false);
@@ -239,6 +236,7 @@ export class RootCauseAnalysis implements OnInit, OnDestroy {
         this.loading.set(false);
         this.rootCauses.set([]);
         this.totalItems = 0;
+        this.coverage.set(null);
         if (error.status !== 500) {
           this.snackBar.open('Failed to load root causes', 'Close', { duration: 3000 });
         }
@@ -311,6 +309,9 @@ export class RootCauseAnalysis implements OnInit, OnDestroy {
   }
 
   rootCauseRows(): RootCauseChartRow[] {
+    const stats = this.coverage();
+    const uncategorizedIds = stats?.uncategorizedFeedbackIds ?? [];
+
     const rows = this.rootCauses()
       .map((c) => ({
         id: c.id,
@@ -319,51 +320,90 @@ export class RootCauseAnalysis implements OnInit, OnDestroy {
         interpretation: this.painPointFullSummary(c),
         feedbackIds: c.feedbackIds?.length ? c.feedbackIds : [],
         isUncategorized: this.isUncategorizedCause(c),
+        badge: (this.isUncategorizedCause(c) ? 'uncategorized' : 'themed') as 'themed' | 'uncategorized',
       }))
       .sort((a, b) => {
         if (a.isUncategorized !== b.isUncategorized) return a.isUncategorized ? 1 : -1;
         return b.count - a.count;
       });
 
-    const themed = rows.filter((row) => !row.isUncategorized).slice(0, 11);
-    const uncategorized = rows.find((row) => row.isUncategorized);
-    if (uncategorized) return [...themed, uncategorized];
+    const themed = rows.filter((row) => !row.isUncategorized);
+    let uncategorized: RootCauseChartRow | undefined = rows.find((row) => row.isUncategorized);
 
-    const stats = this.coverage();
-    if (stats && stats.uncategorized > 0) {
-      return [
-        ...themed,
-        {
-          cause: this.t('rootCausePage.uncategorizedTitle'),
-          count: stats.uncategorized,
-          interpretation: this.t('rootCausePage.uncategorizedSummary', { count: stats.uncategorized }),
-          feedbackIds: [],
-          isUncategorized: true,
-        },
-      ];
+    if (!uncategorized && stats && stats.uncategorized > 0) {
+      uncategorized = {
+        id: 0,
+        cause: this.t('rootCausePage.uncategorizedTitle'),
+        count: stats.uncategorized,
+        interpretation: this.t('rootCausePage.uncategorizedSummary', { count: stats.uncategorized }),
+        feedbackIds: uncategorizedIds,
+        isUncategorized: true,
+        badge: 'uncategorized',
+      };
+    } else if (uncategorized) {
+      const count =
+        stats && stats.uncategorized > 0
+          ? stats.uncategorized
+          : uncategorizedIds.length > 0
+            ? uncategorizedIds.length
+            : uncategorized.count;
+      const ids = uncategorizedIds.length > 0 ? uncategorizedIds : uncategorized.feedbackIds;
+      uncategorized = {
+        ...uncategorized,
+        count,
+        feedbackIds: ids,
+        interpretation:
+          uncategorized.interpretation ||
+          this.t('rootCausePage.uncategorizedSummary', { count }),
+      };
     }
-    return rows.slice(0, 12);
+
+    return uncategorized ? [...themed, uncategorized] : themed;
+  }
+
+  tableRowsDisplayed(): number {
+    return this.rootCauseRows().length;
+  }
+
+  themedRowsSum(): number {
+    return this.rootCauseRows()
+      .filter((r) => !r.isUncategorized)
+      .reduce((sum, r) => sum + r.count, 0);
+  }
+
+  showsReconciliation(): boolean {
+    const total = this.totalNegativeKpi();
+    if (total <= 0) return false;
+    return this.uncategorizedNegativeKpi() > 0 || this.themedRowsSum() < total;
+  }
+
+  themedPainPointRows(): number {
+    return this.rootCauseRows().filter((row) => !row.isUncategorized).length;
   }
 
   totalNegativeKpi(): number {
     const stats = this.coverage();
-    return stats?.totalNegative || this.sentimentNegativeTotal() || 0;
+    return stats?.sentiment?.negative ?? stats?.totalNegative ?? 0;
+  }
+
+  positiveKpi(): number {
+    return this.coverage()?.sentiment?.positive ?? 0;
+  }
+
+  neutralKpi(): number {
+    return this.coverage()?.sentiment?.neutral ?? 0;
+  }
+
+  datasetTotalKpi(): number {
+    return this.coverage()?.sentiment?.total ?? 0;
   }
 
   themedNegativeKpi(): number {
-    const stats = this.coverage();
-    if (stats) return stats.categorizedUnique;
-    return this.rootCauses()
-      .filter((c) => !this.isUncategorizedCause(c))
-      .reduce((sum, c) => sum + (c.frequency || 0), 0);
+    return this.coverage()?.categorizedUnique ?? 0;
   }
 
   uncategorizedNegativeKpi(): number {
-    const total = this.totalNegativeKpi();
-    const themed = this.themedNegativeKpi();
-    const stats = this.coverage();
-    if (stats?.uncategorized != null && stats.uncategorized > 0) return stats.uncategorized;
-    return Math.max(0, total - themed);
+    return this.coverage()?.uncategorized ?? 0;
   }
 
   coverageSummary(): string | null {
@@ -452,7 +492,14 @@ export class RootCauseAnalysis implements OnInit, OnDestroy {
   }
 
   openRelatedRecords(row: RootCauseChartRow, allowRelink = true): void {
-    if (!row.feedbackIds?.length) {
+    const ids =
+      row.feedbackIds?.length > 0
+        ? row.feedbackIds
+        : row.isUncategorized
+          ? this.coverage()?.uncategorizedFeedbackIds ?? []
+          : [];
+
+    if (!ids.length) {
       if (row.isUncategorized) {
         this.snackBar.open(
           'Re-run root cause analysis to load uncategorized negative tweets, or review all negatives from Sentiment Analysis.',
@@ -468,10 +515,11 @@ export class RootCauseAnalysis implements OnInit, OnDestroy {
       }
       return;
     }
+
     this.drilldownTitle.set(row.cause);
     this.drilldownOpen.set(true);
-    this.drilldownState = { row, allowRelink };
-    this.drilldownTotal.set(drilldownModalTotal(row.feedbackIds));
+    this.drilldownState = { row: { ...row, feedbackIds: ids }, allowRelink };
+    this.drilldownTotal.set(drilldownModalTotal(ids));
     this.loadDrilldownPage(1);
   }
 
@@ -531,7 +579,7 @@ export class RootCauseAnalysis implements OnInit, OnDestroy {
     return this.authService.currentUser()?.settings?.companyId || 1;
   }
 
-  private resolveCompanyId(): number | undefined {
+  private resolveCompanyId(): number {
     const user = this.authService.currentUser();
     if (user?.role === 'admin') return user?.settings?.companyId ?? 1;
     return user?.settings?.companyId ?? 1;
@@ -542,26 +590,69 @@ export class RootCauseAnalysis implements OnInit, OnDestroy {
     return user?.role === 'admin' ? undefined : (user?.settings?.companyId || 1);
   }
 
-  private mergeCoverage(
-    apiCoverage: RootCauseCoverage | null,
-    causes: RootCause[],
-    sentimentNegative: number
-  ): RootCauseCoverage {
-    const themedIds = new Set<number>();
-    let themedPainPoints = 0;
-    for (const cause of causes) {
-      if (this.isUncategorizedCause(cause)) continue;
-      themedPainPoints++;
-      for (const id of cause.feedbackIds || []) themedIds.add(id);
-    }
-    const totalNegative = Math.max(apiCoverage?.totalNegative ?? 0, sentimentNegative);
-    const categorizedUnique = apiCoverage?.categorizedUnique ?? themedIds.size;
-    const uncategorized = Math.max(0, totalNegative - categorizedUnique);
+  private resolveCoverage(
+    apiCoverage: RootCauseCoverageStats | null,
+    mapped: RootCause[],
+    sentiment: { positive?: number; negative?: number; neutral?: number; total?: number } | null
+  ): RootCauseCoverageStats | null {
+    const clientCoverage = sentiment ? this.buildClientCoverage(mapped, sentiment) : null;
+    if (!apiCoverage) return clientCoverage;
+    if (!clientCoverage) return apiCoverage;
+
+    const sentimentNeg = clientCoverage.sentiment?.negative ?? apiCoverage.totalNegative ?? 0;
+    const uncategorizedIds =
+      apiCoverage.uncategorizedFeedbackIds?.length
+        ? apiCoverage.uncategorizedFeedbackIds
+        : clientCoverage.uncategorizedFeedbackIds;
+
     return {
-      totalNegative,
+      sentiment: {
+        positive: apiCoverage.sentiment?.positive ?? clientCoverage.sentiment?.positive ?? 0,
+        negative: sentimentNeg,
+        neutral: apiCoverage.sentiment?.neutral ?? clientCoverage.sentiment?.neutral ?? 0,
+        total: apiCoverage.sentiment?.total ?? clientCoverage.sentiment?.total ?? 0,
+      },
+      totalNegative: sentimentNeg,
+      categorizedUnique: apiCoverage.categorizedUnique ?? clientCoverage.categorizedUnique,
+      uncategorized:
+        apiCoverage.uncategorized > 0
+          ? apiCoverage.uncategorized
+          : clientCoverage.uncategorized,
+      themedPainPoints: apiCoverage.themedPainPoints ?? clientCoverage.themedPainPoints,
+      uncategorizedFeedbackIds: uncategorizedIds,
+    };
+  }
+
+  private buildClientCoverage(
+    mapped: RootCause[],
+    sentiment: { positive?: number; negative?: number; neutral?: number; total?: number }
+  ): RootCauseCoverageStats {
+    const themedRows = mapped.filter((c) => !this.isUncategorizedCause(c));
+    const themedAssigned = new Set<number>();
+    for (const row of themedRows) {
+      for (const id of row.feedbackIds) themedAssigned.add(id);
+    }
+    const uncategorizedRow = mapped.find((c) => this.isUncategorizedCause(c));
+    const uncategorizedIds = uncategorizedRow?.feedbackIds ?? [];
+    const sentimentNeg = sentiment.negative ?? 0;
+    const categorizedUnique = themedAssigned.size;
+    const uncategorized =
+      uncategorizedIds.length > 0
+        ? uncategorizedIds.length
+        : Math.max(0, sentimentNeg - categorizedUnique);
+
+    return {
+      sentiment: {
+        positive: sentiment.positive ?? 0,
+        negative: sentimentNeg,
+        neutral: sentiment.neutral ?? 0,
+        total: sentiment.total ?? 0,
+      },
+      totalNegative: sentimentNeg,
       categorizedUnique,
-      uncategorized: apiCoverage?.uncategorized ?? uncategorized,
-      themedPainPoints: apiCoverage?.themedPainPoints ?? themedPainPoints,
+      uncategorized,
+      themedPainPoints: themedRows.length,
+      uncategorizedFeedbackIds: uncategorizedIds.length > 0 ? uncategorizedIds : undefined,
     };
   }
 }

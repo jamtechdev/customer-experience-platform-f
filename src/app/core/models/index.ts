@@ -19,7 +19,10 @@ export type {
   AspectSentiment,
   KeywordSentiment,
   EntityMention,
-  TwitterCxReportDto
+  TwitterCxReportDto,
+  CanonicalSentimentTotals,
+  RootCauseCoverageStats,
+  RootCauseListResponse,
 } from './analysis.model';
 // Export enums normally
 export { 

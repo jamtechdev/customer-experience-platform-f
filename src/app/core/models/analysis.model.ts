@@ -80,11 +80,21 @@ export interface RecommendationFeedback {
   submittedAt: Date;
 }
 
+export interface CanonicalSentimentTotals {
+  positive: number;
+  negative: number;
+  neutral: number;
+  total: number;
+  averageScore?: number;
+}
+
 export interface RootCauseCoverageStats {
+  sentiment: CanonicalSentimentTotals;
   totalNegative: number;
   categorizedUnique: number;
   uncategorized: number;
   themedPainPoints: number;
+  uncategorizedFeedbackIds?: number[];
 }
 
 export interface RootCauseListResponse {

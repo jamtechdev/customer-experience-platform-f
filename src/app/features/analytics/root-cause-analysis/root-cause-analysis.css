@@ -150,20 +150,207 @@
 
 .dense-table {
   width: 100%;
-  min-width: 920px;
+  min-width: 980px;
   table-layout: fixed;
 }
 
+.dense-table .mat-column-badge {
+  width: 130px;
+}
+
 .dense-table .mat-column-cause {
-  width: 28%;
+  width: 24%;
 }
 
 .dense-table .mat-column-count {
-  width: 190px;
+  width: 170px;
 }
 
 .dense-table .mat-column-interpretation {
-  width: 44%;
+  width: 40%;
+}
+
+.table-row-uncategorized {
+  background: linear-gradient(90deg, rgba(251, 191, 36, 0.12), rgba(255, 255, 255, 0));
+}
+
+.row-uncategorized {
+  font-weight: 700;
+}
+
+.row-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 96px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.row-badge-themed {
+  background: rgba(15, 95, 147, 0.12);
+  color: #0f5f93;
+}
+
+.row-badge-uncategorized {
+  background: rgba(217, 119, 6, 0.16);
+  color: #b45309;
+}
+
+.count-value-uncategorized {
+  color: #b45309;
+  font-size: 1.35rem;
+}
+
+.coverage-banner-content {
+  padding-top: 8px !important;
+}
+
+.coverage-badge-row {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  margin-bottom: 14px;
+}
+
+.coverage-badge {
+  border-radius: 16px;
+  border: 1px solid #e5e7eb;
+  padding: 16px 18px;
+  background: linear-gradient(180deg, #ffffff, #f8fafc);
+}
+
+.coverage-badge-label {
+  display: block;
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #6b7280;
+  margin-bottom: 6px;
+}
+
+.coverage-badge-value {
+  display: block;
+  font-size: clamp(1.6rem, 2.4vw, 2.2rem);
+  font-weight: 900;
+  line-height: 1.05;
+  color: #111827;
+}
+
+.coverage-badge-hint {
+  display: block;
+  margin-top: 6px;
+  font-size: 0.82rem;
+  color: #6b7280;
+  line-height: 1.35;
+}
+
+.coverage-badge-total {
+  border-color: rgba(220, 38, 38, 0.28);
+  background: linear-gradient(180deg, #fff5f5, #ffffff);
+}
+
+.coverage-badge-total .coverage-badge-value {
+  color: #dc2626;
+}
+
+.coverage-badge-themed .coverage-badge-value {
+  color: #0f5f93;
+}
+
+.coverage-badge-uncategorized {
+  border-color: rgba(217, 119, 6, 0.28);
+  background: linear-gradient(180deg, #fffbeb, #ffffff);
+}
+
+.coverage-badge-uncategorized .coverage-badge-value {
+  color: #b45309;
+}
+
+.reconciliation-alert {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  padding: 14px 16px;
+  border-radius: 14px;
+  border: 1px solid rgba(15, 95, 147, 0.22);
+  background: linear-gradient(180deg, #eff6ff, #ffffff);
+  color: #1e3a5f;
+}
+
+.reconciliation-alert mat-icon {
+  color: #0f5f93;
+  margin-top: 2px;
+}
+
+.reconciliation-alert p {
+  margin: 6px 0 0;
+  line-height: 1.5;
+  color: #334155;
+}
+
+.table-header-badges {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 8px 0 14px;
+}
+
+.table-rows-note {
+  margin: 0;
+  color: #6b7280;
+  font-size: 0.9rem;
+}
+
+.chip-themed {
+  --mdc-chip-label-text-color: #0f5f93;
+  background: rgba(15, 95, 147, 0.1) !important;
+}
+
+.chip-uncategorized {
+  --mdc-chip-label-text-color: #b45309;
+  background: rgba(217, 119, 6, 0.12) !important;
+}
+
+.chip-total {
+  --mdc-chip-label-text-color: #dc2626;
+  background: rgba(220, 38, 38, 0.1) !important;
+}
+
+.table-totals-footer {
+  padding: 14px 16px;
+  border-top: 1px solid #e5e7eb;
+  background: #f8fafc;
+  font-weight: 700;
+  color: #111827;
+  text-align: right;
+}
+
+.mpl-bar-uncategorized {
+  background: #d97706 !important;
+}
+
+.mpl-bar-col-uncat .mpl-bar-cat {
+  color: #b45309;
+  font-weight: 700;
+}
+
+@media (max-width: 900px) {
+  .coverage-badge-row {
+    grid-template-columns: 1fr;
+  }
+
+  .table-header-badges {
+    flex-direction: column;
+    align-items: flex-start;
+  }
 }
 
 .count-cell-inner {
@@ -201,7 +388,22 @@
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 12px;
-  margin-bottom: 18px;
+  margin-bottom: 10px;
+}
+
+.coverage-note {
+  margin: 0 0 18px;
+  color: #6b7280;
+  font-size: 0.9rem;
+  line-height: 1.45;
+}
+
+.coverage-kpi-positive .coverage-kpi-value {
+  color: #059669;
+}
+
+.coverage-kpi-neutral .coverage-kpi-value {
+  color: #d97706;
 }
 
 .coverage-kpi {

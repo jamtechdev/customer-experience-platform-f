@@ -350,7 +350,7 @@ export class AnalysisService {
     let params = new HttpParams();
     if (companyId) params = params.set('companyId', companyId.toString());
     params = this.realtimeParams(params);
-    return this.http.get<ApiResponse<RootCauseAnalysis[]>>(`${this.baseUrl}/root-cause`, { params });
+    return this.http.get<ApiResponse<RootCauseListResponse | RootCauseAnalysis[]>>(`${this.baseUrl}/root-cause`, { params });
   }
 
   relinkRootCause(rootCauseId: number, companyId: number): Observable<ApiResponse<RootCauseAnalysis>> {

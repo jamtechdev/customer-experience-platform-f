@@ -23,6 +23,41 @@
   </div>
 
   <div *ngIf="!loading()" class="content-section">
+    <mat-card class="section-card" *ngIf="totalNegativeKpi() > 0">
+      <mat-card-content class="coverage-banner-content">
+        <div class="coverage-badge-row" aria-label="Negative tweet coverage summary">
+          <div class="coverage-badge coverage-badge-total">
+            <span class="coverage-badge-label">{{ t('rootCausePage.totalNegativeKpi') }}</span>
+            <strong class="coverage-badge-value">{{ totalNegativeKpi() | number }}</strong>
+            <span class="coverage-badge-hint">{{ t('rootCausePage.badgeMatchesSentiment') }}</span>
+          </div>
+          <div class="coverage-badge coverage-badge-themed">
+            <span class="coverage-badge-label">{{ t('rootCausePage.themedNegativeKpi') }}</span>
+            <strong class="coverage-badge-value">{{ themedNegativeKpi() | number }}</strong>
+            <span class="coverage-badge-hint">{{ t('rootCausePage.badgeThemedHint') }}</span>
+          </div>
+          <div class="coverage-badge coverage-badge-uncategorized">
+            <span class="coverage-badge-label">{{ t('rootCausePage.uncategorizedNegativeKpi') }}</span>
+            <strong class="coverage-badge-value">{{ uncategorizedNegativeKpi() | number }}</strong>
+            <span class="coverage-badge-hint">{{ t('rootCausePage.badgeUncategorizedHint') }}</span>
+          </div>
+        </div>
+
+        <div class="reconciliation-alert" *ngIf="showsReconciliation()">
+          <mat-icon aria-hidden="true">info</mat-icon>
+          <div>
+            <strong>{{ t('rootCausePage.clientReconciliationTitle') }}</strong>
+            <p>{{ t('rootCausePage.clientReconciliationBody', {
+              total: totalNegativeKpi(),
+              themed: themedNegativeKpi(),
+              uncategorized: uncategorizedNegativeKpi(),
+              rows: themedPainPointRows()
+            }) }}</p>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
     <mat-card class="section-card">
       <mat-card-header>
         <mat-card-title>{{ t('rootCausePage.title') }}</mat-card-title>
@@ -31,20 +66,21 @@
         </mat-card-subtitle>
       </mat-card-header>
       <mat-card-content>
-        <div class="coverage-kpis" *ngIf="totalNegativeKpi() > 0">
+        <div class="coverage-kpis" *ngIf="datasetTotalKpi() > 0">
           <div class="coverage-kpi coverage-kpi-total">
-            <span class="coverage-kpi-label">{{ t('rootCausePage.totalNegativeKpi') }}</span>
-            <strong class="coverage-kpi-value">{{ totalNegativeKpi() | number }}</strong>
+            <span class="coverage-kpi-label">{{ t('rootCausePage.datasetTotalKpi') }}</span>
+            <strong class="coverage-kpi-value">{{ datasetTotalKpi() | number }}</strong>
           </div>
-          <div class="coverage-kpi coverage-kpi-themed">
-            <span class="coverage-kpi-label">{{ t('rootCausePage.themedNegativeKpi') }}</span>
-            <strong class="coverage-kpi-value">{{ themedNegativeKpi() | number }}</strong>
+          <div class="coverage-kpi coverage-kpi-positive">
+            <span class="coverage-kpi-label">{{ t('dashboard.positive') }}</span>
+            <strong class="coverage-kpi-value">{{ positiveKpi() | number }}</strong>
           </div>
-          <div class="coverage-kpi coverage-kpi-uncategorized">
-            <span class="coverage-kpi-label">{{ t('rootCausePage.uncategorizedNegativeKpi') }}</span>
-            <strong class="coverage-kpi-value">{{ uncategorizedNegativeKpi() | number }}</strong>
+          <div class="coverage-kpi coverage-kpi-neutral">
+            <span class="coverage-kpi-label">{{ t('dashboard.neutral') }}</span>
+            <strong class="coverage-kpi-value">{{ neutralKpi() | number }}</strong>
           </div>
         </div>
+
         <div *ngIf="rootCauseRows().length === 0" class="empty-state">
           <div class="empty-state-content">
             <mat-icon>info</mat-icon>
@@ -62,8 +98,9 @@
             </button>
           </div>
         </div>
+
         <figure *ngIf="rootCauseRows().length > 0" class="mpl-figure" [attr.aria-label]="t('rootCausePage.chartLabel')">
-          <figcaption class="mpl-figure-title">Negative Tweet Root Causes</figcaption>
+          <figcaption class="mpl-figure-title">{{ t('rootCausePage.chartTitle') }}</figcaption>
           <div class="mpl-chart mpl-chart-mplframe mpl-bar-root">
             <div class="mpl-axes-frame">
               <div class="mpl-y-label-outer" aria-hidden="true">Count</div>
@@ -76,17 +113,21 @@
               </div>
               <div class="mpl-plot mpl-plot-mpl mpl-plot-root">
                 @for (row of rootCauseRows(); track row.cause) {
-                  <div class="mpl-bar-col mpl-bar-col-root">
+                  <div class="mpl-bar-col mpl-bar-col-root" [class.mpl-bar-col-uncat]="row.isUncategorized">
                     <div class="mpl-bar-track">
-                      <div class="mpl-bar-fill mpl-bar-mpl" [style.height.%]="rootCauseBarFillPct(row.count)"></div>
+                      <div
+                        class="mpl-bar-fill mpl-bar-mpl"
+                        [class.mpl-bar-uncategorized]="row.isUncategorized"
+                        [style.height.%]="rootCauseBarFillPct(row.count)">
+                      </div>
                     </div>
                     <div class="mpl-bar-value">
                       <button
                         type="button"
                         class="count-link bar-count-link"
-                        (click)="row.feedbackIds.length ? openRelatedRecords(row) : relinkRecords(row)"
-                        [attr.aria-label]="row.feedbackIds.length ? t('rootCausePage.viewRecords') : t('rootCausePage.relinkRecords')">
-                        {{ row.count }}
+                        (click)="openRelatedRecords(row)"
+                        [attr.aria-label]="t('rootCausePage.viewRecords')">
+                        {{ row.count | number }}
                       </button>
                     </div>
                     <div class="mpl-bar-cat mpl-bar-cat-rot mpl-bar-cat-mpl">{{ truncateChartLabel(row.cause, 28) }}</div>
@@ -97,25 +138,41 @@
           </div>
         </figure>
 
+        <div class="table-header-badges" *ngIf="rootCauseRows().length > 0">
+          <mat-chip-set aria-label="Table row categories">
+            <mat-chip class="chip-themed">{{ t('rootCausePage.chipThemed', { count: themedNegativeKpi() }) }}</mat-chip>
+            <mat-chip class="chip-uncategorized">{{ t('rootCausePage.chipUncategorized', { count: uncategorizedNegativeKpi() }) }}</mat-chip>
+            <mat-chip class="chip-total">{{ t('rootCausePage.chipTotalNegative', { count: totalNegativeKpi() }) }}</mat-chip>
+          </mat-chip-set>
+          <p class="table-rows-note">{{ t('rootCausePage.tableRowsNote', { rows: tableRowsDisplayed(), total: totalNegativeKpi() }) }}</p>
+        </div>
+
         <div class="table-wrapper" *ngIf="rootCauseRows().length > 0">
           <table mat-table [dataSource]="rootCauseRows()" class="dense-table report-mat-table">
+            <ng-container matColumnDef="badge">
+              <th mat-header-cell *matHeaderCellDef>{{ t('rootCausePage.categoryBadge') }}</th>
+              <td mat-cell *matCellDef="let row">
+                <span class="row-badge" [class.row-badge-themed]="!row.isUncategorized" [class.row-badge-uncategorized]="row.isUncategorized">
+                  {{ row.isUncategorized ? t('rootCausePage.badgeUncategorized') : t('rootCausePage.badgeThemed') }}
+                </span>
+              </td>
+            </ng-container>
             <ng-container matColumnDef="cause">
               <th mat-header-cell *matHeaderCellDef>{{ t('rootCausePage.rootCause') }}</th>
-              <td mat-cell *matCellDef="let row">{{ row.cause }}</td>
+              <td mat-cell *matCellDef="let row" [class.row-uncategorized]="row.isUncategorized">{{ row.cause }}</td>
             </ng-container>
             <ng-container matColumnDef="count">
               <th mat-header-cell *matHeaderCellDef>{{ t('rootCausePage.negativeTweetCount') }}</th>
               <td mat-cell *matCellDef="let row" class="count-cell">
                 <div class="count-cell-inner">
-                  <strong class="count-value">{{ row.count | number }}</strong>
+                  <strong class="count-value" [class.count-value-uncategorized]="row.isUncategorized">{{ row.count | number }}</strong>
                   <button
                     type="button"
                     class="count-link view-records-link"
                     mat-button
                     color="primary"
-                    (click)="row.feedbackIds.length ? openRelatedRecords(row) : relinkRecords(row)"
-                    [disabled]="!row.feedbackIds.length && !row.id">
-                    {{ t('rootCausePage.viewRecords') }}
+                    (click)="openRelatedRecords(row)">
+                    {{ t('rootCausePage.viewRecordCount', { count: row.count }) }}
                   </button>
                 </div>
               </td>
@@ -124,9 +181,21 @@
               <th mat-header-cell *matHeaderCellDef>{{ t('rootCausePage.interpretation') }}</th>
               <td mat-cell *matCellDef="let row" class="interpretation-cell wrap-cell">{{ row.interpretation }}</td>
             </ng-container>
-            <tr mat-header-row *matHeaderRowDef="['cause', 'count', 'interpretation']"></tr>
-            <tr mat-row *matRowDef="let row; columns: ['cause', 'count', 'interpretation']"></tr>
+            <tr mat-header-row *matHeaderRowDef="['badge', 'cause', 'count', 'interpretation']"></tr>
+            <tr
+              mat-row
+              *matRowDef="let row; columns: ['badge', 'cause', 'count', 'interpretation']"
+              [class.table-row-uncategorized]="row.isUncategorized">
+            </tr>
           </table>
+
+          <div class="table-totals-footer" *ngIf="showsReconciliation()">
+            <span>{{ t('rootCausePage.tableFooterSum', {
+              themed: themedNegativeKpi(),
+              uncategorized: uncategorizedNegativeKpi(),
+              total: totalNegativeKpi()
+            }) }}</span>
+          </div>
         </div>
       </mat-card-content>
     </mat-card>
