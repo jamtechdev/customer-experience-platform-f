@@ -170,6 +170,7 @@ export class ProcessEnhancement implements OnInit, OnDestroy {
       page,
       limit: this.drilldownPageSize,
       includeIrrelevant: true,
+      drilldownTitle: this.drilldownTitle(),
     }).subscribe({
       next: (res) => {
         this.drilldownLoading.set(false);

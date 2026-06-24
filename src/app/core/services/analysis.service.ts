@@ -122,7 +122,15 @@ export class AnalysisService {
   getFeedbackByIds(
     companyId: number | undefined,
     ids: number[],
-    options?: { rootCauseId?: number; page?: number; limit?: number; includeIrrelevant?: boolean; groupRetweets?: boolean }
+    options?: {
+      rootCauseId?: number;
+      themeTitle?: string;
+      drilldownTitle?: string;
+      page?: number;
+      limit?: number;
+      includeIrrelevant?: boolean;
+      groupRetweets?: boolean;
+    }
   ): Observable<ApiResponse<{ list: any[]; requested: number; returned: number; total: number; grouped?: boolean; page: number; limit: number }>> {
     const unique = [...new Set(ids.filter((n) => Number.isFinite(n) && n > 0))];
     const page = options?.page ?? 1;
@@ -131,6 +139,8 @@ export class AnalysisService {
       ids: unique,
       companyId,
       rootCauseId: options?.rootCauseId,
+      themeTitle: options?.themeTitle,
+      drilldownTitle: options?.drilldownTitle,
       page,
       limit,
       includeIrrelevant: options?.includeIrrelevant === true,
