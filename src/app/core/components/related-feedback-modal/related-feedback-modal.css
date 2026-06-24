@@ -139,6 +139,7 @@
 }
 
 .col-id { width: 74px; }
+.col-retweets { width: 88px; }
 .col-sentiment { width: 128px; }
 .col-source { width: 156px; }
 .col-summary { width: 25%; }
@@ -177,6 +178,28 @@
 .id-cell {
   color: var(--primary-dark, #047857);
   font-weight: 800;
+}
+
+.retweet-cell {
+  text-align: center;
+}
+
+.retweet-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 42px;
+  padding: 4px 8px;
+  border-radius: 999px;
+  background: rgba(220, 38, 38, 0.12);
+  color: #b91c1c;
+  font-weight: 800;
+  font-size: 12px;
+}
+
+.retweet-single {
+  color: var(--text-secondary, #64748b);
+  font-weight: 600;
 }
 
 .source-cell > div {

@@ -34,6 +34,7 @@
         <table class="related-table">
           <colgroup>
             <col class="col-id" />
+            <col class="col-retweets" />
             <col class="col-sentiment" />
             <col class="col-summary" />
             <col class="col-original" />
@@ -42,6 +43,7 @@
           <thead>
             <tr>
               <th>ID</th>
+              <th>Retweets</th>
               <th>Sentiment</th>
               <th>AI summary</th>
               <th>Original feedback</th>
@@ -51,6 +53,10 @@
           <tbody>
             <tr *ngFor="let row of rows">
               <td data-label="ID" class="id-cell">#{{ row.id }}</td>
+              <td data-label="Retweets" class="retweet-cell">
+                <span *ngIf="(row.retweetCount || 1) > 1" class="retweet-badge">×{{ row.retweetCount }}</span>
+                <span *ngIf="(row.retweetCount || 1) <= 1" class="retweet-single">1</span>
+              </td>
               <td data-label="Sentiment" class="sentiment-cell">
                 <span class="sentiment-chip" [class]="(row.sentiment || 'unknown').toLowerCase()">
                   {{ row.sentiment || 'unknown' }}
@@ -66,7 +72,7 @@
                 </ng-template>
               </td>
               <td data-label="Original" class="text-cell"><pre>{{ originalText(row) }}</pre></td>
-              <td data-label="Related" class="text-cell">{{ row.relevanceReason || row.journeyStage || '-' }}</td>
+              <td data-label="Related" class="text-cell">{{ whyRelatedText(row) }}</td>
             </tr>
           </tbody>
         </table>

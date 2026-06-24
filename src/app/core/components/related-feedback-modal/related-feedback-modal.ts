@@ -23,6 +23,9 @@ export interface RelatedFeedbackRow {
   translatedContent?: string | null;
   contentSummary?: string | null;
   relevanceReason?: string | null;
+  rootCauseMatchReason?: string | null;
+  retweetCount?: number;
+  memberIds?: number[];
   source?: string | null;
   author?: string | null;
   date?: string | Date | null;
@@ -169,5 +172,9 @@ export class RelatedFeedbackModal implements OnChanges, OnDestroy {
 
   summaryMissingText(): string {
     return 'Not available';
+  }
+
+  whyRelatedText(row: RelatedFeedbackRow): string {
+    return row.rootCauseMatchReason || row.relevanceReason || row.journeyStage || '-';
   }
 }

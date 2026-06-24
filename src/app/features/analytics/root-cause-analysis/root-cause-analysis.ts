@@ -535,7 +535,7 @@ export class RootCauseAnalysis implements OnInit, OnDestroy {
             return;
           }
           this.drilldownRows.set(res.data.list);
-          this.drilldownTotal.set(drilldownModalTotal(state.row.feedbackIds));
+          this.drilldownTotal.set(res.data?.total ?? drilldownModalTotal(state.row.feedbackIds));
         } else {
           this.snackBar.open(res.message || 'Could not load related records', 'Close', { duration: 5000 });
           this.closeDrilldown();
