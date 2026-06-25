@@ -6,7 +6,7 @@ import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { TwitterCxReportStore } from '../../../core/services/twitter-cx-report.store';
 import { AuthService } from '../../../core/services/auth.service';
 import { OllamaLoader } from '../../../core/components/ollama-loader/ollama-loader';
-import { notifyCxReportLoadFailure, shouldKeepCxReportLoadingAfterResponse } from '../../../core/utils/twitter-cx-report-load';
+import { notifyCxReportLoadFailure } from '../../../core/utils/twitter-cx-report-load';
 import { ImportProcessingService } from '../../../core/services/import-processing.service';
 import { TranslationService } from '../../../core/services/translation.service';
 
@@ -59,12 +59,10 @@ export class Methodology implements OnInit, OnDestroy {
         } else {
           this.bullets.set(res.data?.scopeAndMethodBullets ? res.data.scopeAndMethodBullets : []);
         }
-        if (shouldKeepCxReportLoadingAfterResponse(res, this.importProcessing.isActive())) return;
         this.loading.set(false);
       },
       error: () => {
         this.bullets.set([]);
-        if (this.importProcessing.isActive()) return;
         this.loading.set(false);
         notifyCxReportLoadFailure(this.snackBar, undefined, this.importProcessing.isActive(), this.t('app.close'));
       },

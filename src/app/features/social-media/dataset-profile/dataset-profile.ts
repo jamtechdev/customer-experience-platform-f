@@ -9,7 +9,7 @@ import { TwitterCxReportStore } from '../../../core/services/twitter-cx-report.s
 import { AuthService } from '../../../core/services/auth.service';
 import { AnalysisService } from '../../../core/services/analysis.service';
 import { drilldownModalTotal } from '../../../core/utils/drilldown-display';
-import { notifyCxReportLoadFailure, shouldKeepCxReportLoadingAfterResponse } from '../../../core/utils/twitter-cx-report-load';
+import { notifyCxReportLoadFailure } from '../../../core/utils/twitter-cx-report-load';
 import { ImportProcessingService } from '../../../core/services/import-processing.service';
 import { OllamaLoader } from '../../../core/components/ollama-loader/ollama-loader';
 import { TranslationService } from '../../../core/services/translation.service';
@@ -118,12 +118,10 @@ export class DatasetProfile implements OnInit, OnDestroy {
             Number(res.data?.sentiment?.total ?? res.data?.dataset?.primaryCohortSize ?? 0) || null
           );
         }
-        if (shouldKeepCxReportLoadingAfterResponse(res, this.importProcessing.isActive())) return;
         this.loading.set(false);
       },
       error: () => {
         this.rows.set([]);
-        if (this.importProcessing.isActive()) return;
         this.loading.set(false);
         notifyCxReportLoadFailure(this.snackBar, undefined, this.importProcessing.isActive(), this.t('app.close'));
       },

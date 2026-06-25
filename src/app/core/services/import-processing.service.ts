@@ -1,4 +1,5 @@
 import { Injectable, inject, signal } from '@angular/core';
+import { Subject } from 'rxjs';
 import { CSVService } from './csv.service';
 
 /** Tracks active CSV import / AI analysis so CX pages stay quiet until processing finishes. */
@@ -6,12 +7,15 @@ import { CSVService } from './csv.service';
 export class ImportProcessingService {
   private readonly csv = inject(CSVService);
   private readonly active = signal(false);
+  private readonly becameIdleSubject = new Subject<void>();
   private syncInFlight = false;
   private pollTimer: ReturnType<typeof setInterval> | null = null;
   /** Ignore stale "processing" poll results briefly after import completes. */
   private idleSinceMs = 0;
 
   readonly isActive = this.active.asReadonly();
+  /** Emits once when import / AI processing transitions from active to idle. */
+  readonly becameIdle$ = this.becameIdleSubject.asObservable();
 
   markProcessing(): void {
     this.idleSinceMs = 0;
@@ -20,9 +24,13 @@ export class ImportProcessingService {
   }
 
   markIdle(): void {
+    const wasActive = this.active();
     this.active.set(false);
     this.idleSinceMs = Date.now();
     this.stopPolling();
+    if (wasActive) {
+      this.becameIdleSubject.next();
+    }
   }
 
   /** HTTP fallback when websocket events were missed (e.g. page refresh). */
@@ -38,10 +46,10 @@ export class ImportProcessingService {
           if (this.idleSinceMs > 0 && Date.now() - this.idleSinceMs < 4000) {
             return;
           }
-          this.active.set(true);
-          this.startPolling();
+          this.markProcessing();
+        } else if (this.active()) {
+          this.markIdle();
         } else {
-          this.active.set(false);
           this.idleSinceMs = Date.now();
           this.stopPolling();
         }

@@ -11,7 +11,7 @@ import { AnalysisService } from '../../../core/services/analysis.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { OllamaLoader } from '../../../core/components/ollama-loader/ollama-loader';
-import { notifyCxReportLoadFailure, shouldKeepCxReportLoadingAfterResponse } from '../../../core/utils/twitter-cx-report-load';
+import { notifyCxReportLoadFailure } from '../../../core/utils/twitter-cx-report-load';
 import { ImportProcessingService } from '../../../core/services/import-processing.service';
 import { RelatedFeedbackModal, RelatedFeedbackRow } from '../../../core/components/related-feedback-modal/related-feedback-modal';
 import { alignLinkedCountInText, drilldownModalTotal, effectiveLinkedCount, resolveDrilldownIds } from '../../../core/utils/drilldown-display';
@@ -176,15 +176,11 @@ export class JourneyMap implements OnInit, OnDestroy {
             this.page.set(1);
           }
         } finally {
-          if (!shouldKeepCxReportLoadingAfterResponse(response, this.importProcessing.isActive())) {
-            this.loading.set(false);
-          }
+          this.loading.set(false);
         }
       },
       error: () => {
-        if (!this.importProcessing.isActive()) {
-          this.loading.set(false);
-        }
+        this.loading.set(false);
         notifyCxReportLoadFailure(this.snackBar, undefined, this.importProcessing.isActive(), 'Close');
         this.journeyStages.set([]);
         this.page.set(1);

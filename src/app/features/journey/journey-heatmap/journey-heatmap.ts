@@ -10,7 +10,7 @@ import { TwitterCxReportStore } from '../../../core/services/twitter-cx-report.s
 import { AnalysisService } from '../../../core/services/analysis.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { OllamaLoader } from '../../../core/components/ollama-loader/ollama-loader';
-import { notifyCxReportLoadFailure, shouldKeepCxReportLoadingAfterResponse, twitterCxReportFailureMessage } from '../../../core/utils/twitter-cx-report-load';
+import { notifyCxReportLoadFailure, twitterCxReportFailureMessage } from '../../../core/utils/twitter-cx-report-load';
 import { ImportProcessingService } from '../../../core/services/import-processing.service';
 import { TranslationService } from '../../../core/services/translation.service';
 import { drilldownModalTotal } from '../../../core/utils/drilldown-display';
@@ -160,7 +160,6 @@ export class JourneyHeatmap implements OnInit, OnDestroy {
           this.stages.set([]);
           this.page.set(1);
         }
-        if (shouldKeepCxReportLoadingAfterResponse(res, this.importProcessing.isActive())) return;
         this.loading.set(false);
       },
       error: () => {
@@ -168,7 +167,6 @@ export class JourneyHeatmap implements OnInit, OnDestroy {
         notifyCxReportLoadFailure(this.snackBar, undefined, this.importProcessing.isActive(), this.t('app.close'));
         this.stages.set([]);
         this.page.set(1);
-        if (this.importProcessing.isActive()) return;
         this.loading.set(false);
       },
     });

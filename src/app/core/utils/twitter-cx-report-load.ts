@@ -47,14 +47,35 @@ export const IMPORT_ANALYSIS_LOADER_TITLE = 'Please wait — AI is analyzing you
 export const IMPORT_ANALYSIS_LOADER_SUBTITLE =
   'Sentiment, journey stages, and insights will appear automatically when analysis completes.';
 
-/** Keep page loader visible while CSV import / AI analysis is still running. */
-export function shouldKeepCxReportLoadingAfterResponse(
-  res: { message?: string; success?: boolean } | undefined,
+export function hasCxReportPayload(data?: TwitterCxReportDto | null): boolean {
+  if (!data) return false;
+  return (
+    (data.dataset?.total ?? 0) > 0 ||
+    (data.touchpoints?.length ?? 0) > 0 ||
+    (data.journeyRows?.length ?? 0) > 0 ||
+    (data.actionPlan?.length ?? 0) > 0 ||
+    (data.rootCauses?.length ?? 0) > 0 ||
+    (data.sentiment?.total ?? 0) > 0 ||
+    (data.heatmapPct?.length ?? 0) > 0
+  );
+}
+
+/** True while CSV import, AI analysis, or CX snapshot build is still in progress. */
+export function isCxReportResponsePending(
+  res: { message?: string } | undefined,
   importActive: boolean
 ): boolean {
   if (importActive) return true;
   const msg = res?.message;
   return msg === 'import_processing' || msg === 'snapshot_still_building';
+}
+
+/** @deprecated Use isCxReportResponsePending — do not block page loading with this. */
+export function shouldKeepCxReportLoadingAfterResponse(
+  res: { message?: string; success?: boolean } | undefined,
+  importActive: boolean
+): boolean {
+  return isCxReportResponsePending(res, importActive);
 }
 
 /** Minimal empty report — used while CSV import is still running (no error toast). */

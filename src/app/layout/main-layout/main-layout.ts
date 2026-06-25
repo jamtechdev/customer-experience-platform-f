@@ -13,6 +13,7 @@ import { Footer } from '../footer/footer';
 import { CXWebSocketService } from '../../core/services/cx-websocket.service';
 import { TranslationService } from '../../core/services/translation.service';
 import { ImportProcessingService } from '../../core/services/import-processing.service';
+import { TwitterCxReportStore } from '../../core/services/twitter-cx-report.store';
 import { OllamaLoader } from '../../core/components/ollama-loader/ollama-loader';
 
 @Component({
@@ -39,6 +40,7 @@ export class MainLayout implements OnDestroy {
   private websocket = inject(CXWebSocketService);
   private translationService = inject(TranslationService);
   private importProcessing = inject(ImportProcessingService);
+  private twitterCxReportStore = inject(TwitterCxReportStore);
   private router = inject(Router);
 
   sidenavOpened = signal(true);
@@ -49,9 +51,10 @@ export class MainLayout implements OnDestroy {
   readonly t = (key: string, params?: Record<string, string | number>): string =>
     this.translationService.translate(key, params);
 
-  /** Full-screen loader while CSV / AI analysis runs — hidden on import workflow pages. */
+  /** Full-screen loader while CSV / AI analysis or CX snapshot build runs — hidden on import workflow pages. */
   showImportAnalysisOverlay = computed(() => {
-    if (!this.importProcessing.isActive()) return false;
+    const waiting = this.importProcessing.isActive() || this.twitterCxReportStore.snapshotPending();
+    if (!waiting) return false;
     const url = this.currentUrl();
     return !url.includes('/data-sources/');
   });

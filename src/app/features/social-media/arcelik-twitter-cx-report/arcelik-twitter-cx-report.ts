@@ -30,7 +30,7 @@ import { OllamaLoader } from '../../../core/components/ollama-loader/ollama-load
 import { RelatedFeedbackModal, RelatedFeedbackRow } from '../../../core/components/related-feedback-modal/related-feedback-modal';
 import { drilldownModalTotal } from '../../../core/utils/drilldown-display';
 import { ReportDateRangeFilter } from '../../../core/components/report-date-range-filter/report-date-range-filter';
-import { notifyCxReportLoadFailure, shouldKeepCxReportLoadingAfterResponse, twitterCxReportFailureMessage } from '../../../core/utils/twitter-cx-report-load';
+import { notifyCxReportLoadFailure, twitterCxReportFailureMessage } from '../../../core/utils/twitter-cx-report-load';
 import { ImportProcessingService } from '../../../core/services/import-processing.service';
 
 type SortDir = 'asc' | 'desc';
@@ -389,26 +389,18 @@ export class ArcelikTwitterCxReport implements OnInit, OnDestroy {
       }
     }, 3000);
 
-    let keepLoading = false;
     this.twitterCxReportStore
       .loadTwitterCxReport(sentCo, undefined, startDate, endDate)
       .pipe(
         finalize(() => {
           clearTimeout(msgTimer);
-          if (!keepLoading) {
-            this.loading.set(false);
-            this.loadingMessage.set('Fetching live data from DB and the selected LLM.');
-          }
+          this.loading.set(false);
+          this.loadingMessage.set('Fetching live data from DB and the selected LLM.');
         })
       )
       .subscribe({
         next: (res) => {
           if (res.message === 'stale_response') {
-            return;
-          }
-          keepLoading = shouldKeepCxReportLoadingAfterResponse(res, this.importProcessing.isActive());
-          if (keepLoading) {
-            this.loadingMessage.set('Please wait — AI is analyzing your imported data.');
             return;
           }
           if (res.success && res.data) {
