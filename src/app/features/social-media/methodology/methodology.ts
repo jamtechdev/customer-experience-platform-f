@@ -6,7 +6,8 @@ import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { TwitterCxReportStore } from '../../../core/services/twitter-cx-report.store';
 import { AuthService } from '../../../core/services/auth.service';
 import { OllamaLoader } from '../../../core/components/ollama-loader/ollama-loader';
-import { twitterCxReportFailureMessage } from '../../../core/utils/twitter-cx-report-load';
+import { notifyCxReportLoadFailure } from '../../../core/utils/twitter-cx-report-load';
+import { ImportProcessingService } from '../../../core/services/import-processing.service';
 import { TranslationService } from '../../../core/services/translation.service';
 
 @Component({
@@ -24,6 +25,7 @@ export class Methodology implements OnInit, OnDestroy {
   private twitterCxReportStore = inject(TwitterCxReportStore);
   private authService = inject(AuthService);
   private snackBar = inject(MatSnackBar);
+  private importProcessing = inject(ImportProcessingService);
   private translationService = inject(TranslationService);
   private refreshSub?: Subscription;
 
@@ -53,7 +55,7 @@ export class Methodology implements OnInit, OnDestroy {
         }
         if (!res.success) {
           this.bullets.set([]);
-          this.snackBar.open(twitterCxReportFailureMessage(res.message), this.t('app.close'), { duration: 7000 });
+          notifyCxReportLoadFailure(this.snackBar, res.message, this.importProcessing.isActive(), this.t('app.close'));
         } else {
           this.bullets.set(res.data?.scopeAndMethodBullets ? res.data.scopeAndMethodBullets : []);
         }
@@ -62,7 +64,7 @@ export class Methodology implements OnInit, OnDestroy {
       error: () => {
         this.bullets.set([]);
         this.loading.set(false);
-        this.snackBar.open(twitterCxReportFailureMessage(), this.t('app.close'), { duration: 6000 });
+        notifyCxReportLoadFailure(this.snackBar, undefined, this.importProcessing.isActive(), this.t('app.close'));
       },
     });
   }

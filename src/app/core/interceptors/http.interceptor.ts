@@ -7,6 +7,8 @@ import { ToastrService } from 'ngx-toastr';
 import { AuthService } from '../services/auth.service';
 import { environment } from '../../../environments/environment';
 import { LoaderService } from '../services/loader.service';
+import { ImportProcessingService } from '../services/import-processing.service';
+import { SKIP_ERROR_TOAST } from '../http/http-context';
 
 const AUTH_FORM_PATH_RE = /(^|\/)auth\/(login|register|forgot-password|reset-password)(\/|\?|$)/i;
 const SNACKBAR_MAX_LEN = 500;
@@ -36,10 +38,39 @@ function isAuthProfileEndpoint(url: string): boolean {
   return /(^|\/)auth\/profile(\/|\?|$)/i.test(getRequestPath(url));
 }
 
-function shouldSuppressErrorToast(req: HttpRequest<unknown>): boolean {
+function isTwitterCxReportEndpoint(url: string): boolean {
+  return /\/twitter-cx-report(\/|\?|$)/i.test(getRequestPath(url));
+}
+
+function isAnalysisApiEndpoint(url: string): boolean {
+  return /\/analysis\//i.test(getRequestPath(url));
+}
+
+function isImportOrCxReportErrorMessage(message: string): boolean {
+  const m = message.toLowerCase();
+  return (
+    m.includes('cx report') ||
+    m.includes('import processing') ||
+    m.includes('import history') ||
+    m.includes('batch processing') ||
+    m.includes('rebuild from import')
+  );
+}
+
+function shouldSuppressErrorToast(
+  req: HttpRequest<unknown>,
+  importProcessing: ImportProcessingService,
+  error?: HttpErrorResponse
+): boolean {
+  if (req.context.get(SKIP_ERROR_TOAST)) return true;
   if (!isBackendApiRequest(req)) return true;
   // In local/dev, show auth endpoint failures so debugging is visible immediately.
   if (isAuthFormEndpoint(req.url) && environment.production) return true;
+  // CX report pages handle load failures in-component; never toast for these APIs.
+  if (isTwitterCxReportEndpoint(req.url)) return true;
+  if (importProcessing.isActive() && isAnalysisApiEndpoint(req.url)) return true;
+  if (error?.status === 503 && isAnalysisApiEndpoint(req.url)) return true;
+  if (error && isImportOrCxReportErrorMessage(extractBodyMessage(error))) return true;
   return false;
 }
 
@@ -143,10 +174,12 @@ function notifyHttpError(
   toastr: ToastrService,
   platformId: object,
   message: string,
-  req: HttpRequest<unknown>
+  req: HttpRequest<unknown>,
+  importProcessing: ImportProcessingService,
+  error?: HttpErrorResponse
 ): void {
   if (!isPlatformBrowser(platformId)) return;
-  if (shouldSuppressErrorToast(req)) return;
+  if (shouldSuppressErrorToast(req, importProcessing, error)) return;
   if (!message || !message.trim()) return;
   const text =
     message.length > SNACKBAR_MAX_LEN ? `${message.slice(0, SNACKBAR_MAX_LEN)}…` : message;
@@ -202,6 +235,7 @@ export function errorInterceptor(
   const injector = inject(Injector);
   const toastr = inject(ToastrService);
   const platformId = inject(PLATFORM_ID);
+  const importProcessing = inject(ImportProcessingService);
 
   return next(req).pipe(
     catchError((error: HttpErrorResponse) => {
@@ -211,7 +245,7 @@ export function errorInterceptor(
           const authService = injector.get(AuthService);
           const errorMessage = normalizeHttpErrorMessage(error, req);
           authService.logout();
-          notifyHttpError(toastr, platformId, errorMessage, req);
+          notifyHttpError(toastr, platformId, errorMessage, req, importProcessing, error);
           return throwError(() => error);
         }
         // Login/register/etc. can return 401 for wrong credentials — not an expired session.
@@ -232,7 +266,7 @@ export function errorInterceptor(
             statusText: error.statusText,
             url: error.url || req.url,
           });
-          notifyHttpError(toastr, platformId, errorMessage, req);
+          notifyHttpError(toastr, platformId, errorMessage, req, importProcessing, error);
           return throwError(() => enhancedError);
         }
         if (isAuthProfileEndpoint(req.url)) {
@@ -251,7 +285,7 @@ export function errorInterceptor(
               refreshMsg && refreshMsg !== 'An error occurred'
                 ? refreshMsg
                 : 'Session expired. Please sign in again.';
-            notifyHttpError(toastr, platformId, sessionMsg, req);
+            notifyHttpError(toastr, platformId, sessionMsg, req, importProcessing, refreshError);
             return throwError(() => refreshError);
           })
         );
@@ -276,7 +310,7 @@ export function errorInterceptor(
         url: error.url || req.url,
       });
 
-      notifyHttpError(toastr, platformId, errorMessage, req);
+      notifyHttpError(toastr, platformId, errorMessage, req, importProcessing, error);
 
       return throwError(() => enhancedError);
     })

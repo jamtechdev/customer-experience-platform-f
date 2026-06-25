@@ -20,7 +20,8 @@ import { UserRole } from '../../../core/models';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { formatApiDate, toInputDateValue } from '../../../core/utils/api-date';
 import { OllamaLoader } from '../../../core/components/ollama-loader/ollama-loader';
-import { twitterCxReportFailureMessage } from '../../../core/utils/twitter-cx-report-load';
+import { notifyCxReportLoadFailure } from '../../../core/utils/twitter-cx-report-load';
+import { ImportProcessingService } from '../../../core/services/import-processing.service';
 import { RelatedFeedbackModal, RelatedFeedbackRow } from '../../../core/components/related-feedback-modal/related-feedback-modal';
 import { effectiveLinkedCount, alignLinkedCountInText, resolveDrilldownIds } from '../../../core/utils/drilldown-display';
 
@@ -54,6 +55,7 @@ export class ActionPlans implements OnInit, OnDestroy {
   private authService = inject(AuthService);
   private fb = inject(FormBuilder);
   private snackBar = inject(MatSnackBar);
+  private importProcessing = inject(ImportProcessingService);
 
   loading = signal(false);
   generating = signal(false);
@@ -146,7 +148,7 @@ export class ActionPlans implements OnInit, OnDestroy {
           this.reportPlanRows.set([]);
           this.actionPlans.set([]);
           this.page.set(1);
-          this.snackBar.open(twitterCxReportFailureMessage(response.message), 'Close', { duration: 8000 });
+          notifyCxReportLoadFailure(this.snackBar, response.message, this.importProcessing.isActive(), 'Close');
           this.loading.set(false);
           return;
         }
@@ -201,7 +203,7 @@ export class ActionPlans implements OnInit, OnDestroy {
         this.actionPlans.set([]);
         this.reportPlanRows.set([]);
         this.page.set(1);
-        this.snackBar.open(twitterCxReportFailureMessage(), 'Close', { duration: 6000 });
+        notifyCxReportLoadFailure(this.snackBar, undefined, this.importProcessing.isActive(), 'Close');
       }
     });
   }

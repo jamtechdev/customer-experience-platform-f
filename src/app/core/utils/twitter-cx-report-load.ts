@@ -1,3 +1,6 @@
+import { MatSnackBar } from '@angular/material/snack-bar';
+import { TwitterCxReportDto } from '../models';
+
 /** User-facing copy when bundled Twitter CX report HTTP/stream fails (no .env required). */
 export function twitterCxReportFailureMessage(apiMessage?: string): string {
   if (apiMessage === 'http_0' || apiMessage === 'network') {
@@ -16,7 +19,7 @@ export function twitterCxReportFailureMessage(apiMessage?: string): string {
     return 'This report took too long to load. Try a narrower date range or retry in a moment.';
   }
   if (apiMessage === 'http_503') {
-    return 'The CX report service is temporarily unavailable. Wait for import processing to finish, then retry or rebuild from Import history.';
+    return 'Import is still processing. Previous report data will appear when ready, or retry in a moment.';
   }
   if (apiMessage?.startsWith('http_5')) {
     return 'The report service returned a server error. Retry in a moment; if it repeats, rebuild the report from Import history.';
@@ -39,3 +42,58 @@ export const CX_REPORT_BUILDING_SUBTITLE =
 
 export const CX_REPORT_CACHED_TITLE = 'Loading saved CX report';
 export const CX_REPORT_CACHED_SUBTITLE = 'Reading the latest pre-calculated insights from the database.';
+
+/** Minimal empty report — used while CSV import is still running (no error toast). */
+export function emptyTwitterCxReportDto(): TwitterCxReportDto {
+  return {
+    reportTitle: 'CX report',
+    reportSubtitle: 'Data will appear after import and analysis complete.',
+    dataset: {
+      total: 0,
+      cxRelated: 0,
+      brandSupport: 0,
+      originalCustomerCx: 0,
+      primaryCohortSize: 0,
+    },
+    datasetProfileRows: [],
+    sentiment: { positive: 0, negative: 0, neutral: 0, total: 0, averageScore: 0 },
+    socialNpsProxy: 0,
+    npsInterpretation: '',
+    executiveSummaryBullets: [],
+    scopeAndMethodBullets: [],
+    section4Intro: '',
+    section4Bullets: [],
+    sentimentPatternRows: [],
+    heatmapPct: [],
+    heatmapFigureCaption: '',
+    touchpoints: [],
+    rootCauses: [],
+    journeyRows: [],
+    actionPlan: [],
+    processImprovements: [],
+    managementTakeaways: [],
+    cohortTagsUsed: false,
+    _snapshotMeta: { fallback: true },
+  };
+}
+
+/** True when a failed CX report load should stay silent (import still running). */
+export function shouldSuppressCxReportError(apiMessage?: string, importProcessing?: boolean): boolean {
+  if (apiMessage === 'stale_response' || apiMessage === 'import_processing') return true;
+  if (importProcessing) return true;
+  // CX report pages show an empty state — never flash error toasts for transient server errors.
+  if (apiMessage === 'http_503' || apiMessage === 'http_502' || apiMessage === 'http_504') return true;
+  if (apiMessage?.startsWith('http_5')) return true;
+  return false;
+}
+
+/** Show snackbar only for real failures — never while CSV upload/analysis is in progress. */
+export function notifyCxReportLoadFailure(
+  snackBar: MatSnackBar,
+  apiMessage: string | undefined,
+  importProcessing: boolean,
+  closeLabel = 'Close'
+): void {
+  if (shouldSuppressCxReportError(apiMessage, importProcessing)) return;
+  snackBar.open(twitterCxReportFailureMessage(apiMessage), closeLabel, { duration: 8000 });
+}

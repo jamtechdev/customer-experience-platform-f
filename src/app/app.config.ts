@@ -1,4 +1,4 @@
-import { ApplicationConfig, importProvidersFrom, provideBrowserGlobalErrorListeners } from '@angular/core';
+import { ApplicationConfig, importProvidersFrom, provideBrowserGlobalErrorListeners, APP_INITIALIZER } from '@angular/core';
 import { provideRouter, withComponentInputBinding } from '@angular/router';
 import { provideHttpClient, withInterceptors, withFetch } from '@angular/common/http';
 import { provideNoopAnimations } from '@angular/platform-browser/animations';
@@ -13,6 +13,7 @@ import {
   errorInterceptor,
   languageInterceptor
 } from './core/interceptors/http.interceptor';
+import { ImportProcessingService } from './core/services/import-processing.service';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -43,6 +44,14 @@ export const appConfig: ApplicationConfig = {
       withComponentInputBinding()
     ),
     provideClientHydration(withEventReplay()),
+    {
+      provide: APP_INITIALIZER,
+      useFactory: (importProcessing: ImportProcessingService) => () => {
+        importProcessing.syncFromApi();
+      },
+      deps: [ImportProcessingService],
+      multi: true,
+    },
     provideHttpClient(
       withFetch(), // Enable fetch API for better SSR performance
       withInterceptors([

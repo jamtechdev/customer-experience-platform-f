@@ -30,7 +30,8 @@ import { OllamaLoader } from '../../../core/components/ollama-loader/ollama-load
 import { RelatedFeedbackModal, RelatedFeedbackRow } from '../../../core/components/related-feedback-modal/related-feedback-modal';
 import { drilldownModalTotal } from '../../../core/utils/drilldown-display';
 import { ReportDateRangeFilter } from '../../../core/components/report-date-range-filter/report-date-range-filter';
-import { twitterCxReportFailureMessage } from '../../../core/utils/twitter-cx-report-load';
+import { notifyCxReportLoadFailure, twitterCxReportFailureMessage } from '../../../core/utils/twitter-cx-report-load';
+import { ImportProcessingService } from '../../../core/services/import-processing.service';
 
 type SortDir = 'asc' | 'desc';
 
@@ -134,6 +135,7 @@ export class ArcelikTwitterCxReport implements OnInit, OnDestroy {
   private reportService = inject(ReportService);
   private analysisService = inject(AnalysisService);
   private snackBar = inject(MatSnackBar);
+  private importProcessing = inject(ImportProcessingService);
   private refreshSub?: Subscription;
 
   loading = signal(false);
@@ -406,9 +408,9 @@ export class ArcelikTwitterCxReport implements OnInit, OnDestroy {
             this.loadError.set(null);
           } else {
             this.reportBundle.set(null);
-            const hint = twitterCxReportFailureMessage(res.message);
+            const hint = this.importProcessing.isActive() ? null : twitterCxReportFailureMessage(res.message);
             this.loadError.set(hint);
-            this.snackBar.open(hint, 'Close', { duration: 6000 });
+            notifyCxReportLoadFailure(this.snackBar, res.message, this.importProcessing.isActive(), 'Close');
           }
         },
       });

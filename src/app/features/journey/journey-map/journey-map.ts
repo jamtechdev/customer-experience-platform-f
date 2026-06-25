@@ -11,7 +11,8 @@ import { AnalysisService } from '../../../core/services/analysis.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { OllamaLoader } from '../../../core/components/ollama-loader/ollama-loader';
-import { twitterCxReportFailureMessage } from '../../../core/utils/twitter-cx-report-load';
+import { notifyCxReportLoadFailure } from '../../../core/utils/twitter-cx-report-load';
+import { ImportProcessingService } from '../../../core/services/import-processing.service';
 import { RelatedFeedbackModal, RelatedFeedbackRow } from '../../../core/components/related-feedback-modal/related-feedback-modal';
 import { alignLinkedCountInText, drilldownModalTotal, effectiveLinkedCount, resolveDrilldownIds } from '../../../core/utils/drilldown-display';
 import { TranslationService } from '../../../core/services/translation.service';
@@ -54,6 +55,7 @@ export class JourneyMap implements OnInit, OnDestroy {
   private analysisService = inject(AnalysisService);
   private authService = inject(AuthService);
   private snackBar = inject(MatSnackBar);
+  private importProcessing = inject(ImportProcessingService);
   private translationService = inject(TranslationService);
   readonly t = (key: string, params?: Record<string, string | number>): string =>
     this.translationService.translate(key, params);
@@ -109,7 +111,7 @@ export class JourneyMap implements OnInit, OnDestroy {
         if (!response.success) {
           this.journeyStages.set([]);
           this.page.set(1);
-          this.snackBar.open(twitterCxReportFailureMessage(response.message), 'Close', { duration: 7000 });
+          notifyCxReportLoadFailure(this.snackBar, response.message, this.importProcessing.isActive(), 'Close');
           this.loading.set(false);
           return;
         }
@@ -179,7 +181,7 @@ export class JourneyMap implements OnInit, OnDestroy {
       },
       error: () => {
         this.loading.set(false);
-        this.snackBar.open(twitterCxReportFailureMessage(), 'Close', { duration: 6000 });
+        notifyCxReportLoadFailure(this.snackBar, undefined, this.importProcessing.isActive(), 'Close');
         this.journeyStages.set([]);
         this.page.set(1);
       }

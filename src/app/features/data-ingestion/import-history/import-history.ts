@@ -19,6 +19,7 @@ import { CXWebSocketService, type CSVImportStatusEvent } from '../../../core/ser
 import { formatApiDate } from '../../../core/utils/api-date';
 import { TwitterCxReportStore } from '../../../core/services/twitter-cx-report.store';
 import { CxReportRebuildService } from '../../../core/services/cx-report-rebuild.service';
+import { ImportProcessingService } from '../../../core/services/import-processing.service';
 
 /** Draft uploads (mapped but not imported) stay out of history until import starts. */
 function isHistoryVisibleImport(row: CSVImport): boolean {
@@ -53,6 +54,7 @@ export class ImportHistory implements OnInit, OnDestroy {
   private twitterCxReportStore = inject(TwitterCxReportStore);
   private rebuildService = inject(CxReportRebuildService);
   private snackBar = inject(MatSnackBar);
+  private importProcessing = inject(ImportProcessingService);
   private router = inject(Router);
   private importStatusSub?: Subscription;
   private refreshTimer: any = null;
@@ -75,6 +77,12 @@ export class ImportHistory implements OnInit, OnDestroy {
     this.importStatusSub = this.websocket.onCSVImportStatus().subscribe((payload: CSVImportStatusEvent) => {
       const { importId, status } = payload;
       if (importId == null || !status) return;
+
+      if (status === 'processing') {
+        this.importProcessing.markProcessing();
+      } else if (status === 'completed' || status === 'failed') {
+        this.importProcessing.markIdle();
+      }
 
       this.imports.update((list) =>
         list
@@ -141,7 +149,11 @@ export class ImportHistory implements OnInit, OnDestroy {
     this.csvService.getImports().subscribe({
       next: (res) => {
         if (res.success && res.data) {
-          this.imports.set(res.data.filter(isHistoryVisibleImport));
+          const visible = res.data.filter(isHistoryVisibleImport);
+          this.imports.set(visible);
+          const busy = visible.some((row) => row.status === 'processing');
+          if (busy) this.importProcessing.markProcessing();
+          else this.importProcessing.markIdle();
         } else {
           this.imports.set([]);
         }

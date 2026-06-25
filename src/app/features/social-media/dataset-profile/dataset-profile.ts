@@ -9,7 +9,8 @@ import { TwitterCxReportStore } from '../../../core/services/twitter-cx-report.s
 import { AuthService } from '../../../core/services/auth.service';
 import { AnalysisService } from '../../../core/services/analysis.service';
 import { drilldownModalTotal } from '../../../core/utils/drilldown-display';
-import { twitterCxReportFailureMessage } from '../../../core/utils/twitter-cx-report-load';
+import { notifyCxReportLoadFailure } from '../../../core/utils/twitter-cx-report-load';
+import { ImportProcessingService } from '../../../core/services/import-processing.service';
 import { OllamaLoader } from '../../../core/components/ollama-loader/ollama-loader';
 import { TranslationService } from '../../../core/services/translation.service';
 import { resolveAppCompanyId } from '../../../core/utils/company-scope';
@@ -49,6 +50,7 @@ export class DatasetProfile implements OnInit, OnDestroy {
   private authService = inject(AuthService);
   private analysisService = inject(AnalysisService);
   private snackBar = inject(MatSnackBar);
+  private importProcessing = inject(ImportProcessingService);
   private translationService = inject(TranslationService);
   private refreshSub?: Subscription;
 
@@ -107,7 +109,7 @@ export class DatasetProfile implements OnInit, OnDestroy {
         }
         if (!res.success) {
           this.rows.set([]);
-          this.snackBar.open(twitterCxReportFailureMessage(res.message), this.t('app.close'), { duration: 7000 });
+          notifyCxReportLoadFailure(this.snackBar, res.message, this.importProcessing.isActive(), this.t('app.close'));
         } else {
           this.rows.set(res.data?.datasetProfileRows ? res.data.datasetProfileRows : []);
           this.importedCsvRows.set(Number(res.data?.dataset?.importedCsvRows ?? 0) || null);
@@ -121,7 +123,7 @@ export class DatasetProfile implements OnInit, OnDestroy {
       error: () => {
         this.rows.set([]);
         this.loading.set(false);
-        this.snackBar.open(twitterCxReportFailureMessage(), this.t('app.close'), { duration: 6000 });
+        notifyCxReportLoadFailure(this.snackBar, undefined, this.importProcessing.isActive(), this.t('app.close'));
       },
     });
   }

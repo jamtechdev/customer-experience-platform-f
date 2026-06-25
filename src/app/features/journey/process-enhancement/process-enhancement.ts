@@ -9,7 +9,8 @@ import { TwitterCxReportStore } from '../../../core/services/twitter-cx-report.s
 import { AnalysisService } from '../../../core/services/analysis.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { OllamaLoader } from '../../../core/components/ollama-loader/ollama-loader';
-import { twitterCxReportFailureMessage } from '../../../core/utils/twitter-cx-report-load';
+import { notifyCxReportLoadFailure } from '../../../core/utils/twitter-cx-report-load';
+import { ImportProcessingService } from '../../../core/services/import-processing.service';
 import { RelatedFeedbackModal, RelatedFeedbackRow } from '../../../core/components/related-feedback-modal/related-feedback-modal';
 import {
   formatProcessImprovementText,
@@ -44,6 +45,7 @@ export class ProcessEnhancement implements OnInit, OnDestroy {
   private analysisService = inject(AnalysisService);
   private authService = inject(AuthService);
   private snackBar = inject(MatSnackBar);
+  private importProcessing = inject(ImportProcessingService);
   private refreshSub?: Subscription;
 
   loading = signal(false);
@@ -83,7 +85,7 @@ export class ProcessEnhancement implements OnInit, OnDestroy {
           if (!res.success) {
             this.processImprovements.set([]);
             this.managementTakeaways.set([]);
-            this.snackBar.open(twitterCxReportFailureMessage(res.message), 'Close', { duration: 8000 });
+            notifyCxReportLoadFailure(this.snackBar, res.message, this.importProcessing.isActive(), 'Close');
             this.loading.set(false);
             return;
           }
@@ -136,7 +138,7 @@ export class ProcessEnhancement implements OnInit, OnDestroy {
           this.processImprovements.set([]);
           this.managementTakeaways.set([]);
           this.loading.set(false);
-          this.snackBar.open(twitterCxReportFailureMessage(), 'Close', { duration: 6000 });
+          notifyCxReportLoadFailure(this.snackBar, undefined, this.importProcessing.isActive(), 'Close');
         },
       });
   }

@@ -19,6 +19,7 @@ import {
   ValidateMappingsResult,
 } from '../../../core/services/csv.service';
 import { AuthService } from '../../../core/services/auth.service';
+import { ImportProcessingService } from '../../../core/services/import-processing.service';
 
 @Component({
   selector: 'app-csv-mapping',
@@ -44,6 +45,7 @@ export class CsvMapping implements OnInit {
   private csvService = inject(CSVService);
   private authService = inject(AuthService);
   private snackBar = inject(MatSnackBar);
+  private importProcessing = inject(ImportProcessingService);
 
   importId = signal<number | null>(null);
   loading = signal(true);
@@ -439,6 +441,7 @@ export class CsvMapping implements OnInit {
         }
 
         this.importStarted.set(true);
+        this.importProcessing.markProcessing();
         this.snackBar.open('Import started. Redirecting to Import History for live progress...', 'Close', {
           duration: 5000,
         });

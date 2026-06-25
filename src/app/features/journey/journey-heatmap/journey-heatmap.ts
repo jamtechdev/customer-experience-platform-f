@@ -10,7 +10,8 @@ import { TwitterCxReportStore } from '../../../core/services/twitter-cx-report.s
 import { AnalysisService } from '../../../core/services/analysis.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { OllamaLoader } from '../../../core/components/ollama-loader/ollama-loader';
-import { twitterCxReportFailureMessage } from '../../../core/utils/twitter-cx-report-load';
+import { notifyCxReportLoadFailure, twitterCxReportFailureMessage } from '../../../core/utils/twitter-cx-report-load';
+import { ImportProcessingService } from '../../../core/services/import-processing.service';
 import { TranslationService } from '../../../core/services/translation.service';
 import { drilldownModalTotal } from '../../../core/utils/drilldown-display';
 import { resolveAppCompanyId } from '../../../core/utils/company-scope';
@@ -57,6 +58,7 @@ export class JourneyHeatmap implements OnInit, OnDestroy {
   private analysisService = inject(AnalysisService);
   private authService = inject(AuthService);
   private snackBar = inject(MatSnackBar);
+  private importProcessing = inject(ImportProcessingService);
   private translationService = inject(TranslationService);
   private refreshSub?: Subscription;
   loading = signal(false);
@@ -136,9 +138,8 @@ export class JourneyHeatmap implements OnInit, OnDestroy {
         if (!res.success) {
           this.stages.set([]);
           this.page.set(1);
-          const hint = twitterCxReportFailureMessage(res.message);
-          this.error.set(hint);
-          this.snackBar.open(hint, this.t('app.close'), { duration: 7000 });
+          this.error.set(this.importProcessing.isActive() ? null : twitterCxReportFailureMessage(res.message));
+          notifyCxReportLoadFailure(this.snackBar, res.message, this.importProcessing.isActive(), this.t('app.close'));
           this.loading.set(false);
           return;
         }
@@ -162,9 +163,8 @@ export class JourneyHeatmap implements OnInit, OnDestroy {
         this.loading.set(false);
       },
       error: () => {
-        const hint = twitterCxReportFailureMessage();
-        this.error.set(hint);
-        this.snackBar.open(hint, this.t('app.close'), { duration: 6000 });
+        this.error.set(this.importProcessing.isActive() ? null : twitterCxReportFailureMessage());
+        notifyCxReportLoadFailure(this.snackBar, undefined, this.importProcessing.isActive(), this.t('app.close'));
         this.stages.set([]);
         this.page.set(1);
         this.loading.set(false);

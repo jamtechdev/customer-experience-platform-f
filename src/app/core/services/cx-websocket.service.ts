@@ -5,6 +5,7 @@ import { io, Socket } from 'socket.io-client';
 import { Subject, Observable } from 'rxjs';
 import { AuthService } from './auth.service';
 import { TwitterCxReportStore } from './twitter-cx-report.store';
+import { ImportProcessingService } from './import-processing.service';
 import { environment } from '../../../environments/environment';
 
 export type CSVImportStatusEvent = {
@@ -36,6 +37,7 @@ export class CXWebSocketService {
   private platformId = inject(PLATFORM_ID);
   private authService = inject(AuthService);
   private twitterCxReportStore = inject(TwitterCxReportStore);
+  private importProcessing = inject(ImportProcessingService);
 
   private started = signal(false);
   private socket: Socket | null = null;
@@ -83,10 +85,12 @@ export class CXWebSocketService {
     };
 
     this.socket.on('connect', () => {
+      this.importProcessing.syncFromApi();
       tryJoin();
     });
 
     this.socket.on('reconnect', () => {
+      this.importProcessing.syncFromApi();
       tryJoin();
     });
 
@@ -98,6 +102,13 @@ export class CXWebSocketService {
         errorDetails: payload?.errorDetails,
       };
       if (ev.importId == null || !ev.status) return;
+
+      if (ev.status === 'processing') {
+        this.importProcessing.markProcessing();
+      } else if (ev.status === 'completed' || ev.status === 'failed') {
+        this.importProcessing.markIdle();
+      }
+
       this.importStatusSubject.next(ev);
 
       if (ev.status === 'completed' && this.latestCompanyId != null) {
@@ -117,6 +128,7 @@ export class CXWebSocketService {
       if (!ev.type) return;
       this.analyticsLifecycleSubject.next(ev);
       if (ev.type === 'analysisCompleted') {
+        this.importProcessing.markIdle();
         this.importStatusSubject.next({
           importId: ev.importId ?? -1,
           status: 'completed',
@@ -124,15 +136,27 @@ export class CXWebSocketService {
           errorDetails: ev.details,
         });
       } else if (ev.type === 'analysisStarted' || ev.type === 'datasetUploaded') {
+        this.importProcessing.markProcessing();
         this.importStatusSubject.next({
           importId: ev.importId ?? -1,
           status: 'processing',
           errorMessage: ev.message,
           errorDetails: ev.details,
         });
+      } else if (ev.type === 'analysisFailed') {
+        this.importProcessing.markIdle();
+      } else if (ev.type === 'datasetDeleted') {
+        this.importProcessing.markIdle();
       }
+
       const companyId = ev.companyId ?? this.latestCompanyId ?? undefined;
-      this.twitterCxReportStore.invalidate(companyId);
+      const shouldInvalidate =
+        ev.type === 'analysisCompleted' ||
+        ev.type === 'datasetDeleted' ||
+        ev.type === 'analysisFailed';
+      if (shouldInvalidate) {
+        this.twitterCxReportStore.invalidate(companyId);
+      }
     };
 
     this.socket.on('analytics:lifecycle', handleLifecycle);

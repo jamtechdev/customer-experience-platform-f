@@ -1,5 +1,5 @@
 import { Injectable, inject } from '@angular/core';
-import { HttpClient, HttpParams, HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { HttpClient, HttpParams, HttpErrorResponse, HttpResponse, HttpContext } from '@angular/common/http';
 import { Observable, of, timer, throwError } from 'rxjs';
 import { catchError, switchMap, retry } from 'rxjs/operators';
 import {
@@ -11,6 +11,7 @@ import {
   TwitterCxReportDto,
 } from '../models';
 import { environment } from '../../../environments/environment';
+import { SKIP_ERROR_TOAST } from '../http/http-context';
 
 @Injectable({
   providedIn: 'root',
@@ -21,6 +22,8 @@ export class AnalysisService {
   readonly drilldownIdLimit = 200;
   private readonly cxReportPollMs = 5000;
   private readonly cxReportPollAttempts = 36;
+
+  private readonly cxReportHttpContext = new HttpContext().set(SKIP_ERROR_TOAST, true);
 
   private realtimeParams(params: HttpParams = new HttpParams()): HttpParams {
     return params.set('_t', Date.now().toString());
@@ -54,11 +57,11 @@ export class AnalysisService {
         snapshotId?: number;
         errorMessage?: string | null;
       }>
-    >(`${this.baseUrl}/twitter-cx-report/company-snapshot-status`, { params });
+    >(`${this.baseUrl}/twitter-cx-report/company-snapshot-status`, { params, context: this.cxReportHttpContext });
   }
 
   rebuildTwitterCxReport(companyId: number): Observable<ApiResponse<unknown>> {
-    return this.http.post<ApiResponse<unknown>>(`${this.baseUrl}/twitter-cx-report/rebuild`, { companyId });
+    return this.http.post<ApiResponse<unknown>>(`${this.baseUrl}/twitter-cx-report/rebuild`, { companyId }, { context: this.cxReportHttpContext });
   }
 
   getTwitterCxReportSnapshotStatus(snapshotId: number): Observable<
@@ -75,7 +78,7 @@ export class AnalysisService {
         errorMessage?: string | null;
         report?: TwitterCxReportDto;
       }>
-    >(`${this.baseUrl}/twitter-cx-report/snapshot-status`, { params });
+    >(`${this.baseUrl}/twitter-cx-report/snapshot-status`, { params, context: this.cxReportHttpContext });
   }
 
   private waitForTwitterCxReportSnapshot(
@@ -234,7 +237,7 @@ export class AnalysisService {
     return this.http
       .get<ApiResponse<TwitterCxReportDto | { snapshotPending: boolean; snapshotId: number }>>(
         `${this.baseUrl}/twitter-cx-report`,
-        { params, observe: 'response' }
+        { params, observe: 'response', context: this.cxReportHttpContext }
       )
       .pipe(
         switchMap((httpResp: HttpResponse<ApiResponse<any>>) => {
