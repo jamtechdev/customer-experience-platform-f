@@ -99,6 +99,10 @@
   gap: 16px;
 }
 
+.sentiment-analyzing-loader {
+  min-height: 300px;
+}
+
 .empty-hint {
   margin: 0 0 16px 0;
   padding: 12px 16px;

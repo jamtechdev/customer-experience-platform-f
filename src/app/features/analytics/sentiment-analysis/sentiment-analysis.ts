@@ -160,6 +160,23 @@ export class SentimentAnalysis implements OnInit, OnDestroy {
   readonly t = (key: string, params?: Record<string, string | number>): string =>
     this.translationService.translate(key, params);
 
+  /** True while CSV/AI sentiment processing or manual re-analysis is running. */
+  analyzingFeedback = computed(() => this.reanalyzing() || this.importProcessing.isActive());
+
+  analyzingFeedbackSubtitle = computed(() => {
+    if (this.reanalyzing()) {
+      return this.t('sentiment.enrichmentInProgress');
+    }
+    const progress = this.liveRefresh.progress();
+    if (progress?.aiTotal && progress.aiTotal > 0) {
+      return this.t('sentiment.analyzingFeedbackProgress', {
+        done: progress.aiSucceeded ?? 0,
+        total: progress.aiTotal,
+      });
+    }
+    return this.t('sentiment.analyzingFeedbackSubtitle');
+  });
+
   displayedColumns: string[] = ['sentiment', 'count', 'percentage', 'bar'];
   patternCols: string[] = ['sentiment', 'patterns'];
   feedbackColumns: string[] = [
@@ -212,6 +229,10 @@ export class SentimentAnalysis implements OnInit, OnDestroy {
     this.importStatusSub.add(
       this.liveRefresh.liveTick$.subscribe(() => this.reloadAll(this.filtersApplied(), false, { live: true }))
     );
+
+    if (this.importProcessing.isActive()) {
+      this.reloadAll(this.filtersApplied(), false, { live: true });
+    }
   }
 
   ngOnDestroy(): void {
@@ -437,15 +458,18 @@ export class SentimentAnalysis implements OnInit, OnDestroy {
     const rel = this.filterIsRelevant();
     const isRelevant = rel === 'true' ? true : rel === 'false' ? false : undefined;
     const hasPartial = (this.stats()?.total ?? 0) > 0 || this.feedbackList().length > 0;
-    const live = options?.live === true;
+    const live = options?.live === true || this.importProcessing.isActive();
+    const analyzing = this.analyzingFeedback();
     const importWait =
       !live && (this.importProcessing.isActive() || this.twitterCxReportStore.snapshotPending());
-    const showInitialLoader = !live && (importWait || (!this.hasCompletedInitialLoad && !this.stats()));
+    const showInitialLoader = !analyzing && !live && (importWait || (!this.hasCompletedInitialLoad && !this.stats()));
 
-    if (live && hasPartial) {
-      this.refreshing.set(true);
-    } else if (showInitialLoader) {
-      this.initialLoading.set(true);
+    if (!analyzing) {
+      if (live && hasPartial) {
+        this.refreshing.set(true);
+      } else if (showInitialLoader) {
+        this.initialLoading.set(true);
+      }
     }
 
     forkJoin({

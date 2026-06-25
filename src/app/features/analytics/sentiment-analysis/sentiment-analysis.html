@@ -13,7 +13,7 @@
       [(selectedPresetId)]="selectedPresetId"
       [(startDate)]="startDate"
       [(endDate)]="endDate"
-      [applyDisabled]="initialLoading()"
+      [applyDisabled]="initialLoading() || analyzingFeedback()"
       (apply)="applyRangeAndReload()">
       <button
         mat-raised-button
@@ -21,9 +21,9 @@
         type="button"
         class="filter-extra-action cx-action-btn"
         (click)="refreshData()"
-        [disabled]="initialLoading() || refreshing() || reanalyzing()">
+        [disabled]="initialLoading() || analyzingFeedback() || refreshing() || reanalyzing()">
         <mat-icon [class.spin-icon]="refreshing()">refresh</mat-icon>
-        {{ (initialLoading() || refreshing() || reanalyzing()) ? t('app.refreshing') : t('app.refresh') }}
+        {{ (initialLoading() || analyzingFeedback() || refreshing() || reanalyzing()) ? t('app.refreshing') : t('app.refresh') }}
       </button>
       <button
         mat-raised-button
@@ -40,29 +40,33 @@
 
 
 
-  <div *ngIf="initialLoading() && !stats()" class="loading-container">
-    <app-ollama-loader
-      [title]="t('sentiment.loadingStatsTitle')"
-      [subtitle]="t('sentiment.loadingStatsSubtitle')">
-    </app-ollama-loader>
-  </div>
+  @if (analyzingFeedback()) {
+    <div class="loading-container sentiment-analyzing-loader" role="status" aria-live="polite" aria-busy="true">
+      <app-ollama-loader
+        [title]="t('sentiment.analyzingFeedbackTitle')"
+        [subtitle]="analyzingFeedbackSubtitle()">
+      </app-ollama-loader>
+    </div>
+  } @else if (initialLoading() && !stats()) {
+    <div class="loading-container">
+      <app-ollama-loader
+        [title]="t('sentiment.loadingStatsTitle')"
+        [subtitle]="t('sentiment.loadingStatsSubtitle')">
+      </app-ollama-loader>
+    </div>
+  }
 
-  <div *ngIf="refreshing() && !initialLoading()" class="ai-processing-inline" role="status" aria-live="polite">
+  <div *ngIf="refreshing() && !initialLoading() && !analyzingFeedback()" class="ai-processing-inline" role="status" aria-live="polite">
     <mat-progress-spinner mode="indeterminate" diameter="18"></mat-progress-spinner>
     <span>{{ t('app.refreshing') }}</span>
   </div>
 
-  <div *ngIf="reanalyzing()" class="ai-processing-inline" role="status" aria-live="polite">
-    <mat-progress-spinner mode="indeterminate" diameter="18"></mat-progress-spinner>
-    <span>{{ t('sentiment.enrichmentInProgress') }}</span>
-  </div>
 
 
 
 
 
-
-  <div *ngIf="stats()" class="stats-section">
+  <div *ngIf="stats() && !analyzingFeedback()" class="stats-section">
     <p *ngIf="(stats()?.total ?? 0) === 0" class="empty-hint">{{ t('sentiment.noSentimentData') }}</p>
     <mat-card class="section-card" *ngIf="stats()">
       <mat-card-header>
