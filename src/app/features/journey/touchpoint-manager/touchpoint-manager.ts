@@ -17,7 +17,7 @@ import { AnalysisService } from '../../../core/services/analysis.service';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { AuthService } from '../../../core/services/auth.service';
 import { OllamaLoader } from '../../../core/components/ollama-loader/ollama-loader';
-import { notifyCxReportLoadFailure } from '../../../core/utils/twitter-cx-report-load';
+import { notifyCxReportLoadFailure, shouldKeepCxReportLoadingAfterResponse } from '../../../core/utils/twitter-cx-report-load';
 import { ImportProcessingService } from '../../../core/services/import-processing.service';
 import { RelatedFeedbackModal, RelatedFeedbackRow } from '../../../core/components/related-feedback-modal/related-feedback-modal';
 import { drilldownModalTotal } from '../../../core/utils/drilldown-display';
@@ -173,9 +173,11 @@ export class TouchpointManager implements OnInit, OnDestroy {
           this.reportTouchpoints.set([]);
           this.page.set(1);
         }
+        if (shouldKeepCxReportLoadingAfterResponse(response, this.importProcessing.isActive())) return;
         this.loading.set(false);
       },
       error: () => {
+        if (this.importProcessing.isActive()) return;
         this.loading.set(false);
         this.touchpoints.set([]);
         this.reportTouchpoints.set([]);

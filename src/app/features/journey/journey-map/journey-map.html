@@ -19,8 +19,8 @@
   @if (loading()) {
     <div class="loading-container">
       <app-ollama-loader
-        [title]="t('journeyMap.loadingTitle')"
-        [subtitle]="t('journeyMap.loadingSubtitle')">
+        [title]="importProcessing.isActive() ? t('importAnalysis.loaderTitle') : t('journeyMap.loadingTitle')"
+        [subtitle]="importProcessing.isActive() ? t('importAnalysis.loaderSubtitle') : t('journeyMap.loadingSubtitle')">
       </app-ollama-loader>
     </div>
   } @else if (journeyStages().length === 0) {

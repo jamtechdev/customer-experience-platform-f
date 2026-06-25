@@ -34,6 +34,19 @@
   padding: 20px 24px 104px;
   -webkit-overflow-scrolling: touch;
   box-sizing: border-box;
+  position: relative;
+}
+
+.import-analysis-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 1200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgba(248, 250, 252, 0.92);
+  backdrop-filter: blur(6px);
 }
 
 .main-content app-footer {

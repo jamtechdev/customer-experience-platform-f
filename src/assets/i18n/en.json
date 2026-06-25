@@ -858,5 +858,9 @@
     "addCompetitorHint": "Add competitor manually or import using columns mapped to competitor/competitorId. Only valid competitors are used for comparison.",
     "competitorName": "Competitor name",
     "adding": "Adding..."
+  },
+  "importAnalysis": {
+    "loaderTitle": "Please wait — AI is analyzing your data",
+    "loaderSubtitle": "Sentiment, journey stages, and insights will appear automatically when analysis completes"
   }
 }

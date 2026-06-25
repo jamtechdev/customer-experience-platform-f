@@ -11,7 +11,7 @@ import { AnalysisService } from '../../../core/services/analysis.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { OllamaLoader } from '../../../core/components/ollama-loader/ollama-loader';
-import { notifyCxReportLoadFailure } from '../../../core/utils/twitter-cx-report-load';
+import { notifyCxReportLoadFailure, shouldKeepCxReportLoadingAfterResponse } from '../../../core/utils/twitter-cx-report-load';
 import { ImportProcessingService } from '../../../core/services/import-processing.service';
 import { RelatedFeedbackModal, RelatedFeedbackRow } from '../../../core/components/related-feedback-modal/related-feedback-modal';
 import { alignLinkedCountInText, drilldownModalTotal, effectiveLinkedCount, resolveDrilldownIds } from '../../../core/utils/drilldown-display';
@@ -55,7 +55,7 @@ export class JourneyMap implements OnInit, OnDestroy {
   private analysisService = inject(AnalysisService);
   private authService = inject(AuthService);
   private snackBar = inject(MatSnackBar);
-  private importProcessing = inject(ImportProcessingService);
+  protected readonly importProcessing = inject(ImportProcessingService);
   private translationService = inject(TranslationService);
   readonly t = (key: string, params?: Record<string, string | number>): string =>
     this.translationService.translate(key, params);
@@ -176,11 +176,15 @@ export class JourneyMap implements OnInit, OnDestroy {
             this.page.set(1);
           }
         } finally {
-          this.loading.set(false);
+          if (!shouldKeepCxReportLoadingAfterResponse(response, this.importProcessing.isActive())) {
+            this.loading.set(false);
+          }
         }
       },
       error: () => {
-        this.loading.set(false);
+        if (!this.importProcessing.isActive()) {
+          this.loading.set(false);
+        }
         notifyCxReportLoadFailure(this.snackBar, undefined, this.importProcessing.isActive(), 'Close');
         this.journeyStages.set([]);
         this.page.set(1);

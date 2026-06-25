@@ -9,7 +9,7 @@ import { TwitterCxReportStore } from '../../../core/services/twitter-cx-report.s
 import { AnalysisService } from '../../../core/services/analysis.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { OllamaLoader } from '../../../core/components/ollama-loader/ollama-loader';
-import { notifyCxReportLoadFailure } from '../../../core/utils/twitter-cx-report-load';
+import { notifyCxReportLoadFailure, shouldKeepCxReportLoadingAfterResponse } from '../../../core/utils/twitter-cx-report-load';
 import { ImportProcessingService } from '../../../core/services/import-processing.service';
 import { RelatedFeedbackModal, RelatedFeedbackRow } from '../../../core/components/related-feedback-modal/related-feedback-modal';
 import {
@@ -132,11 +132,13 @@ export class ProcessEnhancement implements OnInit, OnDestroy {
             this.processImprovements.set([]);
             this.managementTakeaways.set([]);
           }
+          if (shouldKeepCxReportLoadingAfterResponse(res, this.importProcessing.isActive())) return;
           this.loading.set(false);
         },
         error: () => {
           this.processImprovements.set([]);
           this.managementTakeaways.set([]);
+          if (this.importProcessing.isActive()) return;
           this.loading.set(false);
           notifyCxReportLoadFailure(this.snackBar, undefined, this.importProcessing.isActive(), 'Close');
         },

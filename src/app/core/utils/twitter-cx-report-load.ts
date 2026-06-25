@@ -43,6 +43,20 @@ export const CX_REPORT_BUILDING_SUBTITLE =
 export const CX_REPORT_CACHED_TITLE = 'Loading saved CX report';
 export const CX_REPORT_CACHED_SUBTITLE = 'Reading the latest pre-calculated insights from the database.';
 
+export const IMPORT_ANALYSIS_LOADER_TITLE = 'Please wait — AI is analyzing your data';
+export const IMPORT_ANALYSIS_LOADER_SUBTITLE =
+  'Sentiment, journey stages, and insights will appear automatically when analysis completes.';
+
+/** Keep page loader visible while CSV import / AI analysis is still running. */
+export function shouldKeepCxReportLoadingAfterResponse(
+  res: { message?: string; success?: boolean } | undefined,
+  importActive: boolean
+): boolean {
+  if (importActive) return true;
+  const msg = res?.message;
+  return msg === 'import_processing' || msg === 'snapshot_still_building';
+}
+
 /** Minimal empty report — used while CSV import is still running (no error toast). */
 export function emptyTwitterCxReportDto(): TwitterCxReportDto {
   return {

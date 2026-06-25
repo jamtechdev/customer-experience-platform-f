@@ -812,5 +812,9 @@
     "addCompetitorHint": "Rakibi manuel ekleyin veya competitor/competitorId eşlemesiyle içe aktarın. Karşılaştırmada yalnızca geçerli rakipler kullanılır.",
     "competitorName": "Rakip adı",
     "adding": "Ekleniyor..."
+  },
+  "importAnalysis": {
+    "loaderTitle": "Lütfen bekleyin — yapay zeka verilerinizi analiz ediyor",
+    "loaderSubtitle": "Duygu analizi, yolculuk aşamaları ve içgörüler analiz tamamlandığında otomatik olarak görünecek"
   }
 }
