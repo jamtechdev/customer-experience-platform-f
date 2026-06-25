@@ -815,6 +815,13 @@
   },
   "importAnalysis": {
     "loaderTitle": "Lütfen bekleyin — yapay zeka verilerinizi analiz ediyor",
-    "loaderSubtitle": "Duygu analizi, yolculuk aşamaları ve içgörüler analiz tamamlandığında otomatik olarak görünecek"
+    "loaderSubtitle": "Duygu analizi, yolculuk aşamaları ve içgörüler analiz tamamlandığında otomatik olarak görünecek",
+    "liveBannerTitle": "Canlı yapay zeka analizi devam ediyor",
+    "liveImporting": "CSV satırları veritabanına kaydediliyor…",
+    "liveRowsSaved": "{{count}} satır kaydedildi — yapay zeka duygu analizi şimdi çalışıyor",
+    "liveAiProgress": "{{total}} satırdan {{done}} tanesinin duygusu analiz edildi — grafikler canlı güncelleniyor",
+    "liveNpsPhase": "NPS skorları oluşturuluyor — duygu sonuçları aşağıda görünüyor",
+    "liveJourneyPhase": "Yolculuk aşamaları ve kök nedenler eşleniyor — duygu verileri canlı güncelleniyor",
+    "liveReportBuilding": "CX rapor anlık görüntüsü oluşturuluyor — en son duygu verileri ekranda"
   }
 }

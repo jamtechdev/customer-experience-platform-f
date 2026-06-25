@@ -1,0 +1,12 @@
+@if (visible()) {
+  <div class="import-live-banner" role="status" aria-live="polite" aria-busy="true">
+    <mat-progress-bar mode="determinate" [value]="progressPct()"></mat-progress-bar>
+    <div class="import-live-banner-body">
+      <mat-icon class="pulse-icon" aria-hidden="true">auto_awesome</mat-icon>
+      <div class="import-live-banner-text">
+        <strong>{{ t('importAnalysis.liveBannerTitle') }}</strong>
+        <span>{{ message() }}</span>
+      </div>
+    </div>
+  </div>
+}

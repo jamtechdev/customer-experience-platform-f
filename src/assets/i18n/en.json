@@ -861,6 +861,13 @@
   },
   "importAnalysis": {
     "loaderTitle": "Please wait — AI is analyzing your data",
-    "loaderSubtitle": "Sentiment, journey stages, and insights will appear automatically when analysis completes"
+    "loaderSubtitle": "Sentiment, journey stages, and insights will appear automatically when analysis completes",
+    "liveBannerTitle": "Live AI analysis in progress",
+    "liveImporting": "Saving your CSV rows to the database…",
+    "liveRowsSaved": "{{count}} rows saved — AI sentiment analysis is running now",
+    "liveAiProgress": "Sentiment analyzed {{done}} of {{total}} rows — charts update live as results arrive",
+    "liveNpsPhase": "Generating NPS scores — sentiment results are already visible below",
+    "liveJourneyPhase": "Mapping journey stages and root causes — sentiment data is updating live",
+    "liveReportBuilding": "Building your CX report snapshot — latest sentiment is already on screen"
   }
 }

@@ -14,6 +14,9 @@ import {
   languageInterceptor
 } from './core/interceptors/http.interceptor';
 import { ImportProcessingService } from './core/services/import-processing.service';
+import { ImportLiveRefreshService } from './core/services/import-live-refresh.service';
+import { TwitterCxReportStore } from './core/services/twitter-cx-report.store';
+import { AuthService } from './core/services/auth.service';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -46,10 +49,20 @@ export const appConfig: ApplicationConfig = {
     provideClientHydration(withEventReplay()),
     {
       provide: APP_INITIALIZER,
-      useFactory: (importProcessing: ImportProcessingService) => () => {
+      useFactory: (
+        importProcessing: ImportProcessingService,
+        liveRefresh: ImportLiveRefreshService,
+        twitterCxReportStore: TwitterCxReportStore,
+        authService: AuthService
+      ) => () => {
         importProcessing.syncFromApi();
+        liveRefresh.start();
+        liveRefresh.liveTick$.subscribe(() => {
+          const companyId = authService.currentUser()?.settings?.companyId;
+          twitterCxReportStore.invalidate(companyId, undefined, true);
+        });
       },
-      deps: [ImportProcessingService],
+      deps: [ImportProcessingService, ImportLiveRefreshService, TwitterCxReportStore, AuthService],
       multi: true,
     },
     provideHttpClient(

@@ -27,6 +27,7 @@ import {
 import { formatApiDate, normalizeApiDateToIso } from '../../../core/utils/api-date';
 import { CXWebSocketService, type CSVImportStatusEvent } from '../../../core/services/cx-websocket.service';
 import { ImportProcessingService } from '../../../core/services/import-processing.service';
+import { ImportLiveRefreshService } from '../../../core/services/import-live-refresh.service';
 import { TwitterCxReportStore } from '../../../core/services/twitter-cx-report.store';
 import { forkJoin, Subscription } from 'rxjs';
 import { OllamaLoader } from '../../../core/components/ollama-loader/ollama-loader';
@@ -86,6 +87,7 @@ export class SentimentAnalysis implements OnInit, OnDestroy {
   private reportService = inject(ReportService);
   private websocket = inject(CXWebSocketService);
   private importProcessing = inject(ImportProcessingService);
+  private liveRefresh = inject(ImportLiveRefreshService);
   private twitterCxReportStore = inject(TwitterCxReportStore);
   private translationService = inject(TranslationService);
   private importStatusSub?: Subscription;
@@ -185,7 +187,7 @@ export class SentimentAnalysis implements OnInit, OnDestroy {
     this.loadPresets();
     this.importStatusSub = this.websocket.onCSVImportStatus().subscribe((payload: CSVImportStatusEvent) => {
       if (payload?.status === 'processing') {
-        this.initialLoading.set(true);
+        this.reloadAll(this.filtersApplied(), false, { live: true });
       }
       if (payload?.status === 'completed') {
         this.reloadAll();
@@ -194,7 +196,7 @@ export class SentimentAnalysis implements OnInit, OnDestroy {
     this.importStatusSub.add(
       this.websocket.onAnalyticsLifecycle().subscribe((event) => {
         if (event.type === 'analysisStarted' || event.type === 'datasetUploaded') {
-          this.initialLoading.set(true);
+          this.reloadAll(this.filtersApplied(), false, { live: true });
         }
         if (event.type === 'datasetDeleted' || event.type === 'analysisCompleted') {
           this.reloadAll();
@@ -205,7 +207,10 @@ export class SentimentAnalysis implements OnInit, OnDestroy {
       this.importProcessing.becameIdle$.subscribe(() => this.reloadAll())
     );
     this.importStatusSub.add(
-      this.twitterCxReportStore.onRefresh$.subscribe(() => this.reloadAll())
+      this.twitterCxReportStore.onRefresh$.subscribe(() => this.reloadAll(false, false, { live: true }))
+    );
+    this.importStatusSub.add(
+      this.liveRefresh.liveTick$.subscribe(() => this.reloadAll(this.filtersApplied(), false, { live: true }))
     );
   }
 
@@ -422,15 +427,24 @@ export class SentimentAnalysis implements OnInit, OnDestroy {
     );
   }
 
-  private reloadAll(withFilters: boolean = this.filtersApplied(), showRefreshToast = false): void {
+  private reloadAll(
+    withFilters: boolean = this.filtersApplied(),
+    showRefreshToast = false,
+    options?: { live?: boolean }
+  ): void {
     const companyId = this.getCompanyId();
     const { start, end } = resolveOptionalApiDateRange(withFilters, this.startDate(), this.endDate());
     const rel = this.filterIsRelevant();
     const isRelevant = rel === 'true' ? true : rel === 'false' ? false : undefined;
+    const hasPartial = (this.stats()?.total ?? 0) > 0 || this.feedbackList().length > 0;
+    const live = options?.live === true;
+    const importWait =
+      !live && (this.importProcessing.isActive() || this.twitterCxReportStore.snapshotPending());
+    const showInitialLoader = !live && (importWait || (!this.hasCompletedInitialLoad && !this.stats()));
 
-    const importWait = this.importProcessing.isActive() || this.twitterCxReportStore.snapshotPending();
-    const showInitialLoader = importWait || (!this.hasCompletedInitialLoad && !this.stats());
-    if (showInitialLoader) {
+    if (live && hasPartial) {
+      this.refreshing.set(true);
+    } else if (showInitialLoader) {
       this.initialLoading.set(true);
     }
 

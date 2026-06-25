@@ -22,6 +22,7 @@ import {
   type ReportDatePreset,
 } from '../../../core/utils/report-date-presets';
 import { CXWebSocketService, type CSVImportStatusEvent } from '../../../core/services/cx-websocket.service';
+import { ImportLiveRefreshService } from '../../../core/services/import-live-refresh.service';
 import { Subscription } from 'rxjs';
 import { OllamaLoader } from '../../../core/components/ollama-loader/ollama-loader';
 import { RelatedFeedbackModal, RelatedFeedbackRow } from '../../../core/components/related-feedback-modal/related-feedback-modal';
@@ -62,6 +63,7 @@ export class NpsAnalysis implements OnInit, OnDestroy {
   private reportService = inject(ReportService);
   private translationService = inject(TranslationService);
   private websocket = inject(CXWebSocketService);
+  private liveRefresh = inject(ImportLiveRefreshService);
   private importStatusSub?: Subscription;
 
   readonly t = (key: string, params?: Record<string, string | number>): string =>
@@ -87,6 +89,9 @@ export class NpsAnalysis implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.loadPresets();
     this.importStatusSub = this.websocket.onCSVImportStatus().subscribe((payload: CSVImportStatusEvent) => {
+      if (payload?.status === 'processing') {
+        this.loadNPSData(this.filtersApplied(), true);
+      }
       if (payload?.status === 'completed') {
         this.loadNPSData();
       }
@@ -97,6 +102,9 @@ export class NpsAnalysis implements OnInit, OnDestroy {
           this.loadNPSData();
         }
       })
+    );
+    this.importStatusSub.add(
+      this.liveRefresh.liveTick$.subscribe(() => this.loadNPSData(this.filtersApplied(), true))
     );
   }
 
@@ -137,8 +145,10 @@ export class NpsAnalysis implements OnInit, OnDestroy {
     this.loadNPSData(true);
   }
 
-  loadNPSData(withFilters: boolean = this.filtersApplied()): void {
-    this.loading.set(true);
+  loadNPSData(withFilters: boolean = this.filtersApplied(), live = false): void {
+    if (!live || !this.npsData()) {
+      this.loading.set(true);
+    }
     const user = this.authService.currentUser();
     // Admin should aggregate across all companies
     const companyId = user?.role === 'admin' ? undefined : (user?.settings?.companyId || 1);

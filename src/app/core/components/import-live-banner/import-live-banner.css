@@ -1,0 +1,71 @@
+.import-live-banner {
+  position: sticky;
+  top: 0;
+  z-index: 1100;
+  margin: -20px -24px 16px;
+  background: linear-gradient(135deg, #0f172a 0%, #1e3a5f 55%, #0c4a6e 100%);
+  color: #f8fafc;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.18);
+  border-bottom: 1px solid rgba(148, 163, 184, 0.25);
+}
+
+.import-live-banner mat-progress-bar {
+  --mdc-linear-progress-active-indicator-color: #38bdf8;
+  --mdc-linear-progress-track-color: rgba(255, 255, 255, 0.14);
+  height: 4px;
+}
+
+.import-live-banner-body {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px 24px 14px;
+}
+
+.pulse-icon {
+  color: #7dd3fc;
+  animation: import-live-pulse 1.6s ease-in-out infinite;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.import-live-banner-text {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.import-live-banner-text strong {
+  font-size: 0.92rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}
+
+.import-live-banner-text span {
+  font-size: 0.84rem;
+  line-height: 1.45;
+  color: rgba(248, 250, 252, 0.88);
+}
+
+@keyframes import-live-pulse {
+  0%,
+  100% {
+    opacity: 0.72;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.08);
+  }
+}
+
+@media (max-width: 600px) {
+  .import-live-banner {
+    margin: -12px -12px 12px;
+  }
+
+  .import-live-banner-body {
+    padding: 10px 12px 12px;
+  }
+}

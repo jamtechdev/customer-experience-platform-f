@@ -13,14 +13,7 @@
   <mat-sidenav-content class="main-content">
     <app-header (toggleSidenav)="toggleSidenav()"></app-header>
     <main class="content-wrapper">
-      @if (showImportAnalysisOverlay()) {
-        <div class="import-analysis-overlay" role="status" aria-live="polite" aria-busy="true">
-          <app-ollama-loader
-            [title]="t('importAnalysis.loaderTitle')"
-            [subtitle]="t('importAnalysis.loaderSubtitle')">
-          </app-ollama-loader>
-        </div>
-      }
+      <app-import-live-banner />
       <router-outlet></router-outlet>
     </main>
 

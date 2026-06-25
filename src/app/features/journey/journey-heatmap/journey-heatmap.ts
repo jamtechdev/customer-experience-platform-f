@@ -129,7 +129,8 @@ export class JourneyHeatmap implements OnInit, OnDestroy {
     }
     this.loading.set(true);
     this.error.set(null);
-    this.twitterCxReportStore.loadTwitterCxReport(companyId, undefined, undefined, undefined, forceLive).subscribe({
+    const useLive = forceLive || this.importProcessing.isActive();
+    this.twitterCxReportStore.loadTwitterCxReport(companyId, undefined, undefined, undefined, useLive).subscribe({
       next: (res) => {
         if (res.message === 'stale_response') {
           this.loading.set(false);

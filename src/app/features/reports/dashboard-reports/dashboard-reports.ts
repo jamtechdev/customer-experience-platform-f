@@ -24,6 +24,8 @@ import {
 } from '../../../core/utils/report-date-presets';
 import { parseIsoDateOnlyLocal } from '../../../core/utils/api-date';
 import { CXWebSocketService, type CSVImportStatusEvent } from '../../../core/services/cx-websocket.service';
+import { ImportLiveRefreshService } from '../../../core/services/import-live-refresh.service';
+import { TwitterCxReportStore } from '../../../core/services/twitter-cx-report.store';
 import { Subscription } from 'rxjs';
 import { OllamaLoader } from '../../../core/components/ollama-loader/ollama-loader';
 import { ReportDateRangeFilter } from '../../../core/components/report-date-range-filter/report-date-range-filter';
@@ -65,6 +67,8 @@ export class DashboardReports implements OnInit, OnDestroy {
   private translationService = inject(TranslationService);
   private reportService = inject(ReportService);
   private websocket = inject(CXWebSocketService);
+  private liveRefresh = inject(ImportLiveRefreshService);
+  private twitterCxReportStore = inject(TwitterCxReportStore);
   private importStatusSub?: Subscription;
 
   loading = signal(true);
@@ -179,10 +183,26 @@ export class DashboardReports implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.loadPresets();
     this.importStatusSub = this.websocket.onCSVImportStatus().subscribe((payload: CSVImportStatusEvent) => {
+      if (payload?.status === 'processing') {
+        this.reloadAll(this.filtersApplied(), true);
+      }
       if (payload?.status === 'completed') {
         this.reloadAll();
       }
     });
+    this.importStatusSub.add(
+      this.websocket.onAnalyticsLifecycle().subscribe((event) => {
+        if (event.type === 'analysisCompleted' || event.type === 'datasetDeleted') {
+          this.reloadAll();
+        }
+      })
+    );
+    this.importStatusSub.add(
+      this.liveRefresh.liveTick$.subscribe(() => this.reloadAll(this.filtersApplied(), true))
+    );
+    this.importStatusSub.add(
+      this.twitterCxReportStore.onRefresh$.subscribe(() => this.reloadAll(this.filtersApplied(), true))
+    );
   }
 
   ngOnDestroy(): void {
@@ -221,18 +241,20 @@ export class DashboardReports implements OnInit, OnDestroy {
     this.reloadAll(true);
   }
 
-  private reloadAll(withFilters: boolean = this.filtersApplied()): void {
-    this.loadCurrentStatus(withFilters);
-    this.loadTrends(withFilters);
+  private reloadAll(withFilters: boolean = this.filtersApplied(), live = false): void {
+    this.loadCurrentStatus(withFilters, live);
+    this.loadTrends(withFilters, live);
   }
 
   onPeriodChange(): void {
     this.loadTrends(this.filtersApplied());
   }
 
-  loadCurrentStatus(withFilters: boolean = this.filtersApplied()): void {
-    this.loading.set(true);
-    this.currentStats.set(null);
+  loadCurrentStatus(withFilters: boolean = this.filtersApplied(), live = false): void {
+    if (!live || !this.currentStats()) {
+      this.loading.set(true);
+      if (!live) this.currentStats.set(null);
+    }
     const user = this.authService.currentUser();
     const companyId = user?.role === 'admin' ? undefined : (user?.settings?.companyId ?? 1);
     let startDate: Date | undefined;
@@ -260,9 +282,11 @@ export class DashboardReports implements OnInit, OnDestroy {
     });
   }
 
-  loadTrends(withFilters: boolean = this.filtersApplied()): void {
-    this.loadingTrends.set(true);
-    this.trends.set(null);
+  loadTrends(withFilters: boolean = this.filtersApplied(), live = false): void {
+    if (!live || !this.trends()) {
+      this.loadingTrends.set(true);
+      if (!live) this.trends.set(null);
+    }
     const user = this.authService.currentUser();
     const companyId = user?.role === 'admin' ? undefined : (user?.settings?.companyId ?? 1);
     const days = withFilters && this.datesValid()

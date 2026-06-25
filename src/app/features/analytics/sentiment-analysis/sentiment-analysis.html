@@ -40,7 +40,7 @@
 
 
 
-  <div *ngIf="initialLoading()" class="loading-container">
+  <div *ngIf="initialLoading() && !stats()" class="loading-container">
     <app-ollama-loader
       [title]="t('sentiment.loadingStatsTitle')"
       [subtitle]="t('sentiment.loadingStatsSubtitle')">

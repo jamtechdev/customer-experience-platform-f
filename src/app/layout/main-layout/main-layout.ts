@@ -1,20 +1,18 @@
-import { Component, computed, inject, signal, OnDestroy } from '@angular/core';
+import { Component, inject, signal, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { NavigationEnd, Router, RouterOutlet } from '@angular/router';
+import { RouterOutlet } from '@angular/router';
 import { MatSidenavModule } from '@angular/material/sidenav';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { BreakpointObserver, Breakpoints } from '@angular/cdk/layout';
-import { filter, Subscription } from 'rxjs';
+import { Subscription } from 'rxjs';
 import { Sidebar } from '../sidebar/sidebar';
 import { Header } from '../header/header';
 import { Footer } from '../footer/footer';
 import { CXWebSocketService } from '../../core/services/cx-websocket.service';
 import { TranslationService } from '../../core/services/translation.service';
-import { ImportProcessingService } from '../../core/services/import-processing.service';
-import { TwitterCxReportStore } from '../../core/services/twitter-cx-report.store';
-import { OllamaLoader } from '../../core/components/ollama-loader/ollama-loader';
+import { ImportLiveBanner } from '../../core/components/import-live-banner/import-live-banner';
 
 @Component({
   selector: 'app-main-layout',
@@ -28,7 +26,7 @@ import { OllamaLoader } from '../../core/components/ollama-loader/ollama-loader'
     Sidebar,
     Header,
     Footer,
-    OllamaLoader,
+    ImportLiveBanner,
   ],
   templateUrl: './main-layout.html',
   styleUrl: './main-layout.css',
@@ -36,35 +34,16 @@ import { OllamaLoader } from '../../core/components/ollama-loader/ollama-loader'
 export class MainLayout implements OnDestroy {
   private breakpointObserver = inject(BreakpointObserver);
   private breakpointSub?: Subscription;
-  private routerSub?: Subscription;
   private websocket = inject(CXWebSocketService);
   private translationService = inject(TranslationService);
-  private importProcessing = inject(ImportProcessingService);
-  private twitterCxReportStore = inject(TwitterCxReportStore);
-  private router = inject(Router);
 
   sidenavOpened = signal(true);
   isMobile = signal(false);
   isRTL = this.translationService.isRTL;
-  private currentUrl = signal(this.router.url);
-
-  readonly t = (key: string, params?: Record<string, string | number>): string =>
-    this.translationService.translate(key, params);
-
-  /** Full-screen loader while CSV / AI analysis or CX snapshot build runs — hidden on import workflow pages. */
-  showImportAnalysisOverlay = computed(() => {
-    const waiting = this.importProcessing.isActive() || this.twitterCxReportStore.snapshotPending();
-    if (!waiting) return false;
-    const url = this.currentUrl();
-    return !url.includes('/data-sources/');
-  });
 
   constructor() {
     // Always-on websocket connection for live status updates across the app.
     this.websocket.start();
-    this.routerSub = this.router.events
-      .pipe(filter((event): event is NavigationEnd => event instanceof NavigationEnd))
-      .subscribe((event) => this.currentUrl.set(event.urlAfterRedirects));
     this.breakpointSub = this.breakpointObserver.observe([
       Breakpoints.Handset,
       Breakpoints.Tablet
@@ -80,7 +59,6 @@ export class MainLayout implements OnDestroy {
 
   ngOnDestroy(): void {
     this.breakpointSub?.unsubscribe();
-    this.routerSub?.unsubscribe();
   }
 
   toggleSidenav(): void {
