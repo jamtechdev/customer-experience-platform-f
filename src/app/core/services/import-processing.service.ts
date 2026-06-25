@@ -8,16 +8,20 @@ export class ImportProcessingService {
   private readonly active = signal(false);
   private syncInFlight = false;
   private pollTimer: ReturnType<typeof setInterval> | null = null;
+  /** Ignore stale "processing" poll results briefly after import completes. */
+  private idleSinceMs = 0;
 
   readonly isActive = this.active.asReadonly();
 
   markProcessing(): void {
+    this.idleSinceMs = 0;
     this.active.set(true);
     this.startPolling();
   }
 
   markIdle(): void {
     this.active.set(false);
+    this.idleSinceMs = Date.now();
     this.stopPolling();
   }
 
@@ -31,10 +35,14 @@ export class ImportProcessingService {
         const rows = Array.isArray(res.data) ? res.data : [];
         const busy = rows.some((row) => row.status === 'processing');
         if (busy) {
+          if (this.idleSinceMs > 0 && Date.now() - this.idleSinceMs < 4000) {
+            return;
+          }
           this.active.set(true);
           this.startPolling();
         } else {
           this.active.set(false);
+          this.idleSinceMs = Date.now();
           this.stopPolling();
         }
       },

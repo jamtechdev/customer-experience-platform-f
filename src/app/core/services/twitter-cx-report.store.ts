@@ -71,10 +71,17 @@ export class TwitterCxReportStore {
           return this.coerceImportProcessingResponse(res, companyId, key);
         }),
         tap((res) => {
-          if (!forceLive && res.success && res.data) {
-            this.cache.set(key, res);
-            this.rememberLastGood(companyId, res);
-            if (importBusy && res.message !== 'import_processing') {
+          if (!forceLive && res.success && res.data && res.message !== 'import_processing') {
+            const hasPayload =
+              (res.data.dataset?.total ?? 0) > 0 ||
+              (res.data.touchpoints?.length ?? 0) > 0 ||
+              (res.data.journeyRows?.length ?? 0) > 0 ||
+              (res.data.actionPlan?.length ?? 0) > 0;
+            if (hasPayload || !this.importProcessing.isActive()) {
+              this.cache.set(key, res);
+              this.rememberLastGood(companyId, res);
+            }
+            if (importBusy && res.message !== 'import_processing' && hasPayload) {
               this.refreshSubject.next(companyId);
             }
           }
@@ -104,9 +111,9 @@ export class TwitterCxReportStore {
     return obs;
   }
 
-  invalidate(companyId?: number, csvImportId?: number): void {
+  invalidate(companyId?: number, csvImportId?: number, force = false): void {
     this.generation++;
-    const importBusy = this.importProcessing.isActive();
+    const importBusy = force ? false : this.importProcessing.isActive();
 
     if (companyId == null && csvImportId == null) {
       for (const k of [...this.inflight.keys()]) this.inflight.delete(k);
@@ -171,7 +178,14 @@ export class TwitterCxReportStore {
 
   private rememberLastGood(companyId: number | undefined, res: ApiResponse<TwitterCxReportDto>): void {
     if (!res.success || !res.data) return;
-    if ((res.data.actionPlan?.length ?? 0) > 0 || (res.data.rootCauses?.length ?? 0) > 0) {
+    const d = res.data;
+    if (
+      (d.dataset?.total ?? 0) > 0 ||
+      (d.actionPlan?.length ?? 0) > 0 ||
+      (d.rootCauses?.length ?? 0) > 0 ||
+      (d.touchpoints?.length ?? 0) > 0 ||
+      (d.journeyRows?.length ?? 0) > 0
+    ) {
       this.lastGoodByCompany.set(String(companyId ?? ''), res);
     }
   }

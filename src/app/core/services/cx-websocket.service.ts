@@ -105,14 +105,14 @@ export class CXWebSocketService {
 
       if (ev.status === 'processing') {
         this.importProcessing.markProcessing();
-      } else if (ev.status === 'completed' || ev.status === 'failed') {
+      } else       if (ev.status === 'completed' || ev.status === 'failed') {
         this.importProcessing.markIdle();
       }
 
       this.importStatusSubject.next(ev);
 
       if (ev.status === 'completed' && this.latestCompanyId != null) {
-        this.twitterCxReportStore.invalidate(this.latestCompanyId);
+        this.twitterCxReportStore.invalidate(this.latestCompanyId, undefined, true);
       }
     });
 
@@ -155,7 +155,7 @@ export class CXWebSocketService {
         ev.type === 'datasetDeleted' ||
         ev.type === 'analysisFailed';
       if (shouldInvalidate) {
-        this.twitterCxReportStore.invalidate(companyId);
+        this.twitterCxReportStore.invalidate(companyId, undefined, ev.type === 'analysisCompleted');
       }
     };
 

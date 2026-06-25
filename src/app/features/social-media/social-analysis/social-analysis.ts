@@ -96,11 +96,21 @@ export class SocialAnalysis implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.loadSocialMediaData();
-    this.lifecycleSub = this.websocket.onAnalyticsLifecycle().subscribe((event) => {
-      if (event.type === 'datasetDeleted' || event.type === 'analysisCompleted') {
-        this.loadSocialMediaData();
-      }
-    });
+    this.lifecycleSub = new Subscription();
+    this.lifecycleSub.add(
+      this.websocket.onAnalyticsLifecycle().subscribe((event) => {
+        if (event.type === 'datasetDeleted' || event.type === 'analysisCompleted') {
+          this.loadSocialMediaData();
+        }
+      })
+    );
+    this.lifecycleSub.add(
+      this.websocket.onCSVImportStatus().subscribe((payload) => {
+        if (payload?.status === 'completed') {
+          this.loadSocialMediaData();
+        }
+      })
+    );
   }
 
   ngOnDestroy(): void {

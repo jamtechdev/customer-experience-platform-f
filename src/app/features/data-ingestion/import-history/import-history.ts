@@ -82,6 +82,9 @@ export class ImportHistory implements OnInit, OnDestroy {
         this.importProcessing.markProcessing();
       } else if (status === 'completed' || status === 'failed') {
         this.importProcessing.markIdle();
+        if (status === 'completed') {
+          this.twitterCxReportStore.invalidate(this.authService.currentUser()?.settings?.companyId, undefined, true);
+        }
       }
 
       this.imports.update((list) =>
@@ -143,7 +146,8 @@ export class ImportHistory implements OnInit, OnDestroy {
   }
 
   loadImports(): void {
-    const hasRows = this.imports().length > 0;
+    const wasBusy = this.importProcessing.isActive();
+    const companyId = this.authService.currentUser()?.settings?.companyId;
     // Never blank the page; always refresh silently in background.
     this.refreshing.set(true);
     this.csvService.getImports().subscribe({
@@ -152,8 +156,14 @@ export class ImportHistory implements OnInit, OnDestroy {
           const visible = res.data.filter(isHistoryVisibleImport);
           this.imports.set(visible);
           const busy = visible.some((row) => row.status === 'processing');
-          if (busy) this.importProcessing.markProcessing();
-          else this.importProcessing.markIdle();
+          if (busy) {
+            this.importProcessing.markProcessing();
+          } else {
+            this.importProcessing.markIdle();
+            if (wasBusy) {
+              this.twitterCxReportStore.invalidate(companyId, undefined, true);
+            }
+          }
         } else {
           this.imports.set([]);
         }
