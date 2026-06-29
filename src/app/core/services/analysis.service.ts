@@ -356,8 +356,13 @@ export class AnalysisService {
   }
 
   // Root Cause Analysis - matches backend /api/analysis/root-cause
-  analyzeRootCauses(companyId: number, limit: number = 50): Observable<ApiResponse<RootCauseAnalysis[]>> {
-    return this.http.post<ApiResponse<RootCauseAnalysis[]>>(`${this.baseUrl}/root-cause`, { companyId, limit });
+  analyzeRootCauses(companyId: number, limit: number = 50, force = true): Observable<ApiResponse<RootCauseAnalysis[]>> {
+    return this.http.post<ApiResponse<RootCauseAnalysis[]>>(`${this.baseUrl}/root-cause`, {
+      companyId,
+      limit,
+      force,
+      forceReanalyze: force,
+    });
   }
 
   getRootCauses(companyId?: number): Observable<ApiResponse<RootCauseListResponse | RootCauseAnalysis[]>> {
