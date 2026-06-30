@@ -10,7 +10,7 @@ import { TwitterCxReportStore } from '../../../core/services/twitter-cx-report.s
 import { AnalysisService } from '../../../core/services/analysis.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { OllamaLoader } from '../../../core/components/ollama-loader/ollama-loader';
-import { notifyCxReportLoadFailure, twitterCxReportFailureMessage, hasCxReportPayload } from '../../../core/utils/twitter-cx-report-load';
+import { notifyCxReportLoadFailure, twitterCxReportFailureMessage, hasCxReportPayload, isCxReportResponsePending } from '../../../core/utils/twitter-cx-report-load';
 import { ImportProcessingService } from '../../../core/services/import-processing.service';
 import { TranslationService } from '../../../core/services/translation.service';
 import { drilldownModalTotal } from '../../../core/utils/drilldown-display';
@@ -145,6 +145,10 @@ export class JourneyHeatmap implements OnInit, OnDestroy {
         }
         clearTimeout(watchdog);
         if (!res.success) {
+          if (isCxReportResponsePending(res, this.importProcessing.isActive())) {
+            if (!cached?.success) this.loading.set(true);
+            return;
+          }
           if (!cached?.success) {
             this.stages.set([]);
             this.page.set(1);

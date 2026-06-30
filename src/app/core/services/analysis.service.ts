@@ -263,6 +263,16 @@ export class AnalysisService {
           return of(body as ApiResponse<TwitterCxReportDto>);
         }),
         timeout(environment.cxReportTimeout || 180000),
+        retry({
+          count: 3,
+          delay: (err: unknown, retryCount: number) => {
+            if (err instanceof TimeoutError) return timer(Math.min(4000 * retryCount, 12000));
+            if (err instanceof HttpErrorResponse && (err.status === 0 || err.status === 502 || err.status === 503 || err.status === 504)) {
+              return timer(Math.min(2500 * retryCount, 10000));
+            }
+            return throwError(() => err);
+          },
+        }),
         catchError((err: unknown) => {
           if (err instanceof TimeoutError) {
             return of({

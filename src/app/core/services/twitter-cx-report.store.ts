@@ -8,6 +8,7 @@ import {
   emptyTwitterCxReportDto,
   hasCxReportPayload,
   isCxReportResponsePending,
+  isTransientCxReportFailure,
 } from '../utils/twitter-cx-report-load';
 
 import { DEFAULT_APP_COMPANY_ID } from '../utils/company-scope';
@@ -117,7 +118,7 @@ export class TwitterCxReportStore {
           const wasPending = this.snapshotPendingSignal();
           const pending = isCxReportResponsePending(res, this.importProcessing.isActive());
           this.snapshotPendingSignal.set(pending);
-          if (pending) {
+          if (pending || isTransientCxReportFailure(res.message)) {
             this.schedulePendingRetry(scopedCompanyId, csvImportId, startDate, endDate, forceLive, key);
           } else {
             this.clearPendingRetry(key);

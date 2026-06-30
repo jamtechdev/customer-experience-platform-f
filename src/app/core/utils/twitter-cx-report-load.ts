@@ -4,7 +4,7 @@ import { TwitterCxReportDto } from '../models';
 /** User-facing copy when bundled Twitter CX report HTTP/stream fails (no .env required). */
 export function twitterCxReportFailureMessage(apiMessage?: string): string {
   if (apiMessage === 'http_0' || apiMessage === 'network') {
-    return 'Could not reach the API server. Wait a moment and retry; if it repeats, check that the backend service is running.';
+    return 'Loading your saved report from the database. This page will refresh automatically.';
   }
   if (apiMessage === 'http_504' || apiMessage === 'http_502') {
     return 'The CX report build is taking longer than the server allows. Try again in a moment, or use a smaller date range.';
@@ -60,6 +60,19 @@ export function hasCxReportPayload(data?: TwitterCxReportDto | null): boolean {
   );
 }
 
+/** Transient failures — auto-retry instead of showing an error card immediately. */
+export function isTransientCxReportFailure(message?: string): boolean {
+  return (
+    message === 'http_0' ||
+    message === 'network' ||
+    message === 'timeout' ||
+    message === 'http_502' ||
+    message === 'http_504' ||
+    message === 'http_503' ||
+    message === 'snapshot_still_building'
+  );
+}
+
 /** True while CSV import, AI analysis, or CX snapshot build is still in progress. */
 export function isCxReportResponsePending(
   res: { message?: string; data?: TwitterCxReportDto | null } | undefined,
@@ -67,6 +80,7 @@ export function isCxReportResponsePending(
 ): boolean {
   const msg = res?.message;
   if (msg === 'snapshot_still_building') return true;
+  if (isTransientCxReportFailure(msg) && !hasCxReportPayload(res?.data)) return true;
   if (msg === 'import_processing' && !hasCxReportPayload(res?.data)) return true;
   if (importActive && !hasCxReportPayload(res?.data)) return true;
   return false;
@@ -118,6 +132,7 @@ export function emptyTwitterCxReportDto(): TwitterCxReportDto {
 export function shouldSuppressCxReportError(apiMessage?: string, importProcessing?: boolean): boolean {
   if (apiMessage === 'stale_response' || apiMessage === 'import_processing') return true;
   if (apiMessage === 'snapshot_still_building') return true;
+  if (apiMessage === 'timeout') return true;
   if (apiMessage === 'http_0' || apiMessage === 'network') return true;
   if (importProcessing) return true;
   // CX report pages show an empty state — never flash error toasts for transient server errors.
