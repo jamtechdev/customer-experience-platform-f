@@ -15,6 +15,7 @@ import { ImportProcessingService } from '../../../core/services/import-processin
 import { TranslationService } from '../../../core/services/translation.service';
 import { drilldownModalTotal } from '../../../core/utils/drilldown-display';
 import { resolveAppCompanyId } from '../../../core/utils/company-scope';
+import { environment } from '../../../../environments/environment';
 import { RelatedFeedbackModal, RelatedFeedbackRow } from '../../../core/components/related-feedback-modal/related-feedback-modal';
 import { PageHeaderCard } from '../../../core/components/page-header-card/page-header-card';
 
@@ -127,51 +128,61 @@ export class JourneyHeatmap implements OnInit, OnDestroy {
     if (refreshFromServer && !forceLive) {
       this.twitterCxReportStore.clearCachedReport(companyId);
     }
-    if (!this.twitterCxReportStore.hasCachedReport(companyId)) {
+    const cached = !forceLive ? this.twitterCxReportStore.getCachedReport(companyId) : undefined;
+    if (cached?.success && cached.data?.heatmapPct?.length) {
+      this.applyHeatmapReport(cached);
+      this.loading.set(false);
+    } else if (!this.twitterCxReportStore.hasCachedReport(companyId)) {
       this.loading.set(true);
     }
     this.error.set(null);
+    const watchdog = setTimeout(() => this.loading.set(false), environment.apiTimeout || 30000);
     this.twitterCxReportStore.loadTwitterCxReport(companyId, undefined, undefined, undefined, forceLive).subscribe({
       next: (res) => {
-        if (res.message === 'stale_response') {
+        clearTimeout(watchdog);
+        if (res.message === 'stale_response' || res.message === 'snapshot_still_building') {
           this.loading.set(false);
           return;
         }
         if (!res.success) {
-          this.stages.set([]);
-          this.page.set(1);
-          this.error.set(this.importProcessing.isActive() ? null : twitterCxReportFailureMessage(res.message));
+          if (!cached?.success) {
+            this.stages.set([]);
+            this.page.set(1);
+            this.error.set(this.importProcessing.isActive() ? null : twitterCxReportFailureMessage(res.message));
+          }
           notifyCxReportLoadFailure(this.snackBar, res.message, this.importProcessing.isActive(), this.t('app.close'));
           this.loading.set(false);
           return;
         }
-        this.error.set(null);
-        this.cohortTotal.set(
-          Number(res.data?.dataset?.total ?? res.data?.sentiment?.total ?? 0) || null
-        );
-        this.importedCsvRows.set(
-          Number(res.data?.dataset?.importedCsvRows ?? 0) || null
-        );
-        this.rowsSaved.set(Number(res.data?.dataset?.total ?? 0) || null);
-        if (res.success && Array.isArray(res.data?.heatmapPct)) {
-          this.stages.set(
-            res.data.heatmapPct.map((r: any) => this.mapHeatmapRow(r))
-          );
-          this.page.set(1);
-        } else {
+        this.applyHeatmapReport(res);
+        this.loading.set(false);
+      },
+      error: () => {
+        clearTimeout(watchdog);
+        this.error.set(this.importProcessing.isActive() ? null : twitterCxReportFailureMessage());
+        if (!cached?.success) {
+          notifyCxReportLoadFailure(this.snackBar, undefined, this.importProcessing.isActive(), this.t('app.close'));
           this.stages.set([]);
           this.page.set(1);
         }
         this.loading.set(false);
       },
-      error: () => {
-        this.error.set(this.importProcessing.isActive() ? null : twitterCxReportFailureMessage());
-        notifyCxReportLoadFailure(this.snackBar, undefined, this.importProcessing.isActive(), this.t('app.close'));
-        this.stages.set([]);
-        this.page.set(1);
-        this.loading.set(false);
-      },
     });
+  }
+
+  private applyHeatmapReport(res: { success?: boolean; data?: { heatmapPct?: unknown[]; dataset?: { total?: number; importedCsvRows?: number }; sentiment?: { total?: number } } }): void {
+    if (!res.success || !res.data) return;
+    this.error.set(null);
+    this.cohortTotal.set(Number(res.data?.dataset?.total ?? res.data?.sentiment?.total ?? 0) || null);
+    this.importedCsvRows.set(Number(res.data?.dataset?.importedCsvRows ?? 0) || null);
+    this.rowsSaved.set(Number(res.data?.dataset?.total ?? 0) || null);
+    if (Array.isArray(res.data?.heatmapPct)) {
+      this.stages.set(res.data.heatmapPct.map((r: any) => this.mapHeatmapRow(r)));
+      this.page.set(1);
+    } else {
+      this.stages.set([]);
+      this.page.set(1);
+    }
   }
 
   getSatisfactionColor(score: number): string {

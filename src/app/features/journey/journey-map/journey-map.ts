@@ -17,6 +17,8 @@ import { RelatedFeedbackModal, RelatedFeedbackRow } from '../../../core/componen
 import { alignLinkedCountInText, drilldownModalTotal, effectiveLinkedCount, resolveDrilldownIds } from '../../../core/utils/drilldown-display';
 import { TranslationService } from '../../../core/services/translation.service';
 import { resolveAppCompanyId } from '../../../core/utils/company-scope';
+import { environment } from '../../../../environments/environment';
+import { ApiResponse, TwitterCxReportDto } from '../../../core/models';
 
 interface JourneyStage {
   id: number;
@@ -101,93 +103,125 @@ export class JourneyMap implements OnInit, OnDestroy {
 
   loadJourneyData(): void {
     const companyId = resolveAppCompanyId(this.authService.currentUser());
-    if (!this.twitterCxReportStore.hasCachedReport(companyId)) {
+    const cached = this.twitterCxReportStore.getCachedReport(companyId);
+    if (cached?.success && cached.data) {
+      this.applyCxReport(cached);
+      this.loading.set(false);
+    } else if (!this.twitterCxReportStore.hasCachedReport(companyId)) {
       this.loading.set(true);
     }
+
+    const watchdog = setTimeout(() => this.loading.set(false), environment.apiTimeout || 30000);
     this.twitterCxReportStore.loadTwitterCxReport(companyId, undefined, undefined, undefined, false).subscribe({
       next: (response) => {
-        if (response.message === 'stale_response') {
+        clearTimeout(watchdog);
+        if (response.message === 'stale_response' || response.message === 'snapshot_still_building') {
           this.loading.set(false);
           return;
         }
         if (!response.success) {
-          this.journeyStages.set([]);
-          this.page.set(1);
+          if (!cached?.success) {
+            this.journeyStages.set([]);
+            this.page.set(1);
+          }
           notifyCxReportLoadFailure(this.snackBar, response.message, this.importProcessing.isActive(), 'Close');
           this.loading.set(false);
           return;
         }
-        try {
-          if (response.success && response.data?.journeyRows) {
-            const heatmap = Array.isArray(response.data.heatmapPct) ? response.data.heatmapPct : [];
-            const heatmapMap: Record<string, { positive: number[]; negative: number[] }> = {};
-            for (const h of heatmap) {
-              const stage = String((h as { stage?: string }).stage ?? '');
-              if (!stage) continue;
-              heatmapMap[stage] = {
-                positive: this.toIds((h as { positiveFeedbackIds?: number[] }).positiveFeedbackIds),
-                negative: this.toIds((h as { negativeFeedbackIds?: number[] }).negativeFeedbackIds),
-              };
-            }
-            this.heatmapByStage.set(heatmapMap);
-            const rows = response.data.journeyRows;
-            this.journeyStages.set(
-              rows.map((r: any, idx: number) => {
-                const stage = String(r?.stage ?? '');
-                const heat = heatmapMap[stage];
-                const satIds = this.mergeIds(
-                  this.toIds(r?.satisfactionFeedbackIds),
-                  this.toIds(r?.satisfactionReferenceIds),
-                  heat?.positive
-                );
-                const disIds = this.mergeIds(
-                  this.toIds(r?.dissatisfactionFeedbackIds),
-                  this.toIds(r?.dissatisfactionReferenceIds),
-                  heat?.negative
-                );
-                const satisfactionCount = Math.max(
-                  Number(r?.satisfactionCount ?? 0),
-                  satIds.length,
-                  Number((heatmap.find((h: any) => h?.stage === stage) as { positiveCount?: number })?.positiveCount ?? 0)
-                );
-                const dissatisfactionCount = Math.max(
-                  Number(r?.dissatisfactionCount ?? 0),
-                  disIds.length,
-                  Number((heatmap.find((h: any) => h?.stage === stage) as { negativeCount?: number })?.negativeCount ?? 0)
-                );
-                return {
-                  id: idx + 1,
-                  name: stage,
-                  satisfactionScore: 0,
-                  dissatisfactionScore: 0,
-                  feedbackCount: typeof r?.feedbackCount === 'number' ? r.feedbackCount : 0,
-                  painPoints: [String(r?.dissatisfactionSummary ?? r?.dissatisfaction ?? '')].filter(Boolean),
-                  satisfactionPoints: [String(r?.satisfactionSummary ?? r?.satisfaction ?? '')].filter(Boolean),
-                  satisfactionReferenceIds: satIds,
-                  dissatisfactionReferenceIds: disIds,
-                  satisfactionFeedbackIds: satIds,
-                  dissatisfactionFeedbackIds: disIds,
-                  satisfactionCount,
-                  dissatisfactionCount,
-                };
-              })
-            );
-            this.page.set(1);
-          } else {
-            this.journeyStages.set([]);
-            this.page.set(1);
-          }
-        } finally {
-          this.loading.set(false);
-        }
+        this.applyCxReport(response);
+        this.loading.set(false);
       },
       error: () => {
+        clearTimeout(watchdog);
         this.loading.set(false);
-        notifyCxReportLoadFailure(this.snackBar, undefined, this.importProcessing.isActive(), 'Close');
-        this.journeyStages.set([]);
-        this.page.set(1);
-      }
+        if (!cached?.success) {
+          notifyCxReportLoadFailure(this.snackBar, undefined, this.importProcessing.isActive(), 'Close');
+          this.journeyStages.set([]);
+          this.page.set(1);
+        }
+      },
     });
+  }
+
+  private applyCxReport(response: ApiResponse<TwitterCxReportDto>): void {
+    if (!response.success || !response.data) return;
+
+    const heatmap = Array.isArray(response.data.heatmapPct) ? response.data.heatmapPct : [];
+    const heatmapMap: Record<string, { positive: number[]; negative: number[] }> = {};
+    for (const h of heatmap) {
+      const stage = String((h as { stage?: string }).stage ?? '');
+      if (!stage) continue;
+      heatmapMap[stage] = {
+        positive: this.toIds((h as { positiveFeedbackIds?: number[] }).positiveFeedbackIds),
+        negative: this.toIds((h as { negativeFeedbackIds?: number[] }).negativeFeedbackIds),
+      };
+    }
+    this.heatmapByStage.set(heatmapMap);
+
+    let rows = Array.isArray(response.data.journeyRows) ? response.data.journeyRows : [];
+    if (rows.length === 0 && heatmap.length > 0) {
+      rows = heatmap.map((h: any) => ({
+        stage: String(h?.stage ?? ''),
+        satisfaction: '—',
+        dissatisfaction: '—',
+        satisfactionSummary: '',
+        dissatisfactionSummary: '',
+        feedbackCount: Number(h?.total ?? 0),
+        satisfactionFeedbackIds: this.toIds(h?.positiveFeedbackIds),
+        dissatisfactionFeedbackIds: this.toIds(h?.negativeFeedbackIds),
+        satisfactionCount: Number(h?.positiveCount ?? h?.positive ?? 0),
+        dissatisfactionCount: Number(h?.negativeCount ?? h?.negative ?? 0),
+      }));
+    }
+
+    if (rows.length === 0) {
+      this.journeyStages.set([]);
+      this.page.set(1);
+      return;
+    }
+
+    this.journeyStages.set(
+      rows.map((r: any, idx: number) => {
+        const stage = String(r?.stage ?? '');
+        const heat = heatmapMap[stage];
+        const satIds = this.mergeIds(
+          this.toIds(r?.satisfactionFeedbackIds),
+          this.toIds(r?.satisfactionReferenceIds),
+          heat?.positive
+        );
+        const disIds = this.mergeIds(
+          this.toIds(r?.dissatisfactionFeedbackIds),
+          this.toIds(r?.dissatisfactionReferenceIds),
+          heat?.negative
+        );
+        const satisfactionCount = Math.max(
+          Number(r?.satisfactionCount ?? 0),
+          satIds.length,
+          Number((heatmap.find((h: any) => h?.stage === stage) as { positiveCount?: number })?.positiveCount ?? 0)
+        );
+        const dissatisfactionCount = Math.max(
+          Number(r?.dissatisfactionCount ?? 0),
+          disIds.length,
+          Number((heatmap.find((h: any) => h?.stage === stage) as { negativeCount?: number })?.negativeCount ?? 0)
+        );
+        return {
+          id: idx + 1,
+          name: stage,
+          satisfactionScore: 0,
+          dissatisfactionScore: 0,
+          feedbackCount: typeof r?.feedbackCount === 'number' ? r.feedbackCount : 0,
+          painPoints: [String(r?.dissatisfactionSummary ?? r?.dissatisfaction ?? '')].filter(Boolean),
+          satisfactionPoints: [String(r?.satisfactionSummary ?? r?.satisfaction ?? '')].filter(Boolean),
+          satisfactionReferenceIds: satIds,
+          dissatisfactionReferenceIds: disIds,
+          satisfactionFeedbackIds: satIds,
+          dissatisfactionFeedbackIds: disIds,
+          satisfactionCount,
+          dissatisfactionCount,
+        };
+      })
+    );
+    this.page.set(1);
   }
 
   goPrevPage(): void {

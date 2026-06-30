@@ -1,7 +1,8 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams, HttpErrorResponse, HttpResponse, HttpContext } from '@angular/common/http';
 import { Observable, of, timer, throwError } from 'rxjs';
-import { catchError, switchMap, retry } from 'rxjs/operators';
+import { catchError, switchMap, timeout, retry } from 'rxjs/operators';
+import { TimeoutError } from 'rxjs';
 import {
   SentimentAnalysisResult,
   RootCauseAnalysis,
@@ -261,7 +262,15 @@ export class AnalysisService {
           }
           return of(body as ApiResponse<TwitterCxReportDto>);
         }),
+        timeout(environment.apiTimeout || 30000),
         catchError((err: unknown) => {
+          if (err instanceof TimeoutError) {
+            return of({
+              success: false,
+              data: undefined as unknown as TwitterCxReportDto,
+              message: 'timeout',
+            } as ApiResponse<TwitterCxReportDto>);
+          }
           const message = err instanceof HttpErrorResponse ? `http_${err.status}` : 'network';
           return of({
             success: false,

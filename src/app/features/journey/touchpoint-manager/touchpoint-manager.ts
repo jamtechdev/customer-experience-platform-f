@@ -22,6 +22,7 @@ import { ImportProcessingService } from '../../../core/services/import-processin
 import { RelatedFeedbackModal, RelatedFeedbackRow } from '../../../core/components/related-feedback-modal/related-feedback-modal';
 import { drilldownModalTotal } from '../../../core/utils/drilldown-display';
 import { resolveAppCompanyId } from '../../../core/utils/company-scope';
+import { environment } from '../../../../environments/environment';
 
 const SOURCE_CHANNEL_NAMES = new Set([
   'twitter',
@@ -130,61 +131,76 @@ export class TouchpointManager implements OnInit, OnDestroy {
 
   loadTouchpoints(): void {
     const companyId = resolveAppCompanyId(this.authService.currentUser());
-    if (!this.twitterCxReportStore.hasCachedReport(companyId)) {
+    const cached = this.twitterCxReportStore.getCachedReport(companyId);
+    if (cached?.success && cached.data?.touchpoints?.length) {
+      this.applyTouchpointReport(cached);
+      this.loading.set(false);
+    } else if (!this.twitterCxReportStore.hasCachedReport(companyId)) {
       this.loading.set(true);
     }
+    const watchdog = setTimeout(() => this.loading.set(false), environment.apiTimeout || 30000);
     this.twitterCxReportStore.loadTwitterCxReport(companyId, undefined, undefined, undefined, false).subscribe({
       next: (response) => {
-        if (response.message === 'stale_response') {
+        clearTimeout(watchdog);
+        if (response.message === 'stale_response' || response.message === 'snapshot_still_building') {
           this.loading.set(false);
           return;
         }
         if (!response.success) {
-          this.touchpoints.set([]);
-          this.reportTouchpoints.set([]);
-          this.page.set(1);
+          if (!cached?.success) {
+            this.touchpoints.set([]);
+            this.reportTouchpoints.set([]);
+            this.page.set(1);
+          }
           notifyCxReportLoadFailure(this.snackBar, response.message, this.importProcessing.isActive(), 'Close');
           this.loading.set(false);
           return;
         }
-        if (response.success && Array.isArray(response.data?.touchpoints)) {
-          const touchpoints = response.data.touchpoints.filter((t: any) => !isSourceChannelName(t?.name ?? ''));
-          const rows = touchpoints.map((t: any, idx: number) => ({
-            id: idx + 1,
-            name: t.name ?? '',
-            description: t.observation ?? '',
-            category: 'touchpoint',
-            order: idx + 1,
-            type: 'touchpoint',
-            stage: '-',
-            feedbackCount: Number(t.volume ?? 0),
-            satisfactionScore: 0
-          }));
-          this.touchpoints.set(rows);
-          this.reportTouchpoints.set(
-            touchpoints.map((t: any) => ({
-              name: t.name ?? '',
-              volume: Number(t.volume ?? 0),
-              observation: t.observation ?? '',
-              feedbackIds: Array.isArray(t.feedbackIds) ? t.feedbackIds : [],
-            }))
-          );
-          this.page.set(1);
-        } else {
-          this.touchpoints.set([]);
-          this.reportTouchpoints.set([]);
-          this.page.set(1);
-        }
+        this.applyTouchpointReport(response);
         this.loading.set(false);
       },
       error: () => {
+        clearTimeout(watchdog);
         this.loading.set(false);
-        this.touchpoints.set([]);
-        this.reportTouchpoints.set([]);
-        this.page.set(1);
-        notifyCxReportLoadFailure(this.snackBar, undefined, this.importProcessing.isActive(), 'Close');
-      }
+        if (!cached?.success) {
+          this.touchpoints.set([]);
+          this.reportTouchpoints.set([]);
+          this.page.set(1);
+          notifyCxReportLoadFailure(this.snackBar, undefined, this.importProcessing.isActive(), 'Close');
+        }
+      },
     });
+  }
+
+  private applyTouchpointReport(response: { success?: boolean; data?: { touchpoints?: any[] } }): void {
+    if (!response.success || !Array.isArray(response.data?.touchpoints)) {
+      this.touchpoints.set([]);
+      this.reportTouchpoints.set([]);
+      this.page.set(1);
+      return;
+    }
+    const touchpoints = response.data.touchpoints.filter((t: any) => !isSourceChannelName(t?.name ?? ''));
+    const rows = touchpoints.map((t: any, idx: number) => ({
+      id: idx + 1,
+      name: t.name ?? '',
+      description: t.observation ?? '',
+      category: 'touchpoint',
+      order: idx + 1,
+      type: 'touchpoint',
+      stage: '-',
+      feedbackCount: Number(t.volume ?? 0),
+      satisfactionScore: 0,
+    }));
+    this.touchpoints.set(rows);
+    this.reportTouchpoints.set(
+      touchpoints.map((t: any) => ({
+        name: t.name ?? '',
+        volume: Number(t.volume ?? 0),
+        observation: t.observation ?? '',
+        feedbackIds: Array.isArray(t.feedbackIds) ? t.feedbackIds : [],
+      }))
+    );
+    this.page.set(1);
   }
 
   touchpointMaxEffective(): number {

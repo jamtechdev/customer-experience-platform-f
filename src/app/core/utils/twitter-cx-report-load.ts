@@ -117,6 +117,7 @@ export function emptyTwitterCxReportDto(): TwitterCxReportDto {
 /** True when a failed CX report load should stay silent (import still running). */
 export function shouldSuppressCxReportError(apiMessage?: string, importProcessing?: boolean): boolean {
   if (apiMessage === 'stale_response' || apiMessage === 'import_processing') return true;
+  if (apiMessage === 'snapshot_still_building') return true;
   if (importProcessing) return true;
   // CX report pages show an empty state — never flash error toasts for transient server errors.
   if (apiMessage === 'http_503' || apiMessage === 'http_502' || apiMessage === 'http_504') return true;
