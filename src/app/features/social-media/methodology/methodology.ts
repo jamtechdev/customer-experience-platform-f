@@ -47,8 +47,7 @@ export class Methodology implements OnInit, OnDestroy {
     const user = this.authService.currentUser();
     const companyId = user?.role === 'admin' ? undefined : (user?.settings?.companyId ?? 1);
     this.loading.set(true);
-    const forceLive = this.importProcessing.isActive();
-    this.twitterCxReportStore.loadTwitterCxReport(companyId, undefined, undefined, undefined, forceLive).subscribe({
+    this.twitterCxReportStore.loadTwitterCxReport(companyId, undefined, undefined, undefined, false).subscribe({
       next: (res) => {
         if (res.message === 'stale_response') {
           this.loading.set(false);

@@ -250,7 +250,11 @@ export class AnalysisService {
             } as ApiResponse<TwitterCxReportDto>);
           }
           if (httpResp.status === 202 && body.data?.snapshotPending && body.data?.snapshotId != null) {
-            return this.waitForTwitterCxReportSnapshot(Number(body.data.snapshotId));
+            return of({
+              success: false,
+              data: undefined as unknown as TwitterCxReportDto,
+              message: 'snapshot_still_building',
+            } as ApiResponse<TwitterCxReportDto>);
           }
           return of(body as ApiResponse<TwitterCxReportDto>);
         }),

@@ -371,7 +371,7 @@ export class ArcelikTwitterCxReport implements OnInit, OnDestroy {
 
   reload(withFilters: boolean = this.filtersApplied()): void {
     this.loading.set(true);
-    this.loadingMessage.set('Fetching live data from DB and the selected LLM.');
+    this.loadingMessage.set('Loading saved report from database…');
     this.loadError.set(null);
     const sentCo = this.sentimentCompanyId();
     let startDate: Date | undefined;
@@ -385,7 +385,7 @@ export class ArcelikTwitterCxReport implements OnInit, OnDestroy {
     // After 3 s switch message to let user know the selected LLM may still be generating live analysis.
     const msgTimer = setTimeout(() => {
       if (this.loading()) {
-        this.loadingMessage.set('The selected LLM is generating the latest report from uploaded CSV records.');
+        this.loadingMessage.set('Still loading from database…');
       }
     }, 3000);
 
@@ -395,7 +395,7 @@ export class ArcelikTwitterCxReport implements OnInit, OnDestroy {
         finalize(() => {
           clearTimeout(msgTimer);
           this.loading.set(false);
-          this.loadingMessage.set('Fetching live data from DB and the selected LLM.');
+          this.loadingMessage.set('Loading saved report from database…');
         })
       )
       .subscribe({

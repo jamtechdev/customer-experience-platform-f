@@ -62,12 +62,14 @@ export function hasCxReportPayload(data?: TwitterCxReportDto | null): boolean {
 
 /** True while CSV import, AI analysis, or CX snapshot build is still in progress. */
 export function isCxReportResponsePending(
-  res: { message?: string } | undefined,
+  res: { message?: string; data?: TwitterCxReportDto | null } | undefined,
   importActive: boolean
 ): boolean {
-  if (importActive) return true;
   const msg = res?.message;
-  return msg === 'import_processing' || msg === 'snapshot_still_building';
+  if (msg === 'snapshot_still_building') return true;
+  if (msg === 'import_processing' && !hasCxReportPayload(res?.data)) return true;
+  if (importActive && !hasCxReportPayload(res?.data)) return true;
+  return false;
 }
 
 /** @deprecated Use isCxReportResponsePending — do not block page loading with this. */

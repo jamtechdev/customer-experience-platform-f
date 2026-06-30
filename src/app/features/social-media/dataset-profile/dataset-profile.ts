@@ -101,8 +101,7 @@ export class DatasetProfile implements OnInit, OnDestroy {
   loadProfile(): void {
     const companyId = resolveAppCompanyId(this.authService.currentUser());
     this.loading.set(true);
-    const forceLive = this.importProcessing.isActive();
-    this.twitterCxReportStore.loadTwitterCxReport(companyId, undefined, undefined, undefined, forceLive).subscribe({
+    this.twitterCxReportStore.loadTwitterCxReport(companyId, undefined, undefined, undefined, false).subscribe({
       next: (res) => {
         if (res.message === 'stale_response') {
           this.loading.set(false);

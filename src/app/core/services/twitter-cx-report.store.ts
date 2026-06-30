@@ -65,7 +65,7 @@ export class TwitterCxReportStore {
     if (cached) return of(cached);
 
     const importBusy = this.importProcessing.isActive();
-    const lastGood = importBusy && !forceLive ? this.findLastGood(companyId, key) : undefined;
+    const lastGood = !forceLive ? this.findLastGood(companyId, key) : undefined;
 
     let obs = this.inflight.get(key);
     if (!obs) {
@@ -119,7 +119,9 @@ export class TwitterCxReportStore {
               subscriber.next(fresh);
             }
           },
-          error: (err) => subscriber.error(err),
+          error: () => {
+            /* keep showing lastGood */
+          },
           complete: () => subscriber.complete(),
         });
         return () => sub.unsubscribe();

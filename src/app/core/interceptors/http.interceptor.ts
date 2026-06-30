@@ -206,6 +206,12 @@ export function authInterceptor(
   return next(req);
 }
 
+function shouldSkipGlobalLoader(url: string): boolean {
+  if (isTwitterCxReportEndpoint(url)) return true;
+  const path = getRequestPath(url);
+  return /\/analysis\/(twitter-cx-report|sentiment|root-cause)/i.test(path);
+}
+
 export function loaderInterceptor(
   req: HttpRequest<unknown>,
   next: HttpHandlerFn
@@ -215,7 +221,7 @@ export function loaderInterceptor(
   const base = environment.apiUrl || '';
   const isBackendApi = req.url.startsWith('/api') || (base !== '' && req.url.startsWith(base));
 
-  if (!isBackendApi) {
+  if (!isBackendApi || shouldSkipGlobalLoader(req.url)) {
     return next(req);
   }
 
