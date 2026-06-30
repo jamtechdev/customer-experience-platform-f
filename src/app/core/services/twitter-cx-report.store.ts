@@ -104,7 +104,10 @@ export class TwitterCxReportStore {
             (res.message === 'timeout' ||
               res.message === 'snapshot_still_building' ||
               res.message === 'http_504' ||
-              res.message === 'http_502')
+              res.message === 'http_502' ||
+              res.message === 'http_503' ||
+              res.message === 'http_0' ||
+              res.message === 'network')
           ) {
             return fallback;
           }

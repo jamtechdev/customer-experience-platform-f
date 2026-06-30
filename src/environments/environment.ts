@@ -24,7 +24,7 @@ export const environment = {
   apiUrl: getEnv('NG_APP_API_URL', 'https://api.sentimenter.ai/api'),
   apiVersion: getEnv('NG_APP_API_VERSION', 'v1'),
   apiTimeout: getEnvNumber('NG_APP_API_TIMEOUT', 30000),
-  cxReportTimeout: getEnvNumber('NG_APP_CX_REPORT_TIMEOUT', 120000),
+  cxReportTimeout: getEnvNumber('NG_APP_CX_REPORT_TIMEOUT', 180000),
 
   auth: {
     tokenKey: getEnv('NG_APP_TOKEN_KEY', 'sentimenter_token'),

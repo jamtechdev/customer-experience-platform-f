@@ -16,7 +16,7 @@ export function twitterCxReportFailureMessage(apiMessage?: string): string {
     return 'The report build did not finish cleanly. Retry after import processing completes, or rebuild it from Import history.';
   }
   if (apiMessage === 'timeout') {
-    return 'Imported CSV data is still loading from the database. Please wait a moment and click Refresh — no new AI analysis will run.';
+    return 'The report is still being read from your imported CSV. Click Refresh in a moment — your data is safe in the database.';
   }
   if (apiMessage === 'http_503') {
     return 'Import is still processing. Previous report data will appear when ready, or retry in a moment.';
@@ -118,6 +118,7 @@ export function emptyTwitterCxReportDto(): TwitterCxReportDto {
 export function shouldSuppressCxReportError(apiMessage?: string, importProcessing?: boolean): boolean {
   if (apiMessage === 'stale_response' || apiMessage === 'import_processing') return true;
   if (apiMessage === 'snapshot_still_building') return true;
+  if (apiMessage === 'http_0' || apiMessage === 'network') return true;
   if (importProcessing) return true;
   // CX report pages show an empty state — never flash error toasts for transient server errors.
   if (apiMessage === 'http_503' || apiMessage === 'http_502' || apiMessage === 'http_504') return true;

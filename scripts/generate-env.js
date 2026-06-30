@@ -35,29 +35,59 @@ function ensureDir(dirPath) {
 
 const frontendRoot = path.resolve(__dirname, '..');
 const frontendEnvPath = path.resolve(frontendRoot, '.env');
+const frontendProductionEnvPath = path.resolve(frontendRoot, '.env.production');
 const backendEnvPath = path.resolve(frontendRoot, '..', 'sentimenter', '.env');
 const outFile = path.resolve(frontendRoot, 'src', 'assets', 'env.js');
 
 const frontendEnv = parseDotEnv(frontendEnvPath);
+const frontendProductionEnv = parseDotEnv(frontendProductionEnvPath);
 const backendEnv = parseDotEnv(backendEnvPath);
 
 const nodeEnv =
-  frontendEnv.NODE_ENV ||
   process.env.NODE_ENV ||
+  frontendProductionEnv.NODE_ENV ||
+  frontendEnv.NODE_ENV ||
   backendEnv.NODE_ENV ||
   '';
-const ngAppProduction =
-  frontendEnv.NG_APP_PRODUCTION ||
-  (nodeEnv === 'production' ? 'true' : '');
+const isProductionBuild =
+  process.argv.includes('--production') ||
+  nodeEnv === 'production' ||
+  process.env.NG_APP_PRODUCTION === 'true' ||
+  frontendProductionEnv.NG_APP_PRODUCTION === 'true' ||
+  (process.argv.includes('build') && !process.argv.some((a) => /configuration=development/i.test(a)));
 
-// Priority: frontend .env NG_APP_API_URL -> backend .env API_URL -> default.
-const frontendApiUrl = frontendEnv.NG_APP_API_URL || '';
-const apiUrl = frontendApiUrl || backendEnv.API_URL || '';
+const PRODUCTION_API_DEFAULT = 'https://api.sentimenter.ai/api';
+
+const ngAppProduction =
+  frontendProductionEnv.NG_APP_PRODUCTION ||
+  (isProductionBuild ? 'true' : '') ||
+  frontendEnv.NG_APP_PRODUCTION ||
+  process.env.NG_APP_PRODUCTION ||
+  'false';
+
+function isRelativeDevApiUrl(url) {
+  if (!url) return true;
+  const trimmed = String(url).trim();
+  return trimmed === '/api' || trimmed.startsWith('/api/');
+}
+
+// Priority: .env.production → absolute API URL → backend .env → production default.
+const envForApi = isProductionBuild
+  ? { ...frontendEnv, ...frontendProductionEnv }
+  : frontendEnv;
+let frontendApiUrl = envForApi.NG_APP_API_URL || '';
+if (isProductionBuild && isRelativeDevApiUrl(frontendApiUrl)) {
+  frontendApiUrl =
+    frontendProductionEnv.NG_APP_API_URL ||
+    backendEnv.API_URL ||
+    PRODUCTION_API_DEFAULT;
+}
+const apiUrl = frontendApiUrl || '';
 const apiBase =
   apiUrl && apiUrl.endsWith('/api') ? apiUrl.replace(/\/api$/, '/api') : apiUrl ? `${apiUrl.replace(/\/$/, '')}/api` : '';
 
-// Fallback to deployed API if env is missing.
-const finalApiBase = apiBase || 'https://api.sentimenter.ai/api';
+// Production must call the API host directly — `/api` only works when nginx proxies on the same origin.
+const finalApiBase = apiBase || (isProductionBuild ? PRODUCTION_API_DEFAULT : '/api');
 
 ensureDir(path.dirname(outFile));
 
