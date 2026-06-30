@@ -501,14 +501,14 @@ export class ArcelikTwitterCxReport implements OnInit, OnDestroy {
     this.analysisService.getFeedbackByIds(companyId, this.drilldownIds, {
       page,
       limit: this.drilldownPageSize,
-      includeIrrelevant: false,
-      drilldownTitle: this.drilldownTitle(),
+      includeIrrelevant: true,
+      groupRetweets: false,
     }).subscribe({
       next: (res) => {
         this.drilldownLoading.set(false);
         if (res.success && Array.isArray(res.data?.list)) {
           this.drilldownRows.set(res.data.list);
-          this.drilldownTotal.set(drilldownModalTotal(this.drilldownIds));
+          this.drilldownTotal.set(res.data?.total ?? drilldownModalTotal(this.drilldownIds));
         } else {
           this.snackBar.open(res.message || 'Could not load related records', 'Close', { duration: 5000 });
           this.closeDrilldown();

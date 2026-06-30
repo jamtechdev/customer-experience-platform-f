@@ -147,7 +147,7 @@ export class ProcessEnhancement implements OnInit, OnDestroy {
               ? p.referenceFeedbackIds
               : [];
           const mergedIds = rcIds.length >= linkedFeedbackIds.length ? rcIds : linkedFeedbackIds;
-          const linkedCount = typeof p.linkedCount === 'number' ? p.linkedCount : mergedIds.length;
+          const linkedCount = mergedIds.length;
           return {
             text: p.text,
             referenceFeedbackIds: mergedIds,
@@ -172,10 +172,10 @@ export class ProcessEnhancement implements OnInit, OnDestroy {
   openReferences(row: ProcessImprovementRow): void {
     const ids = resolveDrilldownIds(row.linkedFeedbackIds, row.referenceFeedbackIds);
     if (!ids.length) return;
-    this.drilldownTitle.set(row.text);
+    this.drilldownTitle.set(this.displayText(row));
     this.drilldownOpen.set(true);
     this.drilldownIds = ids;
-    this.drilldownTotal.set(effectiveLinkedCount(row.linkedCount, row.linkedFeedbackIds, row.referenceFeedbackIds));
+    this.drilldownTotal.set(this.referenceCount(row));
     this.loadDrilldownPage(1);
   }
 
@@ -198,7 +198,7 @@ export class ProcessEnhancement implements OnInit, OnDestroy {
       page,
       limit: this.drilldownPageSize,
       includeIrrelevant: true,
-      drilldownTitle: this.drilldownTitle(),
+      groupRetweets: false,
     }).subscribe({
       next: (res) => {
         this.drilldownLoading.set(false);

@@ -214,16 +214,8 @@ export class JourneyMap implements OnInit, OnDestroy {
           this.toIds(r?.dissatisfactionReferenceIds),
           heat?.negative
         );
-        const satisfactionCount = Math.max(
-          Number(r?.satisfactionCount ?? 0),
-          satIds.length,
-          Number((heatmap.find((h: any) => h?.stage === stage) as { positiveCount?: number })?.positiveCount ?? 0)
-        );
-        const dissatisfactionCount = Math.max(
-          Number(r?.dissatisfactionCount ?? 0),
-          disIds.length,
-          Number((heatmap.find((h: any) => h?.stage === stage) as { negativeCount?: number })?.negativeCount ?? 0)
-        );
+        const satisfactionCount = satIds.length;
+        const dissatisfactionCount = disIds.length;
         return {
           id: idx + 1,
           name: stage,
@@ -281,7 +273,7 @@ export class JourneyMap implements OnInit, OnDestroy {
     this.drilldownTitle.set(`${stageName} · ${polarity}`);
     this.drilldownOpen.set(true);
     this.drilldownIds = unique;
-    this.drilldownTotal.set(Math.max(displayTotal, unique.length));
+    this.drilldownTotal.set(drilldownModalTotal(unique));
     this.loadDrilldownPage(1);
   }
 
@@ -325,6 +317,7 @@ export class JourneyMap implements OnInit, OnDestroy {
       page,
       limit: this.drilldownPageSize,
       includeIrrelevant: true,
+      groupRetweets: false,
     }).subscribe({
       next: (res) => {
         this.drilldownLoading.set(false);

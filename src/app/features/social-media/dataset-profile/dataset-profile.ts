@@ -175,11 +175,12 @@ export class DatasetProfile implements OnInit, OnDestroy {
       page,
       limit: this.drilldownPageSize,
       includeIrrelevant: true,
+      groupRetweets: false,
     }).subscribe({
       next: (res) => {
         this.drilldownLoading.set(false);
         this.drilldownRows.set(res?.data?.list || []);
-        this.drilldownTotal.set(drilldownModalTotal(this.drilldownIds));
+        this.drilldownTotal.set(res?.data?.total ?? drilldownModalTotal(this.drilldownIds));
       },
       error: () => {
         this.drilldownLoading.set(false);

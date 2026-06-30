@@ -196,10 +196,7 @@ export class ActionPlans implements OnInit, OnDestroy {
             ? x.referenceFeedbackIds
             : [];
         const mergedIds = rcIds.length >= linkedFeedbackIds.length ? rcIds : linkedFeedbackIds;
-        const linkedCount =
-          typeof x.linkedCount === 'number' && x.linkedCount > mergedIds.length
-            ? x.linkedCount
-            : mergedIds.length;
+        const linkedCount = mergedIds.length;
         return {
           priority: x.priority ?? '',
           action: x.action ?? '',
@@ -247,10 +244,10 @@ export class ActionPlans implements OnInit, OnDestroy {
   openReferences(row: { action: string; referenceFeedbackIds?: number[]; linkedFeedbackIds?: number[]; linkedCount?: number }): void {
     const ids = resolveDrilldownIds(row.linkedFeedbackIds, row.referenceFeedbackIds);
     if (!ids.length) return;
-    this.drilldownTitle.set(row.action);
+    this.drilldownTitle.set(this.displayAction(row));
     this.drilldownOpen.set(true);
     this.drilldownIds = ids;
-    this.drilldownTotal.set(effectiveLinkedCount(row.linkedCount, row.linkedFeedbackIds, row.referenceFeedbackIds));
+    this.drilldownTotal.set(this.referenceCount(row));
     this.loadDrilldownPage(1);
   }
 
@@ -274,7 +271,7 @@ export class ActionPlans implements OnInit, OnDestroy {
       page,
       limit: this.drilldownPageSize,
       includeIrrelevant: true,
-      drilldownTitle: this.drilldownTitle(),
+      groupRetweets: false,
     }).subscribe({
       next: (res) => {
         this.drilldownLoading.set(false);

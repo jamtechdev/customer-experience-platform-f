@@ -285,6 +285,7 @@ export class JourneyHeatmap implements OnInit, OnDestroy {
       page,
       limit: this.drilldownPageSize,
       includeIrrelevant: true,
+      groupRetweets: false,
     }).subscribe({
       next: (res) => {
         this.drilldownLoading.set(false);
@@ -307,12 +308,9 @@ export class JourneyHeatmap implements OnInit, OnDestroy {
     const posPct = Number(r['positive'] ?? 0);
     const neuPct = Number(r['neutral'] ?? 0);
     const negPct = Number(r['negative'] ?? 0);
-    const positiveCount =
-      Number(r['positiveCount'] ?? 0) || posIds.length || (total ? Math.round((posPct / 100) * total) : 0);
-    const neutralCount =
-      Number(r['neutralCount'] ?? 0) || neuIds.length || (total ? Math.round((neuPct / 100) * total) : 0);
-    const negativeCount =
-      Number(r['negativeCount'] ?? 0) || negIds.length || (total ? Math.round((negPct / 100) * total) : 0);
+    const positiveCount = posIds.length > 0 ? posIds.length : Number(r['positiveCount'] ?? 0);
+    const neutralCount = neuIds.length > 0 ? neuIds.length : Number(r['neutralCount'] ?? 0);
+    const negativeCount = negIds.length > 0 ? negIds.length : Number(r['negativeCount'] ?? 0);
     return {
       stageName: String(r['stage'] ?? 'Unknown'),
       satisfactionScore: posPct / 100,
