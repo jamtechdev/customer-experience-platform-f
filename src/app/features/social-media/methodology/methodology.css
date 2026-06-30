@@ -1,77 +1,21 @@
-.methodology-page {
-  width: 100%;
-  padding: 0;
-}
+@import '../../cx-shared/cx-insights-page.css';
 
-.methodology-card {
-  width: 100%;
-  border: 1px solid #e5e7eb;
-  border-radius: 16px;
-  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.05);
-}
-
-.methodology-card .mat-mdc-card-header {
-  padding: 20px 24px 8px;
-}
-
-.methodology-card .mat-mdc-card-content {
-  padding: 12px 24px 24px;
-}
-
-.loading {
-  display: flex;
-  justify-content: center;
-  padding: 2rem;
-}
-
-.description {
-  margin-bottom: 1.5rem;
-}
-
-.methodology-card h3 {
-  margin-top: 1.5rem;
-  margin-bottom: 0.5rem;
-}
-
-.steps {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-
-.step-card {
-  margin-bottom: 0.5rem;
-}
-
-.step-card .metrics ul,
-.list {
+.methodology-page .narrative-text {
   margin: 0;
-  padding-left: 1.25rem;
-  color: #1f2937;
   line-height: 1.65;
-  max-width: 1100px;
+  color: #334155;
+  font-size: 0.94rem;
 }
 
-.list li {
-  margin-bottom: 10px;
-}
-
-.implementation {
-  margin-top: 0.5rem;
-  font-size: 0.9rem;
-  color: var(--mat-sys-on-surface-variant, #666);
-}
-
-@media (max-width: 600px) {
-  .methodology-page {
-    padding: 0;
-  }
-
-  .methodology-card .mat-mdc-card-header {
-    padding: 16px 16px 6px;
-  }
-
-  .methodology-card .mat-mdc-card-content {
-    padding: 10px 16px 18px;
-  }
+.methodology-page .cohort-badge {
+  margin-left: auto;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: #fff;
+  border: 1px solid #86efac;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #047857;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
 }

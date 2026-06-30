@@ -4,6 +4,7 @@ import { Subscription } from 'rxjs';
 import { CommonModule } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
+import { MatIconModule } from '@angular/material/icon';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { TwitterCxReportStore } from '../../../core/services/twitter-cx-report.store';
 import { AnalysisService } from '../../../core/services/analysis.service';
@@ -34,6 +35,7 @@ export interface ProcessImprovementRow {
     CommonModule,
     MatCardModule,
     MatButtonModule,
+    MatIconModule,
     MatSnackBarModule,
     OllamaLoader,
     RelatedFeedbackModal
@@ -71,9 +73,16 @@ export class ProcessEnhancement implements OnInit, OnDestroy {
     this.refreshSub?.unsubscribe();
   }
 
-  loadProcessData(): void {
+  loadProcessData(refreshFromServer = false): void {
     const companyId = resolveAppCompanyId(this.authService.currentUser());
-    if (!this.twitterCxReportStore.hasCachedReport(companyId)) {
+    if (refreshFromServer) {
+      this.twitterCxReportStore.clearCachedReport(companyId);
+    }
+    const cached = !refreshFromServer ? this.twitterCxReportStore.getCachedReport(companyId) : undefined;
+    if (cached?.success && cached.data) {
+      this.applyProcessReport(cached.data);
+      this.loading.set(false);
+    } else if (!this.twitterCxReportStore.hasCachedReport(companyId)) {
       this.loading.set(true);
     }
     this.twitterCxReportStore
@@ -85,51 +94,16 @@ export class ProcessEnhancement implements OnInit, OnDestroy {
             return;
           }
           if (!res.success) {
-            this.processImprovements.set([]);
-            this.managementTakeaways.set([]);
+            if (!cached?.success) {
+              this.processImprovements.set([]);
+              this.managementTakeaways.set([]);
+            }
             notifyCxReportLoadFailure(this.snackBar, res.message, this.importProcessing.isActive(), 'Close');
             this.loading.set(false);
             return;
           }
-          if (res.success && res.data) {
-            const rootCauses = res.data.rootCauses ?? [];
-            this.rootCauseFeedbackByIndex = rootCauses.map((rc) =>
-              Array.isArray(rc.feedbackIds) ? rc.feedbackIds.filter((id) => Number.isFinite(Number(id)) && Number(id) > 0) : []
-            );
-            const items = res.data.processImprovementItems;
-            if (items?.length) {
-              this.processImprovements.set(
-                items.map((p, index) => {
-                  const rcIds = this.rootCauseFeedbackByIndex[index] ?? [];
-                  const linkedFeedbackIds = Array.isArray((p as { linkedFeedbackIds?: number[] }).linkedFeedbackIds)
-                    ? (p as { linkedFeedbackIds?: number[] }).linkedFeedbackIds!
-                    : Array.isArray(p.referenceFeedbackIds)
-                      ? p.referenceFeedbackIds
-                      : [];
-                  const mergedIds = rcIds.length >= linkedFeedbackIds.length ? rcIds : linkedFeedbackIds;
-                  const linkedCount =
-                    typeof (p as { linkedCount?: number }).linkedCount === 'number'
-                      ? (p as { linkedCount?: number }).linkedCount!
-                      : mergedIds.length;
-                  return {
-                    text: p.text,
-                    referenceFeedbackIds: mergedIds,
-                    linkedFeedbackIds: mergedIds,
-                    linkedCount,
-                  };
-                })
-              );
-            } else {
-              this.processImprovements.set(
-                (res.data.processImprovements ?? []).map((text) => ({
-                  text,
-                  referenceFeedbackIds: [],
-                  linkedFeedbackIds: [],
-                  linkedCount: 0,
-                }))
-              );
-            }
-            this.managementTakeaways.set(res.data.managementTakeaways ?? []);
+          if (res.data) {
+            this.applyProcessReport(res.data);
           } else {
             this.processImprovements.set([]);
             this.managementTakeaways.set([]);
@@ -137,12 +111,62 @@ export class ProcessEnhancement implements OnInit, OnDestroy {
           this.loading.set(false);
         },
         error: () => {
-          this.processImprovements.set([]);
-          this.managementTakeaways.set([]);
+          if (!cached?.success) {
+            this.processImprovements.set([]);
+            this.managementTakeaways.set([]);
+          }
           this.loading.set(false);
           notifyCxReportLoadFailure(this.snackBar, undefined, this.importProcessing.isActive(), 'Close');
         },
       });
+  }
+
+  private applyProcessReport(data: {
+    rootCauses?: Array<{ feedbackIds?: number[] }>;
+    processImprovementItems?: Array<{
+      text: string;
+      referenceFeedbackIds?: number[];
+      linkedFeedbackIds?: number[];
+      linkedCount?: number;
+    }>;
+    processImprovements?: string[];
+    managementTakeaways?: string[];
+  }): void {
+    const rootCauses = data.rootCauses ?? [];
+    this.rootCauseFeedbackByIndex = rootCauses.map((rc) =>
+      Array.isArray(rc.feedbackIds) ? rc.feedbackIds.filter((id) => Number.isFinite(Number(id)) && Number(id) > 0) : []
+    );
+    const items = data.processImprovementItems;
+    if (items?.length) {
+      this.processImprovements.set(
+        items.map((p, index) => {
+          const rcIds = this.rootCauseFeedbackByIndex[index] ?? [];
+          const linkedFeedbackIds = Array.isArray(p.linkedFeedbackIds)
+            ? p.linkedFeedbackIds
+            : Array.isArray(p.referenceFeedbackIds)
+              ? p.referenceFeedbackIds
+              : [];
+          const mergedIds = rcIds.length >= linkedFeedbackIds.length ? rcIds : linkedFeedbackIds;
+          const linkedCount = typeof p.linkedCount === 'number' ? p.linkedCount : mergedIds.length;
+          return {
+            text: p.text,
+            referenceFeedbackIds: mergedIds,
+            linkedFeedbackIds: mergedIds,
+            linkedCount,
+          };
+        })
+      );
+    } else {
+      this.processImprovements.set(
+        (data.processImprovements ?? []).map((text) => ({
+          text,
+          referenceFeedbackIds: [],
+          linkedFeedbackIds: [],
+          linkedCount: 0,
+        }))
+      );
+    }
+    this.managementTakeaways.set(data.managementTakeaways ?? []);
   }
 
   openReferences(row: ProcessImprovementRow): void {

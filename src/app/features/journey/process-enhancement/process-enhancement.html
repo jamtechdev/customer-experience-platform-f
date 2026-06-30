@@ -1,57 +1,81 @@
-<div class="process-enhancement-container">
+<div class="cx-page process-enhancement-container">
   <app-page-header-card
+    badge="CX insights"
     title="Process enhancement"
     subtitle="AI-written process improvements and management takeaways from your CX report"
     icon="auto_fix_high">
+    <button
+      actions
+      mat-raised-button
+      color="primary"
+      type="button"
+      class="cx-action-btn"
+      (click)="loadProcessData(true)"
+      [disabled]="loading()">
+      <mat-icon>{{ loading() ? 'hourglass_top' : 'refresh' }}</mat-icon>
+      {{ loading() ? 'Loading…' : 'Refresh' }}
+    </button>
   </app-page-header-card>
 
-  <div *ngIf="loading()" class="loading-container">
-    <app-ollama-loader
-      title="Loading process improvements"
-      subtitle="Reading saved recommendations and management takeaways from the AI report">
-    </app-ollama-loader>
-  </div>
+  @if (loading()) {
+    <div class="loading-container">
+      <app-ollama-loader
+        title="Loading process improvements"
+        subtitle="Reading saved recommendations and management takeaways from the AI report">
+      </app-ollama-loader>
+    </div>
+  } @else {
+    <mat-card class="cx-section-card section-card">
+      <mat-card-header>
+        <mat-card-title>Process improvements</mat-card-title>
+        <mat-card-subtitle>Recommendations grounded in brand-relevant customer feedback</mat-card-subtitle>
+      </mat-card-header>
+      <mat-card-content>
+        @if (processImprovements().length > 0) {
+          <ul class="list">
+            @for (row of processImprovements(); track $index) {
+              <li class="improvement-row">
+                <span>{{ displayText(row) }}</span>
+                @if (referenceCount(row) > 0) {
+                  <button mat-stroked-button type="button" class="ref-btn cx-action-btn" (click)="openReferences(row)">
+                    <mat-icon>forum</mat-icon>
+                    View references ({{ referenceCount(row) }})
+                  </button>
+                }
+              </li>
+            }
+          </ul>
+        } @else {
+          <div class="cx-empty-state">
+            <mat-icon>auto_fix_high</mat-icon>
+            <p class="empty-hint">No process improvement lines for this scope. Import CSV data and refresh the CX report.</p>
+            <button mat-raised-button color="primary" type="button" class="cx-action-btn" (click)="loadProcessData(true)">
+              <mat-icon>refresh</mat-icon>
+              Refresh
+            </button>
+          </div>
+        }
+      </mat-card-content>
+    </mat-card>
 
-  <div *ngIf="!loading()">
-  <mat-card class="section-card">
-    <mat-card-header>
-      <mat-card-title>Process improvements</mat-card-title>
-      <mat-card-subtitle>AI-written recommendations grounded in brand-relevant feedback</mat-card-subtitle>
-    </mat-card-header>
-    <mat-card-content>
-      <ul class="list" *ngIf="processImprovements().length > 0">
-        <li *ngFor="let row of processImprovements()" class="improvement-row">
-          <span>{{ displayText(row) }}</span>
-          <button
-            *ngIf="referenceCount(row) > 0"
-            mat-stroked-button
-            type="button"
-            class="ref-btn"
-            (click)="openReferences(row)">
-            View references ({{ referenceCount(row) }})
-          </button>
-        </li>
-      </ul>
-      <p *ngIf="processImprovements().length === 0" class="muted empty-hint">
-        No process improvement lines for this date range. Widen the filter, re-import feedback, or run analysis again so the report can populate this section.
-      </p>
-    </mat-card-content>
-  </mat-card>
-
-  <mat-card class="section-card">
-    <mat-card-header>
-      <mat-card-title>What management should take away</mat-card-title>
-    </mat-card-header>
-    <mat-card-content>
-      <ul class="list" *ngIf="managementTakeaways().length > 0">
-        <li *ngFor="let line of managementTakeaways()">{{ line }}</li>
-      </ul>
-      <p *ngIf="managementTakeaways().length === 0" class="muted empty-hint">
-        No management takeaways for this date range yet. Once the Twitter CX report returns data, bullets will appear here.
-      </p>
-    </mat-card-content>
-  </mat-card>
-  </div>
+    <mat-card class="cx-section-card section-card">
+      <mat-card-header>
+        <mat-card-title>What management should take away</mat-card-title>
+        <mat-card-subtitle>Strategic bullets for leadership reviews</mat-card-subtitle>
+      </mat-card-header>
+      <mat-card-content>
+        @if (managementTakeaways().length > 0) {
+          <ul class="cx-bullet-list takeaway-list">
+            @for (line of managementTakeaways(); track $index) {
+              <li>{{ line }}</li>
+            }
+          </ul>
+        } @else {
+          <p class="muted empty-hint">No management takeaways for this date range yet.</p>
+        }
+      </mat-card-content>
+    </mat-card>
+  }
 
   <app-related-feedback-modal
     [open]="drilldownOpen()"

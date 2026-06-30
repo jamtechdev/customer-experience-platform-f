@@ -194,24 +194,32 @@ export class RootCauseAnalysis implements OnInit, OnDestroy {
             : null;
 
         if (response.success && rawList.length >= 0) {
-          const mapped = rawList.map((item: any) => ({
+          const mapped = rawList.map((item: any) => {
+            const feedbackIds = Array.isArray(item.feedbackIds)
+              ? (item.feedbackIds as unknown[])
+                  .map((x) => Number(x))
+                  .filter((n) => Number.isFinite(n) && n > 0)
+              : [];
+            const linkedCount = feedbackIds.length > 0
+              ? feedbackIds.length
+              : typeof item.frequency === 'number'
+                ? item.frequency
+                : 0;
+            return {
             id: Number(item.id) || 0,
             title: typeof item.title === 'string' ? item.title : '',
             category: typeof item.category === 'string' ? item.category : '',
             priority: typeof item.priority === 'string' ? item.priority : '',
             severity: typeof item.severity === 'number' ? item.severity : 0,
-            frequency: typeof item.frequency === 'number' ? item.frequency : 0,
+            frequency: linkedCount,
             description: typeof item.description === 'string' ? item.description : '',
-            feedbackIds: Array.isArray(item.feedbackIds)
-              ? (item.feedbackIds as unknown[])
-                  .map((x) => Number(x))
-                  .filter((n) => Number.isFinite(n) && n > 0)
-              : [],
+            feedbackIds,
             structuredInsights:
               item.structuredInsights && typeof item.structuredInsights === 'object'
                 ? item.structuredInsights
                 : null,
-          }));
+          };
+          });
           this.rootCauses.set(mapped);
           this.totalItems = mapped.length;
           this.coverage.set(this.resolveCoverage(apiCoverage, mapped, sentimentData));
@@ -280,12 +288,13 @@ export class RootCauseAnalysis implements OnInit, OnDestroy {
   }
 
   viewCauseRecords(cause: RootCause): void {
+    const ids = cause.feedbackIds || [];
     this.openRelatedRecords({
       id: cause.id,
       cause: this.painPointTitle(cause),
-      count: cause.frequency || 0,
+      count: ids.length || cause.frequency || 0,
       interpretation: this.painPointSummary(cause),
-      feedbackIds: cause.feedbackIds || [],
+      feedbackIds: ids,
     });
   }
 
@@ -316,7 +325,7 @@ export class RootCauseAnalysis implements OnInit, OnDestroy {
       .map((c) => ({
         id: c.id,
         cause: this.painPointTitle(c),
-        count: c.frequency || 0,
+        count: c.feedbackIds?.length ? c.feedbackIds.length : c.frequency || 0,
         interpretation: this.painPointFullSummary(c),
         feedbackIds: c.feedbackIds?.length ? c.feedbackIds : [],
         isUncategorized: this.isUncategorizedCause(c),
@@ -341,13 +350,8 @@ export class RootCauseAnalysis implements OnInit, OnDestroy {
         badge: 'uncategorized',
       };
     } else if (uncategorized) {
-      const count =
-        stats && stats.uncategorized > 0
-          ? stats.uncategorized
-          : uncategorizedIds.length > 0
-            ? uncategorizedIds.length
-            : uncategorized.count;
       const ids = uncategorizedIds.length > 0 ? uncategorizedIds : uncategorized.feedbackIds;
+      const count = ids.length > 0 ? ids.length : stats?.uncategorized ?? uncategorized.count;
       uncategorized = {
         ...uncategorized,
         count,
@@ -524,7 +528,8 @@ export class RootCauseAnalysis implements OnInit, OnDestroy {
       rootCauseId: state.row.id,
       page,
       limit: this.drilldownPageSize,
-      includeIrrelevant: false,
+      includeIrrelevant: true,
+      groupRetweets: false,
     }).subscribe({
       next: (res) => {
         this.drilldownLoading.set(false);

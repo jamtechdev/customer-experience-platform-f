@@ -1,7 +1,7 @@
+@import '../../cx-shared/cx-insights-page.css';
+
 .dataset-profile-container {
-  padding: 20px 24px 48px;
   max-width: 1100px;
-  margin: 0 auto;
 }
 
 .page-header {

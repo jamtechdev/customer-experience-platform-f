@@ -1,38 +1,19 @@
-.process-enhancement-container {
-  padding: 24px;
-  max-width: 1280px;
-  margin: 0 auto;
-  width: 100%;
-}
+@import '../../cx-shared/cx-insights-page.css';
 
-.loading-container {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 1rem;
-  padding: 2rem;
+.process-enhancement-container {
+  max-width: 1280px;
 }
 
 .empty-hint {
-  margin: 0.5rem 0 0 0;
+  margin: 0;
   max-width: 42rem;
   line-height: 1.45;
 }
 
-.section-card {
-  border: 1px solid #e5e7eb;
-  border-radius: 18px;
-  box-shadow: 0 10px 28px rgba(15, 23, 42, 0.05);
-  overflow: visible;
-  margin-bottom: 16px;
-}
-
 .list {
   margin: 0;
-  color: #1f2937;
-  line-height: 1.6;
-  list-style: none;
   padding: 0;
+  list-style: none;
 }
 
 .improvement-row {
@@ -45,6 +26,8 @@
   border: 1px solid #e5e7eb;
   border-radius: 14px;
   background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+  line-height: 1.55;
+  color: #1e293b;
 }
 
 .ref-btn {
@@ -53,11 +36,15 @@
   font-weight: 600;
 }
 
-@media (max-width: 768px) {
-  .process-enhancement-container {
-    padding: 16px;
-  }
+.takeaway-list {
+  margin-top: 4px;
+}
 
+.muted {
+  color: #64748b;
+}
+
+@media (max-width: 768px) {
   .improvement-row {
     grid-template-columns: 1fr;
   }

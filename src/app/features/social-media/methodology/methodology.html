@@ -1,18 +1,154 @@
-<div class="methodology-page">
-  <mat-card class="methodology-card">
-    <mat-card-header>
-      <mat-card-title>{{ t('nav.methodology') }}</mat-card-title>
-    </mat-card-header>
-    <mat-card-content>
-      <div *ngIf="loading()" class="loading-container">
-        <app-ollama-loader
-          [title]="t('socialMediaPage.methodologyLoadingTitle')"
-          [subtitle]="t('socialMediaPage.methodologyLoadingSubtitle')">
-        </app-ollama-loader>
+<div class="cx-page methodology-page">
+  <app-page-header-card
+    badge="CX analytics"
+    [title]="t('nav.methodology')"
+    [subtitle]="reportSubtitle() || t('methodologyPage.subtitle')"
+    icon="science">
+    <button
+      actions
+      mat-raised-button
+      color="primary"
+      type="button"
+      class="cx-action-btn"
+      (click)="loadMethodology(true)"
+      [disabled]="loading()">
+      <mat-icon>{{ loading() ? 'hourglass_top' : 'refresh' }}</mat-icon>
+      {{ loading() ? t('app.loading') : t('app.refresh') }}
+    </button>
+  </app-page-header-card>
+
+  @if (loading()) {
+    <div class="loading-container">
+      <app-ollama-loader
+        [title]="t('socialMediaPage.methodologyLoadingTitle')"
+        [subtitle]="t('socialMediaPage.methodologyLoadingSubtitle')">
+      </app-ollama-loader>
+    </div>
+  } @else if (!hasContent()) {
+    <mat-card class="cx-section-card">
+      <mat-card-content>
+        <div class="cx-empty-state">
+          <mat-icon>info</mat-icon>
+          <p>{{ t('methodologyPage.empty') }}</p>
+          <button mat-raised-button color="primary" type="button" class="cx-action-btn" (click)="loadMethodology(true)">
+            <mat-icon>refresh</mat-icon>
+            {{ t('app.refresh') }}
+          </button>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  } @else {
+    @if (scopeLine()) {
+      <div class="cx-scope-banner">
+        <mat-icon>dataset</mat-icon>
+        <span>{{ scopeLine() }}</span>
+        @if (cohortTagsUsed()) {
+          <span class="cohort-badge">{{ t('methodologyPage.cohortMapped') }}</span>
+        }
       </div>
-      <ul *ngIf="!loading()" class="list">
-        <li *ngFor="let line of bullets()">{{ line }}</li>
-      </ul>
-    </mat-card-content>
-  </mat-card>
+    }
+
+    <div class="cx-kpi-row">
+      <article class="cx-kpi-card">
+        <mat-icon>forum</mat-icon>
+        <div>
+          <strong>{{ datasetTotal() | number }}</strong>
+          <span>{{ t('methodologyPage.kpiTotal') }}</span>
+        </div>
+      </article>
+      <article class="cx-kpi-card">
+        <mat-icon>sentiment_satisfied</mat-icon>
+        <div>
+          <strong>{{ socialNpsProxy() }}</strong>
+          <span>{{ t('methodologyPage.kpiNps') }}</span>
+        </div>
+      </article>
+      <article class="cx-kpi-card">
+        <mat-icon>groups</mat-icon>
+        <div>
+          <strong>{{ primaryCohort() | number }}</strong>
+          <span>{{ t('methodologyPage.kpiCohort') }}</span>
+        </div>
+      </article>
+    </div>
+
+    <mat-card class="cx-section-card">
+      <mat-card-header>
+        <mat-card-title>{{ t('methodologyPage.scopeTitle') }}</mat-card-title>
+        <mat-card-subtitle>{{ t('methodologyPage.scopeSubtitle') }}</mat-card-subtitle>
+      </mat-card-header>
+      <mat-card-content>
+        <ul class="cx-bullet-list">
+          @for (line of scopeBullets(); track $index) {
+            <li>{{ line }}</li>
+          }
+        </ul>
+      </mat-card-content>
+    </mat-card>
+
+    @if (section4Intro() || section4Bullets().length) {
+      <mat-card class="cx-section-card">
+        <mat-card-header>
+          <mat-card-title>{{ t('methodologyPage.patternsTitle') }}</mat-card-title>
+          @if (section4Intro()) {
+            <mat-card-subtitle>{{ section4Intro() }}</mat-card-subtitle>
+          }
+        </mat-card-header>
+        <mat-card-content>
+          @if (section4Bullets().length) {
+            <ul class="cx-bullet-list">
+              @for (line of section4Bullets(); track $index) {
+                <li>{{ line }}</li>
+              }
+            </ul>
+          }
+        </mat-card-content>
+      </mat-card>
+    }
+
+    @if (npsInterpretation()) {
+      <mat-card class="cx-section-card">
+        <mat-card-header>
+          <mat-card-title>{{ t('methodologyPage.npsTitle') }}</mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <p class="narrative-text">{{ npsInterpretation() }}</p>
+        </mat-card-content>
+      </mat-card>
+    }
+
+    @if (executiveBullets().length) {
+      <mat-card class="cx-section-card">
+        <mat-card-header>
+          <mat-card-title>{{ t('methodologyPage.executiveTitle') }}</mat-card-title>
+          <mat-card-subtitle>{{ t('methodologyPage.executiveSubtitle') }}</mat-card-subtitle>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="cx-bullet-grid">
+            @for (line of executiveBullets(); track $index) {
+              <article class="cx-bullet-card">
+                <mat-icon>lightbulb</mat-icon>
+                <span>{{ line }}</span>
+              </article>
+            }
+          </div>
+        </mat-card-content>
+      </mat-card>
+    }
+
+    @if (managementTakeaways().length) {
+      <mat-card class="cx-section-card">
+        <mat-card-header>
+          <mat-card-title>{{ t('methodologyPage.managementTitle') }}</mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <ul class="cx-bullet-list">
+            @for (line of managementTakeaways(); track $index) {
+              <li>{{ line }}</li>
+            }
+          </ul>
+        </mat-card-content>
+      </mat-card>
+    }
+  }
 </div>

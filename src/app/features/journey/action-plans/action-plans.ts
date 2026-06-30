@@ -78,6 +78,7 @@ export class ActionPlans implements OnInit, OnDestroy {
     return total === 0 ? 0 : Math.ceil(total / this.pageSize);
   });
   displayedColumns: string[] = ['title', 'priority', 'status', 'dueDate', 'actions'];
+  readonly displayedPlanColumns = ['priority', 'action', 'owner', 'impact', 'horizon', 'sources'];
   reportPlanRows = signal<
     Array<{
       priority: string;
@@ -135,9 +136,12 @@ export class ActionPlans implements OnInit, OnDestroy {
     this.refreshSub?.unsubscribe();
   }
 
-  loadActionPlans(): void {
+  loadActionPlans(refreshFromServer = false): void {
     const companyId = resolveAppCompanyId(this.authService.currentUser());
-    const cached = this.twitterCxReportStore.getCachedReport(companyId);
+    if (refreshFromServer) {
+      this.twitterCxReportStore.clearCachedReport(companyId);
+    }
+    const cached = !refreshFromServer ? this.twitterCxReportStore.getCachedReport(companyId) : undefined;
     if (cached?.success && Array.isArray(cached.data?.actionPlan) && cached.data.actionPlan.length > 0) {
       this.applyActionPlanReport(cached);
       this.loading.set(false);
@@ -227,6 +231,17 @@ export class ActionPlans implements OnInit, OnDestroy {
   setActionPriorityFilter(value: 'all' | 'p1' | 'p2' | 'p3'): void {
     this.actionPriorityFilter.set(value);
     this.page.set(1);
+  }
+
+  countByPriority(priority: 'p1' | 'p2' | 'p3'): number {
+    const rows = this.reportPlanRows();
+    if (priority === 'p3') {
+      return rows.filter((row) => {
+        const p = (row.priority || '').trim().toLowerCase();
+        return p !== 'p1' && p !== 'p2';
+      }).length;
+    }
+    return rows.filter((row) => (row.priority || '').trim().toLowerCase() === priority).length;
   }
 
   openReferences(row: { action: string; referenceFeedbackIds?: number[]; linkedFeedbackIds?: number[]; linkedCount?: number }): void {

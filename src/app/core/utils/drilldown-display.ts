@@ -4,17 +4,16 @@ export function drilldownIdCount(linked?: number[], reference?: number[]): numbe
   return normalizeDrilldownIds(ids).length;
 }
 
-/** Prefer explicit linkedCount from API when ID arrays were capped in legacy snapshots. */
+/** Count shown in UI must match drilldown ID lists; legacy linkedCount is fallback only. */
 export function effectiveLinkedCount(
   linkedCount?: number,
   linked?: number[],
   reference?: number[]
 ): number {
   const idCount = drilldownIdCount(linked, reference);
-  if (typeof linkedCount === 'number' && linkedCount > 0) {
-    return Math.max(linkedCount, idCount);
-  }
-  return idCount;
+  if (idCount > 0) return idCount;
+  if (typeof linkedCount === 'number' && linkedCount > 0) return linkedCount;
+  return 0;
 }
 
 export function resolveDrilldownIds(

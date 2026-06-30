@@ -727,6 +727,21 @@
     "sentimentLoadFailed": "Failed to load sentiment distribution",
     "volumeLoadFailed": "Failed to load volume data"
   },
+  "methodologyPage": {
+    "subtitle": "How your CSV data is scoped, filtered, and turned into CX insights across the platform",
+    "empty": "No scope and methodology content yet. Import CSV data and refresh the CX report.",
+    "cohortMapped": "Cohort flags mapped",
+    "kpiTotal": "Rows in analysis scope",
+    "kpiNps": "Social NPS proxy",
+    "kpiCohort": "Primary cohort size",
+    "scopeTitle": "Scope & methodology",
+    "scopeSubtitle": "What is included in this report and how cohorts are defined",
+    "patternsTitle": "Sentiment patterns & recurring phrases",
+    "npsTitle": "NPS proxy interpretation",
+    "executiveTitle": "Executive summary",
+    "executiveSubtitle": "Headline findings from your imported feedback",
+    "managementTitle": "Management takeaways"
+  },
   "notifications": {
     "title": "Notifications",
     "markAsRead": "Mark as Read",
