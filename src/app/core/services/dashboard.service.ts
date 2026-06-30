@@ -152,10 +152,12 @@ export class DashboardService {
   getStats(
     companyId?: number,
     startDate?: Date,
-    endDate?: Date
+    endDate?: Date,
+    lite: boolean = true
   ): Observable<ApiResponse<DashboardStats>> {
     let params = new HttpParams();
     params = params.set('_t', Date.now().toString());
+    if (lite) params = params.set('lite', '1');
     if (companyId) params = params.set('companyId', companyId.toString());
     if (startDate) params = params.set('startDate', startDate.toISOString());
     if (endDate) params = params.set('endDate', endDate.toISOString());

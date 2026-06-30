@@ -19,6 +19,7 @@ import { TranslationService } from '../../../core/services/translation.service';
 import { resolveAppCompanyId } from '../../../core/utils/company-scope';
 import { environment } from '../../../../environments/environment';
 import { ApiResponse, TwitterCxReportDto } from '../../../core/models';
+import { hasCxReportPayload } from '../../../core/utils/twitter-cx-report-load';
 
 interface JourneyStage {
   id: number;
@@ -111,12 +112,16 @@ export class JourneyMap implements OnInit, OnDestroy {
       this.loading.set(true);
     }
 
-    const watchdog = setTimeout(() => this.loading.set(false), environment.apiTimeout || 30000);
+    const watchdog = setTimeout(() => this.loading.set(false), environment.cxReportTimeout || 120000);
     this.twitterCxReportStore.loadTwitterCxReport(companyId, undefined, undefined, undefined, false).subscribe({
       next: (response) => {
         clearTimeout(watchdog);
-        if (response.message === 'stale_response' || response.message === 'snapshot_still_building') {
-          this.loading.set(false);
+        const hasData = response.success && hasCxReportPayload(response.data);
+        if (
+          (response.message === 'stale_response' || response.message === 'snapshot_still_building') &&
+          !hasData
+        ) {
+          this.loading.set(true);
           return;
         }
         if (!response.success) {
@@ -173,6 +178,22 @@ export class JourneyMap implements OnInit, OnDestroy {
         dissatisfactionCount: Number(h?.negativeCount ?? h?.negative ?? 0),
       }));
     }
+
+    if (rows.length === 0) {
+      this.journeyStages.set([]);
+      this.page.set(1);
+      return;
+    }
+
+    rows = rows.filter(
+      (r: any) =>
+        Number(r?.feedbackCount ?? 0) > 0 ||
+        Number(r?.satisfactionCount ?? 0) > 0 ||
+        Number(r?.dissatisfactionCount ?? 0) > 0 ||
+        Number(r?.total ?? 0) > 0 ||
+        Number(r?.positiveCount ?? r?.positive ?? 0) > 0 ||
+        Number(r?.negativeCount ?? r?.negative ?? 0) > 0
+    );
 
     if (rows.length === 0) {
       this.journeyStages.set([]);

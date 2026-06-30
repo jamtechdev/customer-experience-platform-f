@@ -262,7 +262,7 @@ export class AnalysisService {
           }
           return of(body as ApiResponse<TwitterCxReportDto>);
         }),
-        timeout(environment.apiTimeout || 30000),
+        timeout(environment.cxReportTimeout || 120000),
         catchError((err: unknown) => {
           if (err instanceof TimeoutError) {
             return of({

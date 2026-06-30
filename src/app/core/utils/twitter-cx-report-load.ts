@@ -10,13 +10,13 @@ export function twitterCxReportFailureMessage(apiMessage?: string): string {
     return 'The CX report build is taking longer than the server allows. Try again in a moment, or use a smaller date range.';
   }
   if (apiMessage === 'snapshot_still_building') {
-    return 'Your CX report is still being prepared. Keep this page open or retry in 1-2 minutes.';
+    return 'Your imported CSV report is being saved to the database. Keep this page open — it will refresh automatically.';
   }
   if (apiMessage === 'snapshot_failed' || apiMessage === 'snapshot_poll_failed') {
     return 'The report build did not finish cleanly. Retry after import processing completes, or rebuild it from Import history.';
   }
   if (apiMessage === 'timeout') {
-    return 'This report took too long to load. Try a narrower date range or retry in a moment.';
+    return 'Imported CSV data is still loading from the database. Please wait a moment and click Refresh — no new AI analysis will run.';
   }
   if (apiMessage === 'http_503') {
     return 'Import is still processing. Previous report data will appear when ready, or retry in a moment.';

@@ -15,8 +15,7 @@ import {
 } from './core/interceptors/http.interceptor';
 import { ImportProcessingService } from './core/services/import-processing.service';
 import { ImportLiveRefreshService } from './core/services/import-live-refresh.service';
-import { TwitterCxReportStore } from './core/services/twitter-cx-report.store';
-import { AuthService } from './core/services/auth.service';
+import { CXWebSocketService } from './core/services/cx-websocket.service';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -52,17 +51,13 @@ export const appConfig: ApplicationConfig = {
       useFactory: (
         importProcessing: ImportProcessingService,
         liveRefresh: ImportLiveRefreshService,
-        twitterCxReportStore: TwitterCxReportStore,
-        authService: AuthService
+        websocket: CXWebSocketService
       ) => () => {
+        websocket.start();
         importProcessing.syncFromApi();
         liveRefresh.start();
-        liveRefresh.liveTick$.subscribe(() => {
-          const companyId = authService.currentUser()?.settings?.companyId;
-          twitterCxReportStore.invalidate(companyId, undefined, true);
-        });
       },
-      deps: [ImportProcessingService, ImportLiveRefreshService, TwitterCxReportStore, AuthService],
+      deps: [ImportProcessingService, ImportLiveRefreshService, CXWebSocketService],
       multi: true,
     },
     provideHttpClient(

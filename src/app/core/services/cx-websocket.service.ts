@@ -62,6 +62,7 @@ export class CXWebSocketService {
   start(): void {
     if (this.started()) return;
     if (!isPlatformBrowser(this.platformId)) return;
+    if (environment.websocket?.enabled === false) return;
 
     const apiBase = (environment.apiUrl || '').replace(/\/api\/?$/, '');
     const socketUrl = apiBase || 'http://localhost:5000';

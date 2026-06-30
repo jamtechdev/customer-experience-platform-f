@@ -13,7 +13,6 @@ import { RouterModule } from '@angular/router';
 import { DashboardService, DashboardStats, DashboardTrends } from '../../../core/services/dashboard.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { TranslationService } from '../../../core/services/translation.service';
-import { ReportService } from '../../../core/services/report.service';
 import {
   buildClientReportDatePresets,
   inclusiveDaysBetweenYmd,
@@ -26,6 +25,8 @@ import { parseIsoDateOnlyLocal } from '../../../core/utils/api-date';
 import { CXWebSocketService, type CSVImportStatusEvent } from '../../../core/services/cx-websocket.service';
 import { ImportLiveRefreshService } from '../../../core/services/import-live-refresh.service';
 import { TwitterCxReportStore } from '../../../core/services/twitter-cx-report.store';
+import { ImportProcessingService } from '../../../core/services/import-processing.service';
+import { resolveAppCompanyId } from '../../../core/utils/company-scope';
 import { Subscription } from 'rxjs';
 import { OllamaLoader } from '../../../core/components/ollama-loader/ollama-loader';
 import { ReportDateRangeFilter } from '../../../core/components/report-date-range-filter/report-date-range-filter';
@@ -65,10 +66,10 @@ export class DashboardReports implements OnInit, OnDestroy {
   private dashboardService = inject(DashboardService);
   private authService = inject(AuthService);
   private translationService = inject(TranslationService);
-  private reportService = inject(ReportService);
   private websocket = inject(CXWebSocketService);
   private liveRefresh = inject(ImportLiveRefreshService);
   private twitterCxReportStore = inject(TwitterCxReportStore);
+  private importProcessing = inject(ImportProcessingService);
   private importStatusSub?: Subscription;
 
   loading = signal(true);
@@ -76,7 +77,7 @@ export class DashboardReports implements OnInit, OnDestroy {
   currentStats = signal<DashboardStats | null>(null);
   trends = signal<DashboardTrends | null>(null);
   period = signal<'day' | 'week' | 'month'>('week');
-  days = signal(90);
+  days = signal(30);
   Math = Math;
 
   presets = signal<ReportDatePreset[]>([]);
@@ -181,7 +182,10 @@ export class DashboardReports implements OnInit, OnDestroy {
   });
 
   ngOnInit(): void {
-    this.loadPresets();
+    this.presets.set(buildClientReportDatePresets());
+    this.loadCurrentStatus(false);
+    setTimeout(() => this.loadTrends(false), 800);
+
     this.importStatusSub = this.websocket.onCSVImportStatus().subscribe((payload: CSVImportStatusEvent) => {
       if (payload?.status === 'processing') {
         this.reloadAll(this.filtersApplied(), true);
@@ -198,30 +202,23 @@ export class DashboardReports implements OnInit, OnDestroy {
       })
     );
     this.importStatusSub.add(
-      this.liveRefresh.liveTick$.subscribe(() => this.reloadAll(this.filtersApplied(), true))
+      this.liveRefresh.liveTick$.subscribe(() => {
+        if (this.importProcessing.isActive()) {
+          this.reloadAll(this.filtersApplied(), true);
+        }
+      })
     );
     this.importStatusSub.add(
-      this.twitterCxReportStore.onRefresh$.subscribe(() => this.reloadAll(this.filtersApplied(), true))
+      this.twitterCxReportStore.onRefresh$.subscribe(() => {
+        if (this.importProcessing.isActive()) {
+          this.reloadAll(this.filtersApplied(), true);
+        }
+      })
     );
   }
 
   ngOnDestroy(): void {
     this.importStatusSub?.unsubscribe();
-  }
-
-  private loadPresets(): void {
-    this.reportService.getDatePresets().subscribe({
-      next: (res) => {
-        const list =
-          res.success && res.data?.presets?.length ? (res.data.presets as ReportDatePreset[]) : buildClientReportDatePresets();
-        this.presets.set(list);
-        this.reloadAll(false);
-      },
-      error: () => {
-        this.presets.set(buildClientReportDatePresets());
-        this.reloadAll(false);
-      },
-    });
   }
 
   datesValid(): boolean {
@@ -243,7 +240,11 @@ export class DashboardReports implements OnInit, OnDestroy {
 
   private reloadAll(withFilters: boolean = this.filtersApplied(), live = false): void {
     this.loadCurrentStatus(withFilters, live);
-    this.loadTrends(withFilters, live);
+    if (live) {
+      this.loadTrends(withFilters, live);
+    } else {
+      setTimeout(() => this.loadTrends(withFilters, live), live ? 0 : 400);
+    }
   }
 
   onPeriodChange(): void {
@@ -255,8 +256,7 @@ export class DashboardReports implements OnInit, OnDestroy {
       this.loading.set(true);
       if (!live) this.currentStats.set(null);
     }
-    const user = this.authService.currentUser();
-    const companyId = user?.role === 'admin' ? undefined : (user?.settings?.companyId ?? 1);
+    const companyId = resolveAppCompanyId(this.authService.currentUser());
     let startDate: Date | undefined;
     let endDate: Date | undefined;
     if (withFilters) {
@@ -269,7 +269,7 @@ export class DashboardReports implements OnInit, OnDestroy {
       endDate = new Date(ed);
     }
 
-    this.dashboardService.getStats(companyId, startDate, endDate).subscribe({
+    this.dashboardService.getStats(companyId, startDate, endDate, true).subscribe({
       next: (res) => {
         if (res.success && res.data) this.currentStats.set(res.data);
         else this.currentStats.set(null);
@@ -287,8 +287,7 @@ export class DashboardReports implements OnInit, OnDestroy {
       this.loadingTrends.set(true);
       if (!live) this.trends.set(null);
     }
-    const user = this.authService.currentUser();
-    const companyId = user?.role === 'admin' ? undefined : (user?.settings?.companyId ?? 1);
+    const companyId = resolveAppCompanyId(this.authService.currentUser());
     const days = withFilters && this.datesValid()
       ? inclusiveDaysBetweenYmd(this.startDate()!, this.endDate()!)
       : this.days();

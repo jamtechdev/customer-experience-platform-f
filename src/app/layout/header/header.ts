@@ -94,7 +94,16 @@ export class Header implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
-    this.refreshAlerts();
+    const defer = (fn: () => void): void => {
+      if (typeof requestIdleCallback !== 'undefined') {
+        requestIdleCallback(fn, { timeout: 2500 });
+      } else {
+        setTimeout(fn, 1500);
+      }
+    };
+    defer(() => this.refreshAlerts());
+    defer(() => this.refreshLlmStatus());
+
     if (typeof window !== 'undefined') {
       window.addEventListener('sentimenter-alerts-page-opened', this.alertPageOpenedHandler);
     }

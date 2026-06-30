@@ -10,7 +10,7 @@ import { TwitterCxReportStore } from '../../../core/services/twitter-cx-report.s
 import { AnalysisService } from '../../../core/services/analysis.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { OllamaLoader } from '../../../core/components/ollama-loader/ollama-loader';
-import { notifyCxReportLoadFailure, twitterCxReportFailureMessage } from '../../../core/utils/twitter-cx-report-load';
+import { notifyCxReportLoadFailure, twitterCxReportFailureMessage, hasCxReportPayload } from '../../../core/utils/twitter-cx-report-load';
 import { ImportProcessingService } from '../../../core/services/import-processing.service';
 import { TranslationService } from '../../../core/services/translation.service';
 import { drilldownModalTotal } from '../../../core/utils/drilldown-display';
@@ -136,12 +136,13 @@ export class JourneyHeatmap implements OnInit, OnDestroy {
       this.loading.set(true);
     }
     this.error.set(null);
-    const watchdog = setTimeout(() => this.loading.set(false), environment.apiTimeout || 30000);
+    const watchdog = setTimeout(() => this.loading.set(false), environment.cxReportTimeout || 120000);
     this.twitterCxReportStore.loadTwitterCxReport(companyId, undefined, undefined, undefined, forceLive).subscribe({
       next: (res) => {
         clearTimeout(watchdog);
-        if (res.message === 'stale_response' || res.message === 'snapshot_still_building') {
-          this.loading.set(false);
+        const hasData = res.success && hasCxReportPayload(res.data);
+        if ((res.message === 'stale_response' || res.message === 'snapshot_still_building') && !hasData) {
+          this.loading.set(true);
           return;
         }
         if (!res.success) {
