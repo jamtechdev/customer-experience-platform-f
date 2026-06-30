@@ -1,4 +1,4 @@
-import { Component, inject, signal, OnDestroy } from '@angular/core';
+import { Component, inject, signal, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterOutlet } from '@angular/router';
 import { MatSidenavModule } from '@angular/material/sidenav';
@@ -12,6 +12,9 @@ import { Header } from '../header/header';
 import { Footer } from '../footer/footer';
 import { TranslationService } from '../../core/services/translation.service';
 import { ImportLiveBanner } from '../../core/components/import-live-banner/import-live-banner';
+import { TwitterCxReportStore } from '../../core/services/twitter-cx-report.store';
+import { AuthService } from '../../core/services/auth.service';
+import { resolveAppCompanyId } from '../../core/utils/company-scope';
 
 @Component({
   selector: 'app-main-layout',
@@ -30,10 +33,13 @@ import { ImportLiveBanner } from '../../core/components/import-live-banner/impor
   templateUrl: './main-layout.html',
   styleUrl: './main-layout.css',
 })
-export class MainLayout implements OnDestroy {
+export class MainLayout implements OnInit, OnDestroy {
   private breakpointObserver = inject(BreakpointObserver);
   private breakpointSub?: Subscription;
   private translationService = inject(TranslationService);
+  private twitterCxReportStore = inject(TwitterCxReportStore);
+  private authService = inject(AuthService);
+  private cxWarmSub?: Subscription;
 
   sidenavOpened = signal(true);
   isMobile = signal(false);
@@ -53,8 +59,14 @@ export class MainLayout implements OnDestroy {
     });
   }
 
+  ngOnInit(): void {
+    const companyId = resolveAppCompanyId(this.authService.currentUser());
+    this.cxWarmSub = this.twitterCxReportStore.loadTwitterCxReport(companyId).subscribe();
+  }
+
   ngOnDestroy(): void {
     this.breakpointSub?.unsubscribe();
+    this.cxWarmSub?.unsubscribe();
   }
 
   toggleSidenav(): void {

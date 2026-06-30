@@ -115,15 +115,14 @@ export class JourneyMap implements OnInit, OnDestroy {
     const watchdog = setTimeout(() => this.loading.set(false), environment.cxReportTimeout || 120000);
     this.twitterCxReportStore.loadTwitterCxReport(companyId, undefined, undefined, undefined, false).subscribe({
       next: (response) => {
-        clearTimeout(watchdog);
         const hasData = response.success && hasCxReportPayload(response.data);
         if (
           (response.message === 'stale_response' || response.message === 'snapshot_still_building') &&
           !hasData
         ) {
-          this.loading.set(true);
           return;
         }
+        clearTimeout(watchdog);
         if (!response.success) {
           if (!cached?.success) {
             this.journeyStages.set([]);

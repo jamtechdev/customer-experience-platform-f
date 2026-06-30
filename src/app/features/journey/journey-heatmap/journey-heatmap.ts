@@ -139,12 +139,11 @@ export class JourneyHeatmap implements OnInit, OnDestroy {
     const watchdog = setTimeout(() => this.loading.set(false), environment.cxReportTimeout || 120000);
     this.twitterCxReportStore.loadTwitterCxReport(companyId, undefined, undefined, undefined, forceLive).subscribe({
       next: (res) => {
-        clearTimeout(watchdog);
         const hasData = res.success && hasCxReportPayload(res.data);
         if ((res.message === 'stale_response' || res.message === 'snapshot_still_building') && !hasData) {
-          this.loading.set(true);
           return;
         }
+        clearTimeout(watchdog);
         if (!res.success) {
           if (!cached?.success) {
             this.stages.set([]);

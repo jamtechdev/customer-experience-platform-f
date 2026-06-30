@@ -98,6 +98,16 @@ export class TwitterCxReportStore {
             } as ApiResponse<TwitterCxReportDto>;
           }
           if (res.success) return res;
+          const fallback = this.findLastGood(scopedCompanyId, key);
+          if (
+            fallback &&
+            (res.message === 'timeout' ||
+              res.message === 'snapshot_still_building' ||
+              res.message === 'http_504' ||
+              res.message === 'http_502')
+          ) {
+            return fallback;
+          }
           return this.coerceImportProcessingResponse(res, scopedCompanyId, key);
         }),
         tap((res) => {

@@ -100,7 +100,13 @@ export class DatasetProfile implements OnInit, OnDestroy {
 
   loadProfile(): void {
     const companyId = resolveAppCompanyId(this.authService.currentUser());
-    this.loading.set(true);
+    const cached = this.twitterCxReportStore.getCachedReport(companyId);
+    if (cached?.success && cached.data?.datasetProfileRows?.length) {
+      this.applyProfile(cached);
+      this.loading.set(false);
+    } else if (!this.twitterCxReportStore.hasCachedReport(companyId)) {
+      this.loading.set(true);
+    }
     this.twitterCxReportStore.loadTwitterCxReport(companyId, undefined, undefined, undefined, false).subscribe({
       next: (res) => {
         if (res.message === 'stale_response') {
@@ -108,15 +114,12 @@ export class DatasetProfile implements OnInit, OnDestroy {
           return;
         }
         if (!res.success) {
-          this.rows.set([]);
+          if (!cached?.success) {
+            this.rows.set([]);
+          }
           notifyCxReportLoadFailure(this.snackBar, res.message, this.importProcessing.isActive(), this.t('app.close'));
         } else {
-          this.rows.set(res.data?.datasetProfileRows ? res.data.datasetProfileRows : []);
-          this.importedCsvRows.set(Number(res.data?.dataset?.importedCsvRows ?? 0) || null);
-          this.rowsSaved.set(Number(res.data?.dataset?.total ?? 0) || null);
-          this.cohortTotal.set(
-            Number(res.data?.sentiment?.total ?? res.data?.dataset?.primaryCohortSize ?? 0) || null
-          );
+          this.applyProfile(res);
         }
         this.loading.set(false);
       },
@@ -126,6 +129,16 @@ export class DatasetProfile implements OnInit, OnDestroy {
         notifyCxReportLoadFailure(this.snackBar, undefined, this.importProcessing.isActive(), this.t('app.close'));
       },
     });
+  }
+
+  private applyProfile(res: { success?: boolean; data?: any }): void {
+    if (!res.success || !res.data) return;
+    this.rows.set(Array.isArray(res.data.datasetProfileRows) ? res.data.datasetProfileRows : []);
+    this.importedCsvRows.set(Number(res.data?.dataset?.importedCsvRows ?? 0) || null);
+    this.rowsSaved.set(Number(res.data?.dataset?.total ?? 0) || null);
+    this.cohortTotal.set(
+      Number(res.data?.sentiment?.total ?? res.data?.dataset?.primaryCohortSize ?? 0) || null
+    );
   }
 
   metricIcon(metric: string): string {

@@ -9,6 +9,7 @@ import { OllamaLoader } from '../../../core/components/ollama-loader/ollama-load
 import { notifyCxReportLoadFailure } from '../../../core/utils/twitter-cx-report-load';
 import { ImportProcessingService } from '../../../core/services/import-processing.service';
 import { TranslationService } from '../../../core/services/translation.service';
+import { resolveAppCompanyId } from '../../../core/utils/company-scope';
 
 @Component({
   selector: 'app-methodology',
@@ -44,9 +45,14 @@ export class Methodology implements OnInit, OnDestroy {
   }
 
   private loadMethodology(): void {
-    const user = this.authService.currentUser();
-    const companyId = user?.role === 'admin' ? undefined : (user?.settings?.companyId ?? 1);
-    this.loading.set(true);
+    const companyId = resolveAppCompanyId(this.authService.currentUser());
+    const cached = this.twitterCxReportStore.getCachedReport(companyId);
+    if (cached?.success && cached.data?.scopeAndMethodBullets?.length) {
+      this.bullets.set(cached.data.scopeAndMethodBullets);
+      this.loading.set(false);
+    } else if (!this.twitterCxReportStore.hasCachedReport(companyId)) {
+      this.loading.set(true);
+    }
     this.twitterCxReportStore.loadTwitterCxReport(companyId, undefined, undefined, undefined, false).subscribe({
       next: (res) => {
         if (res.message === 'stale_response') {
@@ -54,7 +60,9 @@ export class Methodology implements OnInit, OnDestroy {
           return;
         }
         if (!res.success) {
-          this.bullets.set([]);
+          if (!cached?.success) {
+            this.bullets.set([]);
+          }
           notifyCxReportLoadFailure(this.snackBar, res.message, this.importProcessing.isActive(), this.t('app.close'));
         } else {
           this.bullets.set(res.data?.scopeAndMethodBullets ? res.data.scopeAndMethodBullets : []);

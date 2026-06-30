@@ -137,7 +137,11 @@ export class ActionPlans implements OnInit, OnDestroy {
 
   loadActionPlans(): void {
     const companyId = resolveAppCompanyId(this.authService.currentUser());
-    if (!this.twitterCxReportStore.hasCachedReport(companyId)) {
+    const cached = this.twitterCxReportStore.getCachedReport(companyId);
+    if (cached?.success && Array.isArray(cached.data?.actionPlan) && cached.data.actionPlan.length > 0) {
+      this.applyActionPlanReport(cached);
+      this.loading.set(false);
+    } else if (!this.twitterCxReportStore.hasCachedReport(companyId)) {
       this.loading.set(true);
     }
     this.twitterCxReportStore.loadTwitterCxReport(companyId, undefined, undefined, undefined, false).subscribe({
@@ -147,57 +151,16 @@ export class ActionPlans implements OnInit, OnDestroy {
           return;
         }
         if (!response.success) {
-          this.reportPlanRows.set([]);
-          this.actionPlans.set([]);
-          this.page.set(1);
+          if (!cached?.success) {
+            this.reportPlanRows.set([]);
+            this.actionPlans.set([]);
+            this.page.set(1);
+          }
           notifyCxReportLoadFailure(this.snackBar, response.message, this.importProcessing.isActive(), 'Close');
           this.loading.set(false);
           return;
         }
-        if (response.success && Array.isArray(response.data?.actionPlan)) {
-          const rootCauses = response.data.rootCauses ?? [];
-          this.reportPlanRows.set(
-            response.data.actionPlan.map((x: any, index: number) => {
-              const rcIds = Array.isArray(rootCauses[index]?.feedbackIds)
-                ? rootCauses[index].feedbackIds.filter((id: number) => Number.isFinite(Number(id)) && Number(id) > 0)
-                : [];
-              const linkedFeedbackIds = Array.isArray(x.linkedFeedbackIds)
-                ? x.linkedFeedbackIds
-                : Array.isArray(x.referenceFeedbackIds)
-                  ? x.referenceFeedbackIds
-                  : [];
-              const mergedIds = rcIds.length >= linkedFeedbackIds.length ? rcIds : linkedFeedbackIds;
-              const linkedCount =
-                typeof x.linkedCount === 'number' && x.linkedCount > mergedIds.length
-                  ? x.linkedCount
-                  : mergedIds.length;
-              return {
-                priority: x.priority ?? '',
-                action: x.action ?? '',
-                owner: x.owner ?? '',
-                impact: x.impact ?? '',
-                horizon: x.horizon ?? '',
-                referenceFeedbackIds: mergedIds,
-                linkedFeedbackIds: mergedIds,
-                linkedCount,
-              };
-            })
-          );
-          const mapped = this.reportPlanRows().map((x, idx) => ({
-            id: idx + 1,
-            title: x.action,
-            description: x.impact,
-            priority: x.priority.toLowerCase(),
-            status: 'draft',
-            dueDate: undefined,
-          })) as ActionPlanItem[];
-          this.actionPlans.set(mapped);
-          this.page.set(1);
-        } else {
-          this.reportPlanRows.set([]);
-          this.actionPlans.set([]);
-          this.page.set(1);
-        }
+        this.applyActionPlanReport(response);
         this.loading.set(false);
       },
       error: () => {
@@ -208,6 +171,53 @@ export class ActionPlans implements OnInit, OnDestroy {
         notifyCxReportLoadFailure(this.snackBar, undefined, this.importProcessing.isActive(), 'Close');
       }
     });
+  }
+
+  private applyActionPlanReport(response: { success?: boolean; data?: any }): void {
+    if (!response.success || !Array.isArray(response.data?.actionPlan)) {
+      this.reportPlanRows.set([]);
+      this.actionPlans.set([]);
+      this.page.set(1);
+      return;
+    }
+    const rootCauses = response.data.rootCauses ?? [];
+    this.reportPlanRows.set(
+      response.data.actionPlan.map((x: any, index: number) => {
+        const rcIds = Array.isArray(rootCauses[index]?.feedbackIds)
+          ? rootCauses[index].feedbackIds.filter((id: number) => Number.isFinite(Number(id)) && Number(id) > 0)
+          : [];
+        const linkedFeedbackIds = Array.isArray(x.linkedFeedbackIds)
+          ? x.linkedFeedbackIds
+          : Array.isArray(x.referenceFeedbackIds)
+            ? x.referenceFeedbackIds
+            : [];
+        const mergedIds = rcIds.length >= linkedFeedbackIds.length ? rcIds : linkedFeedbackIds;
+        const linkedCount =
+          typeof x.linkedCount === 'number' && x.linkedCount > mergedIds.length
+            ? x.linkedCount
+            : mergedIds.length;
+        return {
+          priority: x.priority ?? '',
+          action: x.action ?? '',
+          owner: x.owner ?? '',
+          impact: x.impact ?? '',
+          horizon: x.horizon ?? '',
+          referenceFeedbackIds: mergedIds,
+          linkedFeedbackIds: mergedIds,
+          linkedCount,
+        };
+      })
+    );
+    const mapped = this.reportPlanRows().map((x, idx) => ({
+      id: idx + 1,
+      title: x.action,
+      description: x.impact,
+      priority: x.priority.toLowerCase(),
+      status: 'draft',
+      dueDate: undefined,
+    })) as ActionPlanItem[];
+    this.actionPlans.set(mapped);
+    this.page.set(1);
   }
 
   goPrevPage(): void {

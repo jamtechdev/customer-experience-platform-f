@@ -138,9 +138,15 @@ export class TouchpointManager implements OnInit, OnDestroy {
     } else if (!this.twitterCxReportStore.hasCachedReport(companyId)) {
       this.loading.set(true);
     }
-    const watchdog = setTimeout(() => this.loading.set(false), environment.apiTimeout || 30000);
+    const watchdog = setTimeout(() => this.loading.set(false), environment.cxReportTimeout || 120000);
     this.twitterCxReportStore.loadTwitterCxReport(companyId, undefined, undefined, undefined, false).subscribe({
       next: (response) => {
+        if (
+          (response.message === 'stale_response' || response.message === 'snapshot_still_building') &&
+          !(response.success && response.data)
+        ) {
+          return;
+        }
         clearTimeout(watchdog);
         if (response.message === 'stale_response' || response.message === 'snapshot_still_building') {
           this.loading.set(false);
