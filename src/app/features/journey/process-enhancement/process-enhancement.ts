@@ -17,6 +17,7 @@ import {
   effectiveLinkedCount,
   resolveDrilldownIds,
 } from '../../../core/utils/drilldown-display';
+import { resolveAppCompanyId } from '../../../core/utils/company-scope';
 
 export interface ProcessImprovementRow {
   text: string;
@@ -71,9 +72,10 @@ export class ProcessEnhancement implements OnInit, OnDestroy {
   }
 
   loadProcessData(): void {
-    const user = this.authService.currentUser();
-    const companyId = user?.role === 'admin' ? undefined : (user?.settings?.companyId ?? 1);
-    this.loading.set(true);
+    const companyId = resolveAppCompanyId(this.authService.currentUser());
+    if (!this.twitterCxReportStore.hasCachedReport(companyId)) {
+      this.loading.set(true);
+    }
     this.twitterCxReportStore
       .loadTwitterCxReport(companyId, undefined, undefined, undefined, false)
       .subscribe({

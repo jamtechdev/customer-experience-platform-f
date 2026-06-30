@@ -127,12 +127,14 @@ export class JourneyHeatmap implements OnInit, OnDestroy {
     if (refreshFromServer && !forceLive) {
       this.twitterCxReportStore.clearCachedReport(companyId);
     }
-    this.loading.set(true);
+    if (!this.twitterCxReportStore.hasCachedReport(companyId)) {
+      this.loading.set(true);
+    }
     this.error.set(null);
     this.twitterCxReportStore.loadTwitterCxReport(companyId, undefined, undefined, undefined, forceLive).subscribe({
       next: (res) => {
         if (res.message === 'stale_response') {
-          this.loadHeatmap(forceLive, false);
+          this.loading.set(false);
           return;
         }
         if (!res.success) {

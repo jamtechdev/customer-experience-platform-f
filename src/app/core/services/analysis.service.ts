@@ -11,6 +11,7 @@ import {
   TwitterCxReportDto,
 } from '../models';
 import { environment } from '../../../environments/environment';
+import { DEFAULT_APP_COMPANY_ID } from '../utils/company-scope';
 import { SKIP_ERROR_TOAST } from '../http/http-context';
 
 @Injectable({
@@ -228,7 +229,9 @@ export class AnalysisService {
     forceLive: boolean = false
   ): Observable<ApiResponse<TwitterCxReportDto>> {
     let params = new HttpParams();
-    if (companyId != null) params = params.set('companyId', String(companyId));
+    const scopedCompanyId =
+      Number.isInteger(companyId) && (companyId as number) > 0 ? (companyId as number) : DEFAULT_APP_COMPANY_ID;
+    params = params.set('companyId', String(scopedCompanyId));
     if (csvImportId != null) params = params.set('csvImportId', String(csvImportId));
     if (startDate) params = params.set('startDate', startDate.toISOString());
     if (endDate) params = params.set('endDate', endDate.toISOString());
