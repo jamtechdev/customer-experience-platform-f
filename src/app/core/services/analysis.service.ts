@@ -66,6 +66,14 @@ export class AnalysisService {
     return this.http.post<ApiResponse<unknown>>(`${this.baseUrl}/twitter-cx-report/rebuild`, { companyId }, { context: this.cxReportHttpContext });
   }
 
+  rebuildAllAnalytics(companyId: number): Observable<ApiResponse<{ csvImportId?: number; phase?: string; status?: string }>> {
+    return this.http.post<ApiResponse<{ csvImportId?: number; phase?: string; status?: string }>>(
+      `${this.baseUrl}/rebuild-all`,
+      { companyId },
+      { context: this.cxReportHttpContext }
+    );
+  }
+
   getTwitterCxReportSnapshotStatus(snapshotId: number): Observable<
     ApiResponse<{
       status: 'pending' | 'ready' | 'failed';

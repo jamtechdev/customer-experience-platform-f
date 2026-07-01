@@ -149,7 +149,13 @@
     "rebuildReportStarted": "Report rebuild started. Your CSV data is safe — nothing was deleted.",
     "rebuildReportDone": "Report updated in database. Counts and references are refreshed.",
     "rebuildReportStartFailed": "Could not start report rebuild. Try again in a moment.",
-    "rebuildReportTimeout": "Rebuild is taking longer than expected. Check back shortly or retry."
+    "rebuildReportTimeout": "Rebuild is taking longer than expected. Check back shortly or retry.",
+    "rebuildAllStarted": "Full analytics rebuild started — re-classifying all rows and refreshing every tab.",
+    "rebuildAllDone": "All analytics tabs updated. Tweet counts, journey themes, and drilldowns are refreshed.",
+    "rebuildAllFailed": "Full analytics rebuild failed. Try Re-import saved data first, then rebuild.",
+    "rebuildAllStartFailed": "Could not start full analytics rebuild.",
+    "reprocessStarted": "Re-import started with updated rules — omitted rows will be restored where possible.",
+    "reprocessStartFailed": "Could not start re-import. Upload the CSV again if the original file was removed."
   },
   "roles": {
     "admin": "Admin",

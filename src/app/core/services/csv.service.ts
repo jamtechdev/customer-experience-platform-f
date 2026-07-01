@@ -220,6 +220,10 @@ export class CSVService {
     );
   }
 
+  reprocessImport(importId: number): Observable<ApiResponse<{ importId: number; status: string }>> {
+    return this.http.post<ApiResponse<{ importId: number; status: string }>>(`${this.baseUrl}/${importId}/reprocess`, {});
+  }
+
   createMapping(
     csvImportId: number,
     name: string,

@@ -122,7 +122,7 @@ export class SentimentAnalysis implements OnInit, OnDestroy {
   feedbackTotal = signal(0);
   serverPatterns = signal<SentimentReferenceRow[]>([]);
   filterJourneyStage = signal<string>('');
-  filterIsRelevant = signal<string>('true');
+  filterIsRelevant = signal<string>('all');
   filterSearch = signal<string>('');
   referenceOpen = signal(false);
   referenceRow = signal<{

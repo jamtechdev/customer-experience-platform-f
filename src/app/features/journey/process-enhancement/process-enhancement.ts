@@ -17,6 +17,8 @@ import {
   formatProcessImprovementText,
   effectiveLinkedCount,
   resolveDrilldownIds,
+  extractQuotedTheme,
+  drilldownModalTotal,
 } from '../../../core/utils/drilldown-display';
 import { resolveAppCompanyId } from '../../../core/utils/company-scope';
 
@@ -122,7 +124,7 @@ export class ProcessEnhancement implements OnInit, OnDestroy {
   }
 
   private applyProcessReport(data: {
-    rootCauses?: Array<{ feedbackIds?: number[] }>;
+    rootCauses?: Array<{ cause?: string; feedbackIds?: number[] }>;
     processImprovementItems?: Array<{
       text: string;
       referenceFeedbackIds?: number[];
@@ -136,11 +138,24 @@ export class ProcessEnhancement implements OnInit, OnDestroy {
     this.rootCauseFeedbackByIndex = rootCauses.map((rc) =>
       Array.isArray(rc.feedbackIds) ? rc.feedbackIds.filter((id) => Number.isFinite(Number(id)) && Number(id) > 0) : []
     );
+    const rootCauseIdsByTheme = new Map<string, number[]>();
+    for (const rc of rootCauses) {
+      const theme = String(rc.cause || '').trim().toLowerCase();
+      const ids = Array.isArray(rc.feedbackIds)
+        ? rc.feedbackIds.filter((id) => Number.isFinite(Number(id)) && Number(id) > 0)
+        : [];
+      if (theme && ids.length) rootCauseIdsByTheme.set(theme, ids);
+    }
     const items = data.processImprovementItems;
     if (items?.length) {
       this.processImprovements.set(
         items.map((p, index) => {
-          const rcIds = this.rootCauseFeedbackByIndex[index] ?? [];
+          const themeKey = extractQuotedTheme(p.text).toLowerCase();
+          const themeMatch = rootCauses.find((rc) => String(rc.cause || '').trim().toLowerCase() === themeKey);
+          const rcIds =
+            (themeMatch?.feedbackIds?.filter((id) => Number.isFinite(Number(id)) && Number(id) > 0) ??
+              this.rootCauseFeedbackByIndex[index]) ||
+            [];
           const linkedFeedbackIds = Array.isArray(p.linkedFeedbackIds)
             ? p.linkedFeedbackIds
             : Array.isArray(p.referenceFeedbackIds)
@@ -171,11 +186,12 @@ export class ProcessEnhancement implements OnInit, OnDestroy {
 
   openReferences(row: ProcessImprovementRow): void {
     const ids = resolveDrilldownIds(row.linkedFeedbackIds, row.referenceFeedbackIds);
-    if (!ids.length) return;
+    const themeTitle = extractQuotedTheme(row.text);
+    if (!ids.length && this.referenceCount(row) <= 0 && themeTitle === 'this theme') return;
     this.drilldownTitle.set(this.displayText(row));
     this.drilldownOpen.set(true);
     this.drilldownIds = ids;
-    this.drilldownTotal.set(this.referenceCount(row));
+    this.drilldownTotal.set(ids.length ? this.referenceCount(row) : 0);
     this.loadDrilldownPage(1);
   }
 
@@ -189,21 +205,25 @@ export class ProcessEnhancement implements OnInit, OnDestroy {
   }
 
   loadDrilldownPage(page: number): void {
-    if (!this.drilldownIds.length) return;
+    const themeTitle = extractQuotedTheme(this.drilldownTitle());
+    if (!this.drilldownIds.length && themeTitle === 'this theme') return;
     this.drilldownPage.set(page);
     this.drilldownLoading.set(true);
     this.drilldownRows.set([]);
-    const companyId = this.listCompanyId();
+    const companyId = resolveAppCompanyId(this.authService.currentUser());
     this.analysisService.getFeedbackByIds(companyId, this.drilldownIds, {
       page,
       limit: this.drilldownPageSize,
       includeIrrelevant: true,
       groupRetweets: false,
+      themeTitle: themeTitle !== 'this theme' ? themeTitle : undefined,
+      drilldownTitle: this.drilldownTitle(),
     }).subscribe({
       next: (res) => {
         this.drilldownLoading.set(false);
         if (res?.data?.list) this.drilldownRows.set(res.data.list);
-        this.drilldownTotal.set(res?.data?.total ?? this.drilldownIds.length);
+        const resolvedTotal = res?.data?.total ?? 0;
+        this.drilldownTotal.set(resolvedTotal > 0 ? resolvedTotal : drilldownModalTotal(this.drilldownIds));
       },
       error: () => {
         this.drilldownLoading.set(false);
@@ -218,10 +238,5 @@ export class ProcessEnhancement implements OnInit, OnDestroy {
     this.drilldownPage.set(1);
     this.drilldownTotal.set(0);
     this.drilldownIds = [];
-  }
-
-  private listCompanyId(): number | undefined {
-    const user = this.authService.currentUser();
-    return user?.role === 'admin' ? undefined : (user?.settings?.companyId ?? 1);
   }
 }

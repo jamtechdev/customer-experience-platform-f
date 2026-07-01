@@ -11,7 +11,26 @@
         </button>
         <button mat-raised-button color="primary" class="cx-action-btn" (click)="refreshAll()" [disabled]="refreshing()">
           <mat-icon>refresh</mat-icon>
-          {{ refreshing() ? 'Refreshing…' : 'Refresh' }}
+          {{ refreshing() ? 'Refreshing…' : 'Refresh report' }}
+        </button>
+        <button
+          mat-raised-button
+          color="accent"
+          class="cx-action-btn"
+          (click)="rebuildAllAnalytics()"
+          [disabled]="rebuildingAll() || refreshing()"
+          matTooltip="Re-run AI classification and refresh every analytics tab">
+          <mat-icon>auto_fix_high</mat-icon>
+          {{ rebuildingAll() ? 'Rebuilding all…' : 'Rebuild all analytics' }}
+        </button>
+        <button
+          mat-raised-button
+          class="cx-action-btn"
+          (click)="reprocessLatest()"
+          [disabled]="reprocessing() || refreshing() || !latestCompletedImport()"
+          matTooltip="Re-import saved CSV rows with fixed validation (restores omitted rows)">
+          <mat-icon>replay</mat-icon>
+          {{ reprocessing() ? 'Re-importing…' : 'Re-import saved data' }}
         </button>
         <button
           mat-raised-button

@@ -20,6 +20,7 @@ import { formatApiDate } from '../../../core/utils/api-date';
 import { TwitterCxReportStore } from '../../../core/services/twitter-cx-report.store';
 import { CxReportRebuildService } from '../../../core/services/cx-report-rebuild.service';
 import { ImportProcessingService } from '../../../core/services/import-processing.service';
+import { resolveAppCompanyId } from '../../../core/utils/company-scope';
 
 /** Draft uploads (mapped but not imported) stay out of history until import starts. */
 function isHistoryVisibleImport(row: CSVImport): boolean {
@@ -63,6 +64,8 @@ export class ImportHistory implements OnInit, OnDestroy {
 
   loading = signal(false);
   refreshing = signal(false);
+  rebuildingAll = signal(false);
+  reprocessing = signal(false);
   imports = signal<CSVImport[]>([]);
   selectedImportIds = signal<Set<number>>(new Set());
   bulkDeleting = signal(false);
@@ -188,11 +191,41 @@ export class ImportHistory implements OnInit, OnDestroy {
     this.loadImports();
     this.rebuildService.rebuildWithPolling().subscribe({
       next: () => {
-        this.twitterCxReportStore.invalidate(this.authService.currentUser()?.settings?.companyId);
+        this.twitterCxReportStore.invalidate(resolveAppCompanyId(this.authService.currentUser()));
         this.loadImports();
       },
       error: () => this.refreshing.set(false),
       complete: () => this.refreshing.set(false),
+    });
+  }
+
+  /** Re-run AI on all rows and rebuild every analytics tab. */
+  rebuildAllAnalytics(): void {
+    if (this.rebuildingAll() || this.refreshing()) return;
+    this.rebuildingAll.set(true);
+    this.rebuildService.rebuildAllAnalyticsWithPolling().subscribe({
+      next: () => {
+        this.twitterCxReportStore.invalidate(resolveAppCompanyId(this.authService.currentUser()), undefined, true);
+        this.loadImports();
+      },
+      complete: () => this.rebuildingAll.set(false),
+      error: () => this.rebuildingAll.set(false),
+    });
+  }
+
+  latestCompletedImport(): CSVImport | undefined {
+    return this.imports().find((r) => r.status === 'completed');
+  }
+
+  /** Re-import latest completed CSV from disk/staging with current validation rules. */
+  reprocessLatest(): void {
+    const latest = this.latestCompletedImport();
+    if (!latest || this.reprocessing()) return;
+    this.reprocessing.set(true);
+    this.rebuildService.reprocessLatestImport(latest.id).subscribe({
+      next: () => this.loadImports(),
+      complete: () => this.reprocessing.set(false),
+      error: () => this.reprocessing.set(false),
     });
   }
 
