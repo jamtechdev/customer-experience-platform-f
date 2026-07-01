@@ -67,6 +67,20 @@
 
 
   <div *ngIf="stats() && !analyzingFeedback()" class="stats-section">
+    @if (countMismatch() || (importedCsvRows() && stats()?.total !== importedCsvRows())) {
+      <div class="count-check-banner" role="status">
+        <mat-icon>info</mat-icon>
+        <span>
+          CSV file: <strong>{{ importedCsvRows() | number }}</strong> rows ·
+          Saved in database: <strong>{{ savedRows() ?? stats()?.total | number }}</strong> ·
+          Chart total: <strong>{{ stats()?.total | number }}</strong>
+          ({{ stats()?.positive | number }} positive, {{ stats()?.neutral | number }} neutral, {{ stats()?.negative | number }} negative).
+          @if (countMismatch()) {
+            If counts do not match, open <strong>CSV imports</strong> and click <strong>Rebuild all analytics</strong>.
+          }
+        </span>
+      </div>
+    }
     <p *ngIf="(stats()?.total ?? 0) === 0" class="empty-hint">{{ t('sentiment.noSentimentData') }}</p>
     <mat-card class="section-card" *ngIf="stats()">
       <mat-card-header>

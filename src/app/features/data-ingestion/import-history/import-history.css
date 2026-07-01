@@ -1,3 +1,30 @@
+.import-history-container.embedded .embedded-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  padding: 1rem 1rem 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  margin-bottom: 0.5rem;
+}
+
+.success-only .ok-line {
+  color: #2e7d32;
+}
+
+.warn-line {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.35rem;
+  color: #e65100;
+  margin-top: 0.5rem;
+}
+
+.warn-line .warn {
+  font-size: 18px;
+  width: 18px;
+  height: 18px;
+}
+
 .import-history-container {
   width: 100%;
 }

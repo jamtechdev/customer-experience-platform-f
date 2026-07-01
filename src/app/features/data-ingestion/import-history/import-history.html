@@ -15,16 +15,6 @@
         </button>
         <button
           mat-raised-button
-          color="accent"
-          class="cx-action-btn"
-          (click)="rebuildAllAnalytics()"
-          [disabled]="rebuildingAll() || refreshing()"
-          matTooltip="Re-run AI classification and refresh every analytics tab">
-          <mat-icon>auto_fix_high</mat-icon>
-          {{ rebuildingAll() ? 'Rebuilding all…' : 'Rebuild all analytics' }}
-        </button>
-        <button
-          mat-raised-button
           class="cx-action-btn"
           (click)="reprocessLatest()"
           [disabled]="reprocessing() || refreshing() || !latestCompletedImport()"
@@ -48,6 +38,20 @@
   }
 
   <mat-card>
+    @if (embedded) {
+      <div class="embedded-toolbar">
+        <button
+          mat-raised-button
+          color="accent"
+          class="cx-action-btn"
+          (click)="rebuildAllAnalytics()"
+          [disabled]="rebuildingAll() || refreshing()"
+          matTooltip="Re-run AI classification and refresh every analytics tab (Sentiment, Journey, Process improvement, etc.)">
+          <mat-icon>auto_fix_high</mat-icon>
+          {{ rebuildingAll() ? 'Rebuilding all analytics…' : 'Rebuild all analytics' }}
+        </button>
+      </div>
+    }
     <mat-card-content>
       @if (imports().length === 0) {
         <div class="empty-state">
@@ -246,6 +250,24 @@
                 } @else if (!row.errorDetails) {
                   <span class="muted">Failed (no message stored). Re-validate in CSV mapping before import.</span>
                 }
+              } @else if (isCleanSuccess(row)) {
+                <div class="error-structured success-only">
+                  <div class="error-line ok-line">
+                    <mat-icon class="inline-icon">check_circle</mat-icon>
+                    <strong>Import successful</strong> —
+                    {{ getImportedCount(row) | number }} of {{ row.rowCount ?? getImportedCount(row) | number }} rows saved
+                    @if (getAiSuccessCount(row) > 0) {
+                      · {{ getAiSuccessCount(row) | number }} analyzed by AI
+                    }
+                  </div>
+                  @if (hasCountMismatch(row)) {
+                    <div class="error-line warn-line">
+                      <mat-icon class="inline-icon warn">warning</mat-icon>
+                      Row count mismatch: file has {{ row.rowCount | number }} rows but only {{ getImportedCount(row) | number }} were saved.
+                      Use <strong>Re-import saved data</strong> then <strong>Rebuild all analytics</strong>.
+                    </div>
+                  }
+                </div>
               } @else if (row.status === 'completed' && row.errorDetails?.importOmissions) {
                 <div class="error-structured import-omissions">
                   <div class="error-line ok-line">

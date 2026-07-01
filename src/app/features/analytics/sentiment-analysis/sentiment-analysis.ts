@@ -101,6 +101,9 @@ export class SentimentAnalysis implements OnInit, OnDestroy {
   tableExportLoading = signal(false);
   reanalyzing = signal(false);
   stats = signal<SentimentStats | null>(null);
+  importedCsvRows = signal<number | null>(null);
+  savedRows = signal<number | null>(null);
+  countMismatch = signal(false);
   sentimentInterpretation = signal<string>('');
   feedbackList = signal<
     Array<{
@@ -492,6 +495,11 @@ export class SentimentAnalysis implements OnInit, OnDestroy {
           total,
           averageScore: data.averageScore ?? 0,
         });
+        this.importedCsvRows.set(
+          typeof data.importedCsvRows === 'number' && data.importedCsvRows > 0 ? data.importedCsvRows : null
+        );
+        this.savedRows.set(typeof data.savedRows === 'number' && data.savedRows > 0 ? data.savedRows : null);
+        this.countMismatch.set(Boolean(data.countMismatch));
         this.sentimentInterpretation.set(
           typeof data.interpretation === 'string' ? data.interpretation.trim() : ''
         );
@@ -694,6 +702,11 @@ export class SentimentAnalysis implements OnInit, OnDestroy {
           total,
           averageScore: data.averageScore ?? 0
         });
+        this.importedCsvRows.set(
+          typeof data.importedCsvRows === 'number' && data.importedCsvRows > 0 ? data.importedCsvRows : null
+        );
+        this.savedRows.set(typeof data.savedRows === 'number' && data.savedRows > 0 ? data.savedRows : null);
+        this.countMismatch.set(Boolean(data.countMismatch));
         this.sentimentInterpretation.set(
           typeof data.interpretation === 'string' ? data.interpretation.trim() : ''
         );

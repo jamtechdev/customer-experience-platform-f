@@ -19,7 +19,7 @@ const DEFAULT_FORMAT: CSVFormat = {
   requiredSystemFieldsFeedback: ['content', 'date', 'source'],
   requiredSystemFieldsNps: ['score', 'date'],
   optionalColumns: ['author', 'rating', 'company', 'competitor'],
-  maxFileSizeBytes: environment.upload?.maxFileSize ?? 10485760,
+  maxFileSizeBytes: environment.upload?.maxFileSize ?? 52428800,
   firstRowHeaders: true,
 };
 

@@ -289,6 +289,30 @@ export class ImportHistory implements OnInit, OnDestroy {
     }
   }
 
+  getImportedCount(row: CSVImport): number {
+    return Number(row.errorDetails?.importedCount ?? row.rowCount ?? 0);
+  }
+
+  getAiSuccessCount(row: CSVImport): number {
+    return Number(row.errorDetails?.aiSummary?.succeeded ?? 0);
+  }
+
+  hasCountMismatch(row: CSVImport): boolean {
+    const fileRows = Number(row.rowCount ?? 0);
+    const imported = this.getImportedCount(row);
+    const omitted = Number(row.errorDetails?.omittedCount ?? 0);
+    if (fileRows <= 0) return false;
+    return imported + omitted < fileRows || (omitted > 0 && imported < fileRows);
+  }
+
+  isCleanSuccess(row: CSVImport): boolean {
+    if (row.status !== 'completed') return false;
+    if (row.errorDetails?.importOmissions) return false;
+    if (Number(row.errorDetails?.omittedCount ?? 0) > 0) return false;
+    if (Number(row.errorDetails?.aiSummary?.failed ?? 0) > 0) return false;
+    return true;
+  }
+
   formatDate(d: Date | string | number | null | undefined): string {
     return formatApiDate(d, { mode: 'datetime' });
   }

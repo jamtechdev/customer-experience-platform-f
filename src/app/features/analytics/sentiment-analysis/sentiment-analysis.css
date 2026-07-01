@@ -794,3 +794,22 @@
 .list-filters {
   margin-bottom: 16px;
 }
+
+.count-check-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  margin-bottom: 1rem;
+  border-radius: 10px;
+  background: #fff8e1;
+  border: 1px solid #ffe082;
+  color: #5d4037;
+  font-size: 0.92rem;
+  line-height: 1.45;
+}
+
+.count-check-banner mat-icon {
+  color: #f57c00;
+  flex-shrink: 0;
+}
