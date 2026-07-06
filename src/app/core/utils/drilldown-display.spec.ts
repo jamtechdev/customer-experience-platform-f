@@ -1,10 +1,21 @@
-import { formatCellPct, formatProcessImprovementText, repairStaleActionText } from './drilldown-display';
+import { formatCellPct, formatProcessImprovementText, heatmapCellIntensityPct, repairStaleActionText, resolveHeatmapDisplayPct } from './drilldown-display';
 
 describe('drilldown-display (QA Finding 3 & 4)', () => {
   it('shows decimal percentage for small non-zero shares (Finding 3)', () => {
     expect(formatCellPct(4, 2163)).toBe('0.2%');
     expect(formatCellPct(0, 2163)).toBe('0%');
     expect(formatCellPct(1, 19)).toBe('5%');
+  });
+
+  it('ignores stale backend "0%" when counts are non-zero (Finding 3)', () => {
+    expect(resolveHeatmapDisplayPct(4, 2163, '0%')).toBe('0.2%');
+    expect(resolveHeatmapDisplayPct(0, 2163, '0%')).toBe('0%');
+    expect(resolveHeatmapDisplayPct(4, 2163, '0.2%')).toBe('0.2%');
+  });
+
+  it('derives heatmap intensity from counts, not rounded stored pct', () => {
+    expect(heatmapCellIntensityPct(4, 2163, 0)).toBe(0.2);
+    expect(heatmapCellIntensityPct(0, 2163, 0)).toBe(0);
   });
 
   it('preserves cluster-specific process improvement text (Finding 4)', () => {

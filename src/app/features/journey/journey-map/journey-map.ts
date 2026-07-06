@@ -72,7 +72,7 @@ export class JourneyMap implements OnInit, OnDestroy {
   private drilldownIds: number[] = [];
   private drilldownStage = '';
   private drilldownPolarity: 'satisfaction' | 'dissatisfaction' = 'satisfaction';
-  private heatmapByStage = signal<Record<string, { positive: number[]; negative: number[] }>>({});
+  private heatmapByStage = signal<Record<string, { positive: number[]; negative: number[]; all: number[]; total: number }>>({});
   private refreshSub?: Subscription;
 
   loading = signal(false);
@@ -109,10 +109,9 @@ export class JourneyMap implements OnInit, OnDestroy {
     const cached = this.twitterCxReportStore.getCachedReport(companyId);
     if (cached?.success && cached.data) {
       this.applyCxReport(cached);
-      this.loading.set(false);
-    } else if (!this.twitterCxReportStore.hasCachedReport(companyId)) {
-      this.loading.set(true);
     }
+    // Show cached stages immediately — only block the page when we have nothing to render yet.
+    this.loading.set(this.journeyStages().length === 0);
 
     const watchdog = setTimeout(() => this.loading.set(false), environment.cxReportTimeout || 120000);
     this.twitterCxReportStore.loadTwitterCxReport(companyId, undefined, undefined, undefined, false).subscribe({
@@ -153,13 +152,15 @@ export class JourneyMap implements OnInit, OnDestroy {
     if (!response.success || !response.data) return;
 
     const heatmap = Array.isArray(response.data.heatmapPct) ? response.data.heatmapPct : [];
-    const heatmapMap: Record<string, { positive: number[]; negative: number[] }> = {};
+    const heatmapMap: Record<string, { positive: number[]; negative: number[]; all: number[]; total: number }> = {};
     for (const h of heatmap) {
       const stage = String((h as { stage?: string }).stage ?? '');
       if (!stage) continue;
       heatmapMap[stage] = {
         positive: this.toIds((h as { positiveFeedbackIds?: number[] }).positiveFeedbackIds),
         negative: this.toIds((h as { negativeFeedbackIds?: number[] }).negativeFeedbackIds),
+        all: this.toIds((h as { feedbackIds?: number[] }).feedbackIds),
+        total: Number((h as { total?: number }).total ?? 0),
       };
     }
     this.heatmapByStage.set(heatmapMap);
@@ -175,8 +176,8 @@ export class JourneyMap implements OnInit, OnDestroy {
         feedbackCount: Number(h?.total ?? 0),
         satisfactionFeedbackIds: this.toIds(h?.positiveFeedbackIds),
         dissatisfactionFeedbackIds: this.toIds(h?.negativeFeedbackIds),
-        satisfactionCount: Number(h?.positiveCount ?? h?.positive ?? 0),
-        dissatisfactionCount: Number(h?.negativeCount ?? h?.negative ?? 0),
+        satisfactionCount: Number(h?.positiveCount ?? 0),
+        dissatisfactionCount: Number(h?.negativeCount ?? 0),
       }));
     }
 
@@ -218,14 +219,22 @@ export class JourneyMap implements OnInit, OnDestroy {
         );
         const satisfactionCount = satIds.length;
         const dissatisfactionCount = disIds.length;
+        const feedbackCount =
+          typeof r?.feedbackCount === 'number' && r.feedbackCount > 0
+            ? r.feedbackCount
+            : heat?.total && heat.total > 0
+              ? heat.total
+              : heat?.all.length || satisfactionCount + dissatisfactionCount;
+        const satSummary = this.cleanJourneySummary(String(r?.satisfactionSummary ?? r?.satisfaction ?? ''));
+        const disSummary = this.cleanJourneySummary(String(r?.dissatisfactionSummary ?? r?.dissatisfaction ?? ''));
         return {
           id: idx + 1,
           name: stage,
           satisfactionScore: 0,
           dissatisfactionScore: 0,
-          feedbackCount: typeof r?.feedbackCount === 'number' ? r.feedbackCount : 0,
-          painPoints: [String(r?.dissatisfactionSummary ?? r?.dissatisfaction ?? '')].filter(Boolean),
-          satisfactionPoints: [String(r?.satisfactionSummary ?? r?.satisfaction ?? '')].filter(Boolean),
+          feedbackCount,
+          painPoints: disSummary ? [disSummary] : [],
+          satisfactionPoints: satSummary ? [satSummary] : [],
           satisfactionReferenceIds: satIds,
           dissatisfactionReferenceIds: disIds,
           satisfactionFeedbackIds: satIds,
@@ -312,16 +321,34 @@ export class JourneyMap implements OnInit, OnDestroy {
 
   satisfactionDisplay(row: JourneyStage): string {
     const n = this.satisfactionReferenceTotal(row);
-    if (!n) return '-';
-    const raw = row.satisfactionPoints[0] || '';
-    return alignLinkedCountInText(raw, n) || `Positive signals at ${row.name} — ${n} linked feedback row(s).`;
+    const fromBackend = row.satisfactionPoints[0] || '';
+    if (fromBackend) return n > 0 ? alignLinkedCountInText(fromBackend, n) : fromBackend;
+    if (n > 0) {
+      return n >= 3
+        ? `Positive signals at ${row.name} — ${n} linked feedback row(s).`
+        : `Early positive signals at ${row.name} — ${n} linked feedback row(s); more data needed for a confident theme.`;
+    }
+    const disN = this.dissatisfactionReferenceTotal(row);
+    if (row.feedbackCount > 0 && disN === 0) {
+      return `No strong positive themes among ${row.feedbackCount} mapped row(s) at ${row.name} — mostly neutral feedback.`;
+    }
+    return '—';
   }
 
   dissatisfactionDisplay(row: JourneyStage): string {
     const n = this.dissatisfactionReferenceTotal(row);
-    if (!n) return '-';
-    const raw = row.painPoints[0] || '';
-    return alignLinkedCountInText(raw, n) || `Negative themes at ${row.name} — ${n} linked feedback row(s).`;
+    const fromBackend = row.painPoints[0] || '';
+    if (fromBackend) return n > 0 ? alignLinkedCountInText(fromBackend, n) : fromBackend;
+    if (n > 0) {
+      return n >= 3
+        ? `Negative themes at ${row.name} — ${n} linked feedback row(s).`
+        : `Early negative signals at ${row.name} — ${n} linked feedback row(s); more data needed for a confident theme.`;
+    }
+    const satN = this.satisfactionReferenceTotal(row);
+    if (row.feedbackCount > 0 && satN === 0) {
+      return `No negative themes among ${row.feedbackCount} mapped row(s) at ${row.name}.`;
+    }
+    return '—';
   }
 
   loadDrilldownPage(page: number): void {
@@ -383,6 +410,12 @@ export class JourneyMap implements OnInit, OnDestroy {
 
   private listCompanyId(): number {
     return resolveAppCompanyId(this.authService.currentUser());
+  }
+
+  private cleanJourneySummary(text: string): string {
+    const t = text.trim();
+    if (!t || t === '—' || t === '-' || t === '–') return '';
+    return t;
   }
 
   private toIds(value: unknown): number[] {

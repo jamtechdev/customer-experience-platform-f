@@ -58,6 +58,25 @@ export function formatCellPct(count: number, stageTotal: number): string {
   return `${text.includes('.') ? text.replace(/\.?0+$/, '') : text}%`;
 }
 
+/** Prefer backend label unless it collapsed a small non-zero share to "0%". */
+export function resolveHeatmapDisplayPct(
+  count: number,
+  stageTotal: number,
+  backendDisplay?: string | null
+): string {
+  const computed = formatCellPct(count, stageTotal);
+  const stored = backendDisplay?.trim();
+  if (!stored) return computed;
+  if (stored === '0%' && count > 0 && stageTotal > 0) return computed;
+  return stored;
+}
+
+/** Heatmap cell color intensity — always derive from counts when available. */
+export function heatmapCellIntensityPct(count: number, stageTotal: number, fallbackPct = 0): number {
+  if (count > 0 && stageTotal > 0) return heatmapSharePct(count, stageTotal);
+  return fallbackPct;
+}
+
 /** Reject legacy label-only action / process-improvement text (Findings 2 & 4). */
 export function isStaleGenericActionText(action: string): boolean {
   const t = String(action || '').trim();

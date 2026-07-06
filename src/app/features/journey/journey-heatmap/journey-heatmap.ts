@@ -13,7 +13,11 @@ import { OllamaLoader } from '../../../core/components/ollama-loader/ollama-load
 import { notifyCxReportLoadFailure, twitterCxReportFailureMessage, hasCxReportPayload, isCxReportResponsePending } from '../../../core/utils/twitter-cx-report-load';
 import { ImportProcessingService } from '../../../core/services/import-processing.service';
 import { TranslationService } from '../../../core/services/translation.service';
-import { drilldownModalTotal, formatCellPct } from '../../../core/utils/drilldown-display';
+import {
+  drilldownModalTotal,
+  heatmapCellIntensityPct,
+  resolveHeatmapDisplayPct,
+} from '../../../core/utils/drilldown-display';
 import { resolveAppCompanyId } from '../../../core/utils/company-scope';
 import { environment } from '../../../../environments/environment';
 import { RelatedFeedbackModal, RelatedFeedbackRow } from '../../../core/components/related-feedback-modal/related-feedback-modal';
@@ -214,21 +218,15 @@ export class JourneyHeatmap implements OnInit, OnDestroy {
   }
 
   positivePct(row: StageRow): number {
-    const total = this.stageTotal(row);
-    if (!total) return 0;
-    return (row.positiveCount / total) * 100;
+    return heatmapCellIntensityPct(row.positiveCount, this.stageTotal(row));
   }
 
   negativePct(row: StageRow): number {
-    const total = this.stageTotal(row);
-    if (!total) return 0;
-    return (row.negativeCount / total) * 100;
+    return heatmapCellIntensityPct(row.negativeCount, this.stageTotal(row));
   }
 
   neutralPct(row: StageRow): number {
-    const total = this.stageTotal(row);
-    if (!total) return 0;
-    return (row.neutralCount / total) * 100;
+    return heatmapCellIntensityPct(row.neutralCount, this.stageTotal(row));
   }
 
   private stageTotal(row: StageRow): number {
@@ -238,21 +236,15 @@ export class JourneyHeatmap implements OnInit, OnDestroy {
 
   // Display labels that never round a small non-zero share down to "0%" (Finding 3).
   positivePctLabel(row: StageRow): string {
-    return this.heatmapPctDisplay(row, 'positive') ?? formatCellPct(row.positiveCount, this.stageTotal(row));
+    return resolveHeatmapDisplayPct(row.positiveCount, this.stageTotal(row), row.positiveDisplayPct);
   }
 
   neutralPctLabel(row: StageRow): string {
-    return this.heatmapPctDisplay(row, 'neutral') ?? formatCellPct(row.neutralCount, this.stageTotal(row));
+    return resolveHeatmapDisplayPct(row.neutralCount, this.stageTotal(row), row.neutralDisplayPct);
   }
 
   negativePctLabel(row: StageRow): string {
-    return this.heatmapPctDisplay(row, 'negative') ?? formatCellPct(row.negativeCount, this.stageTotal(row));
-  }
-
-  private heatmapPctDisplay(row: StageRow, key: 'positive' | 'neutral' | 'negative'): string | null {
-    const value =
-      key === 'positive' ? row.positiveDisplayPct : key === 'neutral' ? row.neutralDisplayPct : row.negativeDisplayPct;
-    return typeof value === 'string' && value.trim() ? value.trim() : null;
+    return resolveHeatmapDisplayPct(row.negativeCount, this.stageTotal(row), row.negativeDisplayPct);
   }
 
   sentimentIds(row: StageRow, label: HeatmapSentiment): number[] {

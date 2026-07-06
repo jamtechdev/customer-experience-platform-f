@@ -18,7 +18,7 @@ import { TwitterCxReportStore } from '../../../core/services/twitter-cx-report.s
 import { AuthService } from '../../../core/services/auth.service';
 import { ReportService } from '../../../core/services/report.service';
 import { AnalysisService } from '../../../core/services/analysis.service';
-import { formatCellPct } from '../../../core/utils/drilldown-display';
+import { heatmapCellIntensityPct, resolveHeatmapDisplayPct } from '../../../core/utils/drilldown-display';
 import {
   buildClientReportDatePresets,
   toIsoRangeFromYmd,
@@ -451,13 +451,6 @@ export class ArcelikTwitterCxReport implements OnInit, OnDestroy {
   }
 
   heatmapCellLabel(row: HeatmapPctRow, key: 'positive' | 'neutral' | 'negative'): string {
-    const display =
-      key === 'positive'
-        ? row.positiveDisplayPct
-        : key === 'neutral'
-          ? row.neutralDisplayPct
-          : row.negativeDisplayPct;
-    if (display?.trim()) return display.trim();
     const count =
       key === 'positive'
         ? row.positiveCount ?? 0
@@ -465,11 +458,24 @@ export class ArcelikTwitterCxReport implements OnInit, OnDestroy {
           ? row.neutralCount ?? 0
           : row.negativeCount ?? 0;
     const total = row.total && row.total > 0 ? row.total : count;
-    return formatCellPct(count, total);
+    const display =
+      key === 'positive'
+        ? row.positiveDisplayPct
+        : key === 'neutral'
+          ? row.neutralDisplayPct
+          : row.negativeDisplayPct;
+    return resolveHeatmapDisplayPct(count, total, display);
   }
 
   heatmapCellIntensity(row: HeatmapPctRow, key: 'positive' | 'neutral' | 'negative'): number {
-    return row[key];
+    const count =
+      key === 'positive'
+        ? row.positiveCount ?? 0
+        : key === 'neutral'
+          ? row.neutralCount ?? 0
+          : row.negativeCount ?? 0;
+    const total = row.total && row.total > 0 ? row.total : count;
+    return heatmapCellIntensityPct(count, total, row[key]);
   }
 
   truncateChartLabel(text: string, maxLen = 26): string {
