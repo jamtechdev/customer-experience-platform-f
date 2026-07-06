@@ -488,6 +488,8 @@
     "downloadTable": "Tabloyu indir",
     "journeyStage": "Yolculuk aşaması",
     "allStages": "Tüm aşamalar",
+    "sentimentFilter": "Duygu",
+    "allSentiments": "Tüm duygular",
     "relevance": "İlgililik",
     "relevantOnly": "Yalnızca ilgili",
     "relevant": "İlgili",

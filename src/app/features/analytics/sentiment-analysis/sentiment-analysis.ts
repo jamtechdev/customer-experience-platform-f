@@ -125,6 +125,7 @@ export class SentimentAnalysis implements OnInit, OnDestroy {
   feedbackTotal = signal(0);
   serverPatterns = signal<SentimentReferenceRow[]>([]);
   filterJourneyStage = signal<string>('');
+  filterSentiment = signal<string>('');
   filterIsRelevant = signal<string>('all');
   filterSearch = signal<string>('');
   referenceOpen = signal(false);
@@ -201,6 +202,12 @@ export class SentimentAnalysis implements OnInit, OnDestroy {
     'Usage',
     'Support',
     'Retention',
+  ];
+  readonly sentimentFilterOptions: Array<{ value: string; labelKey: string }> = [
+    { value: '', labelKey: 'sentiment.allSentiments' },
+    { value: 'positive', labelKey: 'dashboard.positive' },
+    { value: 'neutral', labelKey: 'dashboard.neutral' },
+    { value: 'negative', labelKey: 'dashboard.negative' },
   ];
 
   ngOnInit(): void {
@@ -377,34 +384,22 @@ export class SentimentAnalysis implements OnInit, OnDestroy {
       return;
     }
 
-    const companyId = this.getCompanyId();
-    const { start, end } = resolveOptionalApiDateRange(this.filtersApplied(), this.startDate(), this.endDate());
-    const rel = this.filterIsRelevant();
-    const isRelevant = rel === 'true' ? true : rel === 'false' ? false : undefined;
     const exportLimit = 100;
     const maxExportRows = 50000;
     const rowsToFetch = Math.min(total, maxExportRows);
+    const companyId = this.getCompanyId();
+    const { start, end } = resolveOptionalApiDateRange(this.filtersApplied(), this.startDate(), this.endDate());
+    const queryFilters = this.listQueryFilters();
 
     this.tableExportLoading.set(true);
     this.analysisService
-      .getFeedbackWithSentiment(companyId, start, end, 1, exportLimit, {
-        journeyStage: this.filterJourneyStage() || undefined,
-        isRelevant,
-        includeIrrelevant: rel === 'all',
-        search: this.filterSearch().trim() || undefined,
-      })
+      .getFeedbackWithSentiment(companyId, start, end, 1, exportLimit, queryFilters)
       .subscribe({
         next: (response) => {
           const firstRows = response?.data?.list || [];
           const apiTotal = Number(response?.data?.total ?? 0);
           const actualTotal = Math.min(Math.max(rowsToFetch, apiTotal), maxExportRows);
           const totalPages = Math.max(1, Math.ceil(actualTotal / exportLimit));
-          const filters = {
-            journeyStage: this.filterJourneyStage() || undefined,
-            isRelevant,
-            includeIrrelevant: rel === 'all',
-            search: this.filterSearch().trim() || undefined,
-          };
 
           if (totalPages <= 1) {
             this.finishFeedbackTableDownload(firstRows, total, maxExportRows);
@@ -412,7 +407,7 @@ export class SentimentAnalysis implements OnInit, OnDestroy {
           }
 
           const pageRequests = Array.from({ length: totalPages - 1 }, (_, idx) =>
-            this.analysisService.getFeedbackWithSentiment(companyId, start, end, idx + 2, exportLimit, filters)
+            this.analysisService.getFeedbackWithSentiment(companyId, start, end, idx + 2, exportLimit, queryFilters)
           );
 
           forkJoin(pageRequests).subscribe({
@@ -458,8 +453,7 @@ export class SentimentAnalysis implements OnInit, OnDestroy {
   ): void {
     const companyId = this.getCompanyId();
     const { start, end } = resolveOptionalApiDateRange(withFilters, this.startDate(), this.endDate());
-    const rel = this.filterIsRelevant();
-    const isRelevant = rel === 'true' ? true : rel === 'false' ? false : undefined;
+    const queryFilters = this.listQueryFilters();
     const hasPartial = (this.stats()?.total ?? 0) > 0 || this.feedbackList().length > 0;
     const live = options?.live === true || this.importProcessing.isActive();
     const analyzing = this.analyzingFeedback();
@@ -478,12 +472,14 @@ export class SentimentAnalysis implements OnInit, OnDestroy {
     forkJoin({
       stats: this.analysisService.getSentimentStats(companyId, start, end),
       patterns: this.analysisService.getSentimentPatterns(companyId, start, end),
-      feedback: this.analysisService.getFeedbackWithSentiment(companyId, start, end, this.page(), this.pageSize(), {
-        journeyStage: this.filterJourneyStage() || undefined,
-        isRelevant,
-        includeIrrelevant: rel === 'all',
-        search: this.filterSearch().trim() || undefined,
-      }),
+      feedback: this.analysisService.getFeedbackWithSentiment(
+        companyId,
+        start,
+        end,
+        this.page(),
+        this.pageSize(),
+        queryFilters
+      ),
     }).subscribe({
       next: ({ stats: statsRes, patterns: patternsRes, feedback: feedbackRes }) => {
         const data = statsRes?.data ?? {};
@@ -571,6 +567,25 @@ export class SentimentAnalysis implements OnInit, OnDestroy {
     this.loadFeedbackList(this.filtersApplied());
   }
 
+  private listQueryFilters(overrides?: { sentiment?: string }): {
+    journeyStage?: string;
+    sentiment?: string;
+    isRelevant?: boolean;
+    includeIrrelevant?: boolean;
+    search?: string;
+  } {
+    const rel = this.filterIsRelevant();
+    const isRelevant = rel === 'true' ? true : rel === 'false' ? false : undefined;
+    const sentiment = overrides?.sentiment ?? (this.filterSentiment().trim() || undefined);
+    return {
+      journeyStage: this.filterJourneyStage() || undefined,
+      sentiment,
+      isRelevant,
+      includeIrrelevant: rel === 'all',
+      search: this.filterSearch().trim() || undefined,
+    };
+  }
+
   openReference(row: {
     id?: number;
     content: string;
@@ -629,15 +644,9 @@ export class SentimentAnalysis implements OnInit, OnDestroy {
 
     const companyId = this.getCompanyId();
     const { start, end } = resolveOptionalApiDateRange(this.filtersApplied(), this.startDate(), this.endDate());
-    const rel = this.filterIsRelevant();
-    const isRelevant = rel === 'true' ? true : rel === 'false' ? false : undefined;
     this.analysisService
       .getFeedbackWithSentiment(companyId, start, end, page, this.drilldownPageSize, {
-        sentiment: bar.key,
-        journeyStage: this.filterJourneyStage() || undefined,
-        isRelevant,
-        includeIrrelevant: rel === 'all',
-        search: this.filterSearch().trim() || undefined,
+        ...this.listQueryFilters({ sentiment: bar.key }),
       })
       .subscribe({
         next: (response) => {
@@ -726,16 +735,8 @@ export class SentimentAnalysis implements OnInit, OnDestroy {
     const companyId = this.getCompanyId();
     const { start, end } = resolveOptionalApiDateRange(withFilters, this.startDate(), this.endDate());
 
-    const rel = this.filterIsRelevant();
-    const isRelevant = rel === 'true' ? true : rel === 'false' ? false : undefined;
-
     this.analysisService
-      .getFeedbackWithSentiment(companyId, start, end, this.page(), this.pageSize(), {
-        journeyStage: this.filterJourneyStage() || undefined,
-        isRelevant,
-        includeIrrelevant: rel === 'all',
-        search: this.filterSearch().trim() || undefined,
-      })
+      .getFeedbackWithSentiment(companyId, start, end, this.page(), this.pageSize(), this.listQueryFilters())
       .subscribe({
       next: (response) => {
         if (response?.success && response?.data) {

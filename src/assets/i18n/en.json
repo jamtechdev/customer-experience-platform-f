@@ -508,6 +508,8 @@
     "downloadTable": "Download table",
     "journeyStage": "Journey stage",
     "allStages": "All stages",
+    "sentimentFilter": "Sentiment",
+    "allSentiments": "All sentiments",
     "relevance": "Relevance",
     "relevantOnly": "Relevant only",
     "relevant": "Relevant",

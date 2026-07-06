@@ -793,6 +793,17 @@
 
 .list-filters {
   margin-bottom: 16px;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+}
+
+.list-filters .search-field {
+  min-width: 180px;
+}
+
+@media (max-width: 640px) {
+  .list-filters {
+    grid-template-columns: 1fr;
+  }
 }
 
 .count-check-banner {

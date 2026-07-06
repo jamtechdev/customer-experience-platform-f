@@ -185,6 +185,14 @@
             </mat-select>
           </mat-form-field>
           <mat-form-field appearance="outline">
+            <mat-label>{{ t('sentiment.sentimentFilter') }}</mat-label>
+            <mat-select [value]="filterSentiment()" (selectionChange)="filterSentiment.set($event.value); applyListFilters()">
+              @for (opt of sentimentFilterOptions; track opt.value) {
+                <mat-option [value]="opt.value">{{ t(opt.labelKey) }}</mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+          <mat-form-field appearance="outline">
             <mat-label>{{ t('sentiment.relevance') }}</mat-label>
             <mat-select [value]="filterIsRelevant()" (selectionChange)="filterIsRelevant.set($event.value); applyListFilters()">
               <mat-option value="true">{{ t('sentiment.relevantOnly') }}</mat-option>
