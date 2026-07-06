@@ -24,7 +24,7 @@ import { notifyCxReportLoadFailure } from '../../../core/utils/twitter-cx-report
 import { ImportProcessingService } from '../../../core/services/import-processing.service';
 import { RelatedFeedbackModal, RelatedFeedbackRow } from '../../../core/components/related-feedback-modal/related-feedback-modal';
 import { resolveAppCompanyId } from '../../../core/utils/company-scope';
-import { effectiveLinkedCount, alignLinkedCountInText, resolveDrilldownIds } from '../../../core/utils/drilldown-display';
+import { effectiveLinkedCount, alignLinkedCountInText, resolveDrilldownIds, repairStaleActionText } from '../../../core/utils/drilldown-display';
 
 @Component({
   selector: 'app-action-plans',
@@ -257,7 +257,8 @@ export class ActionPlans implements OnInit, OnDestroy {
 
   displayAction(row: { action: string; linkedFeedbackIds?: number[]; referenceFeedbackIds?: number[] }): string {
     const count = this.referenceCount(row);
-    return alignLinkedCountInText(row.action, count, 'linked feedback row(s)');
+    const repaired = repairStaleActionText(row.action);
+    return alignLinkedCountInText(repaired, count, 'linked feedback row(s)');
   }
 
   loadDrilldownPage(page: number): void {
