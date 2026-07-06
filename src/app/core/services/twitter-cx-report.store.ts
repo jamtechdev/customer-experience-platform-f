@@ -35,6 +35,18 @@ export class TwitterCxReportStore {
   /** True while waiting for CX snapshot / report build after import. */
   readonly snapshotPending = this.snapshotPendingSignal.asReadonly();
 
+  /** Clears pending state when server snapshot is ready (used by global progress banner). */
+  markSnapshotReady(): void {
+    this.clearAllPendingRetries();
+    this.snapshotPendingSignal.set(false);
+  }
+
+  private clearAllPendingRetries(): void {
+    for (const k of [...this.pendingRetryTimers.keys()]) {
+      this.clearPendingRetry(k);
+    }
+  }
+
   getCachedReport(
     companyId: number | undefined,
     csvImportId?: number,
@@ -131,7 +143,7 @@ export class TwitterCxReportStore {
               this.rememberLastGood(scopedCompanyId, res);
             }
             if (hasPayload && (wasPending || importBusy)) {
-              this.snapshotPendingSignal.set(false);
+              this.markSnapshotReady();
               this.refreshSubject.next(scopedCompanyId);
             }
           }
@@ -215,7 +227,7 @@ export class TwitterCxReportStore {
       const count = (this.pendingRetryCounts.get(key) ?? 0) + 1;
       if (count > this.maxPendingRetries) {
         this.clearPendingRetry(key);
-        this.snapshotPendingSignal.set(false);
+        this.markSnapshotReady();
         return;
       }
       this.pendingRetryCounts.set(key, count);
@@ -227,7 +239,7 @@ export class TwitterCxReportStore {
           const stillPending = isCxReportResponsePending(retryRes, this.importProcessing.isActive());
           if (!stillPending) {
             this.clearPendingRetry(key);
-            this.snapshotPendingSignal.set(false);
+            this.markSnapshotReady();
             if (retryRes.success && hasCxReportPayload(retryRes.data)) {
               this.refreshSubject.next(companyId);
             }

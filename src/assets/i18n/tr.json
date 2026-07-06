@@ -827,6 +827,6 @@
     "liveAiProgress": "{{total}} satırdan {{done}} tanesinin duygusu analiz edildi — grafikler canlı güncelleniyor",
     "liveNpsPhase": "NPS skorları oluşturuluyor — duygu sonuçları aşağıda görünüyor",
     "liveJourneyPhase": "Yolculuk aşamaları ve kök nedenler eşleniyor — duygu verileri canlı güncelleniyor",
-    "liveReportBuilding": "CX rapor anlık görüntüsü oluşturuluyor — en son duygu verileri ekranda"
+    "liveReportBuilding": "Tüm modüller için CX raporu tamamlanıyor — yolculuk haritası, temas noktaları, ısı haritası ve aksiyon planları hazır olunca güncellenecek"
   }
 }

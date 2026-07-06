@@ -7,6 +7,7 @@ import { TwitterCxReportStore } from './twitter-cx-report.store';
 import { TranslationService } from './translation.service';
 import { CSVService } from './csv.service';
 import { ImportProcessingService } from './import-processing.service';
+import { CxAnalysisProgressService } from './cx-analysis-progress.service';
 import { resolveAppCompanyId } from '../utils/company-scope';
 
 type SnapshotStatus = 'none' | 'pending' | 'ready' | 'failed';
@@ -20,6 +21,7 @@ export class CxReportRebuildService {
   private readonly translationService = inject(TranslationService);
   private readonly csvService = inject(CSVService);
   private readonly importProcessing = inject(ImportProcessingService);
+  private readonly cxProgress = inject(CxAnalysisProgressService);
 
   private pollStop$ = new Subject<void>();
 
@@ -39,6 +41,7 @@ export class CxReportRebuildService {
 
     this.analysis.rebuildTwitterCxReport(companyId).subscribe({
       next: () => {
+        this.cxProgress.notifyReportLoadPending(true);
         this.snackBar.open(this.t('csv.rebuildReportStarted'), this.t('app.close'), { duration: 6000 });
         this.pollUntilReady(companyId, done$, 'csv.rebuildReportDone', 'csv.rebuildReportFailed');
       },
@@ -62,6 +65,8 @@ export class CxReportRebuildService {
 
     this.analysis.rebuildAllAnalytics(companyId).subscribe({
       next: () => {
+        this.importProcessing.markProcessing();
+        this.cxProgress.notifyReportLoadPending(true);
         this.snackBar.open(this.t('csv.rebuildAllStarted'), this.t('app.close'), { duration: 8000 });
         this.pollUntilReady(companyId, done$, 'csv.rebuildAllDone', 'csv.rebuildAllFailed', 180);
       },
@@ -114,6 +119,7 @@ export class CxReportRebuildService {
           const status = res.data.status;
           if (status === 'ready') {
             this.store.invalidate(companyId);
+            this.cxProgress.notifyReportLoadPending(false);
             this.snackBar.open(this.t(doneKey), this.t('app.close'), { duration: 7000 });
             this.pollStop$.next();
             done$.next('ready');

@@ -15,6 +15,7 @@ import {
 } from './core/interceptors/http.interceptor';
 import { ImportProcessingService } from './core/services/import-processing.service';
 import { ImportLiveRefreshService } from './core/services/import-live-refresh.service';
+import { CxAnalysisProgressService } from './core/services/cx-analysis-progress.service';
 import { CXWebSocketService } from './core/services/cx-websocket.service';
 
 export const appConfig: ApplicationConfig = {
@@ -51,13 +52,15 @@ export const appConfig: ApplicationConfig = {
       useFactory: (
         importProcessing: ImportProcessingService,
         liveRefresh: ImportLiveRefreshService,
+        cxProgress: CxAnalysisProgressService,
         websocket: CXWebSocketService
       ) => () => {
         websocket.start();
         importProcessing.syncFromApi();
         liveRefresh.start();
+        cxProgress.start();
       },
-      deps: [ImportProcessingService, ImportLiveRefreshService, CXWebSocketService],
+      deps: [ImportProcessingService, ImportLiveRefreshService, CxAnalysisProgressService, CXWebSocketService],
       multi: true,
     },
     provideHttpClient(

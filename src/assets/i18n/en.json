@@ -894,6 +894,6 @@
     "liveAiProgress": "Sentiment analyzed {{done}} of {{total}} rows — charts update live as results arrive",
     "liveNpsPhase": "Generating NPS scores — sentiment results are already visible below",
     "liveJourneyPhase": "Mapping journey stages and root causes — sentiment data is updating live",
-    "liveReportBuilding": "Building your CX report snapshot — latest sentiment is already on screen"
+    "liveReportBuilding": "Finalizing the CX report for all modules — journey map, touchpoints, heatmap, and action plans will refresh when complete"
   }
 }
