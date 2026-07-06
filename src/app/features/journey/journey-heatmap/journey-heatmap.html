@@ -120,7 +120,7 @@
                 (click)="openRelated(row, 'positive')"
                 [attr.aria-label]="row.stageName + ' positive ' + row.positiveCount">
                 <span class="cell-count">{{ row.positiveCount | number }}</span>
-                <span class="cell-pct">{{ positivePct(row).toFixed(0) }}%</span>
+                <span class="cell-pct">{{ positivePctLabel(row) }}</span>
               </button>
               <button
                 class="heatmap-pct-cell count-link"
@@ -129,7 +129,7 @@
                 (click)="openRelated(row, 'neutral')"
                 [attr.aria-label]="row.stageName + ' neutral ' + row.neutralCount">
                 <span class="cell-count">{{ row.neutralCount | number }}</span>
-                <span class="cell-pct">{{ neutralPct(row).toFixed(0) }}%</span>
+                <span class="cell-pct">{{ neutralPctLabel(row) }}</span>
               </button>
               <button
                 class="heatmap-pct-cell count-link"
@@ -138,7 +138,7 @@
                 (click)="openRelated(row, 'negative')"
                 [attr.aria-label]="row.stageName + ' negative ' + row.negativeCount">
                 <span class="cell-count">{{ row.negativeCount | number }}</span>
-                <span class="cell-pct">{{ negativePct(row).toFixed(0) }}%</span>
+                <span class="cell-pct">{{ negativePctLabel(row) }}</span>
               </button>
             }
           </div>

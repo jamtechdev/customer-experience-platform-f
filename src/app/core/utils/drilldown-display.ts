@@ -34,17 +34,34 @@ export function drilldownModalTotal(requestedIds: number[]): number {
   return normalizeDrilldownIds(requestedIds).length;
 }
 
+/**
+ * Format a share percentage so small-but-non-zero values never collapse to a flat "0%"
+ * (Finding 3). Only a genuine zero count renders "0%"; otherwise precision escalates until a
+ * non-zero digit is shown (e.g. 4 of 2163 -> "0.18%").
+ */
+export function formatCellPct(count: number, stageTotal: number): string {
+  if (!count || count <= 0 || !stageTotal || stageTotal <= 0) return '0%';
+  const pct = (count / stageTotal) * 100;
+  if (Math.round(pct) > 0) return `${Math.round(pct)}%`;
+  for (const digits of [1, 2, 3]) {
+    const fixed = pct.toFixed(digits);
+    if (parseFloat(fixed) > 0) return `${fixed}%`;
+  }
+  return '<0.001%';
+}
+
 export function extractQuotedTheme(text: string): string {
   const m = text.match(/[“"]([^”"]+)[”"]/);
   return m?.[1]?.trim() || 'this theme';
 }
 
+/**
+ * Preserve the backend-generated, cluster-specific recommendation and only align the linked-row
+ * count (Finding 4). Previously this replaced every recommendation with an identical
+ * "Run a focused sprint on ..." template, which is what made all clusters read the same.
+ */
 export function formatProcessImprovementText(text: string, count: number): string {
-  const theme = extractQuotedTheme(text);
-  if (count <= 0) {
-    return text.replace(/\s*\(\d+ negative-linked row\(s\)\)/, '');
-  }
-  return `Run a focused sprint on "${theme}" (${count} negative-linked row(s)): assign owner, define SLA, and track repeat-contact rate.`;
+  return alignLinkedCountInText(text, count, 'negative-linked row(s)');
 }
 
 export function alignLinkedCountInText(text: string, count: number, label = 'linked feedback row(s)'): string {

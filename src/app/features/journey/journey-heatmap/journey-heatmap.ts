@@ -13,7 +13,7 @@ import { OllamaLoader } from '../../../core/components/ollama-loader/ollama-load
 import { notifyCxReportLoadFailure, twitterCxReportFailureMessage, hasCxReportPayload, isCxReportResponsePending } from '../../../core/utils/twitter-cx-report-load';
 import { ImportProcessingService } from '../../../core/services/import-processing.service';
 import { TranslationService } from '../../../core/services/translation.service';
-import { drilldownModalTotal } from '../../../core/utils/drilldown-display';
+import { drilldownModalTotal, formatCellPct } from '../../../core/utils/drilldown-display';
 import { resolveAppCompanyId } from '../../../core/utils/company-scope';
 import { environment } from '../../../../environments/environment';
 import { RelatedFeedbackModal, RelatedFeedbackRow } from '../../../core/components/related-feedback-modal/related-feedback-modal';
@@ -223,6 +223,19 @@ export class JourneyHeatmap implements OnInit, OnDestroy {
   neutralPct(row: StageRow): number {
     if (!row.feedbackCount) return 0;
     return (row.neutralCount / row.feedbackCount) * 100;
+  }
+
+  // Display labels that never round a small non-zero share down to "0%" (Finding 3).
+  positivePctLabel(row: StageRow): string {
+    return formatCellPct(row.positiveCount, row.feedbackCount);
+  }
+
+  neutralPctLabel(row: StageRow): string {
+    return formatCellPct(row.neutralCount, row.feedbackCount);
+  }
+
+  negativePctLabel(row: StageRow): string {
+    return formatCellPct(row.negativeCount, row.feedbackCount);
   }
 
   sentimentIds(row: StageRow, label: HeatmapSentiment): number[] {
