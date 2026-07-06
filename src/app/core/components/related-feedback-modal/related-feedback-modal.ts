@@ -1,5 +1,6 @@
 import { CommonModule, DOCUMENT, isPlatformBrowser } from '@angular/common';
 import {
+  AfterViewChecked,
   Component,
   ElementRef,
   EventEmitter,
@@ -42,7 +43,7 @@ export interface RelatedFeedbackRow {
   templateUrl: './related-feedback-modal.html',
   styleUrl: './related-feedback-modal.css',
 })
-export class RelatedFeedbackModal implements OnChanges, OnDestroy {
+export class RelatedFeedbackModal implements OnChanges, OnDestroy, AfterViewChecked {
   @Input() open = false;
   @Input() loading = false;
   @Input() title = '';
@@ -58,6 +59,7 @@ export class RelatedFeedbackModal implements OnChanges, OnDestroy {
   private originalParent: Node | null = null;
   private originalNextSibling: Node | null = null;
   private movedToBody = false;
+  private pendingPortal = false;
 
   constructor(
     private readonly elementRef: ElementRef<HTMLElement>,
@@ -70,13 +72,21 @@ export class RelatedFeedbackModal implements OnChanges, OnDestroy {
   ngOnChanges(changes: SimpleChanges): void {
     if (!changes['open']) return;
     if (this.open) {
-      this.moveHostToBody();
+      this.pendingPortal = true;
     } else {
+      this.pendingPortal = false;
       this.restoreHostLocation();
     }
   }
 
+  ngAfterViewChecked(): void {
+    if (!this.pendingPortal || !this.open) return;
+    this.pendingPortal = false;
+    this.ensureHostOnBody();
+  }
+
   ngOnDestroy(): void {
+    this.pendingPortal = false;
     this.restoreHostLocation();
   }
 
@@ -105,9 +115,13 @@ export class RelatedFeedbackModal implements OnChanges, OnDestroy {
     this.closed.emit();
   }
 
-  private moveHostToBody(): void {
-    if (!this.isBrowser || this.movedToBody) return;
+  private ensureHostOnBody(): void {
+    if (!this.isBrowser) return;
     const host = this.elementRef.nativeElement;
+    if (host.parentElement === this.documentRef.body) {
+      this.movedToBody = true;
+      return;
+    }
     this.originalParent = host.parentNode;
     this.originalNextSibling = host.nextSibling;
     this.documentRef.body.appendChild(host);

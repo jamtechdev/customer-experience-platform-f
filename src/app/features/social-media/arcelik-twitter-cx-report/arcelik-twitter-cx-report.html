@@ -372,24 +372,24 @@
               <div class="heatmap-pct-stage">{{ r.stage }}</div>
               <div
                 class="heatmap-pct-cell"
-                [style.background]="heatmapCellBg(r.positive)"
-                [style.color]="heatmapTextColor(r.positive)"
+                [style.background]="heatmapCellBg(heatmapCellIntensity(r, 'positive'))"
+                [style.color]="heatmapTextColor(heatmapCellIntensity(r, 'positive'))"
               >
-                {{ r.positive }}
+                {{ heatmapCellLabel(r, 'positive') }}
               </div>
               <div
                 class="heatmap-pct-cell"
-                [style.background]="heatmapCellBg(r.neutral)"
-                [style.color]="heatmapTextColor(r.neutral)"
+                [style.background]="heatmapCellBg(heatmapCellIntensity(r, 'neutral'))"
+                [style.color]="heatmapTextColor(heatmapCellIntensity(r, 'neutral'))"
               >
-                {{ r.neutral }}
+                {{ heatmapCellLabel(r, 'neutral') }}
               </div>
               <div
                 class="heatmap-pct-cell"
-                [style.background]="heatmapCellBg(r.negative)"
-                [style.color]="heatmapTextColor(r.negative)"
+                [style.background]="heatmapCellBg(heatmapCellIntensity(r, 'negative'))"
+                [style.color]="heatmapTextColor(heatmapCellIntensity(r, 'negative'))"
               >
-                {{ r.negative }}
+                {{ heatmapCellLabel(r, 'negative') }}
               </div>
             }
           </div>

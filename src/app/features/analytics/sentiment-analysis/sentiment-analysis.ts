@@ -610,12 +610,30 @@ export class SentimentAnalysis implements OnInit, OnDestroy {
   referenceModalRows(): RelatedFeedbackRow[] {
     const row = this.referenceRow();
     if (!row) return [];
-    return [{
+    return [this.mapRowForRelatedModal(row)];
+  }
+
+  private mapRowForRelatedModal(row: {
+    id?: number;
+    content: string;
+    referenceContent?: string;
+    translatedContent?: string;
+    contentSummary?: string;
+    journeyStage?: string;
+    relevanceReason?: string;
+    isRelevant?: boolean;
+    source?: string;
+    date?: string;
+    sentiment?: string;
+    score?: number;
+  }): RelatedFeedbackRow {
+    const original = row.referenceContent || row.content || '';
+    return {
       id: Number(row.id) || 0,
-      content: this.humanizeFeedbackText(row.content || ''),
-      referenceContent: row.referenceContent,
+      content: original,
+      referenceContent: original,
       translatedContent: row.contentSummary || row.translatedContent,
-      contentSummary: row.contentSummary,
+      contentSummary: row.contentSummary || row.translatedContent,
       journeyStage: row.journeyStage,
       relevanceReason: row.relevanceReason,
       isRelevant: row.isRelevant,
@@ -623,7 +641,7 @@ export class SentimentAnalysis implements OnInit, OnDestroy {
       date: normalizeApiDateToIso(row.date),
       sentiment: row.sentiment,
       score: row.score,
-    }];
+    };
   }
 
   openSentimentDrilldown(bar: SentimentChartBar): void {
@@ -653,9 +671,9 @@ export class SentimentAnalysis implements OnInit, OnDestroy {
           this.drilldownLoading.set(false);
           const list = response?.data?.list || [];
           this.drilldownRows.set(
-            list.map((row: any) => ({
+            list.map((row: any) => this.mapRowForRelatedModal({
               ...row,
-              content: this.humanizeFeedbackText(row.contentSummary || row.content || ''),
+              content: row.referenceContent || row.content || '',
               date: normalizeApiDateToIso(row.date),
             }))
           );

@@ -16,10 +16,14 @@ describe('drilldown-display (QA Finding 3 & 4)', () => {
 
   it('repairs legacy Address / sprint templates (Findings 2 & 4)', () => {
     const legacy = 'Address "refrigerator Service Resolution Gap" (344 linked feedback row(s)): —';
-    const repaired = repairStaleActionText(legacy);
-    expect(repaired).toContain('Assign a named owner');
+    const repaired = repairStaleActionText(
+      legacy,
+      'refrigerator Service Resolution Gap',
+      'Warranty repair delays'
+    );
+    expect(repaired).toContain('48-hour repair-closure SLA');
     expect(repaired).not.toMatch(/^address\b/i);
     const sprint = 'Run a focused sprint on "Product Reliability Concern" (53 negative-linked row(s)): assign owner, define SLA, and track repeat-contact rate.';
-    expect(repairStaleActionText(sprint)).toContain('Assign a named owner');
+    expect(repairStaleActionText(sprint, 'Product Reliability Concern')).toContain('product-reliability intervention');
   });
 });

@@ -86,6 +86,8 @@ export class ActionPlans implements OnInit, OnDestroy {
       owner: string;
       impact: string;
       horizon: string;
+      causeTheme?: string;
+      interpretation?: string;
       referenceFeedbackIds?: number[];
       linkedFeedbackIds?: number[];
       linkedCount?: number;
@@ -197,12 +199,17 @@ export class ActionPlans implements OnInit, OnDestroy {
             : [];
         const mergedIds = rcIds.length >= linkedFeedbackIds.length ? rcIds : linkedFeedbackIds;
         const linkedCount = mergedIds.length;
+        const causeTheme = String(rootCauses[index]?.cause || '').trim();
+        const interpretation = String(rootCauses[index]?.interpretation || '').trim();
+        const rawAction = String(x.action ?? '');
         return {
           priority: x.priority ?? '',
-          action: x.action ?? '',
+          action: repairStaleActionText(rawAction, causeTheme || undefined, interpretation || undefined),
           owner: x.owner ?? '',
           impact: x.impact ?? '',
           horizon: x.horizon ?? '',
+          causeTheme: causeTheme || undefined,
+          interpretation: interpretation || undefined,
           referenceFeedbackIds: mergedIds,
           linkedFeedbackIds: mergedIds,
           linkedCount,
@@ -255,9 +262,15 @@ export class ActionPlans implements OnInit, OnDestroy {
     return effectiveLinkedCount(row.linkedCount, row.linkedFeedbackIds, row.referenceFeedbackIds);
   }
 
-  displayAction(row: { action: string; linkedFeedbackIds?: number[]; referenceFeedbackIds?: number[] }): string {
+  displayAction(row: {
+    action: string;
+    causeTheme?: string;
+    interpretation?: string;
+    linkedFeedbackIds?: number[];
+    referenceFeedbackIds?: number[];
+  }): string {
     const count = this.referenceCount(row);
-    const repaired = repairStaleActionText(row.action);
+    const repaired = repairStaleActionText(row.action, row.causeTheme, row.interpretation);
     return alignLinkedCountInText(repaired, count, 'linked feedback row(s)');
   }
 

@@ -139,6 +139,8 @@ export class AnalysisService {
       rootCauseId?: number;
       themeTitle?: string;
       drilldownTitle?: string;
+      journeyStage?: string;
+      sentiment?: string;
       page?: number;
       limit?: number;
       includeIrrelevant?: boolean;
@@ -154,6 +156,8 @@ export class AnalysisService {
       rootCauseId: options?.rootCauseId,
       themeTitle: options?.themeTitle,
       drilldownTitle: options?.drilldownTitle,
+      journeyStage: options?.journeyStage,
+      sentiment: options?.sentiment,
       page,
       limit,
       includeIrrelevant: options?.includeIrrelevant === true,

@@ -250,14 +250,15 @@ export class TouchpointManager implements OnInit, OnDestroy {
     this.drilldownPage.set(page);
     this.drilldownLoading.set(true);
     this.drilldownRows.set([]);
-    const user = this.authService.currentUser();
     const companyId = resolveAppCompanyId(this.authService.currentUser());
-    this.analysisService.getAnalyticsDrilldown({
-      companyId,
-      ids: this.drilldownIds,
-      includeIrrelevant: false,
+    const touchpointName = this.drilldownTitle();
+    this.analysisService.getFeedbackByIds(companyId, this.drilldownIds, {
       page,
       limit: this.drilldownPageSize,
+      includeIrrelevant: false,
+      groupRetweets: false,
+      themeTitle: touchpointName,
+      drilldownTitle: touchpointName,
     }).subscribe({
       next: (res) => {
         this.drilldownLoading.set(false);

@@ -14,7 +14,7 @@ import { OllamaLoader } from '../../../core/components/ollama-loader/ollama-load
 import { notifyCxReportLoadFailure } from '../../../core/utils/twitter-cx-report-load';
 import { ImportProcessingService } from '../../../core/services/import-processing.service';
 import { RelatedFeedbackModal, RelatedFeedbackRow } from '../../../core/components/related-feedback-modal/related-feedback-modal';
-import { alignLinkedCountInText, drilldownModalTotal, effectiveLinkedCount, resolveDrilldownIds } from '../../../core/utils/drilldown-display';
+import { alignLinkedCountInText, drilldownModalTotal, effectiveLinkedCount, extractJourneyThemeFromSummary, extractQuotedTheme, resolveDrilldownIds } from '../../../core/utils/drilldown-display';
 import { TranslationService } from '../../../core/services/translation.service';
 import { resolveAppCompanyId } from '../../../core/utils/company-scope';
 import { environment } from '../../../../environments/environment';
@@ -70,6 +70,8 @@ export class JourneyMap implements OnInit, OnDestroy {
   drilldownTotal = signal(0);
   readonly drilldownPageSize = 10;
   private drilldownIds: number[] = [];
+  private drilldownStage = '';
+  private drilldownPolarity: 'satisfaction' | 'dissatisfaction' = 'satisfaction';
   private heatmapByStage = signal<Record<string, { positive: number[]; negative: number[] }>>({});
   private refreshSub?: Subscription;
 
@@ -267,13 +269,28 @@ export class JourneyMap implements OnInit, OnDestroy {
       .filter((s) => s.feedbackCount > 0).length;
   }
 
-  openReferences(stageName: string, polarity: 'satisfaction' | 'dissatisfaction', ids: number[], displayTotal: number): void {
+  openReferences(
+    stageName: string,
+    polarity: 'satisfaction' | 'dissatisfaction',
+    ids: number[],
+    displayTotal: number,
+    summaryText?: string
+  ): void {
     const unique = resolveDrilldownIds(ids);
     if (!unique.length && displayTotal <= 0) return;
-    this.drilldownTitle.set(`${stageName} · ${polarity}`);
+    const theme = extractJourneyThemeFromSummary(summaryText || '');
+    this.drilldownStage = stageName;
+    this.drilldownPolarity = polarity;
+    this.drilldownTitle.set(
+      theme
+        ? `${stageName} · ${polarity} · “${theme}”`
+        : `${stageName} · ${polarity}`
+    );
     this.drilldownOpen.set(true);
     this.drilldownIds = unique;
-    this.drilldownTotal.set(drilldownModalTotal(unique));
+    this.drilldownTotal.set(unique.length > 0 ? drilldownModalTotal(unique) : displayTotal);
+    this.drilldownRows.set([]);
+    this.drilldownLoading.set(true);
     this.loadDrilldownPage(1);
   }
 
@@ -308,7 +325,11 @@ export class JourneyMap implements OnInit, OnDestroy {
   }
 
   loadDrilldownPage(page: number): void {
-    if (!this.drilldownIds.length) return;
+    const sentiment = this.drilldownPolarity === 'satisfaction' ? 'positive' : 'negative';
+    const themeTitle = extractQuotedTheme(this.drilldownTitle());
+    const hasTheme = themeTitle !== 'this theme';
+    if (!this.drilldownIds.length && !hasTheme && !this.drilldownStage) return;
+
     this.drilldownPage.set(page);
     this.drilldownLoading.set(true);
     this.drilldownRows.set([]);
@@ -318,15 +339,22 @@ export class JourneyMap implements OnInit, OnDestroy {
       limit: this.drilldownPageSize,
       includeIrrelevant: true,
       groupRetweets: false,
+      themeTitle: hasTheme ? themeTitle : undefined,
+      drilldownTitle: this.drilldownTitle(),
+      journeyStage: this.drilldownStage || undefined,
+      sentiment,
     }).subscribe({
       next: (res) => {
         this.drilldownLoading.set(false);
         if (res?.data?.list) this.drilldownRows.set(res.data.list);
-        this.drilldownTotal.set(res?.data?.total ?? drilldownModalTotal(this.drilldownIds));
+        const resolvedTotal = res?.data?.total ?? 0;
+        this.drilldownTotal.set(
+          resolvedTotal > 0 ? resolvedTotal : drilldownModalTotal(this.drilldownIds) || this.drilldownTotal()
+        );
       },
       error: () => {
         this.drilldownLoading.set(false);
-        this.drilldownTotal.set(0);
+        this.drilldownTotal.set(drilldownModalTotal(this.drilldownIds) || this.drilldownTotal());
       },
     });
   }
@@ -337,6 +365,7 @@ export class JourneyMap implements OnInit, OnDestroy {
     this.drilldownPage.set(1);
     this.drilldownTotal.set(0);
     this.drilldownIds = [];
+    this.drilldownStage = '';
   }
 
   flowMilestoneMessage(): string {

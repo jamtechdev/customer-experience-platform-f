@@ -18,7 +18,7 @@ import { TwitterCxReportStore } from '../../../core/services/twitter-cx-report.s
 import { AuthService } from '../../../core/services/auth.service';
 import { ReportService } from '../../../core/services/report.service';
 import { AnalysisService } from '../../../core/services/analysis.service';
-import type { TwitterCxReportDto } from '../../../core/models/analysis.model';
+import { formatCellPct } from '../../../core/utils/drilldown-display';
 import {
   buildClientReportDatePresets,
   toIsoRangeFromYmd,
@@ -69,6 +69,12 @@ interface HeatmapPctRow {
   neutral: number;
   negative: number;
   total?: number;
+  positiveCount?: number;
+  neutralCount?: number;
+  negativeCount?: number;
+  positiveDisplayPct?: string;
+  neutralDisplayPct?: string;
+  negativeDisplayPct?: string;
 }
 
 interface TouchRow {
@@ -441,6 +447,28 @@ export class ArcelikTwitterCxReport implements OnInit, OnDestroy {
 
   heatmapTextColor(pct: number): string {
     return pct >= 42 ? '#0f172a' : '#f8fafc';
+  }
+
+  heatmapCellLabel(row: HeatmapPctRow, key: 'positive' | 'neutral' | 'negative'): string {
+    const display =
+      key === 'positive'
+        ? row.positiveDisplayPct
+        : key === 'neutral'
+          ? row.neutralDisplayPct
+          : row.negativeDisplayPct;
+    if (display?.trim()) return display.trim();
+    const count =
+      key === 'positive'
+        ? row.positiveCount ?? 0
+        : key === 'neutral'
+          ? row.neutralCount ?? 0
+          : row.negativeCount ?? 0;
+    const total = row.total && row.total > 0 ? row.total : count;
+    return formatCellPct(count, total);
+  }
+
+  heatmapCellIntensity(row: HeatmapPctRow, key: 'positive' | 'neutral' | 'negative'): number {
+    return row[key];
   }
 
   truncateChartLabel(text: string, maxLen = 26): string {

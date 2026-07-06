@@ -24,6 +24,8 @@ import { resolveAppCompanyId } from '../../../core/utils/company-scope';
 
 export interface ProcessImprovementRow {
   text: string;
+  cause?: string;
+  interpretation?: string;
   referenceFeedbackIds: number[];
   linkedFeedbackIds: number[];
   linkedCount: number;
@@ -124,7 +126,7 @@ export class ProcessEnhancement implements OnInit, OnDestroy {
   }
 
   private applyProcessReport(data: {
-    rootCauses?: Array<{ cause?: string; feedbackIds?: number[] }>;
+    rootCauses?: Array<{ cause?: string; interpretation?: string; feedbackIds?: number[] }>;
     processImprovementItems?: Array<{
       text: string;
       referenceFeedbackIds?: number[];
@@ -163,8 +165,13 @@ export class ProcessEnhancement implements OnInit, OnDestroy {
               : [];
           const mergedIds = rcIds.length >= linkedFeedbackIds.length ? rcIds : linkedFeedbackIds;
           const linkedCount = mergedIds.length;
+          const cause = String(themeMatch?.cause || extractQuotedTheme(p.text) || '').trim();
+          const interpretation = String(themeMatch?.interpretation || '').trim();
+          const repairedText = formatProcessImprovementText(p.text, linkedCount, cause, interpretation || undefined);
           return {
-            text: p.text,
+            text: repairedText,
+            cause,
+            interpretation: interpretation || undefined,
             referenceFeedbackIds: mergedIds,
             linkedFeedbackIds: mergedIds,
             linkedCount,
@@ -201,7 +208,7 @@ export class ProcessEnhancement implements OnInit, OnDestroy {
 
   displayText(row: ProcessImprovementRow): string {
     const count = this.referenceCount(row);
-    return formatProcessImprovementText(row.text, count);
+    return formatProcessImprovementText(row.text, count, row.cause, row.interpretation);
   }
 
   loadDrilldownPage(page: number): void {

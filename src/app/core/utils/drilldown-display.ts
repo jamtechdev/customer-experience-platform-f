@@ -34,20 +34,28 @@ export function drilldownModalTotal(requestedIds: number[]): number {
   return normalizeDrilldownIds(requestedIds).length;
 }
 
+export function heatmapSharePct(count: number, stageTotal: number): number {
+  if (!count || count <= 0 || !stageTotal || stageTotal <= 0) return 0;
+  const pct = (count / stageTotal) * 100;
+  if (Math.round(pct) > 0) return Math.round(pct);
+  for (const digits of [1, 2, 3]) {
+    const fixed = parseFloat(pct.toFixed(digits));
+    if (fixed > 0) return fixed;
+  }
+  return parseFloat(pct.toFixed(3));
+}
+
 /**
  * Format a share percentage so small-but-non-zero values never collapse to a flat "0%"
  * (Finding 3). Only a genuine zero count renders "0%"; otherwise precision escalates until a
- * non-zero digit is shown (e.g. 4 of 2163 -> "0.18%").
+ * non-zero digit is shown (e.g. 4 of 2163 -> "0.2%").
  */
 export function formatCellPct(count: number, stageTotal: number): string {
-  if (!count || count <= 0 || !stageTotal || stageTotal <= 0) return '0%';
-  const pct = (count / stageTotal) * 100;
-  if (Math.round(pct) > 0) return `${Math.round(pct)}%`;
-  for (const digits of [1, 2, 3]) {
-    const fixed = pct.toFixed(digits);
-    if (parseFloat(fixed) > 0) return `${fixed}%`;
-  }
-  return '<0.001%';
+  const pct = heatmapSharePct(count, stageTotal);
+  if (pct <= 0) return '0%';
+  if (Number.isInteger(pct)) return `${pct}%`;
+  const text = String(pct);
+  return `${text.includes('.') ? text.replace(/\.?0+$/, '') : text}%`;
 }
 
 /** Reject legacy label-only action / process-improvement text (Findings 2 & 4). */
@@ -72,18 +80,58 @@ export function fallbackClusterActionText(cause: string, interpretation?: string
   return `Assign a named owner to ${base.charAt(0).toLowerCase()}${base.slice(1, 300)} — define an SLA, add a resolution checklist, and track repeat-contact rate.`;
 }
 
+/** Tailored next-step text per cluster theme — never a bare "Address …" label (Finding 2). */
+export function clusterSpecificActionText(cause: string, interpretation?: string): string {
+  const theme = String(cause || 'this theme').trim();
+  const detail = (interpretation || '').replace(/\s+/g, ' ').trim();
+  const blob = `${theme} ${detail}`.toLowerCase();
+
+  if (/customer support|support gap|destek|call center|müşteri hizmet|musteri hizmet|iletisim/.test(blob)) {
+    return `Stand up a dedicated support cell for "${theme}": cap queue wait times, enforce first-contact resolution scripts, and track repeat-contact rate until it drops below 15%.`;
+  }
+  if (/service resolution|resolution gap|repair delay|warranty resolution|garanti.*(gecik|redd)|tamir.*(gecik|süre|sure)/.test(blob)) {
+    return `Introduce a 48-hour repair-closure SLA for "${theme}": pre-position spare parts for top failure codes, require technician callback within 24h on reopened tickets, and publish weekly resolution-rate dashboards to service leadership.`;
+  }
+  if (/reliability|defect|quality|arıza|ariza|bozuk|failure|breakdown/.test(blob)) {
+    return `Run a product-reliability intervention for "${theme}": isolate affected batches, complete root-cause hardware tests on returns, and proactively replace or repair units for customers with repeat failures.`;
+  }
+  if (/delivery|teslimat|logistics|kargo|shipment|shipping/.test(blob)) {
+    return `Tighten delivery operations for "${theme}": audit carrier SLAs end-to-end, send proactive delay notifications, and offer compensation when promised delivery windows are missed.`;
+  }
+  if (/billing|pricing|ücret|ucret|fiyat|invoice|refund/.test(blob)) {
+    return `Resolve billing and pricing friction for "${theme}": audit disputed charges against published price lists, authorize frontline refunds up to a defined threshold, and retrain stores on consistent discount communication.`;
+  }
+
+  return fallbackClusterActionText(theme, interpretation);
+}
+
 /** Repair legacy snapshot rows in the UI without requiring a full CX rebuild. */
-export function repairStaleActionText(action: string, causeHint?: string): string {
+export function repairStaleActionText(
+  action: string,
+  causeHint?: string,
+  interpretationHint?: string
+): string {
   const theme = (causeHint || extractQuotedTheme(action) || 'this theme').trim();
   if (isStaleGenericActionText(action)) {
-    return fallbackClusterActionText(theme);
+    return clusterSpecificActionText(theme, interpretationHint);
   }
   return action;
 }
 
 export function extractQuotedTheme(text: string): string {
-  const m = text.match(/[“"]([^”"]+)[”"]/);
+  const m = text.match(/[“"']([^”"']+)[”"']/);
   return m?.[1]?.trim() || 'this theme';
+}
+
+/** Pull journey theme label from satisfaction/dissatisfaction summary text. */
+export function extractJourneyThemeFromSummary(text: string): string | null {
+  const raw = String(text || '').trim();
+  if (!raw || raw === '—' || raw === '-') return null;
+  const withoutCount = raw
+    .replace(/\s*\(\d+[^)]*linked[^)]*\)\.?\s*$/i, '')
+    .replace(/\s*\(\d+[^)]*\)\.?\s*$/g, '')
+    .trim();
+  return withoutCount.length >= 3 ? withoutCount : null;
 }
 
 /**
@@ -91,8 +139,13 @@ export function extractQuotedTheme(text: string): string {
  * count (Finding 4). Previously this replaced every recommendation with an identical
  * "Run a focused sprint on ..." template, which is what made all clusters read the same.
  */
-export function formatProcessImprovementText(text: string, count: number): string {
-  const repaired = repairStaleActionText(text);
+export function formatProcessImprovementText(
+  text: string,
+  count: number,
+  causeHint?: string,
+  interpretationHint?: string
+): string {
+  const repaired = repairStaleActionText(text, causeHint, interpretationHint);
   return alignLinkedCountInText(repaired, count, 'negative-linked row(s)');
 }
 

@@ -211,31 +211,45 @@ export class JourneyHeatmap implements OnInit, OnDestroy {
   }
 
   positivePct(row: StageRow): number {
-    if (!row.feedbackCount) return 0;
-    return (row.positiveCount / row.feedbackCount) * 100;
+    const total = this.stageTotal(row);
+    if (!total) return 0;
+    return (row.positiveCount / total) * 100;
   }
 
   negativePct(row: StageRow): number {
-    if (!row.feedbackCount) return 0;
-    return (row.negativeCount / row.feedbackCount) * 100;
+    const total = this.stageTotal(row);
+    if (!total) return 0;
+    return (row.negativeCount / total) * 100;
   }
 
   neutralPct(row: StageRow): number {
-    if (!row.feedbackCount) return 0;
-    return (row.neutralCount / row.feedbackCount) * 100;
+    const total = this.stageTotal(row);
+    if (!total) return 0;
+    return (row.neutralCount / total) * 100;
+  }
+
+  private stageTotal(row: StageRow): number {
+    const sum = row.positiveCount + row.neutralCount + row.negativeCount;
+    return sum > 0 ? sum : row.feedbackCount;
   }
 
   // Display labels that never round a small non-zero share down to "0%" (Finding 3).
   positivePctLabel(row: StageRow): string {
-    return formatCellPct(row.positiveCount, row.feedbackCount);
+    return this.heatmapPctDisplay(row, 'positive') ?? formatCellPct(row.positiveCount, this.stageTotal(row));
   }
 
   neutralPctLabel(row: StageRow): string {
-    return formatCellPct(row.neutralCount, row.feedbackCount);
+    return this.heatmapPctDisplay(row, 'neutral') ?? formatCellPct(row.neutralCount, this.stageTotal(row));
   }
 
   negativePctLabel(row: StageRow): string {
-    return formatCellPct(row.negativeCount, row.feedbackCount);
+    return this.heatmapPctDisplay(row, 'negative') ?? formatCellPct(row.negativeCount, this.stageTotal(row));
+  }
+
+  private heatmapPctDisplay(row: StageRow & Record<string, unknown>, key: 'positive' | 'neutral' | 'negative'): string | null {
+    const field = key === 'positive' ? 'positiveDisplayPct' : key === 'neutral' ? 'neutralDisplayPct' : 'negativeDisplayPct';
+    const value = row[field];
+    return typeof value === 'string' && value.trim() ? value.trim() : null;
   }
 
   sentimentIds(row: StageRow, label: HeatmapSentiment): number[] {
@@ -313,7 +327,7 @@ export class JourneyHeatmap implements OnInit, OnDestroy {
     });
   }
 
-  private mapHeatmapRow(r: Record<string, unknown>): StageRow {
+  private mapHeatmapRow(r: Record<string, unknown>): StageRow & Record<string, unknown> {
     const total = Number(r['total'] ?? 0);
     const posIds = this.toFeedbackIds(r['positiveFeedbackIds']);
     const neuIds = this.toFeedbackIds(r['neutralFeedbackIds']);
@@ -324,11 +338,12 @@ export class JourneyHeatmap implements OnInit, OnDestroy {
     const positiveCount = posIds.length > 0 ? posIds.length : Number(r['positiveCount'] ?? 0);
     const neutralCount = neuIds.length > 0 ? neuIds.length : Number(r['neutralCount'] ?? 0);
     const negativeCount = negIds.length > 0 ? negIds.length : Number(r['negativeCount'] ?? 0);
+    const stageTotal = total > 0 ? total : positiveCount + neutralCount + negativeCount;
     return {
       stageName: String(r['stage'] ?? 'Unknown'),
       satisfactionScore: posPct / 100,
       dissatisfactionScore: negPct / 100,
-      feedbackCount: total,
+      feedbackCount: stageTotal,
       positiveCount,
       neutralCount,
       negativeCount,
@@ -338,6 +353,9 @@ export class JourneyHeatmap implements OnInit, OnDestroy {
       negativeFeedbackIds: negIds,
       painPoints: [],
       satisfactionPoints: [],
+      positiveDisplayPct: typeof r['positiveDisplayPct'] === 'string' ? r['positiveDisplayPct'] : undefined,
+      neutralDisplayPct: typeof r['neutralDisplayPct'] === 'string' ? r['neutralDisplayPct'] : undefined,
+      negativeDisplayPct: typeof r['negativeDisplayPct'] === 'string' ? r['negativeDisplayPct'] : undefined,
     };
   }
 

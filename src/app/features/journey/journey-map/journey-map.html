@@ -59,7 +59,7 @@
                     mat-stroked-button
                     type="button"
                     class="ref-btn"
-                    (click)="openReferences(row.name, 'satisfaction', satisfactionDrilldownIds(row), satisfactionReferenceTotal(row))">
+                    (click)="openReferences(row.name, 'satisfaction', satisfactionDrilldownIds(row), satisfactionReferenceTotal(row), row.satisfactionPoints[0])">
                     {{ t('journeyMap.viewRefs', { count: satisfactionReferenceTotal(row) }) }}
                   </button>
                 }
@@ -75,7 +75,7 @@
                     mat-stroked-button
                     type="button"
                     class="ref-btn"
-                    (click)="openReferences(row.name, 'dissatisfaction', dissatisfactionDrilldownIds(row), dissatisfactionReferenceTotal(row))">
+                    (click)="openReferences(row.name, 'dissatisfaction', dissatisfactionDrilldownIds(row), dissatisfactionReferenceTotal(row), row.painPoints[0])">
                     {{ t('journeyMap.viewRefs', { count: dissatisfactionReferenceTotal(row) }) }}
                   </button>
                 }
