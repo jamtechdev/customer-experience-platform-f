@@ -15,7 +15,7 @@ export class AuthService {
   private readonly platformId = inject(PLATFORM_ID);
 
   private currentUserSubject = new BehaviorSubject<User | null>(null);
-  
+  private accessToken: string | null = null;
   readonly currentUser$ = this.currentUserSubject.asObservable();
   readonly currentUser = signal<User | null>(null);
   readonly _isInitialized = signal<boolean>(false); // Made public for guard access
@@ -36,6 +36,7 @@ export class AuthService {
   constructor() {
     // Session validation is intentionally guard-driven. Public pages such as
     // login must not call /auth/profile because no cookie yet means a normal 401.
+    this.accessToken = this.readStoredToken();
     this._isInitialized.set(true);
     this.authReady$.next(true);
   }
@@ -64,6 +65,36 @@ export class AuthService {
     this.currentUser.set(null);
     this.currentUserSubject.next(null);
     this._isHydratingProfile.set(false);
+    this.accessToken = null;
+    if (isPlatformBrowser(this.platformId)) {
+      try {
+        sessionStorage.removeItem(environment.auth.tokenKey);
+      } catch {
+        /* ignore */
+      }
+    }
+  }
+
+  private readStoredToken(): string | null {
+    if (!isPlatformBrowser(this.platformId)) return null;
+    try {
+      return sessionStorage.getItem(environment.auth.tokenKey);
+    } catch {
+      return null;
+    }
+  }
+
+  private persistToken(token: string | null): void {
+    if (!isPlatformBrowser(this.platformId)) return;
+    try {
+      if (token) {
+        sessionStorage.setItem(environment.auth.tokenKey, token);
+      } else {
+        sessionStorage.removeItem(environment.auth.tokenKey);
+      }
+    } catch {
+      /* ignore */
+    }
   }
 
   private get apiBase(): string {
@@ -106,7 +137,7 @@ export class AuthService {
   }
 
   getToken(): string | null {
-    return null;
+    return this.accessToken || this.readStoredToken();
   }
 
   hasPermission(permission: string): boolean {
@@ -123,6 +154,9 @@ export class AuthService {
   }
 
   setSession(authResult: AuthResponse): void {
+    const token = authResult.accessToken || (authResult as { token?: string }).token || null;
+    this.accessToken = token;
+    this.persistToken(token);
     this.currentUser.set(authResult.user ?? null);
     this.currentUserSubject.next(authResult.user ?? null);
     this._isHydratingProfile.set(false);

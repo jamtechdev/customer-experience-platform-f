@@ -201,7 +201,10 @@ export function authInterceptor(
     return next(req);
   }
 
-  req = req.clone({ withCredentials: true });
+  const authService = inject(AuthService);
+  const token = authService.getToken();
+  const headers = token ? req.headers.set('Authorization', `Bearer ${token}`) : req.headers;
+  req = req.clone({ withCredentials: true, headers });
 
   return next(req);
 }
