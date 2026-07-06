@@ -33,6 +33,9 @@ interface StageRow {
   negativeFeedbackIds: number[];
   painPoints: string[];
   satisfactionPoints: string[];
+  positiveDisplayPct?: string;
+  neutralDisplayPct?: string;
+  negativeDisplayPct?: string;
 }
 
 type HeatmapSentiment = 'positive' | 'neutral' | 'negative';
@@ -246,9 +249,9 @@ export class JourneyHeatmap implements OnInit, OnDestroy {
     return this.heatmapPctDisplay(row, 'negative') ?? formatCellPct(row.negativeCount, this.stageTotal(row));
   }
 
-  private heatmapPctDisplay(row: StageRow & Record<string, unknown>, key: 'positive' | 'neutral' | 'negative'): string | null {
-    const field = key === 'positive' ? 'positiveDisplayPct' : key === 'neutral' ? 'neutralDisplayPct' : 'negativeDisplayPct';
-    const value = row[field];
+  private heatmapPctDisplay(row: StageRow, key: 'positive' | 'neutral' | 'negative'): string | null {
+    const value =
+      key === 'positive' ? row.positiveDisplayPct : key === 'neutral' ? row.neutralDisplayPct : row.negativeDisplayPct;
     return typeof value === 'string' && value.trim() ? value.trim() : null;
   }
 
@@ -327,7 +330,7 @@ export class JourneyHeatmap implements OnInit, OnDestroy {
     });
   }
 
-  private mapHeatmapRow(r: Record<string, unknown>): StageRow & Record<string, unknown> {
+  private mapHeatmapRow(r: Record<string, unknown>): StageRow {
     const total = Number(r['total'] ?? 0);
     const posIds = this.toFeedbackIds(r['positiveFeedbackIds']);
     const neuIds = this.toFeedbackIds(r['neutralFeedbackIds']);
