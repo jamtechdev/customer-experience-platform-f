@@ -58,17 +58,68 @@ export function formatCellPct(count: number, stageTotal: number): string {
   return `${text.includes('.') ? text.replace(/\.?0+$/, '') : text}%`;
 }
 
-/** Prefer backend label unless it collapsed a small non-zero share to "0%". */
+export interface HeatmapStageCountInput {
+  total?: number;
+  positiveCount?: number;
+  neutralCount?: number;
+  negativeCount?: number;
+  positiveFeedbackIds?: number[];
+  neutralFeedbackIds?: number[];
+  negativeFeedbackIds?: number[];
+  feedbackIds?: number[];
+  positive?: number;
+  neutral?: number;
+  negative?: number;
+}
+
+/** Align stage totals with positive / neutral / negative counts for heatmap UI. */
+export function reconcileHeatmapStageCounts(input: HeatmapStageCountInput): {
+  total: number;
+  positiveCount: number;
+  neutralCount: number;
+  negativeCount: number;
+} {
+  const posIds = normalizeDrilldownIds(input.positiveFeedbackIds);
+  const neuIds = normalizeDrilldownIds(input.neutralFeedbackIds);
+  const negIds = normalizeDrilldownIds(input.negativeFeedbackIds);
+  const allIds = normalizeDrilldownIds(input.feedbackIds);
+
+  let pos = posIds.length > 0 ? posIds.length : Math.max(0, Number(input.positiveCount) || 0);
+  let neu = neuIds.length > 0 ? neuIds.length : Math.max(0, Number(input.neutralCount) || 0);
+  let neg = negIds.length > 0 ? negIds.length : Math.max(0, Number(input.negativeCount) || 0);
+
+  let total = Number(input.total) || 0;
+  if (total <= 0) total = allIds.length > 0 ? allIds.length : pos + neu + neg;
+
+  const classified = pos + neu + neg;
+  if (total > classified) neu += total - classified;
+
+  if (total > 0 && pos + neu + neg === 0) {
+    const pPct = Number(input.positive) || 0;
+    const nPct = Number(input.negative) || 0;
+    const uPct = Number(input.neutral) || 0;
+    if (pPct + nPct + uPct > 0) {
+      pos = pPct > 0 ? Math.max(1, Math.round((pPct / 100) * total)) : 0;
+      neg = nPct > 0 ? Math.max(1, Math.round((nPct / 100) * total)) : 0;
+      neu = Math.max(0, total - pos - neg);
+    } else if (allIds.length > 0) {
+      neu = allIds.length;
+    }
+  }
+
+  return { total, positiveCount: pos, neutralCount: neu, negativeCount: neg };
+}
+
+/** Count is source of truth — never show stale backend "0%" when count > 0. */
 export function resolveHeatmapDisplayPct(
   count: number,
   stageTotal: number,
   backendDisplay?: string | null
 ): string {
   const computed = formatCellPct(count, stageTotal);
+  if (count > 0 && stageTotal > 0) return computed;
   const stored = backendDisplay?.trim();
-  if (!stored) return computed;
-  if (stored === '0%' && count > 0 && stageTotal > 0) return computed;
-  return stored;
+  return stored || computed;
 }
 
 /** Heatmap cell color intensity — always derive from counts when available. */

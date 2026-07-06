@@ -35,6 +35,7 @@ interface JourneyStage {
   dissatisfactionFeedbackIds: number[];
   satisfactionCount: number;
   dissatisfactionCount: number;
+  stageFeedbackIds: number[];
 }
 
 @Component({
@@ -71,8 +72,8 @@ export class JourneyMap implements OnInit, OnDestroy {
   readonly drilldownPageSize = 10;
   private drilldownIds: number[] = [];
   private drilldownStage = '';
-  private drilldownPolarity: 'satisfaction' | 'dissatisfaction' = 'satisfaction';
-  private heatmapByStage = signal<Record<string, { positive: number[]; negative: number[]; all: number[]; total: number }>>({});
+  private drilldownPolarity: 'satisfaction' | 'dissatisfaction' | 'all' = 'satisfaction';
+  private heatmapByStage = signal<Record<string, { positive: number[]; negative: number[]; neutral: number[]; all: number[]; total: number }>>({});
   private refreshSub?: Subscription;
 
   loading = signal(false);
@@ -152,13 +153,14 @@ export class JourneyMap implements OnInit, OnDestroy {
     if (!response.success || !response.data) return;
 
     const heatmap = Array.isArray(response.data.heatmapPct) ? response.data.heatmapPct : [];
-    const heatmapMap: Record<string, { positive: number[]; negative: number[]; all: number[]; total: number }> = {};
+    const heatmapMap: Record<string, { positive: number[]; negative: number[]; neutral: number[]; all: number[]; total: number }> = {};
     for (const h of heatmap) {
       const stage = String((h as { stage?: string }).stage ?? '');
       if (!stage) continue;
       heatmapMap[stage] = {
         positive: this.toIds((h as { positiveFeedbackIds?: number[] }).positiveFeedbackIds),
         negative: this.toIds((h as { negativeFeedbackIds?: number[] }).negativeFeedbackIds),
+        neutral: this.toIds((h as { neutralFeedbackIds?: number[] }).neutralFeedbackIds),
         all: this.toIds((h as { feedbackIds?: number[] }).feedbackIds),
         total: Number((h as { total?: number }).total ?? 0),
       };
@@ -225,6 +227,7 @@ export class JourneyMap implements OnInit, OnDestroy {
             : heat?.total && heat.total > 0
               ? heat.total
               : heat?.all.length || satisfactionCount + dissatisfactionCount;
+        const stageFeedbackIds = this.mergeIds(satIds, disIds, heat?.all, heat?.neutral);
         const satSummary = this.cleanJourneySummary(String(r?.satisfactionSummary ?? r?.satisfaction ?? ''));
         const disSummary = this.cleanJourneySummary(String(r?.dissatisfactionSummary ?? r?.dissatisfaction ?? ''));
         return {
@@ -241,6 +244,7 @@ export class JourneyMap implements OnInit, OnDestroy {
           dissatisfactionFeedbackIds: disIds,
           satisfactionCount,
           dissatisfactionCount,
+          stageFeedbackIds,
         };
       })
     );
@@ -322,7 +326,9 @@ export class JourneyMap implements OnInit, OnDestroy {
   satisfactionDisplay(row: JourneyStage): string {
     const n = this.satisfactionReferenceTotal(row);
     const fromBackend = row.satisfactionPoints[0] || '';
-    if (fromBackend) return n > 0 ? alignLinkedCountInText(fromBackend, n) : fromBackend;
+    if (fromBackend && !this.isStaleJourneySummary(fromBackend, row.feedbackCount, n)) {
+      return n > 0 ? alignLinkedCountInText(fromBackend, n) : fromBackend;
+    }
     if (n > 0) {
       return n >= 3
         ? `Positive signals at ${row.name} — ${n} linked feedback row(s).`
@@ -338,7 +344,9 @@ export class JourneyMap implements OnInit, OnDestroy {
   dissatisfactionDisplay(row: JourneyStage): string {
     const n = this.dissatisfactionReferenceTotal(row);
     const fromBackend = row.painPoints[0] || '';
-    if (fromBackend) return n > 0 ? alignLinkedCountInText(fromBackend, n) : fromBackend;
+    if (fromBackend && !this.isStaleJourneySummary(fromBackend, row.feedbackCount, n)) {
+      return n > 0 ? alignLinkedCountInText(fromBackend, n) : fromBackend;
+    }
     if (n > 0) {
       return n >= 3
         ? `Negative themes at ${row.name} — ${n} linked feedback row(s).`
@@ -351,8 +359,41 @@ export class JourneyMap implements OnInit, OnDestroy {
     return '—';
   }
 
+  stageMappedTotal(row: JourneyStage): number {
+    const idCount = row.stageFeedbackIds.length;
+    return idCount > 0 ? idCount : row.feedbackCount;
+  }
+
+  isNeutralMappedStage(row: JourneyStage): boolean {
+    return (
+      row.feedbackCount > 0 &&
+      this.satisfactionReferenceTotal(row) === 0 &&
+      this.dissatisfactionReferenceTotal(row) === 0
+    );
+  }
+
+  openStageMapped(row: JourneyStage): void {
+    const ids = resolveDrilldownIds(row.stageFeedbackIds);
+    const total = ids.length || row.feedbackCount;
+    if (total <= 0) return;
+    this.drilldownStage = row.name;
+    this.drilldownPolarity = 'all';
+    this.drilldownTitle.set(`${row.name} · all mapped feedback`);
+    this.drilldownOpen.set(true);
+    this.drilldownIds = ids;
+    this.drilldownTotal.set(ids.length > 0 ? drilldownModalTotal(ids) : total);
+    this.drilldownRows.set([]);
+    this.drilldownLoading.set(true);
+    this.loadDrilldownPage(1);
+  }
+
   loadDrilldownPage(page: number): void {
-    const sentiment = this.drilldownPolarity === 'satisfaction' ? 'positive' : 'negative';
+    const sentiment =
+      this.drilldownPolarity === 'satisfaction'
+        ? 'positive'
+        : this.drilldownPolarity === 'dissatisfaction'
+          ? 'negative'
+          : undefined;
     const themeTitle = extractQuotedTheme(this.drilldownTitle());
     const hasTheme = themeTitle !== 'this theme';
     if (!this.drilldownIds.length && !hasTheme && !this.drilldownStage) return;
@@ -369,7 +410,7 @@ export class JourneyMap implements OnInit, OnDestroy {
       themeTitle: hasTheme ? themeTitle : undefined,
       drilldownTitle: this.drilldownTitle(),
       journeyStage: this.drilldownStage || undefined,
-      sentiment,
+      ...(sentiment ? { sentiment } : {}),
     }).subscribe({
       next: (res) => {
         this.drilldownLoading.set(false);
@@ -416,6 +457,14 @@ export class JourneyMap implements OnInit, OnDestroy {
     const t = text.trim();
     if (!t || t === '—' || t === '-' || t === '–') return '';
     return t;
+  }
+
+  /** Ignore backend copy that says 0 linked rows while the stage still has mapped volume. */
+  private isStaleJourneySummary(text: string, feedbackCount: number, linkedN: number): boolean {
+    if (feedbackCount <= 0) return false;
+    if (/0 linked feedback row/i.test(text) && feedbackCount > linkedN) return true;
+    if (linkedN <= 0 && /early (positive|negative) signals/i.test(text)) return true;
+    return false;
   }
 
   private toIds(value: unknown): number[] {

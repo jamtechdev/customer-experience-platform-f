@@ -192,3 +192,9 @@
     grid-template-columns: 40px minmax(0, 1fr);
   }
 }
+
+.stage-mapped-actions {
+  margin-top: 0.75rem;
+  display: flex;
+  justify-content: flex-end;
+}

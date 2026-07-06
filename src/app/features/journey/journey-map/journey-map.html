@@ -81,6 +81,17 @@
                 }
               </section>
             </div>
+            @if (isNeutralMappedStage(row)) {
+              <div class="stage-mapped-actions">
+                <button
+                  mat-stroked-button
+                  type="button"
+                  class="ref-btn"
+                  (click)="openStageMapped(row)">
+                  {{ t('journeyMap.viewRefs', { count: stageMappedTotal(row) }) }}
+                </button>
+              </div>
+            }
           </div>
         </article>
       }

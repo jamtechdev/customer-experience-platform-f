@@ -116,6 +116,8 @@ export class CxAnalysisProgressService {
     void this.syncSnapshotStatus(false);
   }
 
+  private priorSnapshotStatus: SnapshotStatus = 'none';
+
   private companyId(): number {
     return resolveAppCompanyId(this.auth.currentUser());
   }
@@ -127,11 +129,14 @@ export class CxAnalysisProgressService {
       next: (res) => {
         this.syncInFlight.set(false);
         const status: SnapshotStatus = res.data?.status ?? 'none';
+        const prev = this.priorSnapshotStatus;
+        this.priorSnapshotStatus = status;
         this.snapshotStatusSignal.set(status);
 
         if (status === 'ready') {
           this.twitterCxReportStore.markSnapshotReady();
-          if (invalidateOnReady) {
+          // DB snapshot finished: drop in-memory CX cache so pages reload normalized rows (not stale lastGood).
+          if (invalidateOnReady || prev === 'pending') {
             this.twitterCxReportStore.invalidate(this.companyId());
           }
           this.recomputePhase();

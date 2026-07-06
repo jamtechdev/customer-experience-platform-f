@@ -72,13 +72,23 @@ export class TwitterCxReportStore {
     companyId: number | undefined,
     csvImportId?: number,
     startDate?: Date,
-    endDate?: Date
+    endDate?: Date,
+    options?: { clearLastGood?: boolean }
   ): void {
     const scopedCompanyId = this.normalizeCompanyId(companyId);
     const key = this.cacheKey(scopedCompanyId, csvImportId, startDate, endDate, false);
     this.cache.delete(key);
     this.inflight.delete(key);
     this.clearPendingRetry(key);
+    if (options?.clearLastGood) {
+      this.lastGoodByCompany.delete(String(scopedCompanyId));
+      for (const k of [...this.cache.keys()]) {
+        if (k.startsWith(`${scopedCompanyId}|`)) this.cache.delete(k);
+      }
+      for (const k of [...this.inflight.keys()]) {
+        if (k.startsWith(`${scopedCompanyId}|`)) this.inflight.delete(k);
+      }
+    }
   }
 
   loadTwitterCxReport(

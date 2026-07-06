@@ -16,6 +16,7 @@ import { TranslationService } from '../../../core/services/translation.service';
 import {
   drilldownModalTotal,
   heatmapCellIntensityPct,
+  reconcileHeatmapStageCounts,
   resolveHeatmapDisplayPct,
 } from '../../../core/utils/drilldown-display';
 import { resolveAppCompanyId } from '../../../core/utils/company-scope';
@@ -133,13 +134,17 @@ export class JourneyHeatmap implements OnInit, OnDestroy {
   loadHeatmap(forceLive: boolean = false, refreshFromServer: boolean = false): void {
     const companyId = resolveAppCompanyId(this.authService.currentUser());
     if (refreshFromServer && !forceLive) {
-      this.twitterCxReportStore.clearCachedReport(companyId);
+      this.twitterCxReportStore.clearCachedReport(companyId, undefined, undefined, undefined, {
+        clearLastGood: true,
+      });
     }
-    const cached = !forceLive ? this.twitterCxReportStore.getCachedReport(companyId) : undefined;
+    const cached = !forceLive && !refreshFromServer
+      ? this.twitterCxReportStore.getCachedReport(companyId)
+      : undefined;
     if (cached?.success && cached.data?.heatmapPct?.length) {
       this.applyHeatmapReport(cached);
-      this.loading.set(false);
-    } else if (!this.twitterCxReportStore.hasCachedReport(companyId)) {
+    }
+    if (refreshFromServer || !this.stages().length) {
       this.loading.set(true);
     }
     this.error.set(null);
@@ -153,10 +158,10 @@ export class JourneyHeatmap implements OnInit, OnDestroy {
         clearTimeout(watchdog);
         if (!res.success) {
           if (isCxReportResponsePending(res, this.importProcessing.isActive())) {
-            if (!cached?.success) this.loading.set(true);
+            if (!cached?.success && !this.stages().length) this.loading.set(true);
             return;
           }
-          if (!cached?.success) {
+          if (!cached?.success && !this.stages().length) {
             this.stages.set([]);
             this.page.set(1);
             this.error.set(this.importProcessing.isActive() ? null : twitterCxReportFailureMessage(res.message));
@@ -279,7 +284,7 @@ export class JourneyHeatmap implements OnInit, OnDestroy {
     const displayCount = this.sentimentCount(stage, label);
     if (!unique.length && displayCount <= 0) return;
     this.drilldownState = { stage, label, ids: unique };
-    this.drilldownIds = unique;
+    this.drilldownIds = unique.length ? unique : stage.feedbackIds.slice(0, displayCount);
     this.drilldownTotal.set(unique.length || displayCount);
     this.drilldownTitle.set(`${stage.stageName} · ${label} (${this.drilldownTotal().toLocaleString()} messages)`);
     this.drilldownOpen.set(true);
@@ -298,16 +303,22 @@ export class JourneyHeatmap implements OnInit, OnDestroy {
   }
 
   loadDrilldownPage(page: number): void {
-    if (!this.drilldownIds.length) return;
+    const stage = this.drilldownState?.stage.stageName;
+    const label = this.drilldownState?.label;
+    if (!this.drilldownIds.length && !stage) return;
     this.drilldownPage.set(page);
     this.drilldownLoading.set(true);
     this.drilldownRows.set([]);
     const companyId = resolveAppCompanyId(this.authService.currentUser());
+    const sentiment =
+      label === 'positive' ? 'positive' : label === 'negative' ? 'negative' : label === 'neutral' ? 'neutral' : undefined;
     this.analysisService.getFeedbackByIds(companyId, this.drilldownIds, {
       page,
       limit: this.drilldownPageSize,
       includeIrrelevant: true,
       groupRetweets: false,
+      journeyStage: stage,
+      ...(sentiment ? { sentiment } : {}),
     }).subscribe({
       next: (res) => {
         this.drilldownLoading.set(false);
@@ -323,17 +334,29 @@ export class JourneyHeatmap implements OnInit, OnDestroy {
   }
 
   private mapHeatmapRow(r: Record<string, unknown>): StageRow {
-    const total = Number(r['total'] ?? 0);
     const posIds = this.toFeedbackIds(r['positiveFeedbackIds']);
     const neuIds = this.toFeedbackIds(r['neutralFeedbackIds']);
     const negIds = this.toFeedbackIds(r['negativeFeedbackIds']);
+    const feedbackIds = this.toFeedbackIds(r['feedbackIds']);
+    const counts = reconcileHeatmapStageCounts({
+      total: Number(r['total'] ?? 0),
+      positiveCount: Number(r['positiveCount'] ?? 0),
+      neutralCount: Number(r['neutralCount'] ?? 0),
+      negativeCount: Number(r['negativeCount'] ?? 0),
+      positiveFeedbackIds: posIds,
+      neutralFeedbackIds: neuIds,
+      negativeFeedbackIds: negIds,
+      feedbackIds,
+      positive: Number(r['positive'] ?? 0),
+      neutral: Number(r['neutral'] ?? 0),
+      negative: Number(r['negative'] ?? 0),
+    });
+    const { total: stageTotal, positiveCount, neutralCount, negativeCount } = counts;
+    const positiveFeedbackIds = this.resolveSentimentIds(posIds, positiveCount, feedbackIds, negIds, neuIds);
+    const neutralFeedbackIds = this.resolveSentimentIds(neuIds, neutralCount, feedbackIds, posIds, negIds);
+    const negativeFeedbackIds = this.resolveSentimentIds(negIds, negativeCount, feedbackIds, posIds, neuIds);
     const posPct = Number(r['positive'] ?? 0);
-    const neuPct = Number(r['neutral'] ?? 0);
     const negPct = Number(r['negative'] ?? 0);
-    const positiveCount = posIds.length > 0 ? posIds.length : Number(r['positiveCount'] ?? 0);
-    const neutralCount = neuIds.length > 0 ? neuIds.length : Number(r['neutralCount'] ?? 0);
-    const negativeCount = negIds.length > 0 ? negIds.length : Number(r['negativeCount'] ?? 0);
-    const stageTotal = total > 0 ? total : positiveCount + neutralCount + negativeCount;
     return {
       stageName: String(r['stage'] ?? 'Unknown'),
       satisfactionScore: posPct / 100,
@@ -342,16 +365,32 @@ export class JourneyHeatmap implements OnInit, OnDestroy {
       positiveCount,
       neutralCount,
       negativeCount,
-      feedbackIds: this.toFeedbackIds(r['feedbackIds']),
-      positiveFeedbackIds: posIds,
-      neutralFeedbackIds: neuIds,
-      negativeFeedbackIds: negIds,
+      feedbackIds,
+      positiveFeedbackIds,
+      neutralFeedbackIds,
+      negativeFeedbackIds,
       painPoints: [],
       satisfactionPoints: [],
       positiveDisplayPct: typeof r['positiveDisplayPct'] === 'string' ? r['positiveDisplayPct'] : undefined,
       neutralDisplayPct: typeof r['neutralDisplayPct'] === 'string' ? r['neutralDisplayPct'] : undefined,
       negativeDisplayPct: typeof r['negativeDisplayPct'] === 'string' ? r['negativeDisplayPct'] : undefined,
     };
+  }
+
+  private resolveSentimentIds(
+    ids: number[],
+    count: number,
+    allIds: number[],
+    otherA: number[],
+    otherB: number[]
+  ): number[] {
+    if (ids.length > 0) return ids;
+    if (count <= 0 || allIds.length === 0) return ids;
+    const used = new Set([...otherA, ...otherB]);
+    const available = allIds.filter((id) => !used.has(id));
+    if (available.length >= count) return available.slice(0, count);
+    if (count > 0 && otherA.length === 0 && otherB.length === 0) return allIds.slice(0, count);
+    return available;
   }
 
   private toFeedbackIds(value: unknown): number[] {

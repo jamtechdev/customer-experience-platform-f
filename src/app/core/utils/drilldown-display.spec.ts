@@ -1,4 +1,4 @@
-import { formatCellPct, formatProcessImprovementText, heatmapCellIntensityPct, repairStaleActionText, resolveHeatmapDisplayPct } from './drilldown-display';
+import { formatCellPct, formatProcessImprovementText, heatmapCellIntensityPct, reconcileHeatmapStageCounts, repairStaleActionText, resolveHeatmapDisplayPct } from './drilldown-display';
 
 describe('drilldown-display (QA Finding 3 & 4)', () => {
   it('shows decimal percentage for small non-zero shares (Finding 3)', () => {
@@ -11,6 +11,17 @@ describe('drilldown-display (QA Finding 3 & 4)', () => {
     expect(resolveHeatmapDisplayPct(4, 2163, '0%')).toBe('0.2%');
     expect(resolveHeatmapDisplayPct(0, 2163, '0%')).toBe('0%');
     expect(resolveHeatmapDisplayPct(4, 2163, '0.2%')).toBe('0.2%');
+    expect(resolveHeatmapDisplayPct(4, 2163, '5%')).toBe('0.2%');
+  });
+
+  it('reconciles stage total into neutral when sentiment split is missing', () => {
+    const purchase = reconcileHeatmapStageCounts({
+      total: 5,
+      feedbackIds: [1, 2, 3, 4, 5],
+    });
+    expect(purchase.neutralCount).toBe(5);
+    expect(purchase.positiveCount).toBe(0);
+    expect(purchase.negativeCount).toBe(0);
   });
 
   it('derives heatmap intensity from counts, not rounded stored pct', () => {
