@@ -163,7 +163,9 @@ export function clusterSpecificActionText(cause: string, interpretation?: string
     return `Introduce a 48-hour repair-closure SLA for "${theme}": pre-position spare parts for top failure codes, require technician callback within 24h on reopened tickets, and publish weekly resolution-rate dashboards to service leadership.`;
   }
   if (/reliability|defect|quality|arıza|ariza|bozuk|failure|breakdown/.test(blob)) {
-    return `Run a product-reliability intervention for "${theme}": isolate affected batches, complete root-cause hardware tests on returns, and proactively replace or repair units for customers with repeat failures.`;
+    const productHint = theme.replace(/\b(issue|concern|gap|reliability)\b/gi, '').trim();
+    const focus = productHint.length >= 4 ? productHint : theme;
+    return `Run a product-reliability intervention for "${focus}": isolate affected batches for this product line, complete root-cause hardware tests on returns, and proactively replace or repair units with repeat failures.`;
   }
   if (/delivery|teslimat|logistics|kargo|shipment|shipping/.test(blob)) {
     return `Tighten delivery operations for "${theme}": audit carrier SLAs end-to-end, send proactive delay notifications, and offer compensation when promised delivery windows are missed.`;
@@ -233,12 +235,14 @@ export function alignLinkedCountInText(text: string, count: number, label = 'lin
   return replaced;
 }
 
-/** Strip misleading product-specific wording when evidence is thin (Finding 7). */
-export function generalizeMisleadingJourneyThemeLabel(label: string): string {
+/** Strip misleading product-specific wording when label entity is not dominant (Finding 7). */
+export function generalizeMisleadingJourneyThemeLabel(label: string, sampleTexts?: string[]): string {
   const raw = String(label || '').trim();
   if (!raw) return raw;
 
-  if (/coffee\s*machine/i.test(raw) && /campaign|awareness|brand|discount|indirim|kampanya/i.test(raw)) {
+  const campaignContext = /campaign|awareness|brand|discount|indirim|kampanya|promotion|promo/i.test(raw);
+
+  if (/coffee\s*machine/i.test(raw) && campaignContext) {
     const generalized = raw
       .replace(/\bcoffee\s*machine\b\s*&?\s*/gi, '')
       .replace(/^\s*&\s*/, '')
@@ -246,6 +250,31 @@ export function generalizeMisleadingJourneyThemeLabel(label: string): string {
       .trim();
     if (generalized.length >= 8) return generalized;
     return 'Campaign & Brand Awareness';
+  }
+
+  if (sampleTexts && sampleTexts.length >= 3) {
+    const entityPattern = /\b(refrigerator|fridge|oven|dishwasher|washing machine|coffee machine|television|vacuum|air conditioner|klima|buzdolabı|fırın|çamaşır)\b/i;
+    const labelEntity = raw.match(entityPattern)?.[0];
+    if (labelEntity && campaignContext) {
+      const hits = sampleTexts.filter((t) => new RegExp(labelEntity.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i').test(t)).length;
+      const coverage = hits / sampleTexts.length;
+      if (coverage < 0.3) {
+        const stripped = raw
+          .replace(new RegExp(`\\b${labelEntity}\\b\\s*&?\\s*`, 'gi'), '')
+          .replace(/^\s*&\s*/, '')
+          .replace(/\s{2,}/g, ' ')
+          .trim();
+        if (stripped.length >= 8) return stripped;
+        if (campaignContext) return 'Campaign & Brand Awareness';
+      }
+    }
+  } else if (campaignContext && /coffee\s*machine|refrigerator|fridge|oven\b/i.test(raw)) {
+    const stripped = raw
+      .replace(/\b(coffee\s*machine|refrigerator|fridge|oven)\b\s*&?\s*/gi, '')
+      .replace(/^\s*&\s*/, '')
+      .replace(/\s{2,}/g, ' ')
+      .trim();
+    if (stripped.length >= 8) return stripped;
   }
 
   return raw;
