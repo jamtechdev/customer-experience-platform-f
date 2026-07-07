@@ -1,3 +1,5 @@
+import type { TwitterCxReportDto } from '../models';
+
 /** Counts shown in UI must match drilldown ID lists exactly. */
 export function drilldownIdCount(linked?: number[], reference?: number[]): number {
   const ids = linked?.length ? linked : reference ?? [];
@@ -347,7 +349,11 @@ export function repairJourneyThemeDisplay(
 }
 
 /** Repair legacy snapshot payloads on the client without requiring a full CX rebuild. */
-export function repairCxReportPayload<T extends Record<string, unknown>>(data: T): T {
+export function repairCxReportPayload(data: TwitterCxReportDto): TwitterCxReportDto;
+export function repairCxReportPayload<T extends Record<string, unknown>>(data: T): T;
+export function repairCxReportPayload(
+  data: TwitterCxReportDto | Record<string, unknown>
+): TwitterCxReportDto | Record<string, unknown> {
   if (!data || typeof data !== 'object') return data;
   const rootCauses = Array.isArray(data['rootCauses']) ? (data['rootCauses'] as Array<Record<string, unknown>>) : [];
 

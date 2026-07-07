@@ -284,7 +284,7 @@ export class TwitterCxReportStore {
     if (!res.success || !res.data) return res;
     return {
       ...res,
-      data: repairCxReportPayload(res.data as unknown as Record<string, unknown>) as TwitterCxReportDto,
+      data: repairCxReportPayload(res.data),
     };
   }
 
