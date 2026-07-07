@@ -589,6 +589,20 @@
   color: #f59e0b;
 }
 
+.relevance-chip {
+  font-weight: 500;
+}
+
+.relevance-chip.yes {
+  background-color: #e0f2fe;
+  color: #0369a1;
+}
+
+.relevance-chip.no {
+  background-color: #f3f4f6;
+  color: #6b7280;
+}
+
 .progress-bar-container {
   width: 100%;
   height: 24px;

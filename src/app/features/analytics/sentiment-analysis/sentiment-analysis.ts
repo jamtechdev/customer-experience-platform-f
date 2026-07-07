@@ -580,13 +580,16 @@ export class SentimentAnalysis implements OnInit, OnDestroy {
     search?: string;
   } {
     const rel = this.filterIsRelevant();
-    const isRelevant = rel === 'true' ? true : rel === 'false' ? false : undefined;
     const sentiment = overrides?.sentiment ?? (this.filterSentiment().trim() || undefined);
+    const isRelevant = rel === 'true' ? true : rel === 'false' ? false : undefined;
+    const includeIrrelevant = rel === 'all';
+    // Positive/negative/neutral filters should show brand-relevant CX rows only unless user chose otherwise.
+    const autoRelevantOnly = !!sentiment && rel === 'all';
     return {
       journeyStage: this.filterJourneyStage() || undefined,
       sentiment,
-      isRelevant,
-      includeIrrelevant: rel === 'all',
+      isRelevant: autoRelevantOnly ? true : isRelevant,
+      includeIrrelevant: autoRelevantOnly ? false : includeIrrelevant,
       search: this.filterSearch().trim() || undefined,
     };
   }

@@ -223,7 +223,7 @@
               <th mat-header-cell *matHeaderCellDef>{{ t('sentiment.relevant') }}</th>
               <td mat-cell *matCellDef="let row">
                 <mat-chip-set>
-                  <mat-chip [class]="row.isRelevant === false ? 'sentiment-chip negative' : 'sentiment-chip positive'">
+                  <mat-chip [class]="row.isRelevant === false ? 'relevance-chip no' : 'relevance-chip yes'">
                     {{ row.isRelevant === false ? t('app.no') : t('app.yes') }}
                   </mat-chip>
                 </mat-chip-set>
