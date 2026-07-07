@@ -1,4 +1,4 @@
-import { formatCellPct, formatProcessImprovementText, heatmapCellIntensityPct, reconcileHeatmapStageCounts, repairStaleActionText, resolveHeatmapDisplayPct } from './drilldown-display';
+import { formatCellPct, formatProcessImprovementText, generalizeMisleadingJourneyThemeLabel, heatmapCellIntensityPct, reconcileHeatmapStageCounts, repairJourneyThemeDisplay, repairStaleActionText, resolveHeatmapDisplayPct } from './drilldown-display';
 
 describe('drilldown-display (QA Finding 3 & 4)', () => {
   it('shows decimal percentage for small non-zero shares (Finding 3)', () => {
@@ -47,5 +47,17 @@ describe('drilldown-display (QA Finding 3 & 4)', () => {
     expect(repaired).not.toMatch(/^address\b/i);
     const sprint = 'Run a focused sprint on "Product Reliability Concern" (53 negative-linked row(s)): assign owner, define SLA, and track repeat-contact rate.';
     expect(repairStaleActionText(sprint, 'Product Reliability Concern')).toContain('product-reliability intervention');
+  });
+
+  it('generalizes misleading coffee-machine journey labels (Finding 7)', () => {
+    expect(generalizeMisleadingJourneyThemeLabel('Coffee Machine Campaign & Brand Awareness')).not.toMatch(/coffee machine/i);
+    const thin = repairJourneyThemeDisplay(
+      'Product delivered within 48 hours (1 linked feedback row(s).)',
+      1,
+      'Delivery',
+      'satisfaction',
+      19
+    );
+    expect(thin).toMatch(/more data needed/i);
   });
 });

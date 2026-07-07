@@ -14,7 +14,7 @@ import { OllamaLoader } from '../../../core/components/ollama-loader/ollama-load
 import { notifyCxReportLoadFailure } from '../../../core/utils/twitter-cx-report-load';
 import { ImportProcessingService } from '../../../core/services/import-processing.service';
 import { RelatedFeedbackModal, RelatedFeedbackRow } from '../../../core/components/related-feedback-modal/related-feedback-modal';
-import { alignLinkedCountInText, drilldownModalTotal, effectiveLinkedCount, extractJourneyThemeFromSummary, extractQuotedTheme, resolveDrilldownIds } from '../../../core/utils/drilldown-display';
+import { alignLinkedCountInText, drilldownModalTotal, effectiveLinkedCount, extractJourneyThemeFromSummary, extractQuotedTheme, repairJourneyThemeDisplay, resolveDrilldownIds } from '../../../core/utils/drilldown-display';
 import { TranslationService } from '../../../core/services/translation.service';
 import { resolveAppCompanyId } from '../../../core/utils/company-scope';
 import { environment } from '../../../../environments/environment';
@@ -327,7 +327,8 @@ export class JourneyMap implements OnInit, OnDestroy {
     const n = this.satisfactionReferenceTotal(row);
     const fromBackend = row.satisfactionPoints[0] || '';
     if (fromBackend && !this.isStaleJourneySummary(fromBackend, row.feedbackCount, n)) {
-      return n > 0 ? alignLinkedCountInText(fromBackend, n) : fromBackend;
+      const repaired = repairJourneyThemeDisplay(fromBackend, n, row.name, 'satisfaction', row.feedbackCount);
+      return n > 0 ? alignLinkedCountInText(repaired, n) : repaired;
     }
     if (n > 0) {
       return n >= 3
@@ -345,7 +346,8 @@ export class JourneyMap implements OnInit, OnDestroy {
     const n = this.dissatisfactionReferenceTotal(row);
     const fromBackend = row.painPoints[0] || '';
     if (fromBackend && !this.isStaleJourneySummary(fromBackend, row.feedbackCount, n)) {
-      return n > 0 ? alignLinkedCountInText(fromBackend, n) : fromBackend;
+      const repaired = repairJourneyThemeDisplay(fromBackend, n, row.name, 'dissatisfaction', row.feedbackCount);
+      return n > 0 ? alignLinkedCountInText(repaired, n) : repaired;
     }
     if (n > 0) {
       return n >= 3

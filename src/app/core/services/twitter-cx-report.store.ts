@@ -10,6 +10,7 @@ import {
   isCxReportResponsePending,
   isTransientCxReportFailure,
 } from '../utils/twitter-cx-report-load';
+import { repairCxReportPayload } from '../utils/drilldown-display';
 
 import { DEFAULT_APP_COMPANY_ID } from '../utils/company-scope';
 
@@ -54,7 +55,8 @@ export class TwitterCxReportStore {
     endDate?: Date
   ): ApiResponse<TwitterCxReportDto> | undefined {
     const scopedCompanyId = this.normalizeCompanyId(companyId);
-    return this.cache.get(this.cacheKey(scopedCompanyId, csvImportId, startDate, endDate, false));
+    const cached = this.cache.get(this.cacheKey(scopedCompanyId, csvImportId, startDate, endDate, false));
+    return cached ? this.hydrateReportResponse(cached) : undefined;
   }
 
   hasCachedReport(
@@ -120,7 +122,7 @@ export class TwitterCxReportStore {
               data: undefined as unknown as TwitterCxReportDto,
             } as ApiResponse<TwitterCxReportDto>;
           }
-          if (res.success) return res;
+          if (res.success) return this.hydrateReportResponse(res);
           const fallback = this.findLastGood(scopedCompanyId, key);
           if (
             fallback &&
@@ -147,10 +149,11 @@ export class TwitterCxReportStore {
           }
 
           if (!forceLive && res.success && res.data && res.message !== 'import_processing') {
-            const hasPayload = hasCxReportPayload(res.data);
+            const hydrated = this.hydrateReportResponse(res);
+            const hasPayload = hasCxReportPayload(hydrated.data);
             if (hasPayload || !this.importProcessing.isActive()) {
-              this.cache.set(key, res);
-              this.rememberLastGood(scopedCompanyId, res);
+              this.cache.set(key, hydrated);
+              this.rememberLastGood(scopedCompanyId, hydrated);
             }
             if (hasPayload && (wasPending || importBusy)) {
               this.markSnapshotReady();
@@ -275,19 +278,29 @@ export class TwitterCxReportStore {
     this.pendingRetryCounts.delete(key);
   }
 
+  private hydrateReportResponse(
+    res: ApiResponse<TwitterCxReportDto>
+  ): ApiResponse<TwitterCxReportDto> {
+    if (!res.success || !res.data) return res;
+    return {
+      ...res,
+      data: repairCxReportPayload(res.data as unknown as Record<string, unknown>) as TwitterCxReportDto,
+    };
+  }
+
   private findLastGood(
     companyId: number | undefined,
     key: string
   ): ApiResponse<TwitterCxReportDto> | undefined {
     const scopedCompanyId = this.normalizeCompanyId(companyId);
     const cached = this.cache.get(key);
-    if (cached?.success && cached.data) return cached;
+    if (cached?.success && cached.data) return this.hydrateReportResponse(cached);
 
     const stored = this.lastGoodByCompany.get(String(scopedCompanyId));
-    if (stored?.success && stored.data) return stored;
+    if (stored?.success && stored.data) return this.hydrateReportResponse(stored);
 
     for (const [k, v] of this.cache.entries()) {
-      if (k.startsWith(`${scopedCompanyId}|`) && v.success && v.data) return v;
+      if (k.startsWith(`${scopedCompanyId}|`) && v.success && v.data) return this.hydrateReportResponse(v);
     }
     return undefined;
   }

@@ -232,3 +232,186 @@ export function alignLinkedCountInText(text: string, count: number, label = 'lin
   }
   return replaced;
 }
+
+/** Strip misleading product-specific wording when evidence is thin (Finding 7). */
+export function generalizeMisleadingJourneyThemeLabel(label: string): string {
+  const raw = String(label || '').trim();
+  if (!raw) return raw;
+
+  if (/coffee\s*machine/i.test(raw) && /campaign|awareness|brand|discount|indirim|kampanya/i.test(raw)) {
+    const generalized = raw
+      .replace(/\bcoffee\s*machine\b\s*&?\s*/gi, '')
+      .replace(/^\s*&\s*/, '')
+      .replace(/\s{2,}/g, ' ')
+      .trim();
+    if (generalized.length >= 8) return generalized;
+    return 'Campaign & Brand Awareness';
+  }
+
+  return raw;
+}
+
+function fallbackJourneyStageSummary(
+  stage: string,
+  polarity: 'satisfaction' | 'dissatisfaction',
+  linkedCount: number,
+  stageTotal: number
+): string {
+  if (polarity === 'satisfaction') {
+    if (linkedCount > 0) {
+      return linkedCount >= 3
+        ? `Positive signals at ${stage} — ${linkedCount} linked feedback row(s).`
+        : `Early positive signals at ${stage} — ${linkedCount} linked feedback row(s); more data needed for a confident theme.`;
+    }
+    if (stageTotal > 0) {
+      return `No strong positive themes among ${stageTotal} mapped row(s) at ${stage} — mostly neutral feedback.`;
+    }
+    return '—';
+  }
+  if (linkedCount > 0) {
+    return linkedCount >= 3
+      ? `Negative themes at ${stage} — ${linkedCount} linked feedback row(s).`
+      : `Early negative signals at ${stage} — ${linkedCount} linked feedback row(s); more data needed for a confident theme.`;
+  }
+  if (stageTotal > 0) {
+    return `No negative themes among ${stageTotal} mapped row(s) at ${stage}.`;
+  }
+  return '—';
+}
+
+function isBrokenJourneySummary(text: string, linkedCount: number, stageTotal: number): boolean {
+  const raw = String(text || '').trim();
+  if (!raw || stageTotal <= 0) return false;
+  if (/0 linked feedback row/i.test(raw) && stageTotal > linkedCount) return true;
+  if (linkedCount <= 0 && /early (positive|negative) signals/i.test(raw)) return true;
+  return false;
+}
+
+/** Journey theme labels need at least three linked rows (Finding 7). */
+export function repairJourneyThemeDisplay(
+  summary: string,
+  linkedCount: number,
+  stage: string,
+  polarity: 'satisfaction' | 'dissatisfaction',
+  stageTotal = 0
+): string {
+  const raw = String(summary || '').trim();
+  if (isBrokenJourneySummary(raw, linkedCount, stageTotal)) {
+    return fallbackJourneyStageSummary(stage, polarity, linkedCount, stageTotal);
+  }
+  if (!raw || raw === '—') {
+    return stageTotal > 0 ? fallbackJourneyStageSummary(stage, polarity, linkedCount, stageTotal) : raw;
+  }
+  if (linkedCount <= 0) {
+    return stageTotal > 0 ? fallbackJourneyStageSummary(stage, polarity, 0, stageTotal) : raw;
+  }
+  if (linkedCount >= 3) {
+    const themeOnly = raw.replace(/\s*\(\d+[^)]*linked[^)]*\)\.?\s*$/i, '').trim();
+    const generalized = generalizeMisleadingJourneyThemeLabel(themeOnly);
+    if (generalized && generalized !== themeOnly) {
+      return raw.replace(themeOnly, generalized);
+    }
+    return raw;
+  }
+  if (/early (positive|negative) signals/i.test(raw)) return raw;
+  return fallbackJourneyStageSummary(stage, polarity, linkedCount, stageTotal);
+}
+
+/** Repair legacy snapshot payloads on the client without requiring a full CX rebuild. */
+export function repairCxReportPayload<T extends Record<string, unknown>>(data: T): T {
+  if (!data || typeof data !== 'object') return data;
+  const rootCauses = Array.isArray(data['rootCauses']) ? (data['rootCauses'] as Array<Record<string, unknown>>) : [];
+
+  const heatmapPct = Array.isArray(data['heatmapPct'])
+    ? (data['heatmapPct'] as Array<Record<string, unknown>>).map((row) => {
+        const counts = reconcileHeatmapStageCounts({
+          total: Number(row['total']) || 0,
+          positiveCount: Number(row['positiveCount']) || 0,
+          neutralCount: Number(row['neutralCount']) || 0,
+          negativeCount: Number(row['negativeCount']) || 0,
+          positiveFeedbackIds: row['positiveFeedbackIds'] as number[] | undefined,
+          neutralFeedbackIds: row['neutralFeedbackIds'] as number[] | undefined,
+          negativeFeedbackIds: row['negativeFeedbackIds'] as number[] | undefined,
+          feedbackIds: row['feedbackIds'] as number[] | undefined,
+        });
+        const stageTotal = counts.total;
+        return {
+          ...row,
+          ...counts,
+          positive: heatmapSharePct(counts.positiveCount, stageTotal),
+          neutral: heatmapSharePct(counts.neutralCount, stageTotal),
+          negative: heatmapSharePct(counts.negativeCount, stageTotal),
+          positiveDisplayPct: formatCellPct(counts.positiveCount, stageTotal),
+          neutralDisplayPct: formatCellPct(counts.neutralCount, stageTotal),
+          negativeDisplayPct: formatCellPct(counts.negativeCount, stageTotal),
+        };
+      })
+    : data['heatmapPct'];
+
+  const actionPlan = Array.isArray(data['actionPlan'])
+    ? (data['actionPlan'] as Array<Record<string, unknown>>).map((row, i) => {
+        const rc = rootCauses[i];
+        const causeTheme = String(rc?.['cause'] || '').trim();
+        const interpretation = String(rc?.['interpretation'] || '').trim();
+        const rawAction = String(row['action'] ?? '');
+        return {
+          ...row,
+          action: repairStaleActionText(rawAction, causeTheme || undefined, interpretation || undefined),
+        };
+      })
+    : data['actionPlan'];
+
+  const processImprovementItems = Array.isArray(data['processImprovementItems'])
+    ? (data['processImprovementItems'] as Array<Record<string, unknown>>).map((item, i) => {
+        const rc = rootCauses[i];
+        const cause = String(rc?.['cause'] || extractQuotedTheme(String(item['text'] || ''))).trim();
+        const interpretation = String(rc?.['interpretation'] || '').trim();
+        const linkedCount = Number(item['linkedCount']) || 0;
+        return {
+          ...item,
+          text: formatProcessImprovementText(String(item['text'] || ''), linkedCount, cause, interpretation || undefined),
+        };
+      })
+    : data['processImprovementItems'];
+
+  const journeyRows = Array.isArray(data['journeyRows'])
+    ? (data['journeyRows'] as Array<Record<string, unknown>>).map((row) => {
+        const stage = String(row['stage'] || '');
+        const stageTotal = Number(row['feedbackCount']) || 0;
+        const satN = Number(row['satisfactionCount']) || 0;
+        const disN = Number(row['dissatisfactionCount']) || 0;
+        const satisfaction = repairJourneyThemeDisplay(
+          String(row['satisfactionSummary'] ?? row['satisfaction'] ?? ''),
+          satN,
+          stage,
+          'satisfaction',
+          stageTotal
+        );
+        const dissatisfaction = repairJourneyThemeDisplay(
+          String(row['dissatisfactionSummary'] ?? row['dissatisfaction'] ?? ''),
+          disN,
+          stage,
+          'dissatisfaction',
+          stageTotal
+        );
+        return {
+          ...row,
+          satisfaction,
+          dissatisfaction,
+          satisfactionSummary: satisfaction,
+          dissatisfactionSummary: dissatisfaction,
+        };
+      })
+    : data['journeyRows'];
+
+  return {
+    ...data,
+    heatmapPct,
+    actionPlan,
+    processImprovementItems,
+    processImprovements: Array.isArray(processImprovementItems)
+      ? processImprovementItems.map((item) => String((item as Record<string, unknown>)['text'] || ''))
+      : data['processImprovements'],
+    journeyRows,
+  };
+}
