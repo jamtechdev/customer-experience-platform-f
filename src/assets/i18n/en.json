@@ -516,6 +516,7 @@
     "notRelevant": "Not relevant",
     "includeAll": "Include all",
     "searchContent": "Search content",
+    "searchMinLength": "Enter at least 2 characters to search",
     "applyFilters": "Apply filters",
     "noFeedbackPeriod": "No feedback in this period.",
     "summary": "Summary",

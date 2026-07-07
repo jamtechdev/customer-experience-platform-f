@@ -563,6 +563,11 @@ export class SentimentAnalysis implements OnInit, OnDestroy {
   }
 
   applyListFilters(): void {
+    const search = this.filterSearch().trim();
+    if (search.length === 1) {
+      this.snackBar.open(this.t('sentiment.searchMinLength'), this.t('app.close'), { duration: 3500 });
+      return;
+    }
     this.page.set(1);
     this.loadFeedbackList(this.filtersApplied());
   }

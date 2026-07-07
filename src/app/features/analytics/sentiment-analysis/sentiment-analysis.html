@@ -175,7 +175,7 @@
         <div class="filters filters-row list-filters">
           <mat-form-field appearance="outline">
             <mat-label>{{ t('sentiment.journeyStage') }}</mat-label>
-            <mat-select [value]="filterJourneyStage()" (selectionChange)="filterJourneyStage.set($event.value); applyListFilters()">
+            <mat-select [ngModel]="filterJourneyStage()" (ngModelChange)="filterJourneyStage.set($event); applyListFilters()">
               <mat-option value="">{{ t('sentiment.allStages') }}</mat-option>
               @for (s of journeyStageOptions; track s) {
                 @if (s) {
@@ -186,7 +186,7 @@
           </mat-form-field>
           <mat-form-field appearance="outline">
             <mat-label>{{ t('sentiment.sentimentFilter') }}</mat-label>
-            <mat-select [value]="filterSentiment()" (selectionChange)="filterSentiment.set($event.value); applyListFilters()">
+            <mat-select [ngModel]="filterSentiment()" (ngModelChange)="filterSentiment.set($event); applyListFilters()">
               @for (opt of sentimentFilterOptions; track opt.value) {
                 <mat-option [value]="opt.value">{{ t(opt.labelKey) }}</mat-option>
               }
@@ -194,7 +194,7 @@
           </mat-form-field>
           <mat-form-field appearance="outline">
             <mat-label>{{ t('sentiment.relevance') }}</mat-label>
-            <mat-select [value]="filterIsRelevant()" (selectionChange)="filterIsRelevant.set($event.value); applyListFilters()">
+            <mat-select [ngModel]="filterIsRelevant()" (ngModelChange)="filterIsRelevant.set($event); applyListFilters()">
               <mat-option value="true">{{ t('sentiment.relevantOnly') }}</mat-option>
               <mat-option value="false">{{ t('sentiment.notRelevant') }}</mat-option>
               <mat-option value="all">{{ t('sentiment.includeAll') }}</mat-option>

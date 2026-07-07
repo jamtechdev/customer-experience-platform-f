@@ -496,6 +496,7 @@
     "notRelevant": "İlgili değil",
     "includeAll": "Tümünü dahil et",
     "searchContent": "İçerikte ara",
+    "searchMinLength": "Aramak için en az 2 karakter girin",
     "applyFilters": "Filtreleri uygula",
     "noFeedbackPeriod": "Bu dönemde geri bildirim yok.",
     "summary": "Özet",
