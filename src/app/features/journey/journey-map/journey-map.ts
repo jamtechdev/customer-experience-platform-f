@@ -398,7 +398,8 @@ export class JourneyMap implements OnInit, OnDestroy {
           : undefined;
     const themeTitle = extractQuotedTheme(this.drilldownTitle());
     const hasTheme = themeTitle !== 'this theme';
-    if (!this.drilldownIds.length && !hasTheme && !this.drilldownStage) return;
+    const hasSnapshotIds = this.drilldownIds.length > 0;
+    if (!hasSnapshotIds && !hasTheme && !this.drilldownStage) return;
 
     this.drilldownPage.set(page);
     this.drilldownLoading.set(true);
@@ -409,7 +410,8 @@ export class JourneyMap implements OnInit, OnDestroy {
       limit: this.drilldownPageSize,
       includeIrrelevant: true,
       groupRetweets: false,
-      themeTitle: hasTheme ? themeTitle : undefined,
+      // Trust snapshot IDs when present; theme keyword filter emptied journey-map drilldowns.
+      themeTitle: hasTheme && !hasSnapshotIds ? themeTitle : undefined,
       drilldownTitle: this.drilldownTitle(),
       journeyStage: this.drilldownStage || undefined,
       ...(sentiment ? { sentiment } : {}),
