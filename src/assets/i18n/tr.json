@@ -537,7 +537,13 @@
     "sectionTitle": "Yolculuk memnuniyet ısı haritası",
     "sectionSubtitle": "Aşama düzeyinde duygu ısı haritası (%).",
     "insight": "Deneyimde konuşma hacmi en çok Kullanım ve Satın Alma aşamalarında; Teslimat en zayıf memnuniyet dengesini gösteriyor.",
-    "intensity": "(% yoğunluk)"
+    "intensity": "(% yoğunluk)",
+    "scopeCsv": "CSV dosya satırları",
+    "scopeSaved": "Veritabanına kaydedilen",
+    "scopeMapped": "Aşamalara eşlenen",
+    "scopeUnmapped": "Aşamaya eşlenmeyen",
+    "scopeUnified": "Toplam geri bildirim (CSV)",
+    "unmappedNote": "{{count}} satır ısı haritasına alınmadı — genelde bağış/kampanya içerikleri veya kayıtlı yolculuk aşaması, marka geçişi veya çıkarılabilir anahtar kelime olmayan satırlar."
   },
   "metrics": {
     "nps": {

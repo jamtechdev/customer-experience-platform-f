@@ -81,6 +81,12 @@
       </div>
     }
 
+    @if (heatmapFigureCaption()) {
+      <p class="heatmap-scope-note">{{ heatmapFigureCaption() }}</p>
+    } @else if (heatmapExcludedCount()) {
+      <p class="heatmap-scope-note">{{ t('heatmap.unmappedNote', { count: heatmapExcludedCount() ?? 0 }) }}</p>
+    }
+
     <mat-card class="heatmap-card">
       <mat-card-header>
         <mat-card-title>{{ t('heatmap.sectionTitle') }}</mat-card-title>

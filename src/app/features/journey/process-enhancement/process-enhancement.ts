@@ -19,12 +19,16 @@ import {
   resolveDrilldownIds,
   extractQuotedTheme,
   drilldownModalTotal,
+  finalizeProcessImprovementRows,
+  resolveRootCauseIdsForProcessItem,
+  priorityLabelFromClusterSize,
 } from '../../../core/utils/drilldown-display';
 import { resolveAppCompanyId } from '../../../core/utils/company-scope';
 
 export interface ProcessImprovementRow {
   text: string;
   cause?: string;
+  causeTheme?: string;
   interpretation?: string;
   referenceFeedbackIds: number[];
   linkedFeedbackIds: number[];
@@ -66,7 +70,8 @@ export class ProcessEnhancement implements OnInit, OnDestroy {
   drilldownTotal = signal(0);
   readonly drilldownPageSize = 10;
   private drilldownIds: number[] = [];
-  private rootCauseFeedbackByIndex: number[][] = [];
+  private drilldownThemeTitle = '';
+  private rootCauses: Array<{ cause?: string; interpretation?: string; feedbackIds?: number[] }> = [];
 
   ngOnInit(): void {
     this.loadProcessData();
@@ -118,6 +123,7 @@ export class ProcessEnhancement implements OnInit, OnDestroy {
     rootCauses?: Array<{ cause?: string; interpretation?: string; feedbackIds?: number[] }>;
     processImprovementItems?: Array<{
       text: string;
+      causeTheme?: string;
       referenceFeedbackIds?: number[];
       linkedFeedbackIds?: number[];
       linkedCount?: number;
@@ -126,46 +132,51 @@ export class ProcessEnhancement implements OnInit, OnDestroy {
     managementTakeaways?: string[];
   }): void {
     const rootCauses = data.rootCauses ?? [];
-    this.rootCauseFeedbackByIndex = rootCauses.map((rc) =>
-      Array.isArray(rc.feedbackIds) ? rc.feedbackIds.filter((id) => Number.isFinite(Number(id)) && Number(id) > 0) : []
-    );
-    const rootCauseIdsByTheme = new Map<string, number[]>();
-    for (const rc of rootCauses) {
-      const theme = String(rc.cause || '').trim().toLowerCase();
-      const ids = Array.isArray(rc.feedbackIds)
-        ? rc.feedbackIds.filter((id) => Number.isFinite(Number(id)) && Number(id) > 0)
-        : [];
-      if (theme && ids.length) rootCauseIdsByTheme.set(theme, ids);
-    }
+    this.rootCauses = rootCauses;
     const items = data.processImprovementItems;
     if (items?.length) {
+      const drafts = items.map((p, index) => {
+        const itemIds = Array.isArray(p.linkedFeedbackIds)
+          ? p.linkedFeedbackIds
+          : Array.isArray(p.referenceFeedbackIds)
+            ? p.referenceFeedbackIds
+            : [];
+        const quotedTheme = extractQuotedTheme(p.text);
+        const causeTheme = String(p.causeTheme || rootCauses[index]?.cause || quotedTheme || '').trim();
+        const interpretation = String(rootCauses[index]?.interpretation || '').trim();
+        const mergedIds = resolveRootCauseIdsForProcessItem(rootCauses, {
+          causeTheme,
+          quotedTheme,
+          index,
+          itemIds,
+        });
+        const linkedCount = mergedIds.length || Number(p.linkedCount) || 0;
+        return {
+          priority: priorityLabelFromClusterSize(linkedCount),
+          action: String(p.text ?? '').replace(/\(\d+ negative-linked row\(s\)\)/i, '').trim(),
+          owner: '',
+          impact: '',
+          horizon: '',
+          causeTheme,
+          cause: causeTheme,
+          interpretation: interpretation || undefined,
+          sampleText: interpretation || undefined,
+          linkedFeedbackIds: mergedIds,
+          referenceFeedbackIds: mergedIds,
+          linkedCount,
+        };
+      });
+      const finalized = finalizeProcessImprovementRows(drafts);
       this.processImprovements.set(
-        items.map((p, index) => {
-          const themeKey = extractQuotedTheme(p.text).toLowerCase();
-          const themeMatch = rootCauses.find((rc) => String(rc.cause || '').trim().toLowerCase() === themeKey);
-          const rcIds =
-            (themeMatch?.feedbackIds?.filter((id) => Number.isFinite(Number(id)) && Number(id) > 0) ??
-              this.rootCauseFeedbackByIndex[index]) ||
-            [];
-          const linkedFeedbackIds = Array.isArray(p.linkedFeedbackIds)
-            ? p.linkedFeedbackIds
-            : Array.isArray(p.referenceFeedbackIds)
-              ? p.referenceFeedbackIds
-              : [];
-          const mergedIds = rcIds.length >= linkedFeedbackIds.length ? rcIds : linkedFeedbackIds;
-          const linkedCount = mergedIds.length;
-          const cause = String(themeMatch?.cause || extractQuotedTheme(p.text) || '').trim();
-          const interpretation = String(themeMatch?.interpretation || '').trim();
-          const repairedText = formatProcessImprovementText(p.text, linkedCount, cause, interpretation || undefined);
-          return {
-            text: repairedText,
-            cause,
-            interpretation: interpretation || undefined,
-            referenceFeedbackIds: mergedIds,
-            linkedFeedbackIds: mergedIds,
-            linkedCount,
-          };
-        })
+        finalized.map((row) => ({
+          text: row.text,
+          cause: row.causeTheme || row.cause,
+          causeTheme: row.causeTheme || row.cause,
+          interpretation: row.interpretation,
+          referenceFeedbackIds: row.linkedFeedbackIds || row.referenceFeedbackIds || [],
+          linkedFeedbackIds: row.linkedFeedbackIds || row.referenceFeedbackIds || [],
+          linkedCount: row.linkedCount || 0,
+        }))
       );
     } else {
       this.processImprovements.set(
@@ -182,12 +193,13 @@ export class ProcessEnhancement implements OnInit, OnDestroy {
 
   openReferences(row: ProcessImprovementRow): void {
     const ids = resolveDrilldownIds(row.linkedFeedbackIds, row.referenceFeedbackIds);
-    const themeTitle = extractQuotedTheme(row.text);
+    const themeTitle = String(row.causeTheme || row.cause || extractQuotedTheme(row.text) || '').trim();
     if (!ids.length && this.referenceCount(row) <= 0 && themeTitle === 'this theme') return;
+    this.drilldownThemeTitle = themeTitle;
     this.drilldownTitle.set(this.displayText(row));
     this.drilldownOpen.set(true);
     this.drilldownIds = ids;
-    this.drilldownTotal.set(ids.length ? this.referenceCount(row) : 0);
+    this.drilldownTotal.set(this.referenceCount(row));
     this.loadDrilldownPage(1);
   }
 
@@ -197,12 +209,12 @@ export class ProcessEnhancement implements OnInit, OnDestroy {
 
   displayText(row: ProcessImprovementRow): string {
     const count = this.referenceCount(row);
-    return formatProcessImprovementText(row.text, count, row.cause, row.interpretation);
+    return formatProcessImprovementText(row.text, count, row.causeTheme || row.cause, row.interpretation);
   }
 
   loadDrilldownPage(page: number): void {
-    const themeTitle = extractQuotedTheme(this.drilldownTitle());
-    if (!this.drilldownIds.length && themeTitle === 'this theme') return;
+    const themeTitle = this.drilldownThemeTitle || extractQuotedTheme(this.drilldownTitle());
+    if (!this.drilldownIds.length && themeTitle === 'this theme' && this.drilldownTotal() <= 0) return;
     this.drilldownPage.set(page);
     this.drilldownLoading.set(true);
     this.drilldownRows.set([]);
@@ -211,23 +223,20 @@ export class ProcessEnhancement implements OnInit, OnDestroy {
       page,
       limit: this.drilldownPageSize,
       includeIrrelevant: true,
-      groupRetweets: true,
-      themeTitle: themeTitle !== 'this theme' && !this.drilldownIds.length ? themeTitle : undefined,
-      drilldownTitle: this.drilldownTitle(),
+      groupRetweets: false,
+      themeTitle: themeTitle !== 'this theme' ? themeTitle : undefined,
     }).subscribe({
       next: (res) => {
         this.drilldownLoading.set(false);
         if (res?.data?.list) this.drilldownRows.set(res.data.list);
         const resolvedTotal = res?.data?.total ?? 0;
         const idTotal = drilldownModalTotal(this.drilldownIds);
-        this.drilldownTotal.set(resolvedTotal > 0 ? resolvedTotal : idTotal);
-        if (resolvedTotal === 0 && idTotal > 0 && (!res?.data?.list || res.data.list.length === 0)) {
-          this.drilldownTotal.set(idTotal);
-        }
+        const expected = this.drilldownTotal() || idTotal;
+        this.drilldownTotal.set(resolvedTotal > 0 ? resolvedTotal : expected);
       },
       error: () => {
         this.drilldownLoading.set(false);
-        this.drilldownTotal.set(0);
+        this.drilldownTotal.set(drilldownModalTotal(this.drilldownIds) || this.drilldownTotal());
       },
     });
   }
@@ -238,5 +247,6 @@ export class ProcessEnhancement implements OnInit, OnDestroy {
     this.drilldownPage.set(1);
     this.drilldownTotal.set(0);
     this.drilldownIds = [];
+    this.drilldownThemeTitle = '';
   }
 }

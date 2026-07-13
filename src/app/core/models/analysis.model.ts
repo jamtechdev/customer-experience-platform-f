@@ -276,6 +276,8 @@ export interface TwitterCxReportDto {
     importedCsvRows?: number;
     /** Active CSV import used for this report scope. */
     activeCsvImportId?: number;
+    heatmapMappedCount?: number;
+    heatmapExcludedCount?: number;
   };
   datasetProfileRows: Array<{ metric: string; value: string; comment: string; feedbackIds?: number[] }>;
   sentiment: { positive: number; negative: number; neutral: number; total: number; averageScore: number };
@@ -316,10 +318,21 @@ export interface TwitterCxReportDto {
     dissatisfactionFeedbackIds?: number[];
     feedbackCount?: number;
   }>;
-  actionPlan: Array<{ priority: string; action: string; owner: string; impact: string; horizon: string }>;
+  actionPlan: Array<{
+    priority: string;
+    action: string;
+    owner: string;
+    impact: string;
+    horizon: string;
+    causeTheme?: string;
+    referenceFeedbackIds?: number[];
+    linkedFeedbackIds?: number[];
+    linkedCount?: number;
+  }>;
   processImprovements: string[];
   processImprovementItems?: Array<{
     text: string;
+    causeTheme?: string;
     referenceFeedbackIds?: number[];
     linkedFeedbackIds?: number[];
     linkedCount?: number;

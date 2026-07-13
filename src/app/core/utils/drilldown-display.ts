@@ -161,6 +161,255 @@ export function actionTemplateFingerprint(action: string): string {
     .trim();
 }
 
+export function actionsShareTemplate(a: string, b: string): boolean {
+  const left = actionTemplateFingerprint(a);
+  const right = actionTemplateFingerprint(b);
+  if (!left || !right) return false;
+  return left === right;
+}
+
+/** Coarse template family — catches near-duplicates that only differ by quoted theme. */
+export function actionTemplateFamilyKey(action: string): string {
+  const t = String(action || '').toLowerCase();
+  if (/product-reliability intervention/.test(t)) return 'reliability-intervention';
+  if (/assign a named owner/.test(t)) return 'named-owner';
+  if (/48-hour repair-closure sla|repair-closure sla/.test(t)) return 'repair-closure-sla';
+  if (/brand-trust recovery/.test(t)) return 'brand-trust';
+  if (/dedicated support cell/.test(t)) return 'support-cell';
+  if (/billing and pricing friction/.test(t)) return 'billing-friction';
+  if (/washing-machine field-quality/.test(t)) return 'wm-field-quality';
+  if (/tighten delivery operations/.test(t)) return 'delivery-ops';
+  if (/audit refrigerator compressor/.test(t)) return 'fridge-reliability';
+  if (/coffee-machine pre-shipment/.test(t)) return 'coffee-reliability';
+  if (/oven and microwave quality/.test(t)) return 'oven-reliability';
+  if (/vacuum-cleaner reliability/.test(t)) return 'vacuum-reliability';
+  if (/same-week repair recovery/.test(t)) return 'repair-recovery-lane';
+  if (/pre-position critical spare/.test(t)) return 'spare-parts-preposition';
+  if (/technician callback discipline/.test(t)) return 'tech-callback';
+  return actionTemplateFingerprint(action);
+}
+
+export function actionsShareTemplateFamily(a: string, b: string): boolean {
+  const left = actionTemplateFamilyKey(a);
+  const right = actionTemplateFamilyKey(b);
+  if (!left || !right) return false;
+  return left === right;
+}
+
+function mergePositiveIds(...lists: Array<number[] | undefined>): number[] {
+  return [
+    ...new Set(
+      lists
+        .flatMap((list) => list || [])
+        .filter((id) => Number.isFinite(id) && id > 0)
+        .map((id) => Number(id))
+    ),
+  ];
+}
+
+export type RootCauseLike = {
+  cause?: string;
+  interpretation?: string;
+  feedbackIds?: number[];
+};
+
+export type ActionRowLike = {
+  action?: string;
+  causeTheme?: string;
+  cause?: string;
+  interpretation?: string;
+  linkedFeedbackIds?: number[];
+  referenceFeedbackIds?: number[];
+};
+
+/**
+ * Pair an action-plan row to its root-cause metadata by causeTheme / feedback-ID overlap,
+ * falling back to index only when no better signal exists.
+ */
+export function resolveActionPlanRootCauseMeta(
+  row: ActionRowLike,
+  rootCauses: RootCauseLike[],
+  index: number
+): {
+  cause: string;
+  interpretation: string;
+  feedbackIds: number[];
+  matchedBy: 'causeTheme' | 'feedbackIds' | 'index' | 'none';
+} {
+  const rowIds = mergePositiveIds(row.linkedFeedbackIds, row.referenceFeedbackIds);
+  const explicitTheme = String(row.causeTheme || row.cause || '').trim();
+
+  if (explicitTheme && rootCauses.length) {
+    const explicitBucket = rootCauseThemeBucket(explicitTheme, row.interpretation, row.action);
+    if (explicitBucket) {
+      const bucketMatches = rootCauses.filter(
+        (rc) => rootCauseThemeBucket(String(rc.cause || ''), String(rc.interpretation || '')) === explicitBucket
+      );
+      if (bucketMatches.length) {
+        const bestInterpretation = bucketMatches
+          .map((rc) => String(rc.interpretation || '').trim())
+          .sort((a, b) => b.length - a.length)[0] || String(row.interpretation || '').trim();
+        return {
+          cause:
+            explicitBucket === 'brand-perception'
+              ? 'Negative Brand Perception & Customer Dissatisfaction'
+              : String(bucketMatches[0].cause || explicitTheme).trim(),
+          interpretation: bestInterpretation,
+          feedbackIds: mergePositiveIds(
+            rowIds,
+            ...bucketMatches.map((rc) => rc.feedbackIds)
+          ),
+          matchedBy: 'causeTheme',
+        };
+      }
+    }
+    const byTheme = rootCauses.find(
+      (rc) => String(rc.cause || '').trim().toLocaleLowerCase() === explicitTheme.toLocaleLowerCase()
+    );
+    if (byTheme) {
+      return {
+        cause: String(byTheme.cause || explicitTheme).trim(),
+        interpretation: String(byTheme.interpretation || row.interpretation || '').trim(),
+        feedbackIds: mergePositiveIds(byTheme.feedbackIds, rowIds),
+        matchedBy: 'causeTheme',
+      };
+    }
+  }
+
+  if (rowIds.length && rootCauses.length) {
+    const rowSet = new Set(rowIds);
+    let bestIdx = -1;
+    let bestOverlap = 0;
+    rootCauses.forEach((rc, i) => {
+      const ids = (rc.feedbackIds || []).filter((id) => Number.isFinite(id) && id > 0);
+      const overlap = ids.reduce((n, id) => n + (rowSet.has(Number(id)) ? 1 : 0), 0);
+      if (overlap > bestOverlap) {
+        bestOverlap = overlap;
+        bestIdx = i;
+      }
+    });
+    if (bestIdx >= 0 && bestOverlap > 0) {
+      const rc = rootCauses[bestIdx];
+      return {
+        cause: String(rc.cause || explicitTheme || '').trim(),
+        interpretation: String(rc.interpretation || row.interpretation || '').trim(),
+        feedbackIds: mergePositiveIds(rc.feedbackIds, rowIds),
+        matchedBy: 'feedbackIds',
+      };
+    }
+  }
+
+  const indexed = rootCauses[index];
+  if (indexed) {
+    return {
+      cause: explicitTheme || String(indexed.cause || '').trim(),
+      interpretation: String(indexed.interpretation || row.interpretation || '').trim(),
+      feedbackIds: mergePositiveIds(indexed.feedbackIds, rowIds),
+      matchedBy: 'index',
+    };
+  }
+
+  return {
+    cause: explicitTheme || extractQuotedTheme(String(row.action || '')),
+    interpretation: String(row.interpretation || '').trim(),
+    feedbackIds: rowIds,
+    matchedBy: 'none',
+  };
+}
+
+export function alignActionTextToCauseTheme(action: string, causeTheme: string): string {
+  if (!action || !causeTheme) return action;
+  const quoted = extractQuotedTheme(action);
+  if (!quoted || quoted === causeTheme) return action;
+  const weak =
+    /^(product|ürün|urun|this theme)$/i.test(quoted) ||
+    (quoted.length <= 8 && causeTheme.length > quoted.length + 4);
+  if (!weak) return action;
+  return action.replace(
+    new RegExp(`[“"']${quoted.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}[”"']`, 'i'),
+    `"${causeTheme}"`
+  );
+}
+
+function actionPlanCollapseKey(cause: string, interpretation?: string, action?: string): string {
+  const bucket = rootCauseThemeBucket(cause, interpretation, action);
+  if (bucket) return bucket;
+  const lower = String(cause || '').toLowerCase();
+  if (/negative brand|brand perception|customer dissatisfaction/.test(lower)) return 'brand-perception';
+  return lower.replace(/\s+/g, ' ').trim();
+}
+
+function distinctReliabilityAction(theme: string, family: string | null, detail: string, attempt: number): string {
+  const base = clusterSpecificActionText(theme, detail);
+  if (attempt === 0) return base;
+  const focus = family || theme;
+  const variants = [
+    `Launch a failure-mode containment review for "${focus}": rank repeat defects by SKU and serial range, quarantine the highest-risk lots, and verify corrective actions with return-unit teardown evidence.`,
+    `Establish a return-unit root-cause lab for "${focus}": sample early-life failures weekly, trace each defect to supplier or assembly stage, and close the loop with documented production-line countermeasures.`,
+    `Deploy an early-life defect prevention program for "${focus}": flag units failing within 90 days, tighten end-of-line stress tests, and authorize rapid exchange for recurring failure codes.`,
+    `Create a serial-range quality gate for "${focus}": correlate complaints with production lots, hold suspect inventory before shipment, and release batches only after repeat-failure validation passes.`,
+  ];
+  return variants[(attempt - 1) % variants.length];
+}
+
+function distinctKindAction(
+  kind: string,
+  theme: string,
+  family: string | null,
+  interpretation: string | undefined,
+  attempt: number
+): string {
+  const detail = String(interpretation || '').replace(/\s+/g, ' ').trim();
+  if (kind === 'reliability') {
+    return distinctReliabilityAction(theme, family, detail, attempt);
+  }
+  if (kind === 'service') {
+    const focus = family ? `${family} service` : theme;
+    const variants = [
+      `Introduce a 48-hour repair-closure SLA for "${focus}": pre-position spare parts for top failure codes, require technician callback within 24h on reopened tickets, and publish weekly resolution-rate dashboards to service leadership.`,
+      `Stand up a same-week repair recovery lane for "${theme}": triage reopened tickets daily, reserve technician capacity for top failure codes, and escalate any job open longer than 48 hours to a named service lead.`,
+      `Pre-position critical spare parts for "${theme}": lock stock for the top 5 failure codes, auto-dispatch parts with first visit, and track first-time-fix rate until it exceeds 85%.`,
+      `Enforce technician callback discipline for "${theme}": require a customer update within 24h on every reopened ticket and review missed callbacks in the weekly service huddle.`,
+    ];
+    return variants[attempt % variants.length];
+  }
+  if (kind === 'support') {
+    const variants = [
+      `Stand up a dedicated support cell for "${theme}": cap queue wait times, enforce first-contact resolution scripts, and track repeat-contact rate until it drops below 15%.`,
+      `Create a priority callback queue for "${theme}": answer escalations within 4 hours, publish a weekly reopen report, and coach agents on the top 3 unresolved complaint patterns.`,
+      `Deploy an escalation playbook for "${theme}": route repeat contacts to a senior pod, measure first-contact resolution daily, and close the week with a coaching review on reopen drivers.`,
+    ];
+    return variants[attempt % variants.length];
+  }
+  if (kind === 'billing') {
+    const variants = [
+      `Resolve billing and pricing friction for "${theme}": audit disputed charges against published price lists, authorize frontline refunds up to a defined threshold, and retrain stores on consistent discount communication.`,
+      `Publish a clear price-promise checklist for "${theme}": reconcile POS vs advertised offers weekly, empower stores to correct mismatches on the spot, and log every dispute reason for merchandising review.`,
+      `Tighten refund authorization for "${theme}": set a documented threshold for frontline goodwill credits, escalate above-threshold cases in 24h, and audit the top dispute codes monthly.`,
+    ];
+    return variants[attempt % variants.length];
+  }
+  if (kind === 'delivery') {
+    const variants = [
+      `Tighten delivery operations for "${theme}": audit carrier SLAs end-to-end, send proactive delay notifications, and offer compensation when promised delivery windows are missed.`,
+      `Install a delivery-exception war room for "${theme}": monitor late shipments hourly, notify customers before the promised window slips, and auto-trigger goodwill credits for missed slots.`,
+    ];
+    return variants[attempt % variants.length];
+  }
+  const base = clusterSpecificActionText(theme, interpretation);
+  return `${base.replace(/\.\s*$/, '')} — prioritize the dominant complaint pattern in "${theme}".`;
+}
+
+function inferClusterActionKind(cause: string, interpretation?: string, sampleText?: string): string {
+  const blob = `${cause} ${interpretation || ''} ${sampleText || ''}`.toLowerCase();
+  if (/negative brand|brand perception|customer dissatisfaction|marka alg/i.test(blob)) return 'brand-perception';
+  if (/unfair charge|billing|pricing|ücret|ucret|fiyat|invoice|refund|overcharg|\bcharge/i.test(blob)) return 'billing';
+  if (/customer support|support gap|destek|call center|müşteri hizmet|musteri hizmet|iletisim/i.test(blob)) return 'support';
+  if (/service resolution|resolution gap|repair delay|warranty resolution|garanti.*(gecik|redd)|tamir.*(gecik|süre|sure)/i.test(blob)) return 'service';
+  if (/delivery|teslimat|logistics|kargo|shipment|shipping/i.test(blob)) return 'delivery';
+  return 'reliability';
+}
+
 function detectProductFamilyHint(text: string): string | null {
   const blob = String(text || '');
   if (/refrigerator|fridge|buzdolab/i.test(blob)) return 'refrigerator';
@@ -266,25 +515,35 @@ export function ensureDistinctClusterActions(
   items: Array<{ cause: string; interpretation?: string; action: string; sampleText?: string }>
 ): void {
   const used = new Set<string>();
+  const usedFamilies = new Set<string>();
   for (const item of items) {
+    const fresh = clusterSpecificActionText(item.cause, item.interpretation, item.sampleText);
     let action = item.action.trim();
-    if (!action || isStaleGenericActionText(action) || isTemplatedReliabilityAction(action) || isOwnerFallbackAction(action)) {
-      action = clusterSpecificActionText(item.cause, item.interpretation, item.sampleText);
+    if (
+      !action ||
+      isStaleGenericActionText(action) ||
+      isTemplatedReliabilityAction(action) ||
+      isOwnerFallbackAction(action) ||
+      actionsShareTemplate(action, fresh) ||
+      actionsShareTemplateFamily(action, fresh)
+    ) {
+      action = fresh;
     }
+    const family = detectProductFamilyHint(`${item.cause} ${item.interpretation || ''} ${item.sampleText || ''}`);
+    const kind = inferClusterActionKind(item.cause, item.interpretation, item.sampleText);
     let attempt = 0;
-    while (used.has(actionTemplateFingerprint(action)) && attempt < 12) {
-      const detail = String(item.interpretation || item.sampleText || '')
-        .replace(/\s+/g, ' ')
-        .trim();
-      const variantCause = detail.length >= 12 ? `${item.cause} — ${detail.slice(0, 80 + attempt * 20)}` : `${item.cause} (variant ${attempt + 2})`;
-      const variant = clusterSpecificActionText(variantCause, item.interpretation, item.sampleText);
-      action =
-        actionTemplateFingerprint(variant) !== actionTemplateFingerprint(action)
-          ? variant
-          : `${action.replace(/\.\s*$/, '')} — prioritize the dominant complaint pattern in "${item.cause}".`;
+    while (
+      (used.has(actionTemplateFingerprint(action)) || usedFamilies.has(actionTemplateFamilyKey(action))) &&
+      attempt < 12
+    ) {
+      action = distinctKindAction(kind, item.cause, family, item.interpretation || item.sampleText, attempt + 1);
+      if (used.has(actionTemplateFingerprint(action)) || usedFamilies.has(actionTemplateFamilyKey(action))) {
+        action = `${action.replace(/\.\s*$/, '')} — prioritize the dominant complaint pattern in "${item.cause}".`;
+      }
       attempt += 1;
     }
     used.add(actionTemplateFingerprint(action));
+    usedFamilies.add(actionTemplateFamilyKey(action));
     item.action = action;
   }
 }
@@ -301,8 +560,7 @@ export function collapseActionPlanRows<T extends {
   rows.forEach((row, i) => {
     const cause = String(causes[i] || '').trim();
     const interpretation = String(interpretations[i] || '').trim();
-    const bucket = rootCauseThemeBucket(cause, interpretation, String(row.action || ''));
-    const key = bucket || cause.toLocaleLowerCase('en-US');
+    const key = actionPlanCollapseKey(cause, interpretation, String(row.action || ''));
     const existingIdx = indexByKey.get(key);
     if (existingIdx === undefined) {
       indexByKey.set(key, merged.length);
@@ -327,11 +585,207 @@ export function collapseActionPlanRows<T extends {
       linkedCount: count,
       action: count > 0 ? `${actionCore} (${count} linked feedback row(s))` : actionCore,
     } as T & { causeTheme?: string };
-    if (bucket === 'brand-perception' && 'causeTheme' in mergedRow) {
+    if (key === 'brand-perception' && 'causeTheme' in mergedRow) {
       mergedRow.causeTheme = 'Negative Brand Perception & Customer Dissatisfaction';
     }
     merged[existingIdx] = mergedRow;
   });
+  return merged;
+}
+
+export type FinalizableActionPlanRow = {
+  priority: string;
+  action: string;
+  owner?: string;
+  impact?: string;
+  horizon?: string;
+  causeTheme?: string;
+  cause?: string;
+  interpretation?: string;
+  sampleText?: string;
+  referenceFeedbackIds?: number[];
+  linkedFeedbackIds?: number[];
+  linkedCount?: number;
+};
+
+/** Repair titles, dedupe action templates, and collapse duplicate themes for display. */
+export function finalizeActionPlanRows<T extends FinalizableActionPlanRow>(drafts: T[]): T[] {
+  const prepared = drafts.map((draft) => {
+    const causeTheme = repairWeakClusterCauseTitle(
+      String(draft.causeTheme || draft.cause || extractQuotedTheme(draft.action) || '').trim(),
+      draft.interpretation,
+      draft.action
+    );
+    let action = repairStaleActionText(
+      String(draft.action || '').replace(/\(\d+ linked feedback row\(s\)\)/i, '').trim(),
+      causeTheme,
+      draft.interpretation,
+      draft.sampleText || draft.interpretation
+    );
+    action = alignActionTextToCauseTheme(action, causeTheme);
+    const linkedCount =
+      draft.linkedCount ??
+      draft.linkedFeedbackIds?.length ??
+      draft.referenceFeedbackIds?.length ??
+      0;
+    return {
+      ...draft,
+      causeTheme,
+      cause: causeTheme,
+      action,
+      linkedCount,
+      priority: priorityLabelFromClusterSize(linkedCount),
+    };
+  });
+
+  const repairItems = prepared.map((d) => ({
+    cause: d.causeTheme || d.cause || 'this theme',
+    interpretation: d.interpretation,
+    action: d.action,
+    sampleText: d.sampleText || d.interpretation,
+  }));
+  ensureDistinctClusterActions(repairItems);
+  repairItems.forEach((item, i) => {
+    prepared[i].action = alignActionTextToCauseTheme(item.action, prepared[i].causeTheme || prepared[i].cause || '');
+  });
+
+  return collapseActionPlanRows(
+    prepared,
+    prepared.map((d) => d.causeTheme || d.cause || ''),
+    prepared.map((d) => d.interpretation || '')
+  ).map((row) => {
+    const theme = (row as FinalizableActionPlanRow).causeTheme || (row as FinalizableActionPlanRow).cause || '';
+    const count = row.linkedCount || 0;
+    const core = String(row.action || '').replace(/\(\d+ linked feedback row\(s\)\)/i, '').trim();
+    const aligned = alignActionTextToCauseTheme(core, theme);
+    return {
+      ...row,
+      causeTheme:
+        actionPlanCollapseKey(theme, (row as FinalizableActionPlanRow).interpretation, aligned) === 'brand-perception'
+          ? 'Negative Brand Perception & Customer Dissatisfaction'
+          : theme,
+      priority: priorityLabelFromClusterSize(count),
+      action: count > 0 ? `${aligned} (${count} linked feedback row(s))` : aligned,
+    };
+  });
+}
+
+/** Same dedupe/collapse pipeline as action plans, with process-improvement count suffix. */
+export function finalizeProcessImprovementRows<T extends FinalizableActionPlanRow>(
+  drafts: T[]
+): Array<T & { text: string; causeTheme?: string }> {
+  return finalizeActionPlanRows(drafts).map((row) => {
+    const count = row.linkedCount || row.linkedFeedbackIds?.length || row.referenceFeedbackIds?.length || 0;
+    const core = String(row.action || '').replace(/\(\d+ linked feedback row\(s\)\)/i, '').trim();
+    const text = count > 0 ? `${core} (${count} negative-linked row(s))` : core;
+    return {
+      ...row,
+      text,
+      causeTheme: (row as FinalizableActionPlanRow).causeTheme || row.cause,
+    };
+  });
+}
+
+function normalizeThemeKey(value: string): string {
+  return String(value || '')
+    .toLowerCase()
+    .replace(/&/g, ' and ')
+    .replace(/[^a-z0-9ğüşıöç\s]/gi, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+/** Resolve root-cause feedback IDs for a process-improvement row (quoted labels often differ from cluster titles). */
+export function resolveRootCauseIdsForProcessItem(
+  rootCauses: Array<{ cause?: string; interpretation?: string; feedbackIds?: number[] }>,
+  opts: {
+    causeTheme?: string;
+    quotedTheme?: string;
+    index: number;
+    itemIds?: number[];
+  }
+): number[] {
+  const itemIds = normalizeDrilldownIds(opts.itemIds);
+  if (itemIds.length) return itemIds;
+
+  const cause = String(opts.causeTheme || '').trim();
+  const quoted = String(opts.quotedTheme || '').trim();
+  const bucket = rootCauseThemeBucket(cause, '', quoted) || rootCauseThemeBucket(quoted, '', '');
+
+  if (bucket === 'brand-perception') {
+    const merged: number[] = [];
+    for (const rc of rootCauses) {
+      if (rootCauseThemeBucket(String(rc.cause || ''), String(rc.interpretation || '')) === 'brand-perception') {
+        merged.push(...(rc.feedbackIds || []));
+      }
+    }
+    const brandIds = normalizeDrilldownIds(merged);
+    if (brandIds.length) return brandIds;
+  }
+
+  if (bucket) {
+    const match = rootCauses.find(
+      (rc) => rootCauseThemeBucket(String(rc.cause || ''), String(rc.interpretation || '')) === bucket
+    );
+    const bucketIds = normalizeDrilldownIds(match?.feedbackIds);
+    if (bucketIds.length) return bucketIds;
+  }
+
+  const keys = [normalizeThemeKey(cause), normalizeThemeKey(quoted)].filter(Boolean);
+  for (const rc of rootCauses) {
+    const rcKey = normalizeThemeKey(String(rc.cause || ''));
+    if (keys.some((key) => key && (rcKey === key || rcKey.includes(key) || key.includes(rcKey)))) {
+      const ids = normalizeDrilldownIds(rc.feedbackIds);
+      if (ids.length) return ids;
+    }
+  }
+
+  return normalizeDrilldownIds(rootCauses[opts.index]?.feedbackIds);
+}
+
+/** Merge thematically duplicate root causes (esp. brand perception split across P1/P2). */
+export function mergeRootCausesForDisplay(
+  rootCauses: Array<Record<string, unknown>>
+): Array<Record<string, unknown>> {
+  const merged: Array<Record<string, unknown>> = [];
+  const indexByBucket = new Map<string, number>();
+
+  for (const rc of rootCauses) {
+    const interpretation = String(rc['interpretation'] || '').trim();
+    const cause = repairWeakClusterCauseTitle(String(rc['cause'] || '').trim(), interpretation, '');
+    const feedbackIds = mergePositiveIds(
+      Array.isArray(rc['feedbackIds']) ? (rc['feedbackIds'] as number[]) : undefined
+    );
+    const bucket = rootCauseThemeBucket(cause, interpretation) || cause.toLocaleLowerCase();
+
+    const existingIdx = indexByBucket.get(bucket);
+    if (existingIdx === undefined) {
+      indexByBucket.set(bucket, merged.length);
+      merged.push({
+        ...rc,
+        cause: bucket === 'brand-perception' ? 'Negative Brand Perception & Customer Dissatisfaction' : cause,
+        interpretation,
+        feedbackIds,
+        count: feedbackIds.length || Number(rc['count']) || 0,
+      });
+      continue;
+    }
+
+    const existing = merged[existingIdx];
+    const ids = mergePositiveIds(
+      Array.isArray(existing['feedbackIds']) ? (existing['feedbackIds'] as number[]) : undefined,
+      feedbackIds
+    );
+    const existingInterp = String(existing['interpretation'] || '').trim();
+    merged[existingIdx] = {
+      ...existing,
+      cause: bucket === 'brand-perception' ? 'Negative Brand Perception & Customer Dissatisfaction' : String(existing['cause'] || cause),
+      interpretation: existingInterp.length >= interpretation.length ? existingInterp : interpretation,
+      feedbackIds: ids,
+      count: ids.length,
+    };
+  }
+
   return merged;
 }
 
@@ -343,10 +797,16 @@ export function repairStaleActionText(
   sampleText?: string
 ): string {
   const theme = (causeHint || extractQuotedTheme(action) || 'this theme').trim();
-  if (isStaleGenericActionText(action) || isTemplatedReliabilityAction(action) || isOwnerFallbackAction(action)) {
-    return clusterSpecificActionText(theme, interpretationHint, sampleText);
+  const fresh = clusterSpecificActionText(theme, interpretationHint, sampleText);
+  if (
+    isStaleGenericActionText(action) ||
+    isTemplatedReliabilityAction(action) ||
+    isOwnerFallbackAction(action) ||
+    actionsShareTemplate(action, fresh)
+  ) {
+    return fresh;
   }
-  return action;
+  return alignActionTextToCauseTheme(action, theme);
 }
 
 export function extractQuotedTheme(text: string): string {
@@ -514,7 +974,8 @@ export function repairCxReportPayload(
   data: TwitterCxReportDto | Record<string, unknown>
 ): TwitterCxReportDto | Record<string, unknown> {
   if (!data || typeof data !== 'object') return data;
-  const rootCauses = Array.isArray(data['rootCauses']) ? (data['rootCauses'] as Array<Record<string, unknown>>) : [];
+  const rawRootCauses = Array.isArray(data['rootCauses']) ? (data['rootCauses'] as Array<Record<string, unknown>>) : [];
+  const rootCauses = mergeRootCausesForDisplay(rawRootCauses);
 
   const heatmapPct = Array.isArray(data['heatmapPct'])
     ? (data['heatmapPct'] as Array<Record<string, unknown>>).map((row) => {
@@ -542,79 +1003,84 @@ export function repairCxReportPayload(
       })
     : data['heatmapPct'];
 
+  const rootCauseLikes: RootCauseLike[] = rootCauses.map((rc) => ({
+    cause: String(rc['cause'] || '').trim(),
+    interpretation: String(rc['interpretation'] || '').trim(),
+    feedbackIds: Array.isArray(rc['feedbackIds'])
+      ? (rc['feedbackIds'] as number[]).filter((id) => Number.isFinite(Number(id)) && Number(id) > 0)
+      : [],
+  }));
+
   const actionPlan = Array.isArray(data['actionPlan'])
     ? (() => {
-        const repairedCauses = rootCauses.map((rc: Record<string, unknown>) => ({
-          ...rc,
-          cause: repairWeakClusterCauseTitle(String(rc['cause'] || ''), String(rc['interpretation'] || '')),
-        }));
         const drafts = (data['actionPlan'] as Array<Record<string, unknown>>).map((row, i) => {
-          const rc = repairedCauses[i] as Record<string, unknown>;
-          const causeTheme = String(rc['cause'] || '').trim();
-          const interpretation = String(rc['interpretation'] || '').trim();
-          const rawAction = String(row['action'] ?? '');
-          const rcIds = Array.isArray(rc['feedbackIds'])
-            ? (rc['feedbackIds'] as number[]).filter((id) => Number.isFinite(Number(id)) && Number(id) > 0)
-            : [];
-          const rowIds = Array.isArray(row['linkedFeedbackIds'])
-            ? (row['linkedFeedbackIds'] as number[])
-            : Array.isArray(row['referenceFeedbackIds'])
-              ? (row['referenceFeedbackIds'] as number[])
-              : [];
-          const linkedCount = Math.max(rcIds.length, rowIds.length, Number(row['linkedCount']) || 0);
-          const action = repairStaleActionText(rawAction, causeTheme || undefined, interpretation || undefined);
-          return { row, cause: causeTheme, interpretation, action, linkedCount, mergedIds: rcIds.length >= rowIds.length ? rcIds : rowIds };
+          const meta = resolveActionPlanRootCauseMeta(
+            {
+              action: String(row['action'] || ''),
+              causeTheme: String(row['causeTheme'] || row['cause'] || '').trim() || undefined,
+              linkedFeedbackIds: Array.isArray(row['linkedFeedbackIds']) ? (row['linkedFeedbackIds'] as number[]) : undefined,
+              referenceFeedbackIds: Array.isArray(row['referenceFeedbackIds'])
+                ? (row['referenceFeedbackIds'] as number[])
+                : undefined,
+            },
+            rootCauseLikes,
+            i
+          );
+          const linkedCount = meta.feedbackIds.length || Number(row['linkedCount']) || 0;
+          return {
+            ...row,
+            priority: priorityLabelFromClusterSize(linkedCount),
+            action: String(row['action'] ?? '').replace(/\(\d+ linked feedback row\(s\)\)/i, '').trim(),
+            causeTheme: meta.cause,
+            cause: meta.cause,
+            interpretation: meta.interpretation || undefined,
+            sampleText: meta.interpretation || undefined,
+            linkedFeedbackIds: meta.feedbackIds,
+            referenceFeedbackIds: meta.feedbackIds,
+            linkedCount,
+          };
         });
-        ensureDistinctClusterActions(drafts);
-        const collapsed = collapseActionPlanRows(
-          drafts.map((d) => ({
-            ...d.row,
-            priority: priorityLabelFromClusterSize(d.linkedCount),
-            action: d.action,
-            linkedFeedbackIds: d.mergedIds,
-            referenceFeedbackIds: d.mergedIds,
-            linkedCount: d.linkedCount,
-          })),
-          drafts.map((d) => d.cause),
-          drafts.map((d) => d.interpretation)
-        );
-        return collapsed;
+        return finalizeActionPlanRows(drafts);
       })()
     : data['actionPlan'];
 
   const processImprovementItems = Array.isArray(data['processImprovementItems'])
     ? (() => {
         const drafts = (data['processImprovementItems'] as Array<Record<string, unknown>>).map((item, i) => {
-          const rc = rootCauses[i];
-          const cause = String(rc?.['cause'] || extractQuotedTheme(String(item['text'] || ''))).trim();
-          const interpretation = String(rc?.['interpretation'] || '').trim();
-          const rcIds = Array.isArray(rc?.['feedbackIds'])
-            ? (rc!['feedbackIds'] as number[]).filter((id) => Number.isFinite(Number(id)) && Number(id) > 0)
-            : [];
-          const itemIds = Array.isArray(item['linkedFeedbackIds'])
-            ? (item['linkedFeedbackIds'] as number[])
-            : Array.isArray(item['referenceFeedbackIds'])
-              ? (item['referenceFeedbackIds'] as number[])
-              : [];
-          const mergedIds = rcIds.length >= itemIds.length ? rcIds : itemIds;
-          const linkedCount = mergedIds.length || Number(item['linkedCount']) || 0;
-          const text = formatProcessImprovementText(String(item['text'] || ''), linkedCount, cause, interpretation || undefined);
+          const meta = resolveActionPlanRootCauseMeta(
+            {
+              action: String(item['text'] || ''),
+              causeTheme: String(item['causeTheme'] || '').trim() || undefined,
+              linkedFeedbackIds: Array.isArray(item['linkedFeedbackIds']) ? (item['linkedFeedbackIds'] as number[]) : undefined,
+              referenceFeedbackIds: Array.isArray(item['referenceFeedbackIds'])
+                ? (item['referenceFeedbackIds'] as number[])
+                : undefined,
+            },
+            rootCauseLikes,
+            i
+          );
+          const cause = meta.cause || extractQuotedTheme(String(item['text'] || ''));
+          const interpretation = meta.interpretation || undefined;
+          const linkedCount = meta.feedbackIds.length || Number(item['linkedCount']) || 0;
           return {
-            item,
+            ...item,
+            priority: priorityLabelFromClusterSize(linkedCount),
+            action: String(item['text'] ?? '').replace(/\(\d+ negative-linked row\(s\)\)/i, '').trim(),
+            causeTheme: cause,
             cause,
             interpretation,
-            action: text,
-            mergedIds,
+            sampleText: interpretation,
+            linkedFeedbackIds: meta.feedbackIds,
+            referenceFeedbackIds: meta.feedbackIds,
             linkedCount,
           };
         });
-        ensureDistinctClusterActions(drafts.map((d) => ({ cause: d.cause, interpretation: d.interpretation, action: d.action })));
-        return drafts.map((d, i) => ({
-          ...d.item,
-          text: drafts[i].action,
-          linkedFeedbackIds: d.mergedIds.length ? d.mergedIds : d.item['linkedFeedbackIds'],
-          referenceFeedbackIds: d.mergedIds.length ? d.mergedIds : d.item['referenceFeedbackIds'],
-          linkedCount: d.linkedCount || undefined,
+        return finalizeProcessImprovementRows(drafts).map((row) => ({
+          text: row.text,
+          causeTheme: row.causeTheme || row.cause,
+          linkedFeedbackIds: row.linkedFeedbackIds,
+          referenceFeedbackIds: row.referenceFeedbackIds,
+          linkedCount: row.linkedCount,
         }));
       })()
     : data['processImprovementItems'];
@@ -651,6 +1117,7 @@ export function repairCxReportPayload(
 
   return {
     ...data,
+    rootCauses,
     heatmapPct,
     actionPlan,
     processImprovementItems,

@@ -24,7 +24,7 @@ import { notifyCxReportLoadFailure } from '../../../core/utils/twitter-cx-report
 import { ImportProcessingService } from '../../../core/services/import-processing.service';
 import { RelatedFeedbackModal, RelatedFeedbackRow } from '../../../core/components/related-feedback-modal/related-feedback-modal';
 import { resolveAppCompanyId } from '../../../core/utils/company-scope';
-import { effectiveLinkedCount, alignLinkedCountInText, resolveDrilldownIds, repairStaleActionText, ensureDistinctClusterActions, collapseActionPlanRows, priorityLabelFromClusterSize, repairWeakClusterCauseTitle, rootCauseThemeBucket } from '../../../core/utils/drilldown-display';
+import { effectiveLinkedCount, alignLinkedCountInText, resolveDrilldownIds, finalizeActionPlanRows, priorityLabelFromClusterSize, resolveActionPlanRootCauseMeta, mergeRootCausesForDisplay } from '../../../core/utils/drilldown-display';
 
 @Component({
   selector: 'app-action-plans',
@@ -177,72 +177,50 @@ export class ActionPlans implements OnInit, OnDestroy {
       this.page.set(1);
       return;
     }
-    const rootCauses = response.data.rootCauses ?? [];
-    type ReportPlanDraft = {
-      priority: string;
-      action: string;
-      owner: string;
-      impact: string;
-      horizon: string;
-      causeTheme?: string;
-      interpretation?: string;
-      referenceFeedbackIds?: number[];
-      linkedFeedbackIds?: number[];
-      linkedCount?: number;
-    };
-    const drafts: ReportPlanDraft[] = response.data.actionPlan.map((x: any, index: number) => {
-      const rcIds = Array.isArray(rootCauses[index]?.feedbackIds)
-        ? rootCauses[index].feedbackIds.filter((id: number) => Number.isFinite(Number(id)) && Number(id) > 0)
-        : [];
-      const linkedFeedbackIds = Array.isArray(x.linkedFeedbackIds)
-        ? x.linkedFeedbackIds
-        : Array.isArray(x.referenceFeedbackIds)
-          ? x.referenceFeedbackIds
-          : [];
-      const mergedIds = rcIds.length >= linkedFeedbackIds.length ? rcIds : linkedFeedbackIds;
-      const linkedCount = mergedIds.length;
-      const rawAction = String(x.action ?? '').replace(/\(\d+ linked feedback row\(s\)\)/i, '').trim();
-      const causeTheme = repairWeakClusterCauseTitle(
-        String(rootCauses[index]?.cause || '').trim(),
-        String(rootCauses[index]?.interpretation || '').trim(),
-        rawAction
+    const rootCauses = mergeRootCausesForDisplay(
+      Array.isArray(response.data.rootCauses) ? response.data.rootCauses : []
+    );
+    const rootCauseLikes = rootCauses.map((rc) => ({
+      cause: String(rc['cause'] || '').trim(),
+      interpretation: String(rc['interpretation'] || '').trim(),
+      feedbackIds: Array.isArray(rc['feedbackIds'])
+        ? (rc['feedbackIds'] as number[]).filter((id) => Number.isFinite(Number(id)) && Number(id) > 0)
+        : [],
+    }));
+    const drafts = response.data.actionPlan.map((x: any, index: number) => {
+      const meta = resolveActionPlanRootCauseMeta(
+        {
+          action: String(x.action ?? ''),
+          causeTheme: String(x.causeTheme || x.cause || '').trim() || undefined,
+          linkedFeedbackIds: Array.isArray(x.linkedFeedbackIds) ? x.linkedFeedbackIds : undefined,
+          referenceFeedbackIds: Array.isArray(x.referenceFeedbackIds) ? x.referenceFeedbackIds : undefined,
+        },
+        rootCauseLikes,
+        index
       );
-      const interpretation = String(rootCauses[index]?.interpretation || '').trim();
+      const linkedCount = meta.feedbackIds.length;
       return {
         priority: priorityLabelFromClusterSize(linkedCount),
-        action: repairStaleActionText(rawAction, causeTheme || undefined, interpretation || undefined, interpretation),
+        action: String(x.action ?? '').replace(/\(\d+ linked feedback row\(s\)\)/i, '').trim(),
         owner: x.owner ?? '',
         impact: x.impact ?? '',
         horizon: x.horizon ?? '',
-        causeTheme: causeTheme || undefined,
-        interpretation: interpretation || undefined,
-        referenceFeedbackIds: mergedIds,
-        linkedFeedbackIds: mergedIds,
+        causeTheme: meta.cause || undefined,
+        cause: meta.cause || undefined,
+        interpretation: meta.interpretation || undefined,
+        sampleText: meta.interpretation || undefined,
+        referenceFeedbackIds: meta.feedbackIds,
+        linkedFeedbackIds: meta.feedbackIds,
         linkedCount,
       };
     });
-    const actionRepairs = drafts.map((d: ReportPlanDraft) => ({
-      cause: d.causeTheme || 'this theme',
-      interpretation: d.interpretation,
-      action: d.action,
-      sampleText: d.interpretation,
-    }));
-    ensureDistinctClusterActions(actionRepairs);
-    actionRepairs.forEach((repair: { action: string }, i: number) => {
-      drafts[i].action = repair.action;
-    });
-    const collapsed = collapseActionPlanRows<ReportPlanDraft>(
-      drafts,
-      drafts.map((d: ReportPlanDraft) => d.causeTheme || ''),
-      drafts.map((d: ReportPlanDraft) => d.interpretation || '')
-    ).map((row) =>
-      row.causeTheme && rootCauseThemeBucket(row.causeTheme, row.interpretation, row.action) === 'brand-perception'
-        ? { ...row, causeTheme: 'Negative Brand Perception & Customer Dissatisfaction' }
-        : row
-    );
+    const collapsed = finalizeActionPlanRows(drafts);
     this.reportPlanRows.set(
       collapsed.map((row) => ({
         ...row,
+        owner: row.owner ?? '',
+        impact: row.impact ?? '',
+        horizon: row.horizon ?? '',
         priority: priorityLabelFromClusterSize(row.linkedCount || 0),
         action: alignLinkedCountInText(row.action, row.linkedCount || 0, 'linked feedback row(s)'),
       }))

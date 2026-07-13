@@ -248,6 +248,7 @@ export class TouchpointManager implements OnInit, OnDestroy {
       includeIrrelevant: true,
       groupRetweets: true,
       drilldownTitle: touchpointName,
+      touchpointName,
     }).subscribe({
       next: (res) => {
         this.drilldownLoading.set(false);

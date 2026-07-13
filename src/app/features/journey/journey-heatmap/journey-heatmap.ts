@@ -75,6 +75,8 @@ export class JourneyHeatmap implements OnInit, OnDestroy {
   cohortTotal = signal<number | null>(null);
   importedCsvRows = signal<number | null>(null);
   rowsSaved = signal<number | null>(null);
+  heatmapFigureCaption = signal('');
+  heatmapExcludedCount = signal<number | null>(null);
   error = signal<string | null>(null);
   drilldownOpen = signal(false);
   drilldownLoading = signal(false);
@@ -111,6 +113,13 @@ export class JourneyHeatmap implements OnInit, OnDestroy {
     const csv = this.importedCsvRows();
     const saved = this.rowsSaved();
     const mapped = this.heatmapMappedTotal();
+    const excluded = this.heatmapExcludedCount();
+    const unmapped =
+      excluded != null && excluded > 0
+        ? excluded
+        : saved != null && mapped > 0 && saved > mapped
+          ? saved - mapped
+          : null;
     if (csv != null && csv > 0 && saved === csv && mapped === csv) {
       return [{ icon: 'dataset', labelKey: 'heatmap.scopeUnified', value: csv }];
     }
@@ -119,6 +128,9 @@ export class JourneyHeatmap implements OnInit, OnDestroy {
       { icon: 'storage', labelKey: 'heatmap.scopeSaved', value: saved },
       { icon: 'grid_view', labelKey: 'heatmap.scopeMapped', value: mapped },
     ];
+    if (unmapped != null && unmapped > 0) {
+      items.push({ icon: 'block', labelKey: 'heatmap.scopeUnmapped', value: unmapped });
+    }
     return items.filter((item) => item.value != null && item.value > 0);
   });
 
@@ -179,12 +191,28 @@ export class JourneyHeatmap implements OnInit, OnDestroy {
     });
   }
 
-  private applyHeatmapReport(res: { success?: boolean; data?: { heatmapPct?: unknown[]; dataset?: { total?: number; importedCsvRows?: number }; sentiment?: { total?: number } } }): void {
+  private applyHeatmapReport(res: {
+    success?: boolean;
+    data?: {
+      heatmapPct?: unknown[];
+      heatmapFigureCaption?: string;
+      dataset?: {
+        total?: number;
+        importedCsvRows?: number;
+        heatmapMappedCount?: number;
+        heatmapExcludedCount?: number;
+      };
+      sentiment?: { total?: number };
+    };
+  }): void {
     if (!res.success || !res.data) return;
     this.error.set(null);
     this.cohortTotal.set(Number(res.data?.dataset?.total ?? res.data?.sentiment?.total ?? 0) || null);
     this.importedCsvRows.set(Number(res.data?.dataset?.importedCsvRows ?? 0) || null);
     this.rowsSaved.set(Number(res.data?.dataset?.total ?? 0) || null);
+    this.heatmapFigureCaption.set(String(res.data?.heatmapFigureCaption || '').trim());
+    const excluded = Number(res.data?.dataset?.heatmapExcludedCount);
+    this.heatmapExcludedCount.set(Number.isFinite(excluded) && excluded > 0 ? excluded : null);
     if (Array.isArray(res.data?.heatmapPct)) {
       this.stages.set(res.data.heatmapPct.map((r: any) => this.mapHeatmapRow(r)));
       this.page.set(1);
