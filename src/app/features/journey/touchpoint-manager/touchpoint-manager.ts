@@ -255,9 +255,8 @@ export class TouchpointManager implements OnInit, OnDestroy {
     this.analysisService.getFeedbackByIds(companyId, this.drilldownIds, {
       page,
       limit: this.drilldownPageSize,
-      includeIrrelevant: false,
-      groupRetweets: false,
-      themeTitle: touchpointName,
+      includeIrrelevant: true,
+      groupRetweets: true,
       drilldownTitle: touchpointName,
     }).subscribe({
       next: (res) => {

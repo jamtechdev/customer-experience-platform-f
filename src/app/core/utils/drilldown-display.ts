@@ -158,25 +158,56 @@ export function clusterSpecificActionText(cause: string, interpretation?: string
   const detail = (interpretation || '').replace(/\s+/g, ' ').trim();
   const blob = `${theme} ${detail}`.toLowerCase();
 
+  if (/brand perception|customer dissatisfaction|marka alg|negative brand/i.test(blob)) {
+    return `Launch a brand-trust recovery program for "${theme}": publish a transparent response playbook for recurring dissatisfaction themes, assign an executive sponsor, and track sentiment recovery on matched complaints monthly.`;
+  }
+  if (/unfair charge|billing|pricing|ücret|ucret|fiyat|invoice|refund|overcharg/i.test(blob)) {
+    return `Resolve billing and pricing friction for "${theme}": audit disputed charges against published price lists, authorize frontline refunds up to a defined threshold, and retrain stores on consistent discount communication.`;
+  }
   if (/customer support|support gap|destek|call center|müşteri hizmet|musteri hizmet|iletisim/.test(blob)) {
     return `Stand up a dedicated support cell for "${theme}": cap queue wait times, enforce first-contact resolution scripts, and track repeat-contact rate until it drops below 15%.`;
   }
   if (/service resolution|resolution gap|repair delay|warranty resolution|garanti.*(gecik|redd)|tamir.*(gecik|süre|sure)/.test(blob)) {
     return `Introduce a 48-hour repair-closure SLA for "${theme}": pre-position spare parts for top failure codes, require technician callback within 24h on reopened tickets, and publish weekly resolution-rate dashboards to service leadership.`;
   }
-  if (/reliability|defect|quality|arıza|ariza|bozuk|failure|breakdown/.test(blob)) {
-    const productHint = theme.replace(/\b(issue|concern|gap|reliability)\b/gi, '').trim();
-    const focus = productHint.length >= 4 ? productHint : theme;
-    return `Run a product-reliability intervention for "${focus}": isolate affected batches for this product line, complete root-cause hardware tests on returns, and proactively replace or repair units with repeat failures.`;
-  }
   if (/delivery|teslimat|logistics|kargo|shipment|shipping/.test(blob)) {
     return `Tighten delivery operations for "${theme}": audit carrier SLAs end-to-end, send proactive delay notifications, and offer compensation when promised delivery windows are missed.`;
   }
-  if (/billing|pricing|ücret|ucret|fiyat|invoice|refund/.test(blob)) {
-    return `Resolve billing and pricing friction for "${theme}": audit disputed charges against published price lists, authorize frontline refunds up to a defined threshold, and retrain stores on consistent discount communication.`;
+  if (/reliability|defect|quality|arıza|ariza|bozuk|failure|breakdown|unresolved/i.test(blob)) {
+    const productHint = theme.replace(/\b(issue|concern|gap|reliability|defects?)\b/gi, '').trim();
+    const focus = productHint.length >= 4 ? productHint : theme;
+    return `Run a product-reliability intervention for "${focus}": isolate affected batches for this product line, complete root-cause hardware tests on returns, and proactively replace or repair units with repeat failures.`;
   }
 
   return fallbackClusterActionText(theme, interpretation);
+}
+
+export function ensureDistinctClusterActions(
+  items: Array<{ cause: string; interpretation?: string; action: string }>
+): void {
+  const used = new Set<string>();
+  for (const item of items) {
+    let action = item.action.trim();
+    if (!action || isStaleGenericActionText(action)) {
+      action = clusterSpecificActionText(item.cause, item.interpretation);
+    }
+    let attempt = 0;
+    while (used.has(action) && attempt < 8) {
+      const detail = String(item.interpretation || '')
+        .replace(/\s+/g, ' ')
+        .trim()
+        .slice(0, 120);
+      const variantCause = detail.length >= 12 ? `${item.cause} — ${detail}` : `${item.cause} (variant ${attempt + 2})`;
+      const variant = clusterSpecificActionText(variantCause, item.interpretation);
+      action =
+        variant !== action
+          ? variant
+          : `${action.replace(/\.\s*$/, '')} — focus on the dominant complaint pattern in "${item.cause}".`;
+      attempt += 1;
+    }
+    used.add(action);
+    item.action = action;
+  }
 }
 
 /** Repair legacy snapshot rows in the UI without requiring a full CX rebuild. */
@@ -199,11 +230,12 @@ export function extractQuotedTheme(text: string): string {
 
 /** Pull journey theme label from satisfaction/dissatisfaction summary text. */
 export function extractJourneyThemeFromSummary(text: string): string | null {
-  const raw = String(text || '').trim();
+  const raw = String(text || '').trim().replace(/\)+$/g, '');
   if (!raw || raw === '—' || raw === '-') return null;
   const withoutCount = raw
-    .replace(/\s*\(\d+[^)]*linked[^)]*\)\.?\s*$/i, '')
+    .replace(/\s*\(\d+[^)]*linked[^)]*\)\.?\s*/gi, '')
     .replace(/\s*\(\d+[^)]*\)\.?\s*$/g, '')
+    .replace(/\)+$/g, '')
     .trim();
   return withoutCount.length >= 3 ? withoutCount : null;
 }
@@ -226,7 +258,8 @@ export function formatProcessImprovementText(
 export function alignLinkedCountInText(text: string, count: number, label = 'linked feedback row(s)'): string {
   if (!text) return '';
   if (count <= 0) return text.replace(/\(\d+[^)]*\)/, '').trim();
-  const replaced = text
+  const stripped = text.replace(/\)+$/g, '').trim();
+  const replaced = stripped
     .replace(/\(\d+ negative-linked row\(s\)\)/g, `(${count} ${label})`)
     .replace(/\(\d+ linked row\(s\)\)/g, `(${count} ${label})`)
     .replace(/\(\d+ linked feedback row\(s\)\)/g, `(${count} ${label})`)
@@ -384,29 +417,55 @@ export function repairCxReportPayload(
     : data['heatmapPct'];
 
   const actionPlan = Array.isArray(data['actionPlan'])
-    ? (data['actionPlan'] as Array<Record<string, unknown>>).map((row, i) => {
-        const rc = rootCauses[i];
-        const causeTheme = String(rc?.['cause'] || '').trim();
-        const interpretation = String(rc?.['interpretation'] || '').trim();
-        const rawAction = String(row['action'] ?? '');
-        return {
-          ...row,
-          action: repairStaleActionText(rawAction, causeTheme || undefined, interpretation || undefined),
-        };
-      })
+    ? (() => {
+        const drafts = (data['actionPlan'] as Array<Record<string, unknown>>).map((row, i) => {
+          const rc = rootCauses[i];
+          const causeTheme = String(rc?.['cause'] || '').trim();
+          const interpretation = String(rc?.['interpretation'] || '').trim();
+          const rawAction = String(row['action'] ?? '');
+          const action = repairStaleActionText(rawAction, causeTheme || undefined, interpretation || undefined);
+          return { row, cause: causeTheme, interpretation, action };
+        });
+        ensureDistinctClusterActions(drafts);
+        return drafts.map((d) => ({ ...d.row, action: d.action }));
+      })()
     : data['actionPlan'];
 
   const processImprovementItems = Array.isArray(data['processImprovementItems'])
-    ? (data['processImprovementItems'] as Array<Record<string, unknown>>).map((item, i) => {
-        const rc = rootCauses[i];
-        const cause = String(rc?.['cause'] || extractQuotedTheme(String(item['text'] || ''))).trim();
-        const interpretation = String(rc?.['interpretation'] || '').trim();
-        const linkedCount = Number(item['linkedCount']) || 0;
-        return {
-          ...item,
-          text: formatProcessImprovementText(String(item['text'] || ''), linkedCount, cause, interpretation || undefined),
-        };
-      })
+    ? (() => {
+        const drafts = (data['processImprovementItems'] as Array<Record<string, unknown>>).map((item, i) => {
+          const rc = rootCauses[i];
+          const cause = String(rc?.['cause'] || extractQuotedTheme(String(item['text'] || ''))).trim();
+          const interpretation = String(rc?.['interpretation'] || '').trim();
+          const rcIds = Array.isArray(rc?.['feedbackIds'])
+            ? (rc!['feedbackIds'] as number[]).filter((id) => Number.isFinite(Number(id)) && Number(id) > 0)
+            : [];
+          const itemIds = Array.isArray(item['linkedFeedbackIds'])
+            ? (item['linkedFeedbackIds'] as number[])
+            : Array.isArray(item['referenceFeedbackIds'])
+              ? (item['referenceFeedbackIds'] as number[])
+              : [];
+          const mergedIds = rcIds.length >= itemIds.length ? rcIds : itemIds;
+          const linkedCount = mergedIds.length || Number(item['linkedCount']) || 0;
+          const text = formatProcessImprovementText(String(item['text'] || ''), linkedCount, cause, interpretation || undefined);
+          return {
+            item,
+            cause,
+            interpretation,
+            action: text,
+            mergedIds,
+            linkedCount,
+          };
+        });
+        ensureDistinctClusterActions(drafts.map((d) => ({ cause: d.cause, interpretation: d.interpretation, action: d.action })));
+        return drafts.map((d, i) => ({
+          ...d.item,
+          text: drafts[i].action,
+          linkedFeedbackIds: d.mergedIds.length ? d.mergedIds : d.item['linkedFeedbackIds'],
+          referenceFeedbackIds: d.mergedIds.length ? d.mergedIds : d.item['referenceFeedbackIds'],
+          linkedCount: d.linkedCount || undefined,
+        }));
+      })()
     : data['processImprovementItems'];
 
   const journeyRows = Array.isArray(data['journeyRows'])

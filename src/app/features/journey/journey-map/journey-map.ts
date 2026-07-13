@@ -409,7 +409,7 @@ export class JourneyMap implements OnInit, OnDestroy {
       page,
       limit: this.drilldownPageSize,
       includeIrrelevant: true,
-      groupRetweets: false,
+      groupRetweets: true,
       // Trust snapshot IDs when present; theme keyword filter emptied journey-map drilldowns.
       themeTitle: hasTheme && !hasSnapshotIds ? themeTitle : undefined,
       drilldownTitle: this.drilldownTitle(),

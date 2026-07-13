@@ -222,15 +222,19 @@ export class ProcessEnhancement implements OnInit, OnDestroy {
       page,
       limit: this.drilldownPageSize,
       includeIrrelevant: true,
-      groupRetweets: false,
-      themeTitle: themeTitle !== 'this theme' ? themeTitle : undefined,
+      groupRetweets: true,
+      themeTitle: themeTitle !== 'this theme' && !this.drilldownIds.length ? themeTitle : undefined,
       drilldownTitle: this.drilldownTitle(),
     }).subscribe({
       next: (res) => {
         this.drilldownLoading.set(false);
         if (res?.data?.list) this.drilldownRows.set(res.data.list);
         const resolvedTotal = res?.data?.total ?? 0;
-        this.drilldownTotal.set(resolvedTotal > 0 ? resolvedTotal : drilldownModalTotal(this.drilldownIds));
+        const idTotal = drilldownModalTotal(this.drilldownIds);
+        this.drilldownTotal.set(resolvedTotal > 0 ? resolvedTotal : idTotal);
+        if (resolvedTotal === 0 && idTotal > 0 && (!res?.data?.list || res.data.list.length === 0)) {
+          this.drilldownTotal.set(idTotal);
+        }
       },
       error: () => {
         this.drilldownLoading.set(false);
