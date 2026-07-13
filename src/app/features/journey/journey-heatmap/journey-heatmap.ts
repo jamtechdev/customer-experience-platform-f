@@ -133,23 +133,16 @@ export class JourneyHeatmap implements OnInit, OnDestroy {
 
   loadHeatmap(forceLive: boolean = false, refreshFromServer: boolean = false): void {
     const companyId = resolveAppCompanyId(this.authService.currentUser());
-    if (refreshFromServer && !forceLive) {
-      this.twitterCxReportStore.clearCachedReport(companyId, undefined, undefined, undefined, {
-        clearLastGood: true,
-      });
-    }
-    const cached = !forceLive && !refreshFromServer
-      ? this.twitterCxReportStore.getCachedReport(companyId)
-      : undefined;
-    if (cached?.success && cached.data?.heatmapPct?.length) {
-      this.applyHeatmapReport(cached);
+    if (refreshFromServer) {
+      this.twitterCxReportStore.clearCachedReport(companyId);
     }
     if (refreshFromServer || !this.stages().length) {
       this.loading.set(true);
     }
     this.error.set(null);
     const watchdog = setTimeout(() => this.loading.set(false), environment.cxReportTimeout || 120000);
-    this.twitterCxReportStore.loadTwitterCxReport(companyId, undefined, undefined, undefined, forceLive).subscribe({
+    const useForceLive = forceLive || refreshFromServer;
+    this.twitterCxReportStore.loadTwitterCxReport(companyId, undefined, undefined, undefined, useForceLive).subscribe({
       next: (res) => {
         const hasData = res.success && hasCxReportPayload(res.data);
         if ((res.message === 'stale_response' || res.message === 'snapshot_still_building') && !hasData) {
@@ -158,10 +151,10 @@ export class JourneyHeatmap implements OnInit, OnDestroy {
         clearTimeout(watchdog);
         if (!res.success) {
           if (isCxReportResponsePending(res, this.importProcessing.isActive())) {
-            if (!cached?.success && !this.stages().length) this.loading.set(true);
+            if (!this.stages().length) this.loading.set(true);
             return;
           }
-          if (!cached?.success && !this.stages().length) {
+          if (!this.stages().length) {
             this.stages.set([]);
             this.page.set(1);
             this.error.set(this.importProcessing.isActive() ? null : twitterCxReportFailureMessage(res.message));
@@ -176,7 +169,7 @@ export class JourneyHeatmap implements OnInit, OnDestroy {
       error: () => {
         clearTimeout(watchdog);
         this.error.set(this.importProcessing.isActive() ? null : twitterCxReportFailureMessage());
-        if (!cached?.success) {
+        if (!this.stages().length) {
           notifyCxReportLoadFailure(this.snackBar, undefined, this.importProcessing.isActive(), this.t('app.close'));
           this.stages.set([]);
           this.page.set(1);

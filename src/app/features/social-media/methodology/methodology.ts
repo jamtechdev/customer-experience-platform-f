@@ -89,24 +89,15 @@ export class Methodology implements OnInit, OnDestroy {
     if (refreshFromServer) {
       this.twitterCxReportStore.clearCachedReport(companyId);
     }
-    const cached = !refreshFromServer ? this.twitterCxReportStore.getCachedReport(companyId) : undefined;
-    if (cached?.success && this.reportHasScope(cached.data)) {
-      this.applyReport(cached.data!);
-      this.loading.set(false);
-    } else if (!this.twitterCxReportStore.hasCachedReport(companyId)) {
-      this.loading.set(true);
-    }
+    this.loading.set(true);
 
-    this.twitterCxReportStore.loadTwitterCxReport(companyId, undefined, undefined, undefined, false).subscribe({
+    this.twitterCxReportStore.loadTwitterCxReport(companyId, undefined, undefined, undefined, refreshFromServer).subscribe({
       next: (res) => {
         if (res.message === 'stale_response') {
-          this.loading.set(false);
           return;
         }
         if (!res.success) {
-          if (!cached?.success) {
-            this.clearReport();
-          }
+          this.clearReport();
           notifyCxReportLoadFailure(this.snackBar, res.message, this.importProcessing.isActive(), this.t('app.close'));
         } else if (res.data) {
           this.applyReport(res.data);

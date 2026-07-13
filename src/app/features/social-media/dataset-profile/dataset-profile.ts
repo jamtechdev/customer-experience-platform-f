@@ -100,23 +100,14 @@ export class DatasetProfile implements OnInit, OnDestroy {
 
   loadProfile(): void {
     const companyId = resolveAppCompanyId(this.authService.currentUser());
-    const cached = this.twitterCxReportStore.getCachedReport(companyId);
-    if (cached?.success && cached.data?.datasetProfileRows?.length) {
-      this.applyProfile(cached);
-      this.loading.set(false);
-    } else if (!this.twitterCxReportStore.hasCachedReport(companyId)) {
-      this.loading.set(true);
-    }
+    this.loading.set(true);
     this.twitterCxReportStore.loadTwitterCxReport(companyId, undefined, undefined, undefined, false).subscribe({
       next: (res) => {
         if (res.message === 'stale_response') {
-          this.loading.set(false);
           return;
         }
         if (!res.success) {
-          if (!cached?.success) {
-            this.rows.set([]);
-          }
+          this.rows.set([]);
           notifyCxReportLoadFailure(this.snackBar, res.message, this.importProcessing.isActive(), this.t('app.close'));
         } else {
           this.applyProfile(res);

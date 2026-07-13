@@ -120,7 +120,7 @@
                         }
                       </span>
                     </div>
-                    @if (row.errorDetails?.aiSummary?.enabled) {
+                    @if (showAiBatchStats(row) && row.errorDetails?.aiSummary?.enabled) {
                       <div class="error-line">
                         <strong>AI:</strong>
                         attempted {{ row.errorDetails?.aiSummary?.attempted ?? 0 }},
@@ -163,7 +163,7 @@
                       <mat-spinner diameter="16"></mat-spinner>
                       <span><strong>AI</strong> analyzing feedback…</span>
                     </div>
-                    @if (row.errorDetails?.aiSummary?.enabled) {
+                    @if (showAiBatchStats(row) && row.errorDetails?.aiSummary?.enabled) {
                       <div class="error-line">
                         <strong>AI:</strong>
                         attempted {{ row.errorDetails?.aiSummary?.attempted ?? 0 }},
@@ -220,7 +220,7 @@
                         </ul>
                       </details>
                     }
-                    @if (row.errorDetails.aiSummary?.enabled) {
+                    @if (showAiBatchStats(row) && row.errorDetails.aiSummary?.enabled) {
                       <div class="error-line">
                         <strong>AI:</strong>
                         attempted {{ row.errorDetails.aiSummary?.attempted ?? 0 }},
@@ -305,14 +305,6 @@
                       </button>
                     </div>
                   }
-                  @if (row.errorDetails.aiSummary?.enabled) {
-                    <div class="error-line">
-                      <strong>AI:</strong>
-                      attempted {{ row.errorDetails.aiSummary?.attempted ?? 0 }},
-                      success {{ row.errorDetails.aiSummary?.succeeded ?? 0 }},
-                      failed {{ row.errorDetails.aiSummary?.failed ?? 0 }}.
-                    </div>
-                  }
                   @if (row.errorDetails.npsAiSummary?.enabled) {
                     <div class="error-line">
                       <strong>NPS:</strong>
@@ -328,38 +320,15 @@
                     </div>
                   }
                 </div>
-              } @else if (row.status === 'completed' && row.errorDetails?.aiSummary?.enabled) {
-                <div class="error-structured import-omissions">
+              } @else if (row.status === 'completed') {
+                <div class="error-structured success-only">
                   <div class="error-line ok-line">
                     <mat-icon class="inline-icon">check_circle</mat-icon>
-                    Import finished.
+                    <strong>Import finished</strong>
+                    @if (getImportedCount(row) > 0) {
+                      — {{ getImportedCount(row) | number }} row(s) saved
+                    }
                   </div>
-                  <div class="error-line">
-                    Completion: <strong>{{ getFinalProgress(row) }}%</strong>
-                  </div>
-                  <div class="progress-wrap">
-                    <mat-progress-bar class="chunk-progress completed-progress" mode="determinate" [value]="getFinalProgress(row)"></mat-progress-bar>
-                  </div>
-                  <div class="error-line">
-                    <strong>AI:</strong>
-                    attempted {{ row.errorDetails.aiSummary?.attempted ?? 0 }},
-                    success {{ row.errorDetails.aiSummary?.succeeded ?? 0 }},
-                    failed {{ row.errorDetails.aiSummary?.failed ?? 0 }}.
-                  </div>
-                  @if (row.errorDetails.npsAiSummary?.enabled) {
-                    <div class="error-line">
-                      <strong>NPS:</strong>
-                      saved {{ row.errorDetails.npsAiSummary?.succeeded ?? 0 }}
-                      / {{ row.errorDetails.npsAiSummary?.attempted ?? 0 }} OpenAI-inferred score(s).
-                    </div>
-                  }
-                  @if (row.errorDetails.postProcessingSummary) {
-                    <div class="error-line">
-                      <strong>Post analysis:</strong>
-                      root causes {{ row.errorDetails.postProcessingSummary.rootCauseAnalysisCount ?? 0 }},
-                      journey mappings {{ row.errorDetails.postProcessingSummary.journeyMappingCount ?? 0 }}.
-                    </div>
-                  }
                 </div>
               } @else {
                 —

@@ -131,13 +131,7 @@ export class TouchpointManager implements OnInit, OnDestroy {
 
   loadTouchpoints(): void {
     const companyId = resolveAppCompanyId(this.authService.currentUser());
-    const cached = this.twitterCxReportStore.getCachedReport(companyId);
-    if (cached?.success && cached.data?.touchpoints?.length) {
-      this.applyTouchpointReport(cached);
-      this.loading.set(false);
-    } else if (!this.twitterCxReportStore.hasCachedReport(companyId)) {
-      this.loading.set(true);
-    }
+    this.loading.set(true);
     const watchdog = setTimeout(() => this.loading.set(false), environment.cxReportTimeout || 120000);
     this.twitterCxReportStore.loadTwitterCxReport(companyId, undefined, undefined, undefined, false).subscribe({
       next: (response) => {
@@ -153,11 +147,9 @@ export class TouchpointManager implements OnInit, OnDestroy {
           return;
         }
         if (!response.success) {
-          if (!cached?.success) {
-            this.touchpoints.set([]);
-            this.reportTouchpoints.set([]);
-            this.page.set(1);
-          }
+          this.touchpoints.set([]);
+          this.reportTouchpoints.set([]);
+          this.page.set(1);
           notifyCxReportLoadFailure(this.snackBar, response.message, this.importProcessing.isActive(), 'Close');
           this.loading.set(false);
           return;
@@ -168,12 +160,10 @@ export class TouchpointManager implements OnInit, OnDestroy {
       error: () => {
         clearTimeout(watchdog);
         this.loading.set(false);
-        if (!cached?.success) {
-          this.touchpoints.set([]);
-          this.reportTouchpoints.set([]);
-          this.page.set(1);
-          notifyCxReportLoadFailure(this.snackBar, undefined, this.importProcessing.isActive(), 'Close');
-        }
+        this.touchpoints.set([]);
+        this.reportTouchpoints.set([]);
+        this.page.set(1);
+        notifyCxReportLoadFailure(this.snackBar, undefined, this.importProcessing.isActive(), 'Close');
       },
     });
   }

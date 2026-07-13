@@ -82,26 +82,17 @@ export class ProcessEnhancement implements OnInit, OnDestroy {
     if (refreshFromServer) {
       this.twitterCxReportStore.clearCachedReport(companyId);
     }
-    const cached = !refreshFromServer ? this.twitterCxReportStore.getCachedReport(companyId) : undefined;
-    if (cached?.success && cached.data) {
-      this.applyProcessReport(cached.data);
-      this.loading.set(false);
-    } else if (!this.twitterCxReportStore.hasCachedReport(companyId)) {
-      this.loading.set(true);
-    }
+    this.loading.set(true);
     this.twitterCxReportStore
-      .loadTwitterCxReport(companyId, undefined, undefined, undefined, false)
+      .loadTwitterCxReport(companyId, undefined, undefined, undefined, refreshFromServer)
       .subscribe({
         next: (res) => {
           if (res.message === 'stale_response') {
-            this.loading.set(false);
             return;
           }
           if (!res.success) {
-            if (!cached?.success) {
-              this.processImprovements.set([]);
-              this.managementTakeaways.set([]);
-            }
+            this.processImprovements.set([]);
+            this.managementTakeaways.set([]);
             notifyCxReportLoadFailure(this.snackBar, res.message, this.importProcessing.isActive(), 'Close');
             this.loading.set(false);
             return;
@@ -115,10 +106,8 @@ export class ProcessEnhancement implements OnInit, OnDestroy {
           this.loading.set(false);
         },
         error: () => {
-          if (!cached?.success) {
-            this.processImprovements.set([]);
-            this.managementTakeaways.set([]);
-          }
+          this.processImprovements.set([]);
+          this.managementTakeaways.set([]);
           this.loading.set(false);
           notifyCxReportLoadFailure(this.snackBar, undefined, this.importProcessing.isActive(), 'Close');
         },

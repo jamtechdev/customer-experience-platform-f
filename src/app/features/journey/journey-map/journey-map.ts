@@ -107,11 +107,6 @@ export class JourneyMap implements OnInit, OnDestroy {
 
   loadJourneyData(): void {
     const companyId = resolveAppCompanyId(this.authService.currentUser());
-    const cached = this.twitterCxReportStore.getCachedReport(companyId);
-    if (cached?.success && cached.data) {
-      this.applyCxReport(cached);
-    }
-    // Show cached stages immediately — only block the page when we have nothing to render yet.
     this.loading.set(this.journeyStages().length === 0);
 
     const watchdog = setTimeout(() => this.loading.set(false), environment.cxReportTimeout || 120000);
@@ -126,10 +121,8 @@ export class JourneyMap implements OnInit, OnDestroy {
         }
         clearTimeout(watchdog);
         if (!response.success) {
-          if (!cached?.success) {
-            this.journeyStages.set([]);
-            this.page.set(1);
-          }
+          this.journeyStages.set([]);
+          this.page.set(1);
           notifyCxReportLoadFailure(this.snackBar, response.message, this.importProcessing.isActive(), 'Close');
           this.loading.set(false);
           return;
@@ -140,11 +133,9 @@ export class JourneyMap implements OnInit, OnDestroy {
       error: () => {
         clearTimeout(watchdog);
         this.loading.set(false);
-        if (!cached?.success) {
-          notifyCxReportLoadFailure(this.snackBar, undefined, this.importProcessing.isActive(), 'Close');
-          this.journeyStages.set([]);
-          this.page.set(1);
-        }
+        notifyCxReportLoadFailure(this.snackBar, undefined, this.importProcessing.isActive(), 'Close');
+        this.journeyStages.set([]);
+        this.page.set(1);
       },
     });
   }

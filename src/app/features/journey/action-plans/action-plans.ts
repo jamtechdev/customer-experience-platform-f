@@ -24,7 +24,7 @@ import { notifyCxReportLoadFailure } from '../../../core/utils/twitter-cx-report
 import { ImportProcessingService } from '../../../core/services/import-processing.service';
 import { RelatedFeedbackModal, RelatedFeedbackRow } from '../../../core/components/related-feedback-modal/related-feedback-modal';
 import { resolveAppCompanyId } from '../../../core/utils/company-scope';
-import { effectiveLinkedCount, alignLinkedCountInText, resolveDrilldownIds, repairStaleActionText } from '../../../core/utils/drilldown-display';
+import { effectiveLinkedCount, alignLinkedCountInText, resolveDrilldownIds, repairStaleActionText, ensureDistinctClusterActions, collapseActionPlanRows, priorityLabelFromClusterSize, repairWeakClusterCauseTitle, rootCauseThemeBucket } from '../../../core/utils/drilldown-display';
 
 @Component({
   selector: 'app-action-plans',
@@ -143,25 +143,16 @@ export class ActionPlans implements OnInit, OnDestroy {
     if (refreshFromServer) {
       this.twitterCxReportStore.clearCachedReport(companyId);
     }
-    const cached = !refreshFromServer ? this.twitterCxReportStore.getCachedReport(companyId) : undefined;
-    if (cached?.success && Array.isArray(cached.data?.actionPlan) && cached.data.actionPlan.length > 0) {
-      this.applyActionPlanReport(cached);
-      this.loading.set(false);
-    } else if (!this.twitterCxReportStore.hasCachedReport(companyId)) {
-      this.loading.set(true);
-    }
-    this.twitterCxReportStore.loadTwitterCxReport(companyId, undefined, undefined, undefined, false).subscribe({
+    this.loading.set(true);
+    this.twitterCxReportStore.loadTwitterCxReport(companyId, undefined, undefined, undefined, refreshFromServer).subscribe({
       next: (response) => {
         if (response.message === 'stale_response') {
-          this.loading.set(false);
           return;
         }
         if (!response.success) {
-          if (!cached?.success) {
-            this.reportPlanRows.set([]);
-            this.actionPlans.set([]);
-            this.page.set(1);
-          }
+          this.reportPlanRows.set([]);
+          this.actionPlans.set([]);
+          this.page.set(1);
           notifyCxReportLoadFailure(this.snackBar, response.message, this.importProcessing.isActive(), 'Close');
           this.loading.set(false);
           return;
@@ -187,34 +178,74 @@ export class ActionPlans implements OnInit, OnDestroy {
       return;
     }
     const rootCauses = response.data.rootCauses ?? [];
-    this.reportPlanRows.set(
-      response.data.actionPlan.map((x: any, index: number) => {
-        const rcIds = Array.isArray(rootCauses[index]?.feedbackIds)
-          ? rootCauses[index].feedbackIds.filter((id: number) => Number.isFinite(Number(id)) && Number(id) > 0)
+    type ReportPlanDraft = {
+      priority: string;
+      action: string;
+      owner: string;
+      impact: string;
+      horizon: string;
+      causeTheme?: string;
+      interpretation?: string;
+      referenceFeedbackIds?: number[];
+      linkedFeedbackIds?: number[];
+      linkedCount?: number;
+    };
+    const drafts: ReportPlanDraft[] = response.data.actionPlan.map((x: any, index: number) => {
+      const rcIds = Array.isArray(rootCauses[index]?.feedbackIds)
+        ? rootCauses[index].feedbackIds.filter((id: number) => Number.isFinite(Number(id)) && Number(id) > 0)
+        : [];
+      const linkedFeedbackIds = Array.isArray(x.linkedFeedbackIds)
+        ? x.linkedFeedbackIds
+        : Array.isArray(x.referenceFeedbackIds)
+          ? x.referenceFeedbackIds
           : [];
-        const linkedFeedbackIds = Array.isArray(x.linkedFeedbackIds)
-          ? x.linkedFeedbackIds
-          : Array.isArray(x.referenceFeedbackIds)
-            ? x.referenceFeedbackIds
-            : [];
-        const mergedIds = rcIds.length >= linkedFeedbackIds.length ? rcIds : linkedFeedbackIds;
-        const linkedCount = mergedIds.length;
-        const causeTheme = String(rootCauses[index]?.cause || '').trim();
-        const interpretation = String(rootCauses[index]?.interpretation || '').trim();
-        const rawAction = String(x.action ?? '');
-        return {
-          priority: x.priority ?? '',
-          action: repairStaleActionText(rawAction, causeTheme || undefined, interpretation || undefined),
-          owner: x.owner ?? '',
-          impact: x.impact ?? '',
-          horizon: x.horizon ?? '',
-          causeTheme: causeTheme || undefined,
-          interpretation: interpretation || undefined,
-          referenceFeedbackIds: mergedIds,
-          linkedFeedbackIds: mergedIds,
-          linkedCount,
-        };
-      })
+      const mergedIds = rcIds.length >= linkedFeedbackIds.length ? rcIds : linkedFeedbackIds;
+      const linkedCount = mergedIds.length;
+      const rawAction = String(x.action ?? '').replace(/\(\d+ linked feedback row\(s\)\)/i, '').trim();
+      const causeTheme = repairWeakClusterCauseTitle(
+        String(rootCauses[index]?.cause || '').trim(),
+        String(rootCauses[index]?.interpretation || '').trim(),
+        rawAction
+      );
+      const interpretation = String(rootCauses[index]?.interpretation || '').trim();
+      return {
+        priority: priorityLabelFromClusterSize(linkedCount),
+        action: repairStaleActionText(rawAction, causeTheme || undefined, interpretation || undefined, interpretation),
+        owner: x.owner ?? '',
+        impact: x.impact ?? '',
+        horizon: x.horizon ?? '',
+        causeTheme: causeTheme || undefined,
+        interpretation: interpretation || undefined,
+        referenceFeedbackIds: mergedIds,
+        linkedFeedbackIds: mergedIds,
+        linkedCount,
+      };
+    });
+    const actionRepairs = drafts.map((d: ReportPlanDraft) => ({
+      cause: d.causeTheme || 'this theme',
+      interpretation: d.interpretation,
+      action: d.action,
+      sampleText: d.interpretation,
+    }));
+    ensureDistinctClusterActions(actionRepairs);
+    actionRepairs.forEach((repair: { action: string }, i: number) => {
+      drafts[i].action = repair.action;
+    });
+    const collapsed = collapseActionPlanRows<ReportPlanDraft>(
+      drafts,
+      drafts.map((d: ReportPlanDraft) => d.causeTheme || ''),
+      drafts.map((d: ReportPlanDraft) => d.interpretation || '')
+    ).map((row) =>
+      row.causeTheme && rootCauseThemeBucket(row.causeTheme, row.interpretation, row.action) === 'brand-perception'
+        ? { ...row, causeTheme: 'Negative Brand Perception & Customer Dissatisfaction' }
+        : row
+    );
+    this.reportPlanRows.set(
+      collapsed.map((row) => ({
+        ...row,
+        priority: priorityLabelFromClusterSize(row.linkedCount || 0),
+        action: alignLinkedCountInText(row.action, row.linkedCount || 0, 'linked feedback row(s)'),
+      }))
     );
     const mapped = this.reportPlanRows().map((x, idx) => ({
       id: idx + 1,
@@ -270,8 +301,7 @@ export class ActionPlans implements OnInit, OnDestroy {
     referenceFeedbackIds?: number[];
   }): string {
     const count = this.referenceCount(row);
-    const repaired = repairStaleActionText(row.action, row.causeTheme, row.interpretation);
-    return alignLinkedCountInText(repaired, count, 'linked feedback row(s)');
+    return alignLinkedCountInText(row.action, count, 'linked feedback row(s)');
   }
 
   loadDrilldownPage(page: number): void {

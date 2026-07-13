@@ -8,21 +8,17 @@ import {
   emptyTwitterCxReportDto,
   hasCxReportPayload,
   isCxReportResponsePending,
-  isTransientCxReportFailure,
 } from '../utils/twitter-cx-report-load';
 import { repairCxReportPayload } from '../utils/drilldown-display';
 
 import { DEFAULT_APP_COMPANY_ID } from '../utils/company-scope';
 
-/** Coalesces concurrent Twitter CX report loads (same company + optional import). */
+/** Coalesces concurrent Twitter CX report loads — always reads from the database API (no client cache). */
 @Injectable({ providedIn: 'root' })
 export class TwitterCxReportStore {
   private readonly analysis = inject(AnalysisService);
   private readonly importProcessing = inject(ImportProcessingService);
   private readonly inflight = new Map<string, Observable<ApiResponse<TwitterCxReportDto>>>();
-  private readonly cache = new Map<string, ApiResponse<TwitterCxReportDto>>();
-  /** Survives cache clears while import is running so other menus keep working. */
-  private readonly lastGoodByCompany = new Map<string, ApiResponse<TwitterCxReportDto>>();
   private readonly refreshSubject = new Subject<number | undefined>();
   private readonly snapshotPendingSignal = signal(false);
   private readonly pendingRetryTimers = new Map<string, ReturnType<typeof setTimeout>>();
@@ -31,12 +27,11 @@ export class TwitterCxReportStore {
   private readonly maxPendingRetries = 40;
   private readonly pendingRetryMs = 3000;
 
-  /** Emits companyId when snapshot cache was cleared (e.g. after CSV import). */
+  /** Emits companyId when a fresh DB snapshot is available (e.g. after CSV import). */
   readonly onRefresh$ = this.refreshSubject.asObservable();
   /** True while waiting for CX snapshot / report build after import. */
   readonly snapshotPending = this.snapshotPendingSignal.asReadonly();
 
-  /** Clears pending state when server snapshot is ready (used by global progress banner). */
   markSnapshotReady(): void {
     this.clearAllPendingRetries();
     this.snapshotPendingSignal.set(false);
@@ -48,49 +43,40 @@ export class TwitterCxReportStore {
     }
   }
 
+  /** @deprecated Client-side report cache removed — always returns undefined. */
   getCachedReport(
-    companyId: number | undefined,
-    csvImportId?: number,
-    startDate?: Date,
-    endDate?: Date
+    _companyId?: number,
+    _csvImportId?: number,
+    _startDate?: Date,
+    _endDate?: Date
   ): ApiResponse<TwitterCxReportDto> | undefined {
-    const scopedCompanyId = this.normalizeCompanyId(companyId);
-    const cached = this.cache.get(this.cacheKey(scopedCompanyId, csvImportId, startDate, endDate, false));
-    return cached ? this.hydrateReportResponse(cached) : undefined;
+    return undefined;
   }
 
+  /** @deprecated Client-side report cache removed — always returns false. */
   hasCachedReport(
-    companyId: number | undefined,
-    csvImportId?: number,
-    startDate?: Date,
-    endDate?: Date
+    _companyId?: number,
+    _csvImportId?: number,
+    _startDate?: Date,
+    _endDate?: Date
   ): boolean {
-    const scopedCompanyId = this.normalizeCompanyId(companyId);
-    const key = this.cacheKey(scopedCompanyId, csvImportId, startDate, endDate, false);
-    return !!this.findLastGood(scopedCompanyId, key);
+    return false;
   }
 
+  /** Clears in-flight requests so the next load hits the database API again. */
   clearCachedReport(
-    companyId: number | undefined,
+    companyId?: number,
     csvImportId?: number,
     startDate?: Date,
     endDate?: Date,
-    options?: { clearLastGood?: boolean }
+    _options?: { clearLastGood?: boolean }
   ): void {
     const scopedCompanyId = this.normalizeCompanyId(companyId);
     const key = this.cacheKey(scopedCompanyId, csvImportId, startDate, endDate, false);
-    this.cache.delete(key);
     this.inflight.delete(key);
+    this.inflight.delete(this.cacheKey(scopedCompanyId, csvImportId, startDate, endDate, true));
     this.clearPendingRetry(key);
-    if (options?.clearLastGood) {
-      this.lastGoodByCompany.delete(String(scopedCompanyId));
-      for (const k of [...this.cache.keys()]) {
-        if (k.startsWith(`${scopedCompanyId}|`)) this.cache.delete(k);
-      }
-      for (const k of [...this.inflight.keys()]) {
-        if (k.startsWith(`${scopedCompanyId}|`)) this.inflight.delete(k);
-      }
-    }
+    this.generation++;
   }
 
   loadTwitterCxReport(
@@ -102,11 +88,6 @@ export class TwitterCxReportStore {
   ): Observable<ApiResponse<TwitterCxReportDto>> {
     const scopedCompanyId = this.normalizeCompanyId(companyId);
     const key = this.cacheKey(scopedCompanyId, csvImportId, startDate, endDate, forceLive);
-    const cached = !forceLive ? this.cache.get(key) : undefined;
-    if (cached) return of(cached);
-
-    const importBusy = this.importProcessing.isActive();
-    const lastGood = !forceLive ? this.findLastGood(scopedCompanyId, key) : undefined;
 
     let obs = this.inflight.get(key);
     if (!obs) {
@@ -114,75 +95,39 @@ export class TwitterCxReportStore {
       obs = this.analysis
         .getTwitterCxReport(scopedCompanyId, csvImportId, startDate, endDate, forceLive)
         .pipe(
-        map((res) => {
-          if (generationAtStart !== this.generation) {
-            return {
-              success: false,
-              message: 'stale_response',
-              data: undefined as unknown as TwitterCxReportDto,
-            } as ApiResponse<TwitterCxReportDto>;
-          }
-          if (res.success) return this.hydrateReportResponse(res);
-          const fallback = this.findLastGood(scopedCompanyId, key);
-          if (
-            fallback &&
-            (res.message === 'timeout' ||
-              res.message === 'snapshot_still_building' ||
-              res.message === 'http_504' ||
-              res.message === 'http_502' ||
-              res.message === 'http_503' ||
-              res.message === 'http_0' ||
-              res.message === 'network')
-          ) {
-            return fallback;
-          }
-          return this.coerceImportProcessingResponse(res, scopedCompanyId, key);
-        }),
-        tap((res) => {
-          const wasPending = this.snapshotPendingSignal();
-          const pending = isCxReportResponsePending(res, this.importProcessing.isActive());
-          this.snapshotPendingSignal.set(pending);
-          if (pending || isTransientCxReportFailure(res.message)) {
-            this.schedulePendingRetry(scopedCompanyId, csvImportId, startDate, endDate, forceLive, key);
-          } else {
-            this.clearPendingRetry(key);
-          }
+          map((res) => {
+            if (generationAtStart !== this.generation) {
+              return {
+                success: false,
+                message: 'stale_response',
+                data: undefined as unknown as TwitterCxReportDto,
+              } as ApiResponse<TwitterCxReportDto>;
+            }
+            if (res.success) return this.hydrateReportResponse(res);
+            return this.coerceImportProcessingResponse(res);
+          }),
+          tap((res) => {
+            const wasPending = this.snapshotPendingSignal();
+            const pending = isCxReportResponsePending(res, this.importProcessing.isActive());
+            this.snapshotPendingSignal.set(pending);
+            if (pending) {
+              this.schedulePendingRetry(scopedCompanyId, csvImportId, startDate, endDate, forceLive, key);
+            } else {
+              this.clearPendingRetry(key);
+            }
 
-          if (!forceLive && res.success && res.data && res.message !== 'import_processing') {
-            const hydrated = this.hydrateReportResponse(res);
-            const hasPayload = hasCxReportPayload(hydrated.data);
-            if (hasPayload || !this.importProcessing.isActive()) {
-              this.cache.set(key, hydrated);
-              this.rememberLastGood(scopedCompanyId, hydrated);
+            if (res.success && res.data && res.message !== 'import_processing') {
+              const hasPayload = hasCxReportPayload(res.data);
+              if (hasPayload && (wasPending || this.importProcessing.isActive())) {
+                this.markSnapshotReady();
+                this.refreshSubject.next(scopedCompanyId);
+              }
             }
-            if (hasPayload && (wasPending || importBusy)) {
-              this.markSnapshotReady();
-              this.refreshSubject.next(scopedCompanyId);
-            }
-          }
-        }),
-        finalize(() => this.inflight.delete(key)),
-        shareReplay({ bufferSize: 1, refCount: true })
-      );
+          }),
+          finalize(() => this.inflight.delete(key)),
+          shareReplay({ bufferSize: 1, refCount: true })
+        );
       this.inflight.set(key, obs);
-    }
-
-    if (lastGood) {
-      return new Observable((subscriber) => {
-        subscriber.next(lastGood);
-        const sub = obs.subscribe({
-          next: (fresh) => {
-            if (fresh.success && fresh.data && fresh.message !== 'stale_response') {
-              subscriber.next(fresh);
-            }
-          },
-          error: () => {
-            /* keep showing lastGood */
-          },
-          complete: () => subscriber.complete(),
-        });
-        return () => sub.unsubscribe();
-      });
     }
 
     return obs;
@@ -195,10 +140,6 @@ export class TwitterCxReportStore {
     if (companyId == null && csvImportId == null) {
       for (const k of [...this.inflight.keys()]) this.inflight.delete(k);
       for (const k of [...this.pendingRetryTimers.keys()]) this.clearPendingRetry(k);
-      if (!importBusy) {
-        this.cache.clear();
-        this.lastGoodByCompany.clear();
-      }
       if (!importBusy) this.refreshSubject.next(undefined);
       return;
     }
@@ -216,12 +157,6 @@ export class TwitterCxReportStore {
     }
 
     if (!importBusy) {
-      for (const k of [...this.cache.keys()]) {
-        if (k.startsWith(prefix) || (csvImportId != null && k.includes(`|${csvImportId}|`))) {
-          this.cache.delete(k);
-        }
-      }
-      if (companyId != null) this.lastGoodByCompany.delete(String(companyId));
       this.refreshSubject.next(companyId);
     }
   }
@@ -245,7 +180,6 @@ export class TwitterCxReportStore {
       }
       this.pendingRetryCounts.set(key, count);
       this.inflight.delete(key);
-      this.cache.delete(key);
 
       this.loadTwitterCxReport(companyId, csvImportId, startDate, endDate, forceLive).subscribe({
         next: (retryRes) => {
@@ -288,45 +222,15 @@ export class TwitterCxReportStore {
     };
   }
 
-  private findLastGood(
-    companyId: number | undefined,
-    key: string
-  ): ApiResponse<TwitterCxReportDto> | undefined {
-    const scopedCompanyId = this.normalizeCompanyId(companyId);
-    const cached = this.cache.get(key);
-    if (cached?.success && cached.data) return this.hydrateReportResponse(cached);
-
-    const stored = this.lastGoodByCompany.get(String(scopedCompanyId));
-    if (stored?.success && stored.data) return this.hydrateReportResponse(stored);
-
-    for (const [k, v] of this.cache.entries()) {
-      if (k.startsWith(`${scopedCompanyId}|`) && v.success && v.data) return this.hydrateReportResponse(v);
-    }
-    return undefined;
-  }
-
   private coerceImportProcessingResponse(
-    res: ApiResponse<TwitterCxReportDto>,
-    companyId: number | undefined,
-    key: string
+    res: ApiResponse<TwitterCxReportDto>
   ): ApiResponse<TwitterCxReportDto> {
     if (!this.importProcessing.isActive()) return res;
-
-    const fallback = this.findLastGood(companyId, key);
-    if (fallback) return fallback;
-
     return {
       success: true,
       message: 'import_processing',
       data: emptyTwitterCxReportDto(),
     };
-  }
-
-  private rememberLastGood(companyId: number | undefined, res: ApiResponse<TwitterCxReportDto>): void {
-    if (!res.success || !res.data) return;
-    if (hasCxReportPayload(res.data)) {
-      this.lastGoodByCompany.set(String(this.normalizeCompanyId(companyId)), res);
-    }
   }
 
   private normalizeCompanyId(companyId: number | undefined): number {

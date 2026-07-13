@@ -309,8 +309,12 @@ export class ImportHistory implements OnInit, OnDestroy {
     if (row.status !== 'completed') return false;
     if (row.errorDetails?.importOmissions) return false;
     if (Number(row.errorDetails?.omittedCount ?? 0) > 0) return false;
-    if (Number(row.errorDetails?.aiSummary?.failed ?? 0) > 0) return false;
-    return true;
+    return this.getImportedCount(row) > 0;
+  }
+
+  /** Raw AI batch counters are misleading after import completes — hide on finished rows. */
+  showAiBatchStats(row: CSVImport): boolean {
+    return row.status === 'processing' || row.status === 'failed';
   }
 
   formatDate(d: Date | string | number | null | undefined): string {
