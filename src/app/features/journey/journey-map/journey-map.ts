@@ -69,6 +69,8 @@ export class JourneyMap implements OnInit, OnDestroy {
   drilldownRows = signal<RelatedFeedbackRow[]>([]);
   drilldownPage = signal(1);
   drilldownTotal = signal(0);
+  drilldownOriginalCount = signal<number | null>(null);
+  drilldownUniqueCount = signal<number | null>(null);
   readonly drilldownPageSize = 10;
   private drilldownIds: number[] = [];
   private drilldownStage = '';
@@ -293,6 +295,8 @@ export class JourneyMap implements OnInit, OnDestroy {
     this.drilldownOpen.set(true);
     this.drilldownIds = unique;
     this.drilldownTotal.set(unique.length > 0 ? drilldownModalTotal(unique) : displayTotal);
+    this.drilldownOriginalCount.set(null);
+    this.drilldownUniqueCount.set(null);
     this.drilldownRows.set([]);
     this.drilldownLoading.set(true);
     this.loadDrilldownPage(1);
@@ -375,6 +379,8 @@ export class JourneyMap implements OnInit, OnDestroy {
     this.drilldownOpen.set(true);
     this.drilldownIds = ids;
     this.drilldownTotal.set(ids.length > 0 ? drilldownModalTotal(ids) : total);
+    this.drilldownOriginalCount.set(null);
+    this.drilldownUniqueCount.set(null);
     this.drilldownRows.set([]);
     this.drilldownLoading.set(true);
     this.loadDrilldownPage(1);
@@ -414,10 +420,16 @@ export class JourneyMap implements OnInit, OnDestroy {
         this.drilldownTotal.set(
           resolvedTotal > 0 ? resolvedTotal : drilldownModalTotal(this.drilldownIds) || this.drilldownTotal()
         );
+        const original = Number((res?.data as { originalCount?: number } | undefined)?.originalCount);
+        const unique = Number((res?.data as { uniqueCount?: number } | undefined)?.uniqueCount);
+        this.drilldownOriginalCount.set(Number.isFinite(original) && original > 0 ? original : null);
+        this.drilldownUniqueCount.set(Number.isFinite(unique) && unique > 0 ? unique : resolvedTotal || null);
       },
       error: () => {
         this.drilldownLoading.set(false);
         this.drilldownTotal.set(drilldownModalTotal(this.drilldownIds) || this.drilldownTotal());
+        this.drilldownOriginalCount.set(null);
+        this.drilldownUniqueCount.set(null);
       },
     });
   }
@@ -427,6 +439,8 @@ export class JourneyMap implements OnInit, OnDestroy {
     this.drilldownRows.set([]);
     this.drilldownPage.set(1);
     this.drilldownTotal.set(0);
+    this.drilldownOriginalCount.set(null);
+    this.drilldownUniqueCount.set(null);
     this.drilldownIds = [];
     this.drilldownStage = '';
   }

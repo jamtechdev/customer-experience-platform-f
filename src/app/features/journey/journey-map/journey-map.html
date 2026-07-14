@@ -107,6 +107,8 @@
   [page]="drilldownPage()"
   [pageSize]="drilldownPageSize"
   [total]="drilldownTotal()"
+  [originalCount]="drilldownOriginalCount()"
+  [uniqueCount]="drilldownUniqueCount()"
   (pageChange)="loadDrilldownPage($event)"
   (closed)="closeDrilldown()">
 </app-related-feedback-modal>

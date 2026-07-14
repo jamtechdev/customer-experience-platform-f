@@ -1,4 +1,4 @@
-import { formatCellPct, formatProcessImprovementText, generalizeMisleadingJourneyThemeLabel, heatmapCellIntensityPct, reconcileHeatmapStageCounts, repairJourneyThemeDisplay, repairStaleActionText, resolveHeatmapDisplayPct } from './drilldown-display';
+import { formatCellPct, formatProcessImprovementText, generalizeMisleadingJourneyThemeLabel, heatmapCellIntensityPct, reconcileHeatmapStageCounts, repairJourneyThemeDisplay, repairStaleActionText, repairWeakClusterCauseTitle, resolveHeatmapDisplayPct, resolveRootCauseIdsForProcessItem, finalizeProcessImprovementRows, isOwnerFallbackAction } from './drilldown-display';
 
 describe('drilldown-display (QA Finding 3 & 4)', () => {
   it('shows decimal percentage for small non-zero shares (Finding 3)', () => {
@@ -46,7 +46,57 @@ describe('drilldown-display (QA Finding 3 & 4)', () => {
     expect(repaired).toContain('48-hour repair-closure SLA');
     expect(repaired).not.toMatch(/^address\b/i);
     const sprint = 'Run a focused sprint on "Product Reliability Concern" (53 negative-linked row(s)): assign owner, define SLA, and track repeat-contact rate.';
-    expect(repairStaleActionText(sprint, 'Product Reliability Concern')).toContain('product-reliability intervention');
+    expect(repairStaleActionText(sprint, 'Product Reliability Concern')).toContain('defect-containment sprint');
+    expect(repairStaleActionText(sprint, 'Product Reliability Concern')).not.toMatch(/run a product-reliability intervention/i);
+  });
+
+  it('expands bare generic cluster labels', () => {
+    expect(repairWeakClusterCauseTitle('Product', 'buzdolabı soğutmuyor arıza')).toBe('Refrigerator Defects');
+    expect(repairWeakClusterCauseTitle('Service', 'uzun çağrı merkezi bekleme')).toBe('Customer Service Delays');
+  });
+
+  it('unions brand-perception root-cause IDs for process-improvement drilldowns', () => {
+    const ids = resolveRootCauseIdsForProcessItem(
+      [
+        {
+          cause: 'Negative Brand Perception',
+          interpretation: 'regret',
+          feedbackIds: Array.from({ length: 194 }, (_, i) => i + 1),
+        },
+        {
+          cause: 'Negative Brand Perception & Customer Dissatisfaction',
+          interpretation: 'trust',
+          feedbackIds: Array.from({ length: 51 }, (_, i) => i + 500),
+        },
+        { cause: 'Unfair Charges', interpretation: 'billing', feedbackIds: [900, 901] },
+      ],
+      {
+        causeTheme: 'Negative Brand Perception Customer Dissatisfaction',
+        quotedTheme: 'Negative Brand Perception Customer Dissatisfaction',
+        index: 0,
+        itemIds: [],
+      }
+    );
+    expect(ids.length).toBe(245);
+  });
+
+  it('keeps process-improvement count aligned with resolvable IDs only', () => {
+    const finalized = finalizeProcessImprovementRows([
+      {
+        priority: 'P1',
+        action:
+          "Assign a named owner to recurring 'Negative Brand Perception' complaints from the linked feedback — define an SLA.",
+        causeTheme: 'Negative Brand Perception & Customer Dissatisfaction',
+        interpretation: 'trust erosion',
+        linkedFeedbackIds: Array.from({ length: 10 }, (_, i) => i + 1),
+        linkedCount: 194,
+      },
+    ]);
+    expect(finalized).toHaveLength(1);
+    expect(finalized[0].linkedCount).toBe(10);
+    expect(finalized[0].linkedFeedbackIds?.length).toBe(10);
+    expect(isOwnerFallbackAction(finalized[0].action)).toBe(false);
+    expect(formatProcessImprovementText(finalized[0].text, 10)).toContain('10 negative-linked');
   });
 
   it('generalizes misleading coffee-machine journey labels (Finding 7)', () => {

@@ -51,6 +51,9 @@ export class RelatedFeedbackModal implements OnChanges, OnDestroy, AfterViewChec
   @Input() page = 1;
   @Input() pageSize = 10;
   @Input() total = 0;
+  /** Pre-dedupe volume (exact/near-duplicate retweets). When > unique total, shown in footer. */
+  @Input() originalCount: number | null = null;
+  @Input() uniqueCount: number | null = null;
 
   @Output() closed = new EventEmitter<void>();
   @Output() pageChange = new EventEmitter<number>();
@@ -109,6 +112,14 @@ export class RelatedFeedbackModal implements OnChanges, OnDestroy, AfterViewChec
   get rangeEnd(): number {
     if (!this.total || !this.rows.length) return 0;
     return Math.min(this.total, this.rangeStart + this.rows.length - 1);
+  }
+
+  get volumeHint(): string {
+    const original = Number(this.originalCount);
+    const unique = Number(this.uniqueCount ?? this.total);
+    if (!Number.isFinite(original) || original <= 0 || !Number.isFinite(unique)) return '';
+    if (original <= unique) return '';
+    return `${original} mentions · ${unique} unique`;
   }
 
   close(): void {
@@ -189,6 +200,14 @@ export class RelatedFeedbackModal implements OnChanges, OnDestroy, AfterViewChec
   }
 
   whyRelatedText(row: RelatedFeedbackRow): string {
-    return row.rootCauseMatchReason || row.relevanceReason || row.journeyStage || '-';
+    const raw = String(row.rootCauseMatchReason || row.relevanceReason || '').trim();
+    if (raw && !/keyword\s*overlap|linked by theme keyword|theme keyword/i.test(raw)) {
+      return raw;
+    }
+    const fallback = String(row.journeyStage || '').trim();
+    if (fallback) {
+      return `Related by shared ${fallback.toLowerCase()} journey context and customer issue intent.`;
+    }
+    return 'Related by shared customer-experience issue and journey context.';
   }
 }

@@ -77,6 +77,15 @@ export class JourneyHeatmap implements OnInit, OnDestroy {
   rowsSaved = signal<number | null>(null);
   heatmapFigureCaption = signal('');
   heatmapExcludedCount = signal<number | null>(null);
+  heatmapExclusionBreakdown = signal<{
+    charity_or_fundraising: number;
+    insufficient_context: number;
+  } | null>(null);
+  heatmapMappingBasisBreakdown = signal<{
+    persisted_stage: number;
+    inferred_stage: number;
+    default_awareness: number;
+  } | null>(null);
   error = signal<string | null>(null);
   drilldownOpen = signal(false);
   drilldownLoading = signal(false);
@@ -201,6 +210,15 @@ export class JourneyHeatmap implements OnInit, OnDestroy {
         importedCsvRows?: number;
         heatmapMappedCount?: number;
         heatmapExcludedCount?: number;
+        heatmapExclusionBreakdown?: {
+          charity_or_fundraising: number;
+          insufficient_context: number;
+        };
+        heatmapMappingBasisBreakdown?: {
+          persisted_stage: number;
+          inferred_stage: number;
+          default_awareness: number;
+        };
       };
       sentiment?: { total?: number };
     };
@@ -213,6 +231,8 @@ export class JourneyHeatmap implements OnInit, OnDestroy {
     this.heatmapFigureCaption.set(String(res.data?.heatmapFigureCaption || '').trim());
     const excluded = Number(res.data?.dataset?.heatmapExcludedCount);
     this.heatmapExcludedCount.set(Number.isFinite(excluded) && excluded > 0 ? excluded : null);
+    this.heatmapExclusionBreakdown.set(res.data?.dataset?.heatmapExclusionBreakdown ?? null);
+    this.heatmapMappingBasisBreakdown.set(res.data?.dataset?.heatmapMappingBasisBreakdown ?? null);
     if (Array.isArray(res.data?.heatmapPct)) {
       this.stages.set(res.data.heatmapPct.map((r: any) => this.mapHeatmapRow(r)));
       this.page.set(1);
@@ -220,6 +240,37 @@ export class JourneyHeatmap implements OnInit, OnDestroy {
       this.stages.set([]);
       this.page.set(1);
     }
+  }
+
+  coveragePctLabel(): string {
+    const saved = this.rowsSaved();
+    const mapped = this.heatmapMappedTotal();
+    if (saved == null || saved <= 0 || mapped <= 0) return '';
+    const pct = Math.round((mapped / saved) * 1000) / 10;
+    return `${mapped} mapped of ${saved} (${pct}%)`;
+  }
+
+  exclusionBreakdownNote(): string {
+    const b = this.heatmapExclusionBreakdown();
+    if (!b) return '';
+    const parts: string[] = [];
+    if (b.charity_or_fundraising > 0) {
+      parts.push(`${b.charity_or_fundraising} charity/fundraising`);
+    }
+    if (b.insufficient_context > 0) {
+      parts.push(`${b.insufficient_context} empty/insufficient content`);
+    }
+    return parts.length ? `Unmapped: ${parts.join('; ')}.` : '';
+  }
+
+  mappingBasisNote(): string {
+    const b = this.heatmapMappingBasisBreakdown();
+    if (!b) return '';
+    const parts: string[] = [];
+    if (b.persisted_stage > 0) parts.push(`${b.persisted_stage} saved stage`);
+    if (b.inferred_stage > 0) parts.push(`${b.inferred_stage} inferred from text`);
+    if (b.default_awareness > 0) parts.push(`${b.default_awareness} defaulted to Awareness`);
+    return parts.length ? `Mapping basis: ${parts.join('; ')}.` : '';
   }
 
   getSatisfactionColor(score: number): string {

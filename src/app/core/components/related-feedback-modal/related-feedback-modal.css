@@ -81,6 +81,13 @@
   margin: 0;
 }
 
+.related-volume-hint {
+  margin-top: 6px !important;
+  color: var(--text-secondary, #6b7280);
+  font-size: 13px;
+  font-weight: 600;
+}
+
 .related-header p,
 .related-range,
 .page-label {

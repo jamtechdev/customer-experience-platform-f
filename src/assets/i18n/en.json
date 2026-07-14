@@ -565,7 +565,7 @@
     "scopeMapped": "Mapped to stages",
     "scopeUnmapped": "Not mapped to stages",
     "scopeUnified": "Total feedback (CSV import)",
-    "unmappedNote": "{{count}} rows were not placed on the heatmap — typically charity or fundraising posts, or rows without a saved journey stage, brand mention, or inferrable stage keyword.",
+    "unmappedNote": "{{count}} rows were not placed on the heatmap — charity/fundraising posts unrelated to product CX, or empty content. All other import rows are mapped (saved stage, text inference, or Awareness default).",
     "csvImported": "📄 CSV file: {{total}}",
     "rowsSaved": "💾 Saved in DB: {{total}}",
     "cohortTotal": "💬 CX cohort: {{total}}",

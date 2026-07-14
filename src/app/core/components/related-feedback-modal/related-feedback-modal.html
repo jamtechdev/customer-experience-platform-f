@@ -14,6 +14,7 @@
         </span>
         <h3>Related feedback</h3>
         <p *ngIf="title">{{ title }}</p>
+        <p *ngIf="volumeHint" class="related-volume-hint">{{ volumeHint }}</p>
       </div>
       <button class="related-close-icon" mat-icon-button type="button" aria-label="Close related feedback modal" (click)="close()">
         <mat-icon>close</mat-icon>

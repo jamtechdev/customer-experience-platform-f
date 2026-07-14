@@ -139,7 +139,7 @@ export function isStaleGenericActionText(action: string): boolean {
   if (/^run a focused sprint on\b/i.test(t)) return true;
   if (/^(resolve|fix|handle|improve|enhance|manage|tackle|deal with|look into|review)\b/i.test(t)) return true;
   const concrete =
-    /(implement|introduce|create|deploy|hire|staff|reassign|automate|standardi[sz]e|define an sla|set an sla|escalat|retrain|renegotiat|replace|redesign|audit|schedule|proactively|notify|refund|compensat|root-cause|checklist|policy|playbook|workflow|dashboard|triage|route|monitor|reduce|track|call back|follow up|inspect|test protocol|spare part|inventory|assign a named owner|batch isolation|executive sponsor)/i;
+    /(implement|introduce|create|deploy|hire|staff|reassign|automate|standardi[sz]e|define an sla|set an sla|escalat|retrain|renegotiat|replace|redesign|audit|schedule|proactively|notify|refund|compensat|root-cause|checklist|policy|playbook|workflow|dashboard|triage|route|monitor|reduce|track|call back|follow up|inspect|test protocol|spare part|inventory|batch isolation|executive sponsor)/i;
   return !concrete.test(t);
 }
 
@@ -173,6 +173,7 @@ export function actionTemplateFamilyKey(action: string): string {
   const t = String(action || '').toLowerCase();
   if (/product-reliability intervention/.test(t)) return 'reliability-intervention';
   if (/assign a named owner/.test(t)) return 'named-owner';
+  if (/dedicated remediation workstream/.test(t)) return 'remediation-workstream';
   if (/48-hour repair-closure sla|repair-closure sla/.test(t)) return 'repair-closure-sla';
   if (/brand-trust recovery/.test(t)) return 'brand-trust';
   if (/dedicated support cell/.test(t)) return 'support-cell';
@@ -196,13 +197,13 @@ export function actionsShareTemplateFamily(a: string, b: string): boolean {
   return left === right;
 }
 
-function mergePositiveIds(...lists: Array<number[] | undefined>): number[] {
+function mergePositiveIds(...lists: Array<number[] | undefined | null | Array<string | number>>): number[] {
   return [
     ...new Set(
       lists
         .flatMap((list) => list || [])
-        .filter((id) => Number.isFinite(id) && id > 0)
         .map((id) => Number(id))
+        .filter((id) => Number.isFinite(id) && id > 0)
     ),
   ];
 }
@@ -383,7 +384,7 @@ function distinctKindAction(
   }
   if (kind === 'billing') {
     const variants = [
-      `Resolve billing and pricing friction for "${theme}": audit disputed charges against published price lists, authorize frontline refunds up to a defined threshold, and retrain stores on consistent discount communication.`,
+      `Audit disputed charges for "${theme}": reconcile every case against published price lists, authorize frontline refunds up to a defined threshold, and retrain stores on consistent discount communication.`,
       `Publish a clear price-promise checklist for "${theme}": reconcile POS vs advertised offers weekly, empower stores to correct mismatches on the spot, and log every dispute reason for merchandising review.`,
       `Tighten refund authorization for "${theme}": set a documented threshold for frontline goodwill credits, escalate above-threshold cases in 24h, and audit the top dispute codes monthly.`,
     ];
@@ -425,14 +426,32 @@ export function repairWeakClusterCauseTitle(cause: string, interpretation?: stri
   if (!title && actionHint) {
     title = extractQuotedTheme(actionHint);
   }
-  if (!/^(product|ürün|urun)$/i.test(title)) return title;
+  const generic = /^(product|ürün|urun|service|servis|customer|müşteri|musteri|issue|complaint|şikayet|sikayet|problem|quality|kalite|support|destek)$/i;
+  if (!generic.test(title)) return title;
   const combined = `${interpretation || ''} ${actionHint || ''}`.trim();
+  if (/brand perception|customer dissatisfaction|marka alg|negative brand|hayal kırık|pişman|pisman|never buy|regret/i.test(combined)) {
+    return 'Negative Brand Perception & Customer Dissatisfaction';
+  }
   if (/unfair charge|billing|pricing|ücret|ucret|fiyat|invoice|refund|overcharg|\bcharge\b/i.test(combined)) {
-    return 'Pricing Or Billing Concern';
+    return 'Unfair Charges Complaints';
+  }
+  if (/(garanti|warranty).*(redd|delay|gecik|ücret|ucret|dispute)|warranty claim/i.test(combined)) {
+    return 'Warranty Claim Problems';
+  }
+  if (/(servis|service|tamir|repair|destek|support|çağrı|cagri|call center|yanıt yok|cevap yok)/i.test(combined)) {
+    return 'Customer Service Delays';
   }
   const family = detectProductFamilyHint(combined);
-  if (family) return `${family.charAt(0).toUpperCase()}${family.slice(1)} Reliability Issue`;
-  return 'Product Reliability Concern';
+  if (family) {
+    if (/arıza|ariza|bozuk|defect|broken|faulty|failure/i.test(combined) && family === 'refrigerator') {
+      return 'Refrigerator Defects';
+    }
+    return `${family.charAt(0).toUpperCase()}${family.slice(1)} Reliability Issues`;
+  }
+  if (/arıza|ariza|bozuk|defect|broken|faulty|failure|reliability/i.test(combined)) {
+    return 'Product Reliability Issues';
+  }
+  return 'Recurring Customer Experience Issue';
 }
 
 export function rootCauseThemeBucket(title: string, interpretation?: string, action?: string): string | null {
@@ -456,12 +475,13 @@ export function priorityLabelFromClusterSize(count: number): 'P1' | 'P2' | 'P3' 
 }
 
 export function fallbackClusterActionText(cause: string, interpretation?: string): string {
+  const theme = String(cause || 'this theme').trim();
   const detail = (interpretation || '').replace(/\s+/g, ' ').trim();
-  const base =
-    detail && detail !== '—'
-      ? detail
-      : `recurring "${cause || 'this theme'}" complaints from the linked feedback`;
-  return `Assign a named owner to ${base.charAt(0).toLowerCase()}${base.slice(1, 300)} — define an SLA, add a resolution checklist, and track repeat-contact rate.`;
+  const focus =
+    detail && detail !== '—' && detail.length >= 12
+      ? detail.slice(0, 140)
+      : `the dominant complaint pattern in "${theme}"`;
+  return `Stand up a dedicated remediation workstream for "${theme}": diagnose ${focus}, set a measurable weekly closure target for that exact pattern, and escalate unresolved cases after 7 days.`;
 }
 
 /** Tailored next-step text per cluster theme — never a bare "Address …" label (Finding 2). */
@@ -475,7 +495,7 @@ export function clusterSpecificActionText(cause: string, interpretation?: string
     return `Launch a brand-trust recovery program for "${theme}": publish a transparent response playbook for recurring dissatisfaction themes, assign an executive sponsor, and track sentiment recovery on matched complaints monthly.`;
   }
   if (/unfair charge|billing|pricing|ücret|ucret|fiyat|invoice|refund|overcharg/i.test(blob)) {
-    return `Resolve billing and pricing friction for "${theme}": audit disputed charges against published price lists, authorize frontline refunds up to a defined threshold, and retrain stores on consistent discount communication.`;
+    return `Audit disputed charges for "${theme}": reconcile every case against published price lists, authorize frontline refunds up to a defined threshold, and retrain stores on consistent discount communication.`;
   }
   if (/customer support|support gap|destek|call center|müşteri hizmet|musteri hizmet|iletisim/.test(blob)) {
     return `Stand up a dedicated support cell for "${theme}": cap queue wait times, enforce first-contact resolution scripts, and track repeat-contact rate until it drops below 15%.`;
@@ -500,12 +520,12 @@ export function clusterSpecificActionText(cause: string, interpretation?: string
     return `Contain oven and microwave quality escapes for "${theme}": isolate affected production lots, run thermal-cycle validation on returns, and authorize immediate swap for units with repeat control-panel or heating failures.`;
   }
   if (/vacuum|süpürge|supurge/i.test(blob) || family === 'vacuum cleaner') {
-    return `Address vacuum-cleaner reliability complaints in "${theme}": sample returned motors and filters for premature wear, tighten supplier incoming QC, and publish a rapid-exchange policy for repeat suction-motor failures.`;
+    return `Contain vacuum-cleaner reliability complaints in "${theme}": sample returned motors and filters for premature wear, tighten supplier incoming QC, and publish a rapid-exchange policy for repeat suction-motor failures.`;
   }
   if (/reliability|defect|quality|arıza|ariza|bozuk|failure|breakdown|unresolved/i.test(blob)) {
-    const productHint = theme.replace(/\b(issue|concern|gap|reliability|defects?)\b/gi, '').trim();
+    const productHint = theme.replace(/\b(issue|concern|gap|reliability|defects?|problems?)\b/gi, '').trim();
     const focus = productHint.length >= 4 ? productHint : theme;
-    return `Run a product-reliability intervention for "${focus}": isolate affected batches for this product line, complete root-cause hardware tests on returns, and proactively replace or repair units with repeat failures.`;
+    return `Establish a defect-containment sprint for "${theme}": rank repeat failures involving ${focus}, quarantine the highest-risk production lots, and close each mode with documented hardware countermeasures and customer replacement criteria.`;
   }
 
   return fallbackClusterActionText(theme, interpretation);
@@ -617,17 +637,20 @@ export function finalizeActionPlanRows<T extends FinalizableActionPlanRow>(draft
       draft.action
     );
     let action = repairStaleActionText(
-      String(draft.action || '').replace(/\(\d+ linked feedback row\(s\)\)/i, '').trim(),
+      String(draft.action || '')
+        .replace(/\(\d+ linked feedback row\(s\)\)/i, '')
+        .replace(/\(\d+ negative-linked row\(s\)\)/i, '')
+        .trim(),
       causeTheme,
       draft.interpretation,
       draft.sampleText || draft.interpretation
     );
     action = alignActionTextToCauseTheme(action, causeTheme);
-    const linkedCount =
-      draft.linkedCount ??
-      draft.linkedFeedbackIds?.length ??
-      draft.referenceFeedbackIds?.length ??
-      0;
+    const idCount = normalizeDrilldownIds(
+      draft.linkedFeedbackIds?.length ? draft.linkedFeedbackIds : draft.referenceFeedbackIds
+    ).length;
+    // Prefer real ID lists over a phantom linkedCount (Process Improvement 194-of-0 bug).
+    const linkedCount = idCount > 0 ? idCount : 0;
     return {
       ...draft,
       causeTheme,
@@ -706,14 +729,14 @@ export function resolveRootCauseIdsForProcessItem(
   }
 ): number[] {
   const itemIds = normalizeDrilldownIds(opts.itemIds);
-  if (itemIds.length) return itemIds;
-
   const cause = String(opts.causeTheme || '').trim();
   const quoted = String(opts.quotedTheme || '').trim();
   const bucket = rootCauseThemeBucket(cause, '', quoted) || rootCauseThemeBucket(quoted, '', '');
 
+  // Always union brand-perception root-cause IDs — process items often keep a stale/partial list
+  // while the UI count (194) comes from collapsed theme membership.
   if (bucket === 'brand-perception') {
-    const merged: number[] = [];
+    const merged: number[] = [...itemIds];
     for (const rc of rootCauses) {
       if (rootCauseThemeBucket(String(rc.cause || ''), String(rc.interpretation || '')) === 'brand-perception') {
         merged.push(...(rc.feedbackIds || []));
@@ -722,6 +745,8 @@ export function resolveRootCauseIdsForProcessItem(
     const brandIds = normalizeDrilldownIds(merged);
     if (brandIds.length) return brandIds;
   }
+
+  if (itemIds.length) return itemIds;
 
   if (bucket) {
     const match = rootCauses.find(
@@ -750,17 +775,45 @@ export function mergeRootCausesForDisplay(
   const merged: Array<Record<string, unknown>> = [];
   const indexByBucket = new Map<string, number>();
 
+  const titleTokens = (title: string): Set<string> =>
+    new Set(
+      String(title || '')
+        .toLocaleLowerCase('tr-TR')
+        .replace(/[^\p{L}\p{N}\s-]/gu, ' ')
+        .split(/\s+/)
+        .filter((w) => w.length > 2)
+    );
+
+  const titlesSimilar = (a: string, b: string): boolean => {
+    const left = String(a || '').toLocaleLowerCase('tr-TR').trim();
+    const right = String(b || '').toLocaleLowerCase('tr-TR').trim();
+    if (!left || !right) return false;
+    if (left === right) return true;
+    if (left.length >= 12 && right.length >= 12 && (left.includes(right) || right.includes(left))) return true;
+    const ta = titleTokens(left);
+    const tb = titleTokens(right);
+    if (!ta.size || !tb.size) return false;
+    let overlap = 0;
+    for (const w of ta) if (tb.has(w)) overlap += 1;
+    return overlap / Math.max(ta.size, tb.size) >= 0.72;
+  };
+
   for (const rc of rootCauses) {
     const interpretation = String(rc['interpretation'] || '').trim();
     const cause = repairWeakClusterCauseTitle(String(rc['cause'] || '').trim(), interpretation, '');
     const feedbackIds = mergePositiveIds(
       Array.isArray(rc['feedbackIds']) ? (rc['feedbackIds'] as number[]) : undefined
     );
-    const bucket = rootCauseThemeBucket(cause, interpretation) || cause.toLocaleLowerCase();
+    const bucket = rootCauseThemeBucket(cause, interpretation) || '';
 
-    const existingIdx = indexByBucket.get(bucket);
+    let existingIdx = bucket ? indexByBucket.get(bucket) : undefined;
     if (existingIdx === undefined) {
-      indexByBucket.set(bucket, merged.length);
+      existingIdx = merged.findIndex((row) => titlesSimilar(String(row['cause'] || ''), cause));
+    }
+
+    if (existingIdx === undefined || existingIdx < 0) {
+      const key = bucket || cause.toLocaleLowerCase();
+      indexByBucket.set(key, merged.length);
       merged.push({
         ...rc,
         cause: bucket === 'brand-perception' ? 'Negative Brand Perception & Customer Dissatisfaction' : cause,
@@ -777,9 +830,15 @@ export function mergeRootCausesForDisplay(
       feedbackIds
     );
     const existingInterp = String(existing['interpretation'] || '').trim();
+    const existingCause = String(existing['cause'] || cause);
     merged[existingIdx] = {
       ...existing,
-      cause: bucket === 'brand-perception' ? 'Negative Brand Perception & Customer Dissatisfaction' : String(existing['cause'] || cause),
+      cause:
+        bucket === 'brand-perception'
+          ? 'Negative Brand Perception & Customer Dissatisfaction'
+          : existingCause.length >= cause.length
+            ? existingCause
+            : cause,
       interpretation: existingInterp.length >= interpretation.length ? existingInterp : interpretation,
       feedbackIds: ids,
       count: ids.length,
@@ -837,7 +896,11 @@ export function formatProcessImprovementText(
   causeHint?: string,
   interpretationHint?: string
 ): string {
-  const repaired = repairStaleActionText(text, causeHint, interpretationHint);
+  const stripped = String(text || '')
+    .replace(/\(\d+ negative-linked row\(s\)\)/gi, '')
+    .replace(/\(\d+ linked feedback row\(s\)\)/gi, '')
+    .trim();
+  const repaired = repairStaleActionText(stripped, causeHint, interpretationHint);
   return alignLinkedCountInText(repaired, count, 'negative-linked row(s)');
 }
 

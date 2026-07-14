@@ -15,10 +15,8 @@ import { ImportProcessingService } from '../../../core/services/import-processin
 import { RelatedFeedbackModal, RelatedFeedbackRow } from '../../../core/components/related-feedback-modal/related-feedback-modal';
 import {
   formatProcessImprovementText,
-  effectiveLinkedCount,
   resolveDrilldownIds,
   extractQuotedTheme,
-  drilldownModalTotal,
   finalizeProcessImprovementRows,
   resolveRootCauseIdsForProcessItem,
   priorityLabelFromClusterSize,
@@ -136,11 +134,10 @@ export class ProcessEnhancement implements OnInit, OnDestroy {
     const items = data.processImprovementItems;
     if (items?.length) {
       const drafts = items.map((p, index) => {
-        const itemIds = Array.isArray(p.linkedFeedbackIds)
-          ? p.linkedFeedbackIds
-          : Array.isArray(p.referenceFeedbackIds)
-            ? p.referenceFeedbackIds
-            : [];
+        const itemIds = [
+          ...(Array.isArray(p.linkedFeedbackIds) ? p.linkedFeedbackIds : []),
+          ...(Array.isArray(p.referenceFeedbackIds) ? p.referenceFeedbackIds : []),
+        ];
         const quotedTheme = extractQuotedTheme(p.text);
         const causeTheme = String(p.causeTheme || rootCauses[index]?.cause || quotedTheme || '').trim();
         const interpretation = String(rootCauses[index]?.interpretation || '').trim();
@@ -150,10 +147,14 @@ export class ProcessEnhancement implements OnInit, OnDestroy {
           index,
           itemIds,
         });
-        const linkedCount = mergedIds.length || Number(p.linkedCount) || 0;
+        // Count must equal resolvable feedback IDs — never trust a phantom linkedCount alone.
+        const linkedCount = mergedIds.length;
         return {
           priority: priorityLabelFromClusterSize(linkedCount),
-          action: String(p.text ?? '').replace(/\(\d+ negative-linked row\(s\)\)/i, '').trim(),
+          action: String(p.text ?? '')
+            .replace(/\(\d+ negative-linked row\(s\)\)/i, '')
+            .replace(/\(\d+ linked feedback row\(s\)\)/i, '')
+            .trim(),
           owner: '',
           impact: '',
           horizon: '',
@@ -168,15 +169,20 @@ export class ProcessEnhancement implements OnInit, OnDestroy {
       });
       const finalized = finalizeProcessImprovementRows(drafts);
       this.processImprovements.set(
-        finalized.map((row) => ({
-          text: row.text,
-          cause: row.causeTheme || row.cause,
-          causeTheme: row.causeTheme || row.cause,
-          interpretation: row.interpretation,
-          referenceFeedbackIds: row.linkedFeedbackIds || row.referenceFeedbackIds || [],
-          linkedFeedbackIds: row.linkedFeedbackIds || row.referenceFeedbackIds || [],
-          linkedCount: row.linkedCount || 0,
-        }))
+        finalized
+          .map((row) => {
+            const ids = resolveDrilldownIds(row.linkedFeedbackIds, row.referenceFeedbackIds);
+            return {
+              text: row.text,
+              cause: row.causeTheme || row.cause,
+              causeTheme: row.causeTheme || row.cause,
+              interpretation: row.interpretation,
+              referenceFeedbackIds: ids,
+              linkedFeedbackIds: ids,
+              linkedCount: ids.length,
+            };
+          })
+          .filter((row) => row.text.trim().length > 0)
       );
     } else {
       this.processImprovements.set(
@@ -192,19 +198,36 @@ export class ProcessEnhancement implements OnInit, OnDestroy {
   }
 
   openReferences(row: ProcessImprovementRow): void {
-    const ids = resolveDrilldownIds(row.linkedFeedbackIds, row.referenceFeedbackIds);
+    let ids = resolveDrilldownIds(row.linkedFeedbackIds, row.referenceFeedbackIds);
     const themeTitle = String(row.causeTheme || row.cause || extractQuotedTheme(row.text) || '').trim();
-    if (!ids.length && this.referenceCount(row) <= 0 && themeTitle === 'this theme') return;
+    // Recover IDs from root causes when the row still has a theme but empty/stale id lists.
+    if (!ids.length && themeTitle && themeTitle !== 'this theme') {
+      ids = resolveRootCauseIdsForProcessItem(this.rootCauses, {
+        causeTheme: themeTitle,
+        quotedTheme: extractQuotedTheme(row.text),
+        index: 0,
+        itemIds: [],
+      });
+    }
+    if (!ids.length) {
+      this.snackBar.open(
+        'No linked feedback IDs are available for this recommendation. Refresh the CX report to rebuild references.',
+        'Close',
+        { duration: 5000 }
+      );
+      return;
+    }
     this.drilldownThemeTitle = themeTitle;
-    this.drilldownTitle.set(this.displayText(row));
+    this.drilldownTitle.set(this.displayText({ ...row, linkedFeedbackIds: ids, referenceFeedbackIds: ids, linkedCount: ids.length }));
     this.drilldownOpen.set(true);
     this.drilldownIds = ids;
-    this.drilldownTotal.set(this.referenceCount(row));
+    this.drilldownTotal.set(ids.length);
     this.loadDrilldownPage(1);
   }
 
   referenceCount(row: ProcessImprovementRow): number {
-    return effectiveLinkedCount(row.linkedCount, row.linkedFeedbackIds, row.referenceFeedbackIds);
+    const idCount = resolveDrilldownIds(row.linkedFeedbackIds, row.referenceFeedbackIds).length;
+    return idCount > 0 ? idCount : 0;
   }
 
   displayText(row: ProcessImprovementRow): string {
@@ -213,30 +236,42 @@ export class ProcessEnhancement implements OnInit, OnDestroy {
   }
 
   loadDrilldownPage(page: number): void {
-    const themeTitle = this.drilldownThemeTitle || extractQuotedTheme(this.drilldownTitle());
-    if (!this.drilldownIds.length && themeTitle === 'this theme' && this.drilldownTotal() <= 0) return;
+    if (!this.drilldownIds.length) {
+      this.drilldownRows.set([]);
+      this.drilldownTotal.set(0);
+      return;
+    }
     this.drilldownPage.set(page);
     this.drilldownLoading.set(true);
     this.drilldownRows.set([]);
     const companyId = resolveAppCompanyId(this.authService.currentUser());
+    // Do not send themeTitle when curated snapshot IDs are present — keyword re-filtering
+    // emptied brand-perception drilldowns (194 IDs → 0 rows).
     this.analysisService.getFeedbackByIds(companyId, this.drilldownIds, {
       page,
       limit: this.drilldownPageSize,
       includeIrrelevant: true,
       groupRetweets: false,
-      themeTitle: themeTitle !== 'this theme' ? themeTitle : undefined,
     }).subscribe({
       next: (res) => {
         this.drilldownLoading.set(false);
-        if (res?.data?.list) this.drilldownRows.set(res.data.list);
+        const list = res?.data?.list || [];
+        this.drilldownRows.set(list);
         const resolvedTotal = res?.data?.total ?? 0;
-        const idTotal = drilldownModalTotal(this.drilldownIds);
-        const expected = this.drilldownTotal() || idTotal;
-        this.drilldownTotal.set(resolvedTotal > 0 ? resolvedTotal : expected);
+        // Never keep a phantom expected total when the API returns no rows.
+        this.drilldownTotal.set(resolvedTotal > 0 ? resolvedTotal : list.length > 0 ? list.length : 0);
+        if (resolvedTotal === 0 && list.length === 0 && this.drilldownIds.length > 0) {
+          this.snackBar.open(
+            'Linked feedback IDs could not be loaded (they may be stale after re-import). Refresh the CX report to rebuild references.',
+            'Close',
+            { duration: 6000 }
+          );
+        }
       },
       error: () => {
         this.drilldownLoading.set(false);
-        this.drilldownTotal.set(drilldownModalTotal(this.drilldownIds) || this.drilldownTotal());
+        this.drilldownRows.set([]);
+        this.drilldownTotal.set(0);
       },
     });
   }
