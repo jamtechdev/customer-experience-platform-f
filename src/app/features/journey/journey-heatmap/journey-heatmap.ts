@@ -250,6 +250,15 @@ export class JourneyHeatmap implements OnInit, OnDestroy {
     return `${mapped} mapped of ${saved} (${pct}%)`;
   }
 
+  /** Warn when coverage matches the known ~38% eligibility regression on large imports. */
+  lowCoverageRebuildHint(): string {
+    const saved = this.rowsSaved();
+    const mapped = this.heatmapMappedTotal();
+    if (saved == null || saved < 500 || mapped == null || mapped <= 0) return '';
+    if (mapped / saved >= 0.5) return '';
+    return 'Coverage looks unusually low for this import size. Click Refresh to rebuild journey-stage mapping; unmapped rows should only be charity/fundraising or empty content.';
+  }
+
   exclusionBreakdownNote(): string {
     const b = this.heatmapExclusionBreakdown();
     if (!b) return '';

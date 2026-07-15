@@ -252,8 +252,16 @@ export class TouchpointManager implements OnInit, OnDestroy {
     }).subscribe({
       next: (res) => {
         this.drilldownLoading.set(false);
-        this.drilldownRows.set(res?.data?.list || []);
-        this.drilldownTotal.set(res?.data?.total ?? drilldownModalTotal(this.drilldownIds));
+        const list = res?.data?.list || [];
+        this.drilldownRows.set(list);
+        const resolvedTotal = Number(res?.data?.total);
+        this.drilldownTotal.set(
+          Number.isFinite(resolvedTotal) && resolvedTotal > 0
+            ? resolvedTotal
+            : list.length > 0
+              ? list.length
+              : 0
+        );
       },
       error: () => {
         this.drilldownLoading.set(false);

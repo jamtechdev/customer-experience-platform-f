@@ -89,6 +89,9 @@
     @if (coveragePctLabel()) {
       <p class="heatmap-scope-note">{{ coveragePctLabel() }}</p>
     }
+    @if (lowCoverageRebuildHint()) {
+      <p class="heatmap-scope-note heatmap-rebuild-hint">{{ lowCoverageRebuildHint() }}</p>
+    }
     @if (exclusionBreakdownNote()) {
       <p class="heatmap-scope-note">{{ exclusionBreakdownNote() }}</p>
     }

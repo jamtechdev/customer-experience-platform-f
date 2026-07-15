@@ -144,11 +144,19 @@ export function isStaleGenericActionText(action: string): boolean {
 }
 
 export function isTemplatedReliabilityAction(action: string): boolean {
-  return /run a product-reliability intervention for/i.test(String(action || ''));
+  const t = String(action || '');
+  return (
+    /run a product-reliability intervention for/i.test(t) ||
+    (/isolate affected batches/i.test(t) && /root-cause hardware tests/i.test(t))
+  );
 }
 
 export function isOwnerFallbackAction(action: string): boolean {
-  return /assign a named owner to/i.test(String(action || ''));
+  const t = String(action || '');
+  return (
+    /assign a named owner to/i.test(t) ||
+    (/define an sla/i.test(t) && /resolution checklist/i.test(t) && /repeat-contact rate/i.test(t) && /recurring/i.test(t))
+  );
 }
 
 export function actionTemplateFingerprint(action: string): string {
@@ -171,13 +179,16 @@ export function actionsShareTemplate(a: string, b: string): boolean {
 /** Coarse template family — catches near-duplicates that only differ by quoted theme. */
 export function actionTemplateFamilyKey(action: string): string {
   const t = String(action || '').toLowerCase();
-  if (/product-reliability intervention/.test(t)) return 'reliability-intervention';
+  if (/product-reliability intervention|isolate affected batches|root-cause hardware tests/.test(t)) {
+    return 'reliability-intervention';
+  }
   if (/assign a named owner/.test(t)) return 'named-owner';
   if (/dedicated remediation workstream/.test(t)) return 'remediation-workstream';
   if (/48-hour repair-closure sla|repair-closure sla/.test(t)) return 'repair-closure-sla';
-  if (/brand-trust recovery/.test(t)) return 'brand-trust';
+  if (/brand-trust recovery|trust-recovery cadence/.test(t)) return 'brand-trust';
   if (/dedicated support cell/.test(t)) return 'support-cell';
-  if (/billing and pricing friction/.test(t)) return 'billing-friction';
+  if (/billing and pricing friction|audit disputed .+ charges for/.test(t)) return 'billing-friction';
+  // Do not bucket intentional distinctReliabilityAction variants into one family — fingerprints differ.
   if (/washing-machine field-quality/.test(t)) return 'wm-field-quality';
   if (/tighten delivery operations/.test(t)) return 'delivery-ops';
   if (/audit refrigerator compressor/.test(t)) return 'fridge-reliability';
@@ -886,9 +897,9 @@ export function extractJourneyThemeFromSummary(text: string): string | null {
 }
 
 /**
- * Preserve the backend-generated, cluster-specific recommendation and only align the linked-row
- * count (Finding 4). Previously this replaced every recommendation with an identical
- * "Run a focused sprint on ..." template, which is what made all clusters read the same.
+ * Preserve cluster-specific recommendations and only align the linked-row count.
+ * Only rewrite known-bad legacy templates — never re-run full repair against the default
+ * fresh text, which would collapse ensureDistinctClusterActions variants back into one body.
  */
 export function formatProcessImprovementText(
   text: string,
@@ -900,7 +911,13 @@ export function formatProcessImprovementText(
     .replace(/\(\d+ negative-linked row\(s\)\)/gi, '')
     .replace(/\(\d+ linked feedback row\(s\)\)/gi, '')
     .trim();
-  const repaired = repairStaleActionText(stripped, causeHint, interpretationHint);
+  const needsLegacyRepair =
+    isTemplatedReliabilityAction(stripped) ||
+    isOwnerFallbackAction(stripped) ||
+    isStaleGenericActionText(stripped);
+  const repaired = needsLegacyRepair
+    ? repairStaleActionText(stripped, causeHint, interpretationHint)
+    : stripped;
   return alignLinkedCountInText(repaired, count, 'negative-linked row(s)');
 }
 

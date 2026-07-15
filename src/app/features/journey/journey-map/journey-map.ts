@@ -415,19 +415,31 @@ export class JourneyMap implements OnInit, OnDestroy {
     }).subscribe({
       next: (res) => {
         this.drilldownLoading.set(false);
-        if (res?.data?.list) this.drilldownRows.set(res.data.list);
-        const resolvedTotal = res?.data?.total ?? 0;
+        const list = res?.data?.list || [];
+        this.drilldownRows.set(list);
+        const resolvedTotal = Number(res?.data?.total);
         this.drilldownTotal.set(
-          resolvedTotal > 0 ? resolvedTotal : drilldownModalTotal(this.drilldownIds) || this.drilldownTotal()
+          Number.isFinite(resolvedTotal) && resolvedTotal > 0
+            ? resolvedTotal
+            : list.length > 0
+              ? list.length
+              : 0
         );
         const original = Number((res?.data as { originalCount?: number } | undefined)?.originalCount);
         const unique = Number((res?.data as { uniqueCount?: number } | undefined)?.uniqueCount);
         this.drilldownOriginalCount.set(Number.isFinite(original) && original > 0 ? original : null);
-        this.drilldownUniqueCount.set(Number.isFinite(unique) && unique > 0 ? unique : resolvedTotal || null);
+        this.drilldownUniqueCount.set(
+          Number.isFinite(unique) && unique > 0
+            ? unique
+            : Number.isFinite(resolvedTotal) && resolvedTotal > 0
+              ? resolvedTotal
+              : null
+        );
       },
       error: () => {
         this.drilldownLoading.set(false);
-        this.drilldownTotal.set(drilldownModalTotal(this.drilldownIds) || this.drilldownTotal());
+        this.drilldownRows.set([]);
+        this.drilldownTotal.set(0);
         this.drilldownOriginalCount.set(null);
         this.drilldownUniqueCount.set(null);
       },
