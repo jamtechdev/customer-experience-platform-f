@@ -164,13 +164,6 @@
   line-height: 1.5;
 }
 
-.heatmap-rebuild-hint {
-  border-color: #fdba74;
-  background: #fff7ed;
-  color: #9a3412;
-  font-weight: 600;
-}
-
 .heatmap-card {
   border-radius: 18px;
   border: 1px solid #e2e8f0;

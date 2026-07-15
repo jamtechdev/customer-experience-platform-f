@@ -139,25 +139,8 @@ export class ProcessEnhancement implements OnInit, OnDestroy {
           ...(Array.isArray(p.referenceFeedbackIds) ? p.referenceFeedbackIds : []),
         ];
         const quotedTheme = extractQuotedTheme(p.text);
-        const causeTheme = String(p.causeTheme || quotedTheme || rootCauses[index]?.cause || '').trim();
-        // Match interpretation by theme / ID overlap — never by list index alone.
-        const themeMatched = rootCauses.find((rc) => {
-          const rcCause = String(rc.cause || '').trim().toLowerCase();
-          const theme = causeTheme.toLowerCase();
-          if (!rcCause || !theme) return false;
-          if (rcCause === theme) return true;
-          if (theme.includes(rcCause) || rcCause.includes(theme)) return true;
-          return /brand perception|customer dissatisfaction|negative brand/i.test(theme) &&
-            /brand perception|customer dissatisfaction|negative brand/i.test(rcCause);
-        });
-        const idMatched = !themeMatched
-          ? rootCauses.find((rc) => {
-              const rcIds = new Set((rc.feedbackIds || []).map(Number));
-              return itemIds.some((id) => rcIds.has(Number(id)));
-            })
-          : undefined;
-        const matched = themeMatched || idMatched || rootCauses[index];
-        const interpretation = String(matched?.interpretation || '').trim();
+        const causeTheme = String(p.causeTheme || rootCauses[index]?.cause || quotedTheme || '').trim();
+        const interpretation = String(rootCauses[index]?.interpretation || '').trim();
         const mergedIds = resolveRootCauseIdsForProcessItem(rootCauses, {
           causeTheme,
           quotedTheme,
@@ -262,35 +245,22 @@ export class ProcessEnhancement implements OnInit, OnDestroy {
     this.drilldownLoading.set(true);
     this.drilldownRows.set([]);
     const companyId = resolveAppCompanyId(this.authService.currentUser());
-    const themeTitle =
-      this.drilldownThemeTitle && this.drilldownThemeTitle !== 'this theme'
-        ? this.drilldownThemeTitle
-        : undefined;
-    // Prefer curated snapshot IDs. Pass themeTitle only as a recovery hint when IDs are stale —
-    // the backend skips keyword re-filter when IDs resolve, and falls back to theme when they do not.
+    // Do not send themeTitle when curated snapshot IDs are present — keyword re-filtering
+    // emptied brand-perception drilldowns (194 IDs → 0 rows).
     this.analysisService.getFeedbackByIds(companyId, this.drilldownIds, {
       page,
       limit: this.drilldownPageSize,
       includeIrrelevant: true,
       groupRetweets: false,
-      themeTitle,
-      drilldownTitle: this.drilldownTitle(),
-      sentiment: 'negative',
     }).subscribe({
       next: (res) => {
         this.drilldownLoading.set(false);
         const list = res?.data?.list || [];
         this.drilldownRows.set(list);
-        const resolvedTotal = Number(res?.data?.total);
+        const resolvedTotal = res?.data?.total ?? 0;
         // Never keep a phantom expected total when the API returns no rows.
-        this.drilldownTotal.set(
-          Number.isFinite(resolvedTotal) && resolvedTotal > 0
-            ? resolvedTotal
-            : list.length > 0
-              ? list.length
-              : 0
-        );
-        if ((resolvedTotal === 0 || !Number.isFinite(resolvedTotal)) && list.length === 0 && this.drilldownIds.length > 0) {
+        this.drilldownTotal.set(resolvedTotal > 0 ? resolvedTotal : list.length > 0 ? list.length : 0);
+        if (resolvedTotal === 0 && list.length === 0 && this.drilldownIds.length > 0) {
           this.snackBar.open(
             'Linked feedback IDs could not be loaded (they may be stale after re-import). Refresh the CX report to rebuild references.',
             'Close',
