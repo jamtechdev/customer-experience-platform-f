@@ -187,6 +187,8 @@ export function actionTemplateFamilyKey(action: string): string {
   if (/same-week repair recovery/.test(t)) return 'repair-recovery-lane';
   if (/pre-position critical spare/.test(t)) return 'spare-parts-preposition';
   if (/technician callback discipline/.test(t)) return 'tech-callback';
+  if (/priority callback queue/.test(t)) return 'priority-callback';
+  if (/defect-containment sprint/.test(t)) return 'defect-containment';
   return actionTemplateFingerprint(action);
 }
 
@@ -335,8 +337,19 @@ export function alignActionTextToCauseTheme(action: string, causeTheme: string):
 function actionPlanCollapseKey(cause: string, interpretation?: string, action?: string): string {
   const bucket = rootCauseThemeBucket(cause, interpretation, action);
   if (bucket) return bucket;
+  const family = actionTemplateFamilyKey(String(action || ''));
+  const fingerprint = actionTemplateFingerprint(String(action || ''));
+  if (family && family !== fingerprint) return `action-family:${family}`;
   const lower = String(cause || '').toLowerCase();
   if (/negative brand|brand perception|customer dissatisfaction/.test(lower)) return 'brand-perception';
+  if (/customer support|support gap|unresponsive.*(service|support)|unresponsive customer/i.test(lower)) {
+    return 'action-family:priority-callback';
+  }
+  if (/reliability|product defect|after long use|compressor|door-seal/i.test(lower)) {
+    if (/refrigerator|fridge|buzdolab/i.test(`${cause} ${interpretation || ''}`)) {
+      return 'action-family:fridge-reliability';
+    }
+  }
   return lower.replace(/\s+/g, ' ').trim();
 }
 
@@ -571,9 +584,12 @@ export function ensureDistinctClusterActions(
 export function collapseActionPlanRows<T extends {
   priority: string;
   action: string;
+  impact?: string;
   linkedFeedbackIds?: number[];
   referenceFeedbackIds?: number[];
   linkedCount?: number;
+  causeTheme?: string;
+  cause?: string;
 }>(rows: T[], causes: string[], interpretations: string[] = []): T[] {
   const merged: T[] = [];
   const indexByKey = new Map<string, number>();
@@ -584,7 +600,15 @@ export function collapseActionPlanRows<T extends {
     const existingIdx = indexByKey.get(key);
     if (existingIdx === undefined) {
       indexByKey.set(key, merged.length);
-      merged.push({ ...row });
+      const count = normalizeDrilldownIds([
+        ...(row.linkedFeedbackIds || []),
+        ...(row.referenceFeedbackIds || []),
+      ]).length || row.linkedCount || 0;
+      merged.push({
+        ...row,
+        linkedCount: count || row.linkedCount,
+        impact: count > 0 ? `${count} customer feedback row(s) clustered in this theme` : row.impact,
+      });
       return;
     }
     const existing = merged[existingIdx];
@@ -604,13 +628,48 @@ export function collapseActionPlanRows<T extends {
       referenceFeedbackIds: ids.length ? ids : existing.referenceFeedbackIds,
       linkedCount: count,
       action: count > 0 ? `${actionCore} (${count} linked feedback row(s))` : actionCore,
+      impact: `${count} customer feedback row(s) clustered in this theme`,
     } as T & { causeTheme?: string };
     if (key === 'brand-perception' && 'causeTheme' in mergedRow) {
       mergedRow.causeTheme = 'Negative Brand Perception & Customer Dissatisfaction';
     }
     merged[existingIdx] = mergedRow;
   });
-  return merged;
+
+  const byFamily: T[] = [];
+  const familyIndex = new Map<string, number>();
+  for (const row of merged) {
+    const family = actionTemplateFamilyKey(String(row.action || ''));
+    const fingerprint = actionTemplateFingerprint(String(row.action || ''));
+    const familyKey = family && family !== fingerprint ? `action-family:${family}` : fingerprint;
+    const existingIdx = familyIndex.get(familyKey);
+    if (existingIdx === undefined) {
+      familyIndex.set(familyKey, byFamily.length);
+      byFamily.push(row);
+      continue;
+    }
+    const existing = byFamily[existingIdx];
+    const ids = normalizeDrilldownIds([
+      ...(existing.linkedFeedbackIds || []),
+      ...(existing.referenceFeedbackIds || []),
+      ...(row.linkedFeedbackIds || []),
+      ...(row.referenceFeedbackIds || []),
+    ]);
+    const count = ids.length || Math.max(existing.linkedCount || 0, row.linkedCount || 0);
+    const actionCore = String(existing.action || '').replace(/\(\d+ linked feedback row\(s\)\)/i, '').trim();
+    const cause = String(row.causeTheme || row.cause || '');
+    byFamily[existingIdx] = {
+      ...existing,
+      priority: priorityLabelFromClusterSize(count),
+      linkedFeedbackIds: ids.length ? ids : existing.linkedFeedbackIds,
+      referenceFeedbackIds: ids.length ? ids : existing.referenceFeedbackIds,
+      linkedCount: count,
+      action: count > 0 ? `${actionCore} (${count} linked feedback row(s))` : actionCore,
+      impact: `${count} customer feedback row(s) clustered in this theme`,
+      ...(cause && count >= (existing.linkedCount || 0) ? { causeTheme: cause, cause } : {}),
+    } as T;
+  }
+  return byFamily;
 }
 
 export type FinalizableActionPlanRow = {
@@ -678,16 +737,22 @@ export function finalizeActionPlanRows<T extends FinalizableActionPlanRow>(draft
     prepared.map((d) => d.interpretation || '')
   ).map((row) => {
     const theme = (row as FinalizableActionPlanRow).causeTheme || (row as FinalizableActionPlanRow).cause || '';
-    const count = row.linkedCount || 0;
+    const count =
+      normalizeDrilldownIds([
+        ...(row.linkedFeedbackIds || []),
+        ...(row.referenceFeedbackIds || []),
+      ]).length || row.linkedCount || 0;
     const core = String(row.action || '').replace(/\(\d+ linked feedback row\(s\)\)/i, '').trim();
-    const aligned = alignActionTextToCauseTheme(core, theme);
+    const aligned = sanitizeTurkishFocusInActionText(alignActionTextToCauseTheme(core, theme));
     return {
       ...row,
       causeTheme:
         actionPlanCollapseKey(theme, (row as FinalizableActionPlanRow).interpretation, aligned) === 'brand-perception'
           ? 'Negative Brand Perception & Customer Dissatisfaction'
           : theme,
+      linkedCount: count,
       priority: priorityLabelFromClusterSize(count),
+      impact: count > 0 ? `${count} customer feedback row(s) clustered in this theme` : row.impact,
       action: count > 0 ? `${aligned} (${count} linked feedback row(s))` : aligned,
     };
   });
@@ -861,11 +926,39 @@ export function repairStaleActionText(
     isStaleGenericActionText(action) ||
     isTemplatedReliabilityAction(action) ||
     isOwnerFallbackAction(action) ||
+    hasTurkishLeakInActionText(action) ||
     actionsShareTemplate(action, fresh)
   ) {
-    return fresh;
+    return sanitizeTurkishFocusInActionText(fresh);
   }
-  return alignActionTextToCauseTheme(action, theme);
+  return sanitizeTurkishFocusInActionText(alignActionTextToCauseTheme(action, theme));
+}
+
+/** Detect Turkish sample keywords leaked into English action templates (client QA). */
+export function hasTurkishLeakInActionText(action: string): boolean {
+  return /[ğüşıöçĞÜŞİÖÇ]/.test(String(action || '')) || /\b(ürünü|urunu|arızalı|arizali|ürün|urun)\b/i.test(String(action || ''));
+}
+
+/** Replace leaked Turkish focus phrases with English operational terms. */
+export function sanitizeTurkishFocusInActionText(action: string): string {
+  let text = String(action || '');
+  if (!text) return text;
+  const replacements: Array<[RegExp, string]> = [
+    [/\bürünü\/arızalı\b/gi, 'defect/product'],
+    [/\burunu\/arizali\b/gi, 'defect/product'],
+    [/\bürünü\b/gi, 'product'],
+    [/\burunu\b/gi, 'product'],
+    [/\barızalı\b/gi, 'defect'],
+    [/\barizali\b/gi, 'defect'],
+    [/\bürün\b/gi, 'product'],
+    [/\burun\b/gi, 'product'],
+    [/\bservis\b/gi, 'service'],
+    [/\bgaranti\b/gi, 'warranty'],
+  ];
+  for (const [pattern, replacement] of replacements) {
+    text = text.replace(pattern, replacement);
+  }
+  return text;
 }
 
 export function extractQuotedTheme(text: string): string {
@@ -906,15 +999,22 @@ export function formatProcessImprovementText(
 
 export function alignLinkedCountInText(text: string, count: number, label = 'linked feedback row(s)'): string {
   if (!text) return '';
-  if (count <= 0) return text.replace(/\(\d+[^)]*\)/, '').trim();
-  const stripped = text.replace(/\)+$/g, '').trim();
+  if (count <= 0) return text.replace(/\(\d+[^)]*$/, '').replace(/\(\d+[^)]*\)/, '').trim();
+  // Repair truncated suffixes like "(118 linked feedback row(s" missing the closing ")".
+  let stripped = String(text)
+    .replace(/\(\d+\s*(?:negative-)?linked(?:\s+feedback)?\s+row\(s\)?\s*$/i, '')
+    .replace(/\)+$/g, '')
+    .trim();
   const replaced = stripped
     .replace(/\(\d+ negative-linked row\(s\)\)/g, `(${count} ${label})`)
     .replace(/\(\d+ linked row\(s\)\)/g, `(${count} ${label})`)
     .replace(/\(\d+ linked feedback row\(s\)\)/g, `(${count} ${label})`)
     .replace(/\d+ brand-relevant mention\(s\)/gi, `${count} ${label}`);
-  if (!replaced.match(/\(\d+/)) {
+  if (!/\(\d+/.test(replaced)) {
     return `${replaced} (${count} ${label})`;
+  }
+  if (/\(\d+[^)]*$/.test(replaced)) {
+    return replaced.replace(/\(\d+[^)]*$/, `(${count} ${label})`);
   }
   return replaced;
 }

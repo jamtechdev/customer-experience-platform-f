@@ -1,4 +1,4 @@
-import { formatCellPct, formatProcessImprovementText, generalizeMisleadingJourneyThemeLabel, heatmapCellIntensityPct, reconcileHeatmapStageCounts, repairJourneyThemeDisplay, repairStaleActionText, repairWeakClusterCauseTitle, resolveHeatmapDisplayPct, resolveRootCauseIdsForProcessItem, finalizeProcessImprovementRows, isOwnerFallbackAction } from './drilldown-display';
+import { formatCellPct, formatProcessImprovementText, generalizeMisleadingJourneyThemeLabel, heatmapCellIntensityPct, reconcileHeatmapStageCounts, repairJourneyThemeDisplay, repairStaleActionText, repairWeakClusterCauseTitle, resolveHeatmapDisplayPct, resolveRootCauseIdsForProcessItem, finalizeProcessImprovementRows, finalizeActionPlanRows, isOwnerFallbackAction } from './drilldown-display';
 
 describe('drilldown-display (QA Finding 3 & 4)', () => {
   it('shows decimal percentage for small non-zero shares (Finding 3)', () => {
@@ -109,5 +109,71 @@ describe('drilldown-display (QA Finding 3 & 4)', () => {
       19
     );
     expect(thin).toMatch(/more data needed/i);
+  });
+
+  it('syncs impact clustered count with linked IDs after merge (client QA)', () => {
+    const finalized = finalizeActionPlanRows([
+      {
+        priority: 'P1',
+        action: 'Audit disputed vacuum cleaner Pricing Or Billing charges for "vacuum cleaner Pricing Or Billing Concern"',
+        causeTheme: 'vacuum cleaner Pricing Or Billing Concern',
+        interpretation: 'pricing',
+        linkedFeedbackIds: Array.from({ length: 106 }, (_, i) => i + 1),
+        linkedCount: 106,
+        impact: '106 customer feedback row(s) clustered in this theme',
+      },
+      {
+        priority: 'P2',
+        action: 'Audit disputed vacuum cleaner Pricing Or Billing charges for "vacuum cleaner Pricing Or Billing Concern"',
+        causeTheme: 'vacuum cleaner Pricing Or Billing Concern',
+        interpretation: 'billing',
+        linkedFeedbackIds: Array.from({ length: 12 }, (_, i) => i + 200),
+        linkedCount: 12,
+        impact: '12 customer feedback row(s) clustered in this theme',
+      },
+    ]);
+    expect(finalized).toHaveLength(1);
+    expect(finalized[0].linkedCount).toBe(118);
+    expect(finalized[0].impact).toMatch(/118 customer feedback row\(s\) clustered/);
+  });
+
+  it('collapses near-identical callback and fridge-audit action pairs (client QA)', () => {
+    const finalized = finalizeActionPlanRows([
+      {
+        priority: 'P1',
+        action:
+          'Create a priority callback queue for "refrigerator Customer Support Gap": answer escalations within 4 hours.',
+        causeTheme: 'refrigerator Customer Support Gap',
+        linkedFeedbackIds: Array.from({ length: 39 }, (_, i) => i + 1),
+        linkedCount: 39,
+      },
+      {
+        priority: 'P2',
+        action:
+          'Create a priority callback queue for "Unresponsive Customer Service and Support": answer escalations within 4 hours.',
+        causeTheme: 'Unresponsive Customer Service and Support',
+        linkedFeedbackIds: Array.from({ length: 18 }, (_, i) => i + 100),
+        linkedCount: 18,
+      },
+      {
+        priority: 'P2',
+        action:
+          'Audit refrigerator compressor and door-seal failure codes for "Product Defect in Refrigerators After Long Use": quarantine repeat-return batches.',
+        causeTheme: 'Product Defect in Refrigerators After Long Use',
+        linkedFeedbackIds: Array.from({ length: 28 }, (_, i) => i + 200),
+        linkedCount: 28,
+      },
+      {
+        priority: 'P3',
+        action:
+          'Audit refrigerator compressor and door-seal failure codes for "Refrigerator Reliability Issue": quarantine repeat-return batches.',
+        causeTheme: 'Refrigerator Reliability Issue',
+        linkedFeedbackIds: Array.from({ length: 16 }, (_, i) => i + 300),
+        linkedCount: 16,
+      },
+    ]);
+    expect(finalized).toHaveLength(2);
+    expect(finalized.some((r) => /priority callback/i.test(r.action) && r.linkedCount === 57)).toBe(true);
+    expect(finalized.some((r) => /audit refrigerator compressor/i.test(r.action) && r.linkedCount === 44)).toBe(true);
   });
 });
