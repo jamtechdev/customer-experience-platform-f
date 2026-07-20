@@ -199,13 +199,20 @@ export class TouchpointManager implements OnInit, OnDestroy {
     this.page.set(1);
   }
 
-  touchpointMaxEffective(): number {
-    const rows = this.reportTouchpoints();
-    return Math.max(1, ...rows.map((r) => r.volume));
+  /** Volume shown on cards must match drilldown ID list length. */
+  touchpointReferenceVolume(row: { volume: number; feedbackIds?: number[] }): number {
+    const idCount = drilldownModalTotal(row.feedbackIds || []);
+    return idCount > 0 ? idCount : Number(row.volume ?? 0);
   }
 
-  touchpointBarFillPct(volume: number): number {
+  touchpointMaxEffective(): number {
+    const rows = this.reportTouchpoints();
+    return Math.max(1, ...rows.map((r) => this.touchpointReferenceVolume(r)));
+  }
+
+  touchpointBarFillPct(row: { volume: number; feedbackIds?: number[] }): number {
     const max = this.touchpointMaxEffective();
+    const volume = this.touchpointReferenceVolume(row);
     return Math.min(100, max > 0 ? (volume / max) * 100 : 0);
   }
 
@@ -225,13 +232,14 @@ export class TouchpointManager implements OnInit, OnDestroy {
     this.page.update((p) => Math.min(maxPage, p + 1));
   }
 
-  openRelatedTouchpoint(row: { name: string; feedbackIds: number[] }): void {
+  openRelatedTouchpoint(row: { name: string; volume: number; feedbackIds: number[] }): void {
     const ids = [...new Set((row.feedbackIds || []).filter((id) => Number.isFinite(id) && id > 0))];
     if (!ids.length) return;
+    const total = this.touchpointReferenceVolume(row);
     this.drilldownTitle.set(row.name);
     this.drilldownOpen.set(true);
     this.drilldownIds = ids;
-    this.drilldownTotal.set(drilldownModalTotal(this.drilldownIds));
+    this.drilldownTotal.set(drilldownModalTotal(this.drilldownIds) || total);
     this.loadDrilldownPage(1);
   }
 
@@ -246,14 +254,16 @@ export class TouchpointManager implements OnInit, OnDestroy {
       page,
       limit: this.drilldownPageSize,
       includeIrrelevant: false,
-      groupRetweets: true,
+      groupRetweets: false,
       drilldownTitle: touchpointName,
       touchpointName,
     }).subscribe({
       next: (res) => {
         this.drilldownLoading.set(false);
         this.drilldownRows.set(res?.data?.list || []);
-        this.drilldownTotal.set(res?.data?.total ?? drilldownModalTotal(this.drilldownIds));
+        const resolvedTotal = res?.data?.total ?? 0;
+        const expected = drilldownModalTotal(this.drilldownIds);
+        this.drilldownTotal.set(resolvedTotal > 0 ? resolvedTotal : expected);
       },
       error: () => {
         this.drilldownLoading.set(false);

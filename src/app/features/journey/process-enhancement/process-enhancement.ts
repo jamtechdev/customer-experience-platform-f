@@ -14,6 +14,7 @@ import { notifyCxReportLoadFailure } from '../../../core/utils/twitter-cx-report
 import { ImportProcessingService } from '../../../core/services/import-processing.service';
 import { RelatedFeedbackModal, RelatedFeedbackRow } from '../../../core/components/related-feedback-modal/related-feedback-modal';
 import {
+  drilldownModalTotal,
   formatProcessImprovementText,
   resolveDrilldownIds,
   extractQuotedTheme,
@@ -221,13 +222,12 @@ export class ProcessEnhancement implements OnInit, OnDestroy {
     this.drilldownTitle.set(this.displayText({ ...row, linkedFeedbackIds: ids, referenceFeedbackIds: ids, linkedCount: ids.length }));
     this.drilldownOpen.set(true);
     this.drilldownIds = ids;
-    this.drilldownTotal.set(ids.length);
+    this.drilldownTotal.set(drilldownModalTotal(ids));
     this.loadDrilldownPage(1);
   }
 
   referenceCount(row: ProcessImprovementRow): number {
-    const idCount = resolveDrilldownIds(row.linkedFeedbackIds, row.referenceFeedbackIds).length;
-    return idCount > 0 ? idCount : 0;
+    return drilldownModalTotal(resolveDrilldownIds(row.linkedFeedbackIds, row.referenceFeedbackIds));
   }
 
   displayText(row: ProcessImprovementRow): string {
@@ -262,9 +262,10 @@ export class ProcessEnhancement implements OnInit, OnDestroy {
         const list = res?.data?.list || [];
         this.drilldownRows.set(list);
         const resolvedTotal = res?.data?.total ?? 0;
+        const expected = drilldownModalTotal(this.drilldownIds);
         // Never keep a phantom expected total when the API returns no rows.
         this.drilldownTotal.set(resolvedTotal > 0 ? resolvedTotal : list.length > 0 ? list.length : 0);
-        if (resolvedTotal === 0 && list.length === 0 && this.drilldownIds.length > 0) {
+        if (resolvedTotal === 0 && list.length === 0 && expected > 0) {
           this.snackBar.open(
             'Linked feedback IDs could not be loaded (they may be stale after re-import). Refresh the CX report to rebuild references.',
             'Close',

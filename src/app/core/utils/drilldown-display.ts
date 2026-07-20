@@ -36,6 +36,32 @@ export function drilldownModalTotal(requestedIds: number[]): number {
   return normalizeDrilldownIds(requestedIds).length;
 }
 
+export interface JourneyReferenceIdInput {
+  referenceIds?: number[];
+  feedbackIds?: number[];
+  linkedCount?: number;
+}
+
+/**
+ * Journey theme cards may ship a focused reference subset plus the full polarity bucket.
+ * Drilldowns must use the subset so the modal matches the count on the card.
+ */
+export function journeyReferenceDrilldownIds(input: JourneyReferenceIdInput): number[] {
+  const refs = normalizeDrilldownIds(input.referenceIds);
+  const all = normalizeDrilldownIds(input.feedbackIds);
+  if (refs.length > 0 && (all.length === 0 || refs.length < all.length)) {
+    return refs;
+  }
+  return resolveDrilldownIds(input.feedbackIds, input.referenceIds);
+}
+
+/** Count shown on journey reference buttons — must equal journeyReferenceDrilldownIds length. */
+export function journeyReferenceTotal(input: JourneyReferenceIdInput): number {
+  const ids = journeyReferenceDrilldownIds(input);
+  if (ids.length > 0) return ids.length;
+  return effectiveLinkedCount(input.linkedCount, input.feedbackIds, input.referenceIds);
+}
+
 export function heatmapSharePct(count: number, stageTotal: number): number {
   if (!count || count <= 0 || !stageTotal || stageTotal <= 0) return 0;
   const pct = (count / stageTotal) * 100;

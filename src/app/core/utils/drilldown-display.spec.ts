@@ -1,4 +1,4 @@
-import { formatCellPct, formatProcessImprovementText, generalizeMisleadingJourneyThemeLabel, heatmapCellIntensityPct, reconcileHeatmapStageCounts, repairJourneyThemeDisplay, repairStaleActionText, repairWeakClusterCauseTitle, resolveHeatmapDisplayPct, resolveRootCauseIdsForProcessItem, finalizeProcessImprovementRows, finalizeActionPlanRows, isOwnerFallbackAction } from './drilldown-display';
+import { formatCellPct, formatProcessImprovementText, generalizeMisleadingJourneyThemeLabel, heatmapCellIntensityPct, journeyReferenceDrilldownIds, journeyReferenceTotal, reconcileHeatmapStageCounts, repairJourneyThemeDisplay, repairStaleActionText, repairWeakClusterCauseTitle, resolveHeatmapDisplayPct, resolveRootCauseIdsForProcessItem, finalizeProcessImprovementRows, finalizeActionPlanRows, isOwnerFallbackAction } from './drilldown-display';
 
 describe('drilldown-display (QA Finding 3 & 4)', () => {
   it('shows decimal percentage for small non-zero shares (Finding 3)', () => {
@@ -175,5 +175,20 @@ describe('drilldown-display (QA Finding 3 & 4)', () => {
     expect(finalized).toHaveLength(2);
     expect(finalized.some((r) => /priority callback/i.test(r.action) && r.linkedCount === 57)).toBe(true);
     expect(finalized.some((r) => /audit refrigerator compressor/i.test(r.action) && r.linkedCount === 44)).toBe(true);
+  });
+
+  it('journey reference count matches theme subset drilldown IDs', () => {
+    const themeSubset = [11, 12, 13, 14];
+    const fullBucket = Array.from({ length: 22 }, (_, i) => i + 1);
+    const input = { referenceIds: themeSubset, feedbackIds: fullBucket };
+    expect(journeyReferenceDrilldownIds(input)).toEqual(themeSubset);
+    expect(journeyReferenceTotal(input)).toBe(4);
+  });
+
+  it('journey reference falls back to full bucket when no theme subset exists', () => {
+    const fullBucket = [1, 2, 3];
+    const input = { referenceIds: [], feedbackIds: fullBucket };
+    expect(journeyReferenceDrilldownIds(input)).toEqual(fullBucket);
+    expect(journeyReferenceTotal(input)).toBe(3);
   });
 });

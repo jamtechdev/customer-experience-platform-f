@@ -14,7 +14,16 @@ import { OllamaLoader } from '../../../core/components/ollama-loader/ollama-load
 import { notifyCxReportLoadFailure } from '../../../core/utils/twitter-cx-report-load';
 import { ImportProcessingService } from '../../../core/services/import-processing.service';
 import { RelatedFeedbackModal, RelatedFeedbackRow } from '../../../core/components/related-feedback-modal/related-feedback-modal';
-import { alignLinkedCountInText, drilldownModalTotal, effectiveLinkedCount, extractJourneyThemeFromSummary, extractQuotedTheme, repairJourneyThemeDisplay, resolveDrilldownIds } from '../../../core/utils/drilldown-display';
+import {
+  alignLinkedCountInText,
+  drilldownModalTotal,
+  extractJourneyThemeFromSummary,
+  extractQuotedTheme,
+  journeyReferenceDrilldownIds,
+  journeyReferenceTotal,
+  repairJourneyThemeDisplay,
+  resolveDrilldownIds,
+} from '../../../core/utils/drilldown-display';
 import { TranslationService } from '../../../core/services/translation.service';
 import { resolveAppCompanyId } from '../../../core/utils/company-scope';
 import { environment } from '../../../../environments/environment';
@@ -202,25 +211,27 @@ export class JourneyMap implements OnInit, OnDestroy {
       rows.map((r: any, idx: number) => {
         const stage = String(r?.stage ?? '');
         const heat = heatmapMap[stage];
-        const satIds = this.mergeIds(
-          this.toIds(r?.satisfactionFeedbackIds),
-          this.toIds(r?.satisfactionReferenceIds),
-          heat?.positive
-        );
-        const disIds = this.mergeIds(
-          this.toIds(r?.dissatisfactionFeedbackIds),
-          this.toIds(r?.dissatisfactionReferenceIds),
-          heat?.negative
-        );
-        const satisfactionCount = satIds.length;
-        const dissatisfactionCount = disIds.length;
+        const satRefIds = this.toIds(r?.satisfactionReferenceIds);
+        const disRefIds = this.toIds(r?.dissatisfactionReferenceIds);
+        const satAllIds = this.mergeIds(this.toIds(r?.satisfactionFeedbackIds), heat?.positive);
+        const disAllIds = this.mergeIds(this.toIds(r?.dissatisfactionFeedbackIds), heat?.negative);
+        const satisfactionCount = journeyReferenceTotal({
+          referenceIds: satRefIds,
+          feedbackIds: satAllIds,
+          linkedCount: r?.satisfactionCount,
+        });
+        const dissatisfactionCount = journeyReferenceTotal({
+          referenceIds: disRefIds,
+          feedbackIds: disAllIds,
+          linkedCount: r?.dissatisfactionCount,
+        });
         const feedbackCount =
           typeof r?.feedbackCount === 'number' && r.feedbackCount > 0
             ? r.feedbackCount
             : heat?.total && heat.total > 0
               ? heat.total
               : heat?.all.length || satisfactionCount + dissatisfactionCount;
-        const stageFeedbackIds = this.mergeIds(satIds, disIds, heat?.all, heat?.neutral);
+        const stageFeedbackIds = this.mergeIds(satAllIds, disAllIds, heat?.all, heat?.neutral);
         const satSummary = this.cleanJourneySummary(String(r?.satisfactionSummary ?? r?.satisfaction ?? ''));
         const disSummary = this.cleanJourneySummary(String(r?.dissatisfactionSummary ?? r?.dissatisfaction ?? ''));
         return {
@@ -231,10 +242,10 @@ export class JourneyMap implements OnInit, OnDestroy {
           feedbackCount,
           painPoints: disSummary ? [disSummary] : [],
           satisfactionPoints: satSummary ? [satSummary] : [],
-          satisfactionReferenceIds: satIds,
-          dissatisfactionReferenceIds: disIds,
-          satisfactionFeedbackIds: satIds,
-          dissatisfactionFeedbackIds: disIds,
+          satisfactionReferenceIds: satRefIds.length ? satRefIds : satAllIds,
+          dissatisfactionReferenceIds: disRefIds.length ? disRefIds : disAllIds,
+          satisfactionFeedbackIds: satAllIds,
+          dissatisfactionFeedbackIds: disAllIds,
           satisfactionCount,
           dissatisfactionCount,
           stageFeedbackIds,
@@ -303,36 +314,33 @@ export class JourneyMap implements OnInit, OnDestroy {
   }
 
   satisfactionDrilldownIds(row: JourneyStage): number[] {
-    // Prefer theme-supporting reference IDs when they are a focused subset of the polarity bucket.
-    const refs = this.toIds(row.satisfactionReferenceIds);
-    const all = this.toIds(row.satisfactionFeedbackIds);
-    if (refs.length > 0 && (all.length === 0 || refs.length < all.length)) {
-      return resolveDrilldownIds(refs);
-    }
-    return resolveDrilldownIds(refs, all);
+    return journeyReferenceDrilldownIds({
+      referenceIds: row.satisfactionReferenceIds,
+      feedbackIds: row.satisfactionFeedbackIds,
+    });
   }
 
   dissatisfactionDrilldownIds(row: JourneyStage): number[] {
-    const refs = this.toIds(row.dissatisfactionReferenceIds);
-    const all = this.toIds(row.dissatisfactionFeedbackIds);
-    if (refs.length > 0 && (all.length === 0 || refs.length < all.length)) {
-      return resolveDrilldownIds(refs);
-    }
-    return resolveDrilldownIds(refs, all);
+    return journeyReferenceDrilldownIds({
+      referenceIds: row.dissatisfactionReferenceIds,
+      feedbackIds: row.dissatisfactionFeedbackIds,
+    });
   }
 
   satisfactionReferenceTotal(row: JourneyStage): number {
-    const refs = this.toIds(row.satisfactionReferenceIds);
-    const all = this.toIds(row.satisfactionFeedbackIds);
-    if (refs.length > 0 && (all.length === 0 || refs.length <= all.length)) return refs.length;
-    return effectiveLinkedCount(row.satisfactionCount, row.satisfactionFeedbackIds, row.satisfactionReferenceIds);
+    return journeyReferenceTotal({
+      referenceIds: row.satisfactionReferenceIds,
+      feedbackIds: row.satisfactionFeedbackIds,
+      linkedCount: row.satisfactionCount,
+    });
   }
 
   dissatisfactionReferenceTotal(row: JourneyStage): number {
-    const refs = this.toIds(row.dissatisfactionReferenceIds);
-    const all = this.toIds(row.dissatisfactionFeedbackIds);
-    if (refs.length > 0 && (all.length === 0 || refs.length <= all.length)) return refs.length;
-    return effectiveLinkedCount(row.dissatisfactionCount, row.dissatisfactionFeedbackIds, row.dissatisfactionReferenceIds);
+    return journeyReferenceTotal({
+      referenceIds: row.dissatisfactionReferenceIds,
+      feedbackIds: row.dissatisfactionFeedbackIds,
+      linkedCount: row.dissatisfactionCount,
+    });
   }
 
   satisfactionDisplay(row: JourneyStage): string {
@@ -422,7 +430,7 @@ export class JourneyMap implements OnInit, OnDestroy {
       page,
       limit: this.drilldownPageSize,
       includeIrrelevant: true,
-      groupRetweets: true,
+      groupRetweets: false,
       // Always send themeTitle for journey map so oversized stage buckets can be narrowed.
       themeTitle: hasTheme ? themeTitle : undefined,
       drilldownTitle: this.drilldownTitle(),
