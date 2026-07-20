@@ -148,7 +148,7 @@ export class AnalysisService {
       includeIrrelevant?: boolean;
       groupRetweets?: boolean;
     }
-  ): Observable<ApiResponse<{ list: any[]; requested: number; returned: number; total: number; grouped?: boolean; originalCount?: number; uniqueCount?: number; page: number; limit: number }>> {
+  ): Observable<ApiResponse<{ list: any[]; matchedIds?: number[]; requested: number; returned: number; total: number; grouped?: boolean; originalCount?: number; uniqueCount?: number; page: number; limit: number }>> {
     const unique = [...new Set(ids.filter((n) => Number.isFinite(n) && n > 0))];
     const page = options?.page ?? 1;
     const limit = options?.limit ?? 10;

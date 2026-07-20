@@ -273,8 +273,8 @@ export class ProcessEnhancement implements OnInit, OnDestroy {
         const expected = drilldownModalTotal(this.drilldownIds);
         const nextTotal = resolvedTotal > 0 ? resolvedTotal : list.length > 0 ? list.length : expected;
         this.drilldownTotal.set(nextTotal);
-        const matchedIds = Array.isArray((res?.data as { matchedIds?: number[] } | undefined)?.matchedIds)
-          ? ((res.data as { matchedIds: number[] }).matchedIds || []).map((id) => Number(id)).filter((id) => id > 0)
+        const matchedIds = Array.isArray(res?.data?.matchedIds)
+          ? (res.data.matchedIds || []).map((id) => Number(id)).filter((id) => id > 0)
           : [];
         this.syncProcessReferenceCount(nextTotal, matchedIds);
         if (nextTotal === 0 && expected > 0) {

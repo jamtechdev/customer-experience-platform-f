@@ -452,8 +452,8 @@ export class JourneyMap implements OnInit, OnDestroy {
         const nextTotal =
           resolvedTotal > 0 ? resolvedTotal : this.drilldownRows().length > 0 ? this.drilldownRows().length : requested;
         this.drilldownTotal.set(nextTotal);
-        const matchedIds = Array.isArray((res?.data as { matchedIds?: number[] } | undefined)?.matchedIds)
-          ? ((res.data as { matchedIds: number[] }).matchedIds || []).map((id) => Number(id)).filter((id) => id > 0)
+        const matchedIds = Array.isArray(res?.data?.matchedIds)
+          ? (res.data.matchedIds || []).map((id) => Number(id)).filter((id) => id > 0)
           : [];
         this.syncJourneyReferenceCount(nextTotal, matchedIds);
         const original = Number((res?.data as { originalCount?: number } | undefined)?.originalCount);

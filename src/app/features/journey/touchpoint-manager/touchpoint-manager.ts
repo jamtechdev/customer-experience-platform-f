@@ -267,8 +267,8 @@ export class TouchpointManager implements OnInit, OnDestroy {
         const expected = drilldownModalTotal(this.drilldownIds);
         const nextTotal = resolvedTotal > 0 ? resolvedTotal : this.drilldownRows().length > 0 ? this.drilldownRows().length : expected;
         this.drilldownTotal.set(nextTotal);
-        const matchedIds = Array.isArray((res?.data as { matchedIds?: number[] } | undefined)?.matchedIds)
-          ? ((res.data as { matchedIds: number[] }).matchedIds || []).map((id) => Number(id)).filter((id) => id > 0)
+        const matchedIds = Array.isArray(res?.data?.matchedIds)
+          ? (res.data.matchedIds || []).map((id) => Number(id)).filter((id) => id > 0)
           : [];
         if (matchedIds.length && nextTotal > 0) {
           this.drilldownIds = matchedIds.slice(0, nextTotal);
