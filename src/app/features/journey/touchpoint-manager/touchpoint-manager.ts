@@ -147,9 +147,11 @@ export class TouchpointManager implements OnInit, OnDestroy {
           return;
         }
         if (!response.success) {
-          this.touchpoints.set([]);
-          this.reportTouchpoints.set([]);
-          this.page.set(1);
+          if (!this.touchpoints().length && !this.reportTouchpoints().length) {
+            this.touchpoints.set([]);
+            this.reportTouchpoints.set([]);
+            this.page.set(1);
+          }
           notifyCxReportLoadFailure(this.snackBar, response.message, this.importProcessing.isActive(), 'Close');
           this.loading.set(false);
           return;
@@ -261,14 +263,29 @@ export class TouchpointManager implements OnInit, OnDestroy {
       next: (res) => {
         this.drilldownLoading.set(false);
         this.drilldownRows.set(res?.data?.list || []);
-        const resolvedTotal = res?.data?.total ?? 0;
+        const resolvedTotal = Number(res?.data?.total ?? 0);
         const expected = drilldownModalTotal(this.drilldownIds);
-        this.drilldownTotal.set(resolvedTotal > 0 ? resolvedTotal : expected);
+        const nextTotal = resolvedTotal > 0 ? resolvedTotal : this.drilldownRows().length > 0 ? this.drilldownRows().length : expected;
+        this.drilldownTotal.set(nextTotal);
+        const matchedIds = Array.isArray((res?.data as { matchedIds?: number[] } | undefined)?.matchedIds)
+          ? ((res.data as { matchedIds: number[] }).matchedIds || []).map((id) => Number(id)).filter((id) => id > 0)
+          : [];
+        if (matchedIds.length && nextTotal > 0) {
+          this.drilldownIds = matchedIds.slice(0, nextTotal);
+          const title = this.drilldownTitle();
+          this.reportTouchpoints.update((rows) =>
+            rows.map((row) =>
+              row.name === title
+                ? { ...row, feedbackIds: this.drilldownIds, volume: nextTotal }
+                : row
+            )
+          );
+        }
       },
       error: () => {
         this.drilldownLoading.set(false);
         this.drilldownRows.set([]);
-        this.drilldownTotal.set(0);
+        this.drilldownTotal.set(drilldownModalTotal(this.drilldownIds));
       },
     });
   }

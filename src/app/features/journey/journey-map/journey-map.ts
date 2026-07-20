@@ -128,12 +128,16 @@ export class JourneyMap implements OnInit, OnDestroy {
           (response.message === 'stale_response' || response.message === 'snapshot_still_building') &&
           !hasData
         ) {
+          // Keep existing journey rows while rebuild is in flight.
+          this.loading.set(false);
           return;
         }
         clearTimeout(watchdog);
         if (!response.success) {
-          this.journeyStages.set([]);
-          this.page.set(1);
+          if (!this.journeyStages().length) {
+            this.journeyStages.set([]);
+            this.page.set(1);
+          }
           notifyCxReportLoadFailure(this.snackBar, response.message, this.importProcessing.isActive(), 'Close');
           this.loading.set(false);
           return;
@@ -145,8 +149,10 @@ export class JourneyMap implements OnInit, OnDestroy {
         clearTimeout(watchdog);
         this.loading.set(false);
         notifyCxReportLoadFailure(this.snackBar, undefined, this.importProcessing.isActive(), 'Close');
-        this.journeyStages.set([]);
-        this.page.set(1);
+        if (!this.journeyStages().length) {
+          this.journeyStages.set([]);
+          this.page.set(1);
+        }
       },
     });
   }
@@ -305,7 +311,8 @@ export class JourneyMap implements OnInit, OnDestroy {
     );
     this.drilldownOpen.set(true);
     this.drilldownIds = unique;
-    this.drilldownTotal.set(unique.length > 0 ? drilldownModalTotal(unique) : displayTotal);
+    // Button count and modal footer must start from the same number.
+    this.drilldownTotal.set(unique.length > 0 ? unique.length : displayTotal);
     this.drilldownOriginalCount.set(null);
     this.drilldownUniqueCount.set(null);
     this.drilldownRows.set([]);
@@ -440,10 +447,15 @@ export class JourneyMap implements OnInit, OnDestroy {
       next: (res) => {
         this.drilldownLoading.set(false);
         if (res?.data?.list) this.drilldownRows.set(res.data.list);
-        const resolvedTotal = res?.data?.total ?? 0;
-        this.drilldownTotal.set(
-          resolvedTotal > 0 ? resolvedTotal : drilldownModalTotal(this.drilldownIds) || this.drilldownTotal()
-        );
+        const resolvedTotal = Number(res?.data?.total ?? 0);
+        const requested = drilldownModalTotal(this.drilldownIds);
+        const nextTotal =
+          resolvedTotal > 0 ? resolvedTotal : this.drilldownRows().length > 0 ? this.drilldownRows().length : requested;
+        this.drilldownTotal.set(nextTotal);
+        const matchedIds = Array.isArray((res?.data as { matchedIds?: number[] } | undefined)?.matchedIds)
+          ? ((res.data as { matchedIds: number[] }).matchedIds || []).map((id) => Number(id)).filter((id) => id > 0)
+          : [];
+        this.syncJourneyReferenceCount(nextTotal, matchedIds);
         const original = Number((res?.data as { originalCount?: number } | undefined)?.originalCount);
         const unique = Number((res?.data as { uniqueCount?: number } | undefined)?.uniqueCount);
         this.drilldownOriginalCount.set(Number.isFinite(original) && original > 0 ? original : null);
@@ -456,6 +468,33 @@ export class JourneyMap implements OnInit, OnDestroy {
         this.drilldownUniqueCount.set(null);
       },
     });
+  }
+
+  /** Align card "View references (N)" with modal total after API filtering. */
+  private syncJourneyReferenceCount(total: number, matchedIds: number[]): void {
+    if (total <= 0 || !this.drilldownStage) return;
+    const polarity = this.drilldownPolarity;
+    if (polarity !== 'satisfaction' && polarity !== 'dissatisfaction') return;
+    const ids = resolveDrilldownIds(matchedIds.length ? matchedIds : this.drilldownIds).slice(0, total);
+    this.journeyStages.update((stages) =>
+      stages.map((row) => {
+        if (row.name !== this.drilldownStage) return row;
+        if (polarity === 'satisfaction') {
+          return {
+            ...row,
+            satisfactionCount: total,
+            satisfactionReferenceIds: ids.length ? ids : row.satisfactionReferenceIds,
+          };
+        }
+        return {
+          ...row,
+          dissatisfactionCount: total,
+          dissatisfactionReferenceIds: ids.length ? ids : row.dissatisfactionReferenceIds,
+        };
+      })
+    );
+    // Keep subsequent page loads on the synced ID list so totals stay stable.
+    if (ids.length) this.drilldownIds = ids;
   }
 
   closeDrilldown(): void {

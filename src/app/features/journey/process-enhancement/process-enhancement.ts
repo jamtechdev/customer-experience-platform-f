@@ -70,6 +70,7 @@ export class ProcessEnhancement implements OnInit, OnDestroy {
   readonly drilldownPageSize = 10;
   private drilldownIds: number[] = [];
   private drilldownThemeTitle = '';
+  private drilldownRowIndex = -1;
   private rootCauses: Array<{ cause?: string; interpretation?: string; feedbackIds?: number[] }> = [];
 
   ngOnInit(): void {
@@ -91,19 +92,24 @@ export class ProcessEnhancement implements OnInit, OnDestroy {
       .loadTwitterCxReport(companyId, undefined, undefined, undefined, refreshFromServer)
       .subscribe({
         next: (res) => {
-          if (res.message === 'stale_response') {
+          if (res.message === 'stale_response' || res.message === 'snapshot_still_building') {
+            // Keep existing rows visible while rebuild finishes — do not wipe the page.
+            this.loading.set(false);
             return;
           }
           if (!res.success) {
-            this.processImprovements.set([]);
-            this.managementTakeaways.set([]);
+            // Only clear when we got a definitive failure, not a transient rebuild race.
+            if (!this.processImprovements().length) {
+              this.processImprovements.set([]);
+              this.managementTakeaways.set([]);
+            }
             notifyCxReportLoadFailure(this.snackBar, res.message, this.importProcessing.isActive(), 'Close');
             this.loading.set(false);
             return;
           }
           if (res.data) {
             this.applyProcessReport(res.data);
-          } else {
+          } else if (!this.processImprovements().length) {
             this.processImprovements.set([]);
             this.managementTakeaways.set([]);
           }
@@ -218,11 +224,12 @@ export class ProcessEnhancement implements OnInit, OnDestroy {
       );
       return;
     }
+    this.drilldownRowIndex = this.processImprovements().indexOf(row);
     this.drilldownThemeTitle = themeTitle;
     this.drilldownTitle.set(this.displayText({ ...row, linkedFeedbackIds: ids, referenceFeedbackIds: ids, linkedCount: ids.length }));
     this.drilldownOpen.set(true);
     this.drilldownIds = ids;
-    this.drilldownTotal.set(drilldownModalTotal(ids));
+    this.drilldownTotal.set(ids.length);
     this.loadDrilldownPage(1);
   }
 
@@ -250,7 +257,8 @@ export class ProcessEnhancement implements OnInit, OnDestroy {
     this.analysisService.getFeedbackByIds(companyId, this.drilldownIds, {
       page,
       limit: this.drilldownPageSize,
-      includeIrrelevant: false,
+      // Curated PE IDs are membership — do not hide rows as "irrelevant" (empty after rebuild).
+      includeIrrelevant: true,
       groupRetweets: false,
       themeTitle: this.drilldownThemeTitle || undefined,
       drilldownTitle: this.drilldownTitle(),
@@ -261,11 +269,15 @@ export class ProcessEnhancement implements OnInit, OnDestroy {
         this.drilldownLoading.set(false);
         const list = res?.data?.list || [];
         this.drilldownRows.set(list);
-        const resolvedTotal = res?.data?.total ?? 0;
+        const resolvedTotal = Number(res?.data?.total ?? 0);
         const expected = drilldownModalTotal(this.drilldownIds);
-        // Never keep a phantom expected total when the API returns no rows.
-        this.drilldownTotal.set(resolvedTotal > 0 ? resolvedTotal : list.length > 0 ? list.length : 0);
-        if (resolvedTotal === 0 && list.length === 0 && expected > 0) {
+        const nextTotal = resolvedTotal > 0 ? resolvedTotal : list.length > 0 ? list.length : expected;
+        this.drilldownTotal.set(nextTotal);
+        const matchedIds = Array.isArray((res?.data as { matchedIds?: number[] } | undefined)?.matchedIds)
+          ? ((res.data as { matchedIds: number[] }).matchedIds || []).map((id) => Number(id)).filter((id) => id > 0)
+          : [];
+        this.syncProcessReferenceCount(nextTotal, matchedIds);
+        if (nextTotal === 0 && expected > 0) {
           this.snackBar.open(
             'Linked feedback IDs could not be loaded (they may be stale after re-import). Refresh the CX report to rebuild references.',
             'Close',
@@ -276,9 +288,31 @@ export class ProcessEnhancement implements OnInit, OnDestroy {
       error: () => {
         this.drilldownLoading.set(false);
         this.drilldownRows.set([]);
-        this.drilldownTotal.set(0);
+        this.drilldownTotal.set(drilldownModalTotal(this.drilldownIds));
       },
     });
+  }
+
+  /** Keep "View references (N)" equal to modal "of N". */
+  private syncProcessReferenceCount(total: number, matchedIds: number[]): void {
+    if (total <= 0) return;
+    const ids = resolveDrilldownIds(matchedIds.length ? matchedIds : this.drilldownIds).slice(0, total);
+    if (!ids.length) return;
+    this.drilldownIds = ids;
+    const idx = this.drilldownRowIndex;
+    if (idx < 0) return;
+    this.processImprovements.update((rows) =>
+      rows.map((row, i) =>
+        i === idx
+          ? {
+              ...row,
+              linkedFeedbackIds: ids,
+              referenceFeedbackIds: ids,
+              linkedCount: total,
+            }
+          : row
+      )
+    );
   }
 
   closeDrilldown(): void {
@@ -288,5 +322,6 @@ export class ProcessEnhancement implements OnInit, OnDestroy {
     this.drilldownTotal.set(0);
     this.drilldownIds = [];
     this.drilldownThemeTitle = '';
+    this.drilldownRowIndex = -1;
   }
 }

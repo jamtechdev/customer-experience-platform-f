@@ -302,7 +302,7 @@ export class ActionPlans implements OnInit, OnDestroy {
       },
       error: () => {
         this.drilldownLoading.set(false);
-        this.drilldownTotal.set(0);
+        this.drilldownTotal.set(this.drilldownIds.length);
       },
     });
   }
