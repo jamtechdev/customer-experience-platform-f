@@ -271,12 +271,15 @@ export class ProcessEnhancement implements OnInit, OnDestroy {
         this.drilldownRows.set(list);
         const resolvedTotal = Number(res?.data?.total ?? 0);
         const expected = drilldownModalTotal(this.drilldownIds);
-        const nextTotal = resolvedTotal > 0 ? resolvedTotal : list.length > 0 ? list.length : expected;
+        // Never keep phantom total when API returned no rows.
+        const nextTotal = resolvedTotal > 0 ? resolvedTotal : list.length;
         this.drilldownTotal.set(nextTotal);
         const matchedIds = Array.isArray(res?.data?.matchedIds)
           ? (res.data.matchedIds || []).map((id) => Number(id)).filter((id) => id > 0)
           : [];
-        this.syncProcessReferenceCount(nextTotal, matchedIds);
+        if (nextTotal > 0) {
+          this.syncProcessReferenceCount(nextTotal, matchedIds);
+        }
         if (nextTotal === 0 && expected > 0) {
           this.snackBar.open(
             'Linked feedback IDs could not be loaded (they may be stale after re-import). Refresh the CX report to rebuild references.',
