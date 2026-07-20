@@ -142,6 +142,7 @@ export class AnalysisService {
       touchpointName?: string;
       journeyStage?: string;
       sentiment?: string;
+      context?: string;
       page?: number;
       limit?: number;
       includeIrrelevant?: boolean;
@@ -160,6 +161,7 @@ export class AnalysisService {
       touchpointName: options?.touchpointName,
       journeyStage: options?.journeyStage,
       sentiment: options?.sentiment,
+      context: options?.context,
       page,
       limit,
       includeIrrelevant: options?.includeIrrelevant === true,
@@ -183,6 +185,10 @@ export class AnalysisService {
         if (options?.rootCauseId != null) params = params.set('rootCauseId', String(options.rootCauseId));
         if (options?.touchpointName) params = params.set('touchpointName', options.touchpointName);
         if (options?.drilldownTitle) params = params.set('drilldownTitle', options.drilldownTitle);
+        if (options?.themeTitle) params = params.set('themeTitle', options.themeTitle);
+        if (options?.journeyStage) params = params.set('journeyStage', options.journeyStage);
+        if (options?.sentiment) params = params.set('sentiment', options.sentiment);
+        if (options?.context) params = params.set('context', options.context);
 
         const fallbackParams = params;
         return this.http.get<ApiResponse<{ list: any[]; requested: number; returned: number; total: number; page: number; limit: number }>>(

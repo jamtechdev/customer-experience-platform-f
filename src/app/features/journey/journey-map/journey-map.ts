@@ -303,18 +303,35 @@ export class JourneyMap implements OnInit, OnDestroy {
   }
 
   satisfactionDrilldownIds(row: JourneyStage): number[] {
-    return resolveDrilldownIds(row.satisfactionFeedbackIds, row.satisfactionReferenceIds);
+    // Prefer theme-supporting reference IDs when they are a focused subset of the polarity bucket.
+    const refs = this.toIds(row.satisfactionReferenceIds);
+    const all = this.toIds(row.satisfactionFeedbackIds);
+    if (refs.length > 0 && (all.length === 0 || refs.length < all.length)) {
+      return resolveDrilldownIds(refs);
+    }
+    return resolveDrilldownIds(refs, all);
   }
 
   dissatisfactionDrilldownIds(row: JourneyStage): number[] {
-    return resolveDrilldownIds(row.dissatisfactionFeedbackIds, row.dissatisfactionReferenceIds);
+    const refs = this.toIds(row.dissatisfactionReferenceIds);
+    const all = this.toIds(row.dissatisfactionFeedbackIds);
+    if (refs.length > 0 && (all.length === 0 || refs.length < all.length)) {
+      return resolveDrilldownIds(refs);
+    }
+    return resolveDrilldownIds(refs, all);
   }
 
   satisfactionReferenceTotal(row: JourneyStage): number {
+    const refs = this.toIds(row.satisfactionReferenceIds);
+    const all = this.toIds(row.satisfactionFeedbackIds);
+    if (refs.length > 0 && (all.length === 0 || refs.length <= all.length)) return refs.length;
     return effectiveLinkedCount(row.satisfactionCount, row.satisfactionFeedbackIds, row.satisfactionReferenceIds);
   }
 
   dissatisfactionReferenceTotal(row: JourneyStage): number {
+    const refs = this.toIds(row.dissatisfactionReferenceIds);
+    const all = this.toIds(row.dissatisfactionFeedbackIds);
+    if (refs.length > 0 && (all.length === 0 || refs.length <= all.length)) return refs.length;
     return effectiveLinkedCount(row.dissatisfactionCount, row.dissatisfactionFeedbackIds, row.dissatisfactionReferenceIds);
   }
 
@@ -395,8 +412,7 @@ export class JourneyMap implements OnInit, OnDestroy {
           : undefined;
     const themeTitle = extractQuotedTheme(this.drilldownTitle());
     const hasTheme = themeTitle !== 'this theme';
-    const hasSnapshotIds = this.drilldownIds.length > 0;
-    if (!hasSnapshotIds && !hasTheme && !this.drilldownStage) return;
+    if (!this.drilldownIds.length && !hasTheme && !this.drilldownStage) return;
 
     this.drilldownPage.set(page);
     this.drilldownLoading.set(true);
@@ -407,8 +423,8 @@ export class JourneyMap implements OnInit, OnDestroy {
       limit: this.drilldownPageSize,
       includeIrrelevant: true,
       groupRetweets: true,
-      // Trust snapshot IDs when present; theme keyword filter emptied journey-map drilldowns.
-      themeTitle: hasTheme && !hasSnapshotIds ? themeTitle : undefined,
+      // Always send themeTitle for journey map so oversized stage buckets can be narrowed.
+      themeTitle: hasTheme ? themeTitle : undefined,
       drilldownTitle: this.drilldownTitle(),
       journeyStage: this.drilldownStage || undefined,
       ...(sentiment ? { sentiment } : {}),

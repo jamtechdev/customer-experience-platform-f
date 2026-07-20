@@ -245,13 +245,17 @@ export class ProcessEnhancement implements OnInit, OnDestroy {
     this.drilldownLoading.set(true);
     this.drilldownRows.set([]);
     const companyId = resolveAppCompanyId(this.authService.currentUser());
-    // Do not send themeTitle when curated snapshot IDs are present — keyword re-filtering
-    // emptied brand-perception drilldowns (194 IDs → 0 rows).
+    // Send theme + negative sentiment so Positive/Neutral rows cannot appear in
+    // "Negative Brand Perception" / process-improvement drilldowns.
     this.analysisService.getFeedbackByIds(companyId, this.drilldownIds, {
       page,
       limit: this.drilldownPageSize,
-      includeIrrelevant: true,
+      includeIrrelevant: false,
       groupRetweets: false,
+      themeTitle: this.drilldownThemeTitle || undefined,
+      drilldownTitle: this.drilldownTitle(),
+      sentiment: 'negative',
+      context: 'negative-linked process improvement',
     }).subscribe({
       next: (res) => {
         this.drilldownLoading.set(false);
