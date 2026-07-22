@@ -72,6 +72,9 @@ export class ProcessEnhancement implements OnInit, OnDestroy {
   private drilldownThemeTitle = '';
   private drilldownRowIndex = -1;
   private rootCauses: Array<{ cause?: string; interpretation?: string; feedbackIds?: number[] }> = [];
+  /** Prevents infinite retry loops when IDs are genuinely missing. */
+  private drilldownThemeOnlyRetryDone = false;
+  private drilldownRefreshTriggered = false;
 
   ngOnInit(): void {
     this.loadProcessData();
@@ -206,13 +209,29 @@ export class ProcessEnhancement implements OnInit, OnDestroy {
 
   openReferences(row: ProcessImprovementRow): void {
     let ids = resolveDrilldownIds(row.linkedFeedbackIds, row.referenceFeedbackIds);
-    const themeTitle = String(row.causeTheme || row.cause || extractQuotedTheme(row.text) || '').trim();
+    let themeTitle = String(row.causeTheme || row.cause || extractQuotedTheme(row.text) || '').trim();
+    if (!themeTitle || themeTitle === 'this theme') {
+      // Pricing / billing PE actions often have no quoted theme — derive from action text.
+      const billingHint = String(row.text || '');
+      if (/pricing|discount|indirim|charge|billing|ücret|ucret|promo|promotion|transparency/i.test(billingHint)) {
+        themeTitle = 'Unfair Charges Complaints';
+      }
+    }
     // Recover IDs from root causes when the row still has a theme but empty/stale id lists.
     if (!ids.length && themeTitle && themeTitle !== 'this theme') {
       ids = resolveRootCauseIdsForProcessItem(this.rootCauses, {
         causeTheme: themeTitle,
         quotedTheme: extractQuotedTheme(row.text),
         index: 0,
+        itemIds: [],
+      });
+    }
+    if (!ids.length && this.rootCauses.length) {
+      // Last resort: union billing / brand root-cause IDs so the modal can still open.
+      ids = resolveRootCauseIdsForProcessItem(this.rootCauses, {
+        causeTheme: themeTitle || 'Unfair Charges Complaints',
+        quotedTheme: extractQuotedTheme(row.text),
+        index: Math.max(0, this.processImprovements().indexOf(row)),
         itemIds: [],
       });
     }
@@ -225,11 +244,13 @@ export class ProcessEnhancement implements OnInit, OnDestroy {
       return;
     }
     this.drilldownRowIndex = this.processImprovements().indexOf(row);
-    this.drilldownThemeTitle = themeTitle;
+    this.drilldownThemeTitle = themeTitle && themeTitle !== 'this theme' ? themeTitle : '';
     this.drilldownTitle.set(this.displayText({ ...row, linkedFeedbackIds: ids, referenceFeedbackIds: ids, linkedCount: ids.length }));
     this.drilldownOpen.set(true);
     this.drilldownIds = ids;
     this.drilldownTotal.set(ids.length);
+    this.drilldownThemeOnlyRetryDone = false;
+    this.drilldownRefreshTriggered = false;
     this.loadDrilldownPage(1);
   }
 
@@ -242,8 +263,15 @@ export class ProcessEnhancement implements OnInit, OnDestroy {
     return formatProcessImprovementText(row.text, count, row.causeTheme || row.cause, row.interpretation);
   }
 
-  loadDrilldownPage(page: number): void {
-    if (!this.drilldownIds.length) {
+  loadDrilldownPage(page: number, themeOnly = false): void {
+    const requestIds = themeOnly ? [] : this.drilldownIds;
+    const themeTitle =
+      this.drilldownThemeTitle ||
+      (/pricing|discount|indirim|charge|billing|ücret|ucret|promo|promotion|transparency/i.test(this.drilldownTitle())
+        ? 'Unfair Charges Complaints'
+        : '') ||
+      undefined;
+    if (!requestIds.length && !themeTitle) {
       this.drilldownRows.set([]);
       this.drilldownTotal.set(0);
       return;
@@ -252,18 +280,16 @@ export class ProcessEnhancement implements OnInit, OnDestroy {
     this.drilldownLoading.set(true);
     this.drilldownRows.set([]);
     const companyId = resolveAppCompanyId(this.authService.currentUser());
-    // Send theme + negative sentiment so Positive/Neutral rows cannot appear in
-    // "Negative Brand Perception" / process-improvement drilldowns.
-    this.analysisService.getFeedbackByIds(companyId, this.drilldownIds, {
+    // Theme-only retry forces backend stale-ID recovery from the active import when snapshot IDs are gone.
+    this.analysisService.getFeedbackByIds(companyId, requestIds, {
       page,
       limit: this.drilldownPageSize,
-      // Curated PE IDs are membership — do not hide rows as "irrelevant" (empty after rebuild).
       includeIrrelevant: true,
       groupRetweets: false,
-      themeTitle: this.drilldownThemeTitle || undefined,
-      drilldownTitle: this.drilldownTitle(),
       sentiment: 'negative',
       context: 'negative-linked process improvement',
+      themeTitle: themeTitle || undefined,
+      drilldownTitle: this.drilldownTitle(),
     }).subscribe({
       next: (res) => {
         this.drilldownLoading.set(false);
@@ -271,7 +297,6 @@ export class ProcessEnhancement implements OnInit, OnDestroy {
         this.drilldownRows.set(list);
         const resolvedTotal = Number(res?.data?.total ?? 0);
         const expected = drilldownModalTotal(this.drilldownIds);
-        // Never keep phantom total when API returned no rows.
         const nextTotal = resolvedTotal > 0 ? resolvedTotal : list.length;
         this.drilldownTotal.set(nextTotal);
         const matchedIds = Array.isArray(res?.data?.matchedIds)
@@ -279,19 +304,47 @@ export class ProcessEnhancement implements OnInit, OnDestroy {
           : [];
         if (nextTotal > 0) {
           this.syncProcessReferenceCount(nextTotal, matchedIds);
+          return;
         }
-        if (nextTotal === 0 && expected > 0) {
+        // Snapshot IDs empty → rebuild from theme against the active CSV import.
+        if (!themeOnly && expected > 0 && !this.drilldownThemeOnlyRetryDone && themeTitle) {
+          this.drilldownThemeOnlyRetryDone = true;
+          this.loadDrilldownPage(page, true);
+          return;
+        }
+        if (expected > 0 && !this.drilldownRefreshTriggered) {
+          this.drilldownRefreshTriggered = true;
           this.snackBar.open(
-            'Linked feedback IDs could not be loaded (they may be stale after re-import). Refresh the CX report to rebuild references.',
+            'Linked feedback references are out of date. Refreshing the CX report to rebuild them…',
             'Close',
             { duration: 6000 }
+          );
+          this.closeDrilldown();
+          this.loadProcessData(true);
+          return;
+        }
+        if (expected > 0) {
+          this.snackBar.open(
+            'Linked feedback IDs could not be loaded. Wait for the CX report refresh to finish, then open references again.',
+            'Close',
+            { duration: 7000 }
           );
         }
       },
       error: () => {
         this.drilldownLoading.set(false);
         this.drilldownRows.set([]);
-        this.drilldownTotal.set(drilldownModalTotal(this.drilldownIds));
+        this.drilldownTotal.set(0);
+        if (!themeOnly && !this.drilldownThemeOnlyRetryDone && themeTitle) {
+          this.drilldownThemeOnlyRetryDone = true;
+          this.loadDrilldownPage(page, true);
+          return;
+        }
+        this.snackBar.open(
+          'Could not load related feedback. Try Refresh on Process Enhancement, then open references again.',
+          'Close',
+          { duration: 6000 }
+        );
       },
     });
   }
@@ -326,5 +379,6 @@ export class ProcessEnhancement implements OnInit, OnDestroy {
     this.drilldownIds = [];
     this.drilldownThemeTitle = '';
     this.drilldownRowIndex = -1;
+    this.drilldownThemeOnlyRetryDone = false;
   }
 }
