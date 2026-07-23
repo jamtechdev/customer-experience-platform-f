@@ -35,8 +35,6 @@ export interface RelatedFeedbackRow {
   /** Model confidence ∈ [0,1] */
   confidence?: number | null;
   needsReview?: boolean | null;
-  /** Aspect-based sentiments from backend (`entity`/`target` + sentiment). */
-  targetSentiments?: Array<{ target?: string; entity?: string; sentiment: string; score?: number }> | null;
   keyPhrases?: string[] | null;
   journeyStage?: string | null;
   isRelevant?: boolean | null;
