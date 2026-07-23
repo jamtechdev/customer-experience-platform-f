@@ -63,6 +63,18 @@
                   {{ row.sentiment || 'unknown' }}
                 </span>
                 <small *ngIf="row.score !== null && row.score !== undefined">Score: {{ row.score }}</small>
+                <small *ngIf="row.confidence !== null && row.confidence !== undefined" class="confidence-line">
+                  Confidence: {{ (row.confidence * 100) | number:'1.0-0' }}%
+                </small>
+                <span *ngIf="row.needsReview" class="review-chip">Needs review</span>
+                <div class="absa-chips" *ngIf="aspectChips(row).length">
+                  <span
+                    *ngFor="let chip of aspectChips(row)"
+                    class="absa-chip"
+                    [class]="chip.sentiment">
+                    {{ chip.target }} · {{ chip.sentiment }}
+                  </span>
+                </div>
               </td>
               <td data-label="AI summary" class="text-cell summary-cell">
                 <ng-container *ngIf="summaryText(row); else missingSummary">

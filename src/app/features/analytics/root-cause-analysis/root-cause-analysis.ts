@@ -529,7 +529,7 @@ export class RootCauseAnalysis implements OnInit, OnDestroy {
       page,
       limit: this.drilldownPageSize,
       includeIrrelevant: true,
-      groupRetweets: false,
+      groupRetweets: true,
     }).subscribe({
       next: (res) => {
         this.drilldownLoading.set(false);

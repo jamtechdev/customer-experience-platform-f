@@ -2,12 +2,22 @@ import { Injectable, inject, signal, computed, PLATFORM_ID } from '@angular/core
 import { isPlatformBrowser } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
-import { Observable, tap, catchError, throwError, BehaviorSubject, of, map, finalize } from 'rxjs';
+import {
+  Observable,
+  tap,
+  catchError,
+  throwError,
+  BehaviorSubject,
+  of,
+  map,
+  finalize,
+  shareReplay,
+} from 'rxjs';
 import { User, AuthResponse, LoginRequest, ApiResponse, UserRole } from '../models';
 import { environment } from '../../../environments/environment';
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class AuthService {
   private readonly http = inject(HttpClient);
@@ -15,39 +25,44 @@ export class AuthService {
   private readonly platformId = inject(PLATFORM_ID);
 
   private currentUserSubject = new BehaviorSubject<User | null>(null);
+  /** In-memory only — never persisted (XSS-safe). HTTP uses httpOnly cookie. */
   private accessToken: string | null = null;
   readonly currentUser$ = this.currentUserSubject.asObservable();
   readonly currentUser = signal<User | null>(null);
-  readonly _isInitialized = signal<boolean>(false); // Made public for guard access
+  readonly _isInitialized = signal<boolean>(false);
   private _isInitializing = false;
   private _isHydratingProfile = signal<boolean>(false);
+  private ensureSessionInFlight: Observable<boolean> | null = null;
+  private refreshInFlight: Observable<ApiResponse<AuthResponse>> | null = null;
+  private sessionEndInProgress = false;
 
-  readonly isAuthenticated = computed(() => {
-    const hasUser = !!this.currentUser();
-    const isHydratingProfile = this._isHydratingProfile();
-    return hasUser || isHydratingProfile;
-  });
+  /** True only when we have a loaded user — never while probing (avoids blink / fake logged-in). */
+  readonly isAuthenticated = computed(() => !!this.currentUser());
 
-  // Observable that emits when auth state is ready (initialized)
-  // Start with false, will be set to true after initialization
   readonly authReady$ = new BehaviorSubject<boolean>(false);
   readonly isAdmin = computed(() => this.currentUser()?.role === UserRole.ADMIN);
 
   constructor() {
-    // Session validation is intentionally guard-driven. Public pages such as
-    // login must not call /auth/profile because no cookie yet means a normal 401.
-    this.accessToken = this.readStoredToken();
+    // Session validation is guard-driven. Public pages must not call /auth/profile first.
+    this.purgeLegacyStoredToken();
     this._isInitialized.set(true);
     this.authReady$.next(true);
+  }
+
+  /** True when we have an in-memory session worth refreshing on 401. */
+  hasActiveSessionHint(): boolean {
+    return !!this.accessToken || !!this.currentUser();
   }
 
   ensureSession(): Observable<boolean> {
     if (this.currentUser()) return of(true);
     if (!isPlatformBrowser(this.platformId)) return of(false);
+    if (this.ensureSessionInFlight) return this.ensureSessionInFlight;
+
     this._isInitializing = true;
     this._isHydratingProfile.set(true);
 
-    return this.getProfile().pipe(
+    this.ensureSessionInFlight = this.getProfile().pipe(
       map(() => true),
       catchError(() => {
         this.clearSessionState();
@@ -57,8 +72,11 @@ export class AuthService {
         this._isHydratingProfile.set(false);
         this._isInitializing = false;
         this.authReady$.next(true);
-      })
+        this.ensureSessionInFlight = null;
+      }),
+      shareReplay(1)
     );
+    return this.ensureSessionInFlight;
   }
 
   private clearSessionState(): void {
@@ -66,32 +84,13 @@ export class AuthService {
     this.currentUserSubject.next(null);
     this._isHydratingProfile.set(false);
     this.accessToken = null;
-    if (isPlatformBrowser(this.platformId)) {
-      try {
-        sessionStorage.removeItem(environment.auth.tokenKey);
-      } catch {
-        /* ignore */
-      }
-    }
+    this.purgeLegacyStoredToken();
   }
 
-  private readStoredToken(): string | null {
-    if (!isPlatformBrowser(this.platformId)) return null;
-    try {
-      return sessionStorage.getItem(environment.auth.tokenKey);
-    } catch {
-      return null;
-    }
-  }
-
-  private persistToken(token: string | null): void {
+  private purgeLegacyStoredToken(): void {
     if (!isPlatformBrowser(this.platformId)) return;
     try {
-      if (token) {
-        sessionStorage.setItem(environment.auth.tokenKey, token);
-      } else {
-        sessionStorage.removeItem(environment.auth.tokenKey);
-      }
+      sessionStorage.removeItem(environment.auth.tokenKey);
     } catch {
       /* ignore */
     }
@@ -103,12 +102,13 @@ export class AuthService {
 
   login(credentials: LoginRequest): Observable<ApiResponse<AuthResponse>> {
     return this.http.post<ApiResponse<AuthResponse>>(`${this.apiBase}/auth/login`, credentials).pipe(
-      tap(response => {
+      tap((response) => {
         if (response.success && response.data?.user) {
+          this.sessionEndInProgress = false;
           this.setSession(response.data);
         }
       }),
-      catchError(error => {
+      catchError((error) => {
         console.error('Login error:', error);
         return throwError(() => error);
       })
@@ -116,34 +116,71 @@ export class AuthService {
   }
 
   logout(): void {
-    this.http.post<ApiResponse<null>>(`${this.apiBase}/auth/logout`, {}).subscribe({
-      error: () => {
-        /* Clear local state even if the server session is already gone. */
-      },
-    });
+    if (isPlatformBrowser(this.platformId)) {
+      this.http.post<ApiResponse<null>>(`${this.apiBase}/auth/logout`, {}).subscribe({
+        error: () => {
+          /* Clear local state even if the server session is already gone. */
+        },
+      });
+    }
     this.clearSessionState();
-    // Redirect to landing page after logout
-    this.router.navigate(['/'], { replaceUrl: true });
+    this.router.navigate(['/login'], { replaceUrl: true });
+  }
+
+  /**
+   * End session once without toast spam / navigation thrash (401 refresh failures).
+   */
+  endSessionQuietly(redirectToLogin = true): void {
+    if (this.sessionEndInProgress) {
+      this.clearSessionState();
+      return;
+    }
+    this.sessionEndInProgress = true;
+    this.clearSessionState();
+    if (isPlatformBrowser(this.platformId)) {
+      this.http.post<ApiResponse<null>>(`${this.apiBase}/auth/logout`, {}).subscribe({
+        error: () => undefined,
+        complete: () => {
+          this.sessionEndInProgress = false;
+        },
+      });
+    } else {
+      this.sessionEndInProgress = false;
+    }
+    if (redirectToLogin && isPlatformBrowser(this.platformId)) {
+      const onLogin = this.router.url.startsWith('/login');
+      if (!onLogin) {
+        this.router.navigate(['/login'], { replaceUrl: true });
+      }
+    }
   }
 
   refreshToken(): Observable<ApiResponse<AuthResponse>> {
-    return this.http.post<ApiResponse<AuthResponse>>(`${this.apiBase}/auth/refresh`, {}).pipe(
-      tap(response => {
-        if (response.success && response.data?.user) {
-          this.setSession(response.data);
-        }
-      })
-    );
+    if (this.refreshInFlight) return this.refreshInFlight;
+    this.refreshInFlight = this.http
+      .post<ApiResponse<AuthResponse>>(`${this.apiBase}/auth/refresh`, {})
+      .pipe(
+        tap((response) => {
+          if (response.success && response.data?.user) {
+            this.sessionEndInProgress = false;
+            this.setSession(response.data);
+          }
+        }),
+        finalize(() => {
+          this.refreshInFlight = null;
+        }),
+        shareReplay(1)
+      );
+    return this.refreshInFlight;
   }
 
   getToken(): string | null {
-    return this.accessToken || this.readStoredToken();
+    return this.accessToken;
   }
 
   hasPermission(permission: string): boolean {
     const user = this.currentUser();
     if (!user) return false;
-    
     return user.role === UserRole.ADMIN;
   }
 
@@ -156,7 +193,7 @@ export class AuthService {
   setSession(authResult: AuthResponse): void {
     const token = authResult.accessToken || (authResult as { token?: string }).token || null;
     this.accessToken = token;
-    this.persistToken(token);
+    this.purgeLegacyStoredToken();
     this.currentUser.set(authResult.user ?? null);
     this.currentUserSubject.next(authResult.user ?? null);
     this._isHydratingProfile.set(false);
@@ -164,16 +201,20 @@ export class AuthService {
 
   forgotPassword(email: string): Observable<ApiResponse<{ message: string }>> {
     return this.http.post<ApiResponse<{ message: string }>>(`${this.apiBase}/auth/forgot-password`, { email }).pipe(
-      catchError(error => {
+      catchError((error) => {
         console.error('Forgot password error:', error);
         return throwError(() => error);
       })
     );
   }
 
-  resetPassword(data: { email: string; otp: string; newPassword: string }): Observable<ApiResponse<{ message: string }>> {
+  resetPassword(data: {
+    email: string;
+    otp: string;
+    newPassword: string;
+  }): Observable<ApiResponse<{ message: string }>> {
     return this.http.post<ApiResponse<{ message: string }>>(`${this.apiBase}/auth/reset-password`, data).pipe(
-      catchError(error => {
+      catchError((error) => {
         console.error('Reset password error:', error);
         return throwError(() => error);
       })
@@ -182,13 +223,13 @@ export class AuthService {
 
   getProfile(): Observable<ApiResponse<User>> {
     return this.http.get<ApiResponse<User>>(`${this.apiBase}/auth/profile`).pipe(
-      tap(response => {
+      tap((response) => {
         if (response.success && response.data) {
           this.currentUser.set(response.data);
           this.currentUserSubject.next(response.data);
         }
       }),
-      catchError(error => {
+      catchError((error) => {
         if (error.status === 401 || error.status === 403) {
           this.clearSessionState();
         } else {

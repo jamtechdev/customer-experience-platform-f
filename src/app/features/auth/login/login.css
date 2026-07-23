@@ -428,6 +428,23 @@
   text-align: center;
 }
 
+.btn-clear-session {
+  margin-top: 12px;
+  background: transparent;
+  border: 1px solid rgba(15, 23, 42, 0.2);
+  color: #475569;
+  font-size: 0.875rem;
+  font-weight: 500;
+  padding: 8px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.btn-clear-session:hover {
+  border-color: #dc2626;
+  color: #b91c1c;
+}
+
 .nav-links {
   display: flex;
   align-items: center;

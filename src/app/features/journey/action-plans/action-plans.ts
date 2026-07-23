@@ -115,6 +115,7 @@ export class ActionPlans implements OnInit, OnDestroy {
   drilldownTotal = signal(0);
   readonly drilldownPageSize = 10;
   private drilldownIds: number[] = [];
+  private drilldownThemeTitle = '';
   showForm = signal(false);
   editingId = signal<number | null>(null);
   form: FormGroup;
@@ -257,9 +258,17 @@ export class ActionPlans implements OnInit, OnDestroy {
     return rows.filter((row) => (row.priority || '').trim().toLowerCase() === priority).length;
   }
 
-  openReferences(row: { action: string; referenceFeedbackIds?: number[]; linkedFeedbackIds?: number[]; linkedCount?: number }): void {
+  openReferences(row: {
+    action: string;
+    causeTheme?: string;
+    cause?: string;
+    referenceFeedbackIds?: number[];
+    linkedFeedbackIds?: number[];
+    linkedCount?: number;
+  }): void {
     const ids = resolveDrilldownIds(row.linkedFeedbackIds, row.referenceFeedbackIds);
     if (!ids.length) return;
+    this.drilldownThemeTitle = String(row.causeTheme || row.cause || '').trim();
     this.drilldownTitle.set(this.displayAction(row));
     this.drilldownOpen.set(true);
     this.drilldownIds = ids;
@@ -287,18 +296,27 @@ export class ActionPlans implements OnInit, OnDestroy {
     this.drilldownPage.set(page);
     this.drilldownLoading.set(true);
     this.drilldownRows.set([]);
-    const user = this.authService.currentUser();
     const companyId = resolveAppCompanyId(this.authService.currentUser());
+    // Action plans are negative-linked clusters — pass context so praise/ownership
+    // (#3697/#3758/#3798/#3780) are dropped and RT duplicates collapse.
     this.analysisService.getFeedbackByIds(companyId, this.drilldownIds, {
       page,
       limit: this.drilldownPageSize,
       includeIrrelevant: true,
-      groupRetweets: false,
+      groupRetweets: true,
+      sentiment: 'negative',
+      context: 'action plan',
+      themeTitle: this.drilldownThemeTitle || undefined,
+      drilldownTitle: this.drilldownTitle(),
     }).subscribe({
       next: (res) => {
         this.drilldownLoading.set(false);
         if (res?.data?.list) this.drilldownRows.set(res.data.list);
-        this.drilldownTotal.set(res?.data?.total ?? this.drilldownIds.length);
+        // Use filtered/grouped total from API — not stale snapshot ID count (48).
+        const apiTotal = Number(res?.data?.total);
+        this.drilldownTotal.set(
+          Number.isFinite(apiTotal) && apiTotal >= 0 ? apiTotal : this.drilldownIds.length
+        );
       },
       error: () => {
         this.drilldownLoading.set(false);
@@ -313,6 +331,7 @@ export class ActionPlans implements OnInit, OnDestroy {
     this.drilldownPage.set(1);
     this.drilldownTotal.set(0);
     this.drilldownIds = [];
+    this.drilldownThemeTitle = '';
   }
 
   goNextPage(): void {

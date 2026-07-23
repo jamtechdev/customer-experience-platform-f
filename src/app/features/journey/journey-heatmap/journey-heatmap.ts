@@ -388,7 +388,7 @@ export class JourneyHeatmap implements OnInit, OnDestroy {
       page,
       limit: this.drilldownPageSize,
       includeIrrelevant: true,
-      groupRetweets: false,
+      groupRetweets: true,
       journeyStage: stage,
       ...(sentiment ? { sentiment } : {}),
     }).subscribe({

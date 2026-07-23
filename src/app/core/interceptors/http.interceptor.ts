@@ -249,12 +249,12 @@ export function errorInterceptor(
   return next(req).pipe(
     catchError((error: HttpErrorResponse) => {
       if (error.status === 401) {
-        const isRefreshRequest = req.url.includes('/auth/refresh');
+        const isRefreshRequest = /\/auth\/refresh(\/|\?|$)/i.test(getRequestPath(req.url));
+        const authService = injector.get(AuthService);
+
         if (isRefreshRequest) {
-          const authService = injector.get(AuthService);
-          const errorMessage = normalizeHttpErrorMessage(error, req);
-          authService.logout();
-          notifyHttpError(toastr, platformId, errorMessage, req, importProcessing, error);
+          // Missing/expired refresh cookie — end quietly (no toast spam / blink loop).
+          authService.endSessionQuietly(true);
           return throwError(() => error);
         }
         // Login/register/etc. can return 401 for wrong credentials — not an expired session.
@@ -281,20 +281,17 @@ export function errorInterceptor(
         if (isAuthProfileEndpoint(req.url)) {
           return throwError(() => error);
         }
-        const authService = injector.get(AuthService);
+        // Anonymous callers (APP_INITIALIZER, public pages) must not trigger refresh/logout.
+        if (!authService.hasActiveSessionHint()) {
+          return throwError(() => error);
+        }
         return authService.refreshToken().pipe(
           switchMap(() => {
             const newReq = req.clone({ withCredentials: true });
             return next(newReq);
           }),
           catchError((refreshError: HttpErrorResponse) => {
-            authService.logout();
-            const refreshMsg = normalizeHttpErrorMessage(refreshError, req);
-            const sessionMsg =
-              refreshMsg && refreshMsg !== 'An error occurred'
-                ? refreshMsg
-                : 'Session expired. Please sign in again.';
-            notifyHttpError(toastr, platformId, sessionMsg, req, importProcessing, refreshError);
+            authService.endSessionQuietly(true);
             return throwError(() => refreshError);
           })
         );

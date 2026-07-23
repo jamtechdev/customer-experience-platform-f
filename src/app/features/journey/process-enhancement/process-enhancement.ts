@@ -285,7 +285,7 @@ export class ProcessEnhancement implements OnInit, OnDestroy {
       page,
       limit: this.drilldownPageSize,
       includeIrrelevant: true,
-      groupRetweets: false,
+      groupRetweets: true,
       sentiment: 'negative',
       context: 'negative-linked process improvement',
       themeTitle: themeTitle || undefined,

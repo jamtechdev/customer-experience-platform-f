@@ -256,7 +256,7 @@ export class TouchpointManager implements OnInit, OnDestroy {
       page,
       limit: this.drilldownPageSize,
       includeIrrelevant: false,
-      groupRetweets: false,
+      groupRetweets: true,
       drilldownTitle: touchpointName,
       touchpointName,
     }).subscribe({

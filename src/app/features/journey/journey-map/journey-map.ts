@@ -437,7 +437,7 @@ export class JourneyMap implements OnInit, OnDestroy {
       page,
       limit: this.drilldownPageSize,
       includeIrrelevant: true,
-      groupRetweets: false,
+      groupRetweets: true,
       // Always send themeTitle for journey map so oversized stage buckets can be narrowed.
       themeTitle: hasTheme ? themeTitle : undefined,
       drilldownTitle: this.drilldownTitle(),

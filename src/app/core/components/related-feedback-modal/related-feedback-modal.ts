@@ -32,6 +32,12 @@ export interface RelatedFeedbackRow {
   date?: string | Date | null;
   sentiment?: string | null;
   score?: number | null;
+  /** Model confidence ∈ [0,1] */
+  confidence?: number | null;
+  needsReview?: boolean | null;
+  /** Aspect-based sentiments from backend (`entity`/`target` + sentiment). */
+  targetSentiments?: Array<{ target?: string; entity?: string; sentiment: string; score?: number }> | null;
+  keyPhrases?: string[] | null;
   journeyStage?: string | null;
   isRelevant?: boolean | null;
 }
@@ -209,5 +215,25 @@ export class RelatedFeedbackModal implements OnChanges, OnDestroy, AfterViewChec
       return `Related by shared ${fallback.toLowerCase()} journey context and customer issue intent.`;
     }
     return 'Related by shared customer-experience issue and journey context.';
+  }
+
+  aspectChips(row: RelatedFeedbackRow): Array<{ target: string; sentiment: string }> {
+    const fromTargets = Array.isArray(row.targetSentiments)
+      ? row.targetSentiments
+          .map((t: any) => ({
+            target: String(t?.target || t?.entity || '').trim(),
+            sentiment: String(t?.sentiment || '').toLowerCase(),
+          }))
+          .filter((t) => t.target && t.sentiment)
+      : [];
+    if (fromTargets.length) return fromTargets.slice(0, 6);
+
+    const phrases = Array.isArray(row.keyPhrases) ? row.keyPhrases : [];
+    const fromPhrases: Array<{ target: string; sentiment: string }> = [];
+    for (const p of phrases) {
+      const m = String(p || '').match(/^absa:([^:]+):(\w+)/i);
+      if (m) fromPhrases.push({ target: m[1], sentiment: m[2].toLowerCase() });
+    }
+    return fromPhrases.slice(0, 6);
   }
 }

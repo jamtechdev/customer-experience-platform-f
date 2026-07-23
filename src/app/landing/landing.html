@@ -13,6 +13,9 @@
       <div class="nav-links">
         <ng-container *ngIf="!isLoggedIn; else loggedInNav">
           <a routerLink="/login" class="btn-primary btn-large">Admin Login</a>
+          <button class="lagout-btn" type="button" (click)="logout()" title="Clear stuck session cookies">
+            Logout
+          </button>
         </ng-container>
         <ng-template #loggedInNav>
           <button class="lagout-btn" type="button" (click)="logout()">Logout</button>

@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { ToastrService } from 'ngx-toastr';
 import { AuthService } from '../../../core/services/auth.service';
+import { AuthSessionBootstrap } from '../../../core/services/auth-session-bootstrap.service';
 import { TranslationService } from '../../../core/services/translation.service';
 import { LoaderService } from '../../../core/services/loader.service';
 
@@ -18,6 +19,7 @@ export class Login implements OnInit {
   private router = inject(Router);
   private route = inject(ActivatedRoute);
   private authService = inject(AuthService);
+  private sessionBootstrap = inject(AuthSessionBootstrap);
   private translationService = inject(TranslationService);
   private toastr = inject(ToastrService);
   protected loaderService = inject(LoaderService);
@@ -60,6 +62,7 @@ export class Login implements OnInit {
         if (response.success && response.data) {
           const okMsg =
             (typeof response.message === 'string' && response.message) || 'Login successful';
+          this.sessionBootstrap.startIfNeeded();
           this.toastr.success(okMsg, 'Signed in');
           this.router.navigate(['/app/dashboard'], { replaceUrl: true });
         } else {
@@ -75,6 +78,13 @@ export class Login implements OnInit {
         this.toastr.error(message, 'Login failed');
       }
     });
+  }
+
+  /** Clear stuck httpOnly cookies when profile/session returns 401. */
+  onClearSession(): void {
+    this.authService.logout();
+    this.errorMessage.set('');
+    this.toastr.info('Session cleared. You can sign in again.', 'Logged out');
   }
 
 }

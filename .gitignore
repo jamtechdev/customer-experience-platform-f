@@ -61,3 +61,7 @@ Thumbs.db
 # Frontend runtime environment config (local-only).
 # `environment.ts` may be generated/modified locally; keep it out of commits.
 src/environments/environment.ts
+# Local-only generated / override files (never deploy these)
+src/assets/env.js
+proxy.conf.local.js
+

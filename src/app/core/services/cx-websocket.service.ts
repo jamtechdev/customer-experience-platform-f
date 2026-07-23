@@ -71,6 +71,10 @@ export class CXWebSocketService {
       path: '/socket.io',
       // Allow polling fallback in local/dev where websocket upgrades may be delayed.
       transports: ['websocket', 'polling'],
+      withCredentials: true,
+      auth: {
+        token: this.authService.getToken() || undefined,
+      },
       reconnection: true,
       reconnectionAttempts: Infinity,
       reconnectionDelay: 1000,
@@ -82,6 +86,8 @@ export class CXWebSocketService {
     const tryJoin = () => {
       if (!this.socket || !this.socket.connected) return;
       if (this.latestCompanyId == null) return;
+      // Refresh token on each join in case session was renewed.
+      this.socket.auth = { token: this.authService.getToken() || undefined };
       this.socket.emit('join:company', String(this.latestCompanyId));
     };
 
@@ -95,7 +101,7 @@ export class CXWebSocketService {
       tryJoin();
     });
 
-    this.socket.on('csv:importStatus', (payload: any) => {
+    const handleImportStatus = (payload: any) => {
       const ev: CSVImportStatusEvent = {
         importId: payload?.importId,
         status: payload?.status,
@@ -106,7 +112,7 @@ export class CXWebSocketService {
 
       if (ev.status === 'processing') {
         this.importProcessing.markProcessing();
-      } else       if (ev.status === 'completed' || ev.status === 'failed') {
+      } else if (ev.status === 'completed' || ev.status === 'failed') {
         this.importProcessing.markIdle();
       }
 
@@ -115,7 +121,11 @@ export class CXWebSocketService {
       if (ev.status === 'completed' && this.latestCompanyId != null) {
         this.twitterCxReportStore.invalidate(this.latestCompanyId, undefined, true);
       }
-    });
+    };
+
+    this.socket.on('csv:importStatus', handleImportStatus);
+    this.socket.on('csv:import-status', handleImportStatus);
+    this.socket.on('import:status', handleImportStatus);
 
     const handleLifecycle = (payload: any) => {
       const ev: AnalyticsLifecycleEvent = {
