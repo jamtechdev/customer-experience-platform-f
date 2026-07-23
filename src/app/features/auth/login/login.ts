@@ -80,11 +80,4 @@ export class Login implements OnInit {
     });
   }
 
-  /** Clear stuck httpOnly cookies when profile/session returns 401. */
-  onClearSession(): void {
-    this.authService.logout();
-    this.errorMessage.set('');
-    this.toastr.info('Session cleared. You can sign in again.', 'Logged out');
-  }
-
 }

@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { TranslationService } from '../core/services/translation.service';
@@ -12,11 +12,10 @@ import { AuthService } from '../core/services/auth.service';
   templateUrl: './landing.html',
   styleUrl: './landing.css',
 })
-export class Landing {
+export class Landing implements OnInit {
   private translationService = inject(TranslationService);
   private authService = inject(AuthService);
 
-  // Translation getter
   t = (key: string): string => this.translationService.translate(key);
 
   currentYear = new Date().getFullYear();
@@ -25,34 +24,39 @@ export class Landing {
     {
       icon: 'analytics',
       titleKey: 'sentimentAnalysis',
-      descriptionKey: 'sentimentAnalysisDesc'
+      descriptionKey: 'sentimentAnalysisDesc',
     },
     {
       icon: 'trending_up',
       titleKey: 'npsAnalysis',
-      descriptionKey: 'npsAnalysisDesc'
+      descriptionKey: 'npsAnalysisDesc',
     },
     {
       icon: 'search',
       titleKey: 'rootCauseAnalysis',
-      descriptionKey: 'rootCauseAnalysisDesc'
+      descriptionKey: 'rootCauseAnalysisDesc',
     },
     {
       icon: 'compare',
       titleKey: 'competitorAnalysis',
-      descriptionKey: 'competitorAnalysisDesc'
+      descriptionKey: 'competitorAnalysisDesc',
     },
     {
       icon: 'map',
       titleKey: 'customerJourney',
-      descriptionKey: 'customerJourneyDesc'
+      descriptionKey: 'customerJourneyDesc',
     },
     {
       icon: 'notifications',
       titleKey: 'detailedReports',
-      descriptionKey: 'detailedReportsDesc'
-    }
+      descriptionKey: 'detailedReportsDesc',
+    },
   ];
+
+  ngOnInit(): void {
+    // Restore cookie session so Logout appears only when actually signed in.
+    this.authService.ensureSession().subscribe();
+  }
 
   get isLoggedIn(): boolean {
     return this.authService.isAuthenticated();
