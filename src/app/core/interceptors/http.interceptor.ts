@@ -34,6 +34,10 @@ function isAuthFormEndpoint(url: string): boolean {
   return AUTH_FORM_PATH_RE.test(getRequestPath(url));
 }
 
+function isAuthSessionEndpoint(url: string): boolean {
+  return /(^|\/)auth\/(logout|refresh|profile)(\/|\?|$)/i.test(getRequestPath(url));
+}
+
 function isAuthProfileEndpoint(url: string): boolean {
   return /(^|\/)auth\/profile(\/|\?|$)/i.test(getRequestPath(url));
 }
@@ -64,7 +68,9 @@ function shouldSuppressErrorToast(
 ): boolean {
   if (req.context.get(SKIP_ERROR_TOAST)) return true;
   if (!isBackendApiRequest(req)) return true;
-  // In local/dev, show auth endpoint failures so debugging is visible immediately.
+  // Logout/refresh/profile probes must never spam toasts (intentional sign-out or cookie probe).
+  if (isAuthSessionEndpoint(req.url)) return true;
+  // In production, hide auth form transport noise; login component shows its own error.
   if (isAuthFormEndpoint(req.url) && environment.production) return true;
   // CX report pages handle load failures in-component; never toast for these APIs.
   if (isTwitterCxReportEndpoint(req.url)) return true;

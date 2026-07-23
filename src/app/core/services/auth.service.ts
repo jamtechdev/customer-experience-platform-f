@@ -1,6 +1,6 @@
 import { Injectable, inject, signal, computed, PLATFORM_ID } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpContext } from '@angular/common/http';
 import { Router } from '@angular/router';
 import {
   Observable,
@@ -15,6 +15,7 @@ import {
 } from 'rxjs';
 import { User, AuthResponse, LoginRequest, ApiResponse, UserRole } from '../models';
 import { environment } from '../../../environments/environment';
+import { SKIP_ERROR_TOAST } from '../http/http-context';
 
 @Injectable({
   providedIn: 'root',
@@ -43,13 +44,11 @@ export class AuthService {
   readonly isAdmin = computed(() => this.currentUser()?.role === UserRole.ADMIN);
 
   constructor() {
-    // Session validation is guard-driven. Public pages must not call /auth/profile first.
     this.purgeLegacyStoredToken();
     this._isInitialized.set(true);
     this.authReady$.next(true);
   }
 
-  /** True when we have an in-memory session worth refreshing on 401. */
   hasActiveSessionHint(): boolean {
     return !!this.accessToken || !!this.currentUser();
   }
@@ -100,6 +99,10 @@ export class AuthService {
     return environment.apiUrl || '/api';
   }
 
+  private silentHttpContext(): HttpContext {
+    return new HttpContext().set(SKIP_ERROR_TOAST, true);
+  }
+
   login(credentials: LoginRequest): Observable<ApiResponse<AuthResponse>> {
     return this.http.post<ApiResponse<AuthResponse>>(`${this.apiBase}/auth/login`, credentials).pipe(
       tap((response) => {
@@ -115,21 +118,31 @@ export class AuthService {
     );
   }
 
+  /** One clean sign-out — no error toasts, no duplicate logout messages. */
   logout(): void {
-    if (isPlatformBrowser(this.platformId)) {
-      this.http.post<ApiResponse<null>>(`${this.apiBase}/auth/logout`, {}).subscribe({
-        error: () => {
-          /* Clear local state even if the server session is already gone. */
-        },
-      });
+    if (this.sessionEndInProgress) {
+      this.clearSessionState();
+      this.router.navigate(['/login'], { replaceUrl: true });
+      return;
     }
+    this.sessionEndInProgress = true;
     this.clearSessionState();
+    if (isPlatformBrowser(this.platformId)) {
+      this.http
+        .post<ApiResponse<null>>(`${this.apiBase}/auth/logout`, {}, { context: this.silentHttpContext() })
+        .subscribe({
+          error: () => undefined,
+          complete: () => {
+            this.sessionEndInProgress = false;
+          },
+        });
+    } else {
+      this.sessionEndInProgress = false;
+    }
     this.router.navigate(['/login'], { replaceUrl: true });
   }
 
-  /**
-   * End session once without toast spam / navigation thrash (401 refresh failures).
-   */
+  /** End session once without toast spam (401 refresh failures). */
   endSessionQuietly(redirectToLogin = true): void {
     if (this.sessionEndInProgress) {
       this.clearSessionState();
@@ -138,18 +151,19 @@ export class AuthService {
     this.sessionEndInProgress = true;
     this.clearSessionState();
     if (isPlatformBrowser(this.platformId)) {
-      this.http.post<ApiResponse<null>>(`${this.apiBase}/auth/logout`, {}).subscribe({
-        error: () => undefined,
-        complete: () => {
-          this.sessionEndInProgress = false;
-        },
-      });
+      this.http
+        .post<ApiResponse<null>>(`${this.apiBase}/auth/logout`, {}, { context: this.silentHttpContext() })
+        .subscribe({
+          error: () => undefined,
+          complete: () => {
+            this.sessionEndInProgress = false;
+          },
+        });
     } else {
       this.sessionEndInProgress = false;
     }
     if (redirectToLogin && isPlatformBrowser(this.platformId)) {
-      const onLogin = this.router.url.startsWith('/login');
-      if (!onLogin) {
+      if (!this.router.url.startsWith('/login')) {
         this.router.navigate(['/login'], { replaceUrl: true });
       }
     }
@@ -158,7 +172,11 @@ export class AuthService {
   refreshToken(): Observable<ApiResponse<AuthResponse>> {
     if (this.refreshInFlight) return this.refreshInFlight;
     this.refreshInFlight = this.http
-      .post<ApiResponse<AuthResponse>>(`${this.apiBase}/auth/refresh`, {})
+      .post<ApiResponse<AuthResponse>>(
+        `${this.apiBase}/auth/refresh`,
+        {},
+        { context: this.silentHttpContext() }
+      )
       .pipe(
         tap((response) => {
           if (response.success && response.data?.user) {
@@ -178,7 +196,7 @@ export class AuthService {
     return this.accessToken;
   }
 
-  hasPermission(permission: string): boolean {
+  hasPermission(_permission: string): boolean {
     const user = this.currentUser();
     if (!user) return false;
     return user.role === UserRole.ADMIN;
@@ -222,21 +240,23 @@ export class AuthService {
   }
 
   getProfile(): Observable<ApiResponse<User>> {
-    return this.http.get<ApiResponse<User>>(`${this.apiBase}/auth/profile`).pipe(
-      tap((response) => {
-        if (response.success && response.data) {
-          this.currentUser.set(response.data);
-          this.currentUserSubject.next(response.data);
-        }
-      }),
-      catchError((error) => {
-        if (error.status === 401 || error.status === 403) {
-          this.clearSessionState();
-        } else {
-          console.error('Get profile error:', error);
-        }
-        return throwError(() => error);
-      })
-    );
+    return this.http
+      .get<ApiResponse<User>>(`${this.apiBase}/auth/profile`, { context: this.silentHttpContext() })
+      .pipe(
+        tap((response) => {
+          if (response.success && response.data) {
+            this.currentUser.set(response.data);
+            this.currentUserSubject.next(response.data);
+          }
+        }),
+        catchError((error) => {
+          if (error.status === 401 || error.status === 403) {
+            this.clearSessionState();
+          } else {
+            console.error('Get profile error:', error);
+          }
+          return throwError(() => error);
+        })
+      );
   }
 }
