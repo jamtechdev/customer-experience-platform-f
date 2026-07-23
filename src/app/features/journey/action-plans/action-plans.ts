@@ -113,9 +113,12 @@ export class ActionPlans implements OnInit, OnDestroy {
   drilldownRows = signal<RelatedFeedbackRow[]>([]);
   drilldownPage = signal(1);
   drilldownTotal = signal(0);
+  drilldownOriginalCount = signal<number | null>(null);
+  drilldownUniqueCount = signal<number | null>(null);
   readonly drilldownPageSize = 10;
   private drilldownIds: number[] = [];
   private drilldownThemeTitle = '';
+  private drilldownRowIndex = -1;
   showForm = signal(false);
   editingId = signal<number | null>(null);
   form: FormGroup;
@@ -269,11 +272,15 @@ export class ActionPlans implements OnInit, OnDestroy {
   }): void {
     const ids = resolveDrilldownIds(row.linkedFeedbackIds, row.referenceFeedbackIds);
     if (!ids.length) return;
+    this.drilldownRowIndex = this.reportPlanRows().findIndex((r) => r === row);
     this.drilldownThemeTitle = String(row.causeTheme || row.cause || '').trim();
     this.drilldownTitle.set(this.displayAction(row));
     this.drilldownOpen.set(true);
     this.drilldownIds = ids;
+    // Snapshot ID count (e.g. 314) is provisional — modal uses unique after RT group.
     this.drilldownTotal.set(this.referenceCount(row));
+    this.drilldownOriginalCount.set(null);
+    this.drilldownUniqueCount.set(null);
     this.loadDrilldownPage(1);
   }
 
@@ -328,17 +335,72 @@ export class ActionPlans implements OnInit, OnDestroy {
       next: (res) => {
         this.drilldownLoading.set(false);
         if (res?.data?.list) this.drilldownRows.set(res.data.list);
-        // Use filtered/grouped total from API — not stale snapshot ID count (48).
-        const apiTotal = Number(res?.data?.total);
-        this.drilldownTotal.set(
-          Number.isFinite(apiTotal) && apiTotal >= 0 ? apiTotal : this.drilldownIds.length
-        );
+        // Unique after negative-filter + retweet grouping (48), not raw snapshot IDs (314).
+        const uniqueRaw = Number(res?.data?.uniqueCount ?? res?.data?.total);
+        const unique =
+          Number.isFinite(uniqueRaw) && uniqueRaw >= 0 ? uniqueRaw : this.drilldownIds.length;
+        const originalRaw = Number(res?.data?.originalCount);
+        const original =
+          Number.isFinite(originalRaw) && originalRaw > 0 ? originalRaw : this.drilldownIds.length;
+        this.drilldownTotal.set(unique);
+        this.drilldownUniqueCount.set(unique);
+        this.drilldownOriginalCount.set(original > unique ? original : null);
+        const matchedIds = Array.isArray(res?.data?.matchedIds)
+          ? (res.data.matchedIds || []).map((id) => Number(id)).filter((id) => id > 0)
+          : [];
+        this.syncActionPlanReferenceCount(unique, matchedIds, original);
       },
       error: () => {
         this.drilldownLoading.set(false);
-        this.drilldownTotal.set(this.drilldownIds.length);
+        this.drilldownTotal.set(0);
+        this.drilldownOriginalCount.set(null);
+        this.drilldownUniqueCount.set(null);
       },
     });
+  }
+
+  /** Keep card "View references (N)" equal to modal unique total (not raw RT IDs). */
+  private syncActionPlanReferenceCount(uniqueTotal: number, matchedIds: number[], originalTotal: number): void {
+    const capped = Math.max(0, uniqueTotal);
+    // Prefer API matchedIds (unique group reps). If missing, slice provisional IDs to unique total
+    // so linkedCount is not overridden by a longer raw ID list (314 vs 48 bug).
+    const ids = resolveDrilldownIds(matchedIds.length ? matchedIds : this.drilldownIds).slice(0, capped);
+    if (!ids.length && capped > 0) return;
+    this.drilldownIds = ids;
+    this.drilldownTotal.set(capped);
+    this.drilldownUniqueCount.set(capped);
+    this.drilldownOriginalCount.set(originalTotal > capped ? originalTotal : null);
+
+    let idx = this.drilldownRowIndex;
+    if (idx < 0) {
+      idx = this.reportPlanRows().findIndex((r) =>
+        resolveDrilldownIds(r.linkedFeedbackIds, r.referenceFeedbackIds).some((id) =>
+          this.drilldownIds.includes(id)
+        )
+      );
+      this.drilldownRowIndex = idx;
+    }
+    if (idx < 0) return;
+
+    this.reportPlanRows.update((rows) =>
+      rows.map((row, i) => {
+        if (i !== idx) return row;
+        const synced = syncActionPlanRowCounts({
+          ...row,
+          linkedFeedbackIds: ids,
+          referenceFeedbackIds: ids,
+          linkedCount: capped,
+        });
+        return {
+          ...synced,
+          priority: priorityLabelFromClusterSize(capped),
+        };
+      })
+    );
+    const updated = this.reportPlanRows()[idx];
+    if (updated) {
+      this.drilldownTitle.set(this.displayAction(updated));
+    }
   }
 
   closeDrilldown(): void {
@@ -346,8 +408,11 @@ export class ActionPlans implements OnInit, OnDestroy {
     this.drilldownRows.set([]);
     this.drilldownPage.set(1);
     this.drilldownTotal.set(0);
+    this.drilldownOriginalCount.set(null);
+    this.drilldownUniqueCount.set(null);
     this.drilldownIds = [];
     this.drilldownThemeTitle = '';
+    this.drilldownRowIndex = -1;
   }
 
   goNextPage(): void {
