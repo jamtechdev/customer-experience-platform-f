@@ -734,8 +734,8 @@ export function finalizeActionPlanRows<T extends FinalizableActionPlanRow>(draft
     const idCount = normalizeDrilldownIds(
       draft.linkedFeedbackIds?.length ? draft.linkedFeedbackIds : draft.referenceFeedbackIds
     ).length;
-    // Prefer real ID lists over a phantom linkedCount (Process Improvement 194-of-0 bug).
-    const linkedCount = idCount > 0 ? idCount : 0;
+    // Prefer real ID lists; keep draft.linkedCount only when IDs are missing.
+    const linkedCount = idCount > 0 ? idCount : Number(draft.linkedCount) > 0 ? Number(draft.linkedCount) : 0;
     return {
       ...draft,
       causeTheme,
@@ -743,6 +743,10 @@ export function finalizeActionPlanRows<T extends FinalizableActionPlanRow>(draft
       action,
       linkedCount,
       priority: priorityLabelFromClusterSize(linkedCount),
+      impact:
+        linkedCount > 0
+          ? `${linkedCount} customer feedback row(s) clustered in this theme`
+          : draft.impact,
     };
   });
 
@@ -1035,14 +1039,43 @@ export function alignLinkedCountInText(text: string, count: number, label = 'lin
     .replace(/\(\d+ negative-linked row\(s\)\)/g, `(${count} ${label})`)
     .replace(/\(\d+ linked row\(s\)\)/g, `(${count} ${label})`)
     .replace(/\(\d+ linked feedback row\(s\)\)/g, `(${count} ${label})`)
+    .replace(/\b\d+\s+customer feedback row\(s\)/gi, `${count} customer feedback row(s)`)
     .replace(/\d+ brand-relevant mention\(s\)/gi, `${count} ${label}`);
-  if (!/\(\d+/.test(replaced)) {
+  if (!/\(\d+/.test(replaced) && !/\b\d+\s+customer feedback row\(s\)/i.test(replaced)) {
     return `${replaced} (${count} ${label})`;
   }
   if (/\(\d+[^)]*$/.test(replaced)) {
     return replaced.replace(/\(\d+[^)]*$/, `(${count} ${label})`);
   }
   return replaced;
+}
+
+/**
+ * One source of truth for Action Plan cards/table: title count, impact text, and Sources
+ * button must all equal the unique linked feedback ID count (never a stale LLM number).
+ */
+export function syncActionPlanRowCounts<
+  T extends {
+    action?: string;
+    impact?: string;
+    linkedCount?: number;
+    linkedFeedbackIds?: number[];
+    referenceFeedbackIds?: number[];
+  },
+>(row: T): T & { action: string; impact: string; linkedCount: number } {
+  const count = effectiveLinkedCount(row.linkedCount, row.linkedFeedbackIds, row.referenceFeedbackIds);
+  const actionCore = String(row.action || '')
+    .replace(/\(\d+\s*(?:negative-)?linked(?:\s+feedback)?\s+row\(s\)\)/gi, '')
+    .trim();
+  return {
+    ...row,
+    linkedCount: count,
+    action: count > 0 ? alignLinkedCountInText(actionCore, count, 'linked feedback row(s)') : actionCore,
+    impact:
+      count > 0
+        ? `${count} customer feedback row(s) clustered in this theme`
+        : String(row.impact || '').trim(),
+  };
 }
 
 /** Strip misleading product-specific wording when label entity is not dominant (Finding 7). */

@@ -1,4 +1,4 @@
-import { formatCellPct, formatProcessImprovementText, generalizeMisleadingJourneyThemeLabel, heatmapCellIntensityPct, journeyReferenceDrilldownIds, journeyReferenceTotal, reconcileHeatmapStageCounts, repairJourneyThemeDisplay, repairStaleActionText, repairWeakClusterCauseTitle, resolveHeatmapDisplayPct, resolveRootCauseIdsForProcessItem, finalizeProcessImprovementRows, finalizeActionPlanRows, isOwnerFallbackAction } from './drilldown-display';
+import { formatCellPct, formatProcessImprovementText, generalizeMisleadingJourneyThemeLabel, heatmapCellIntensityPct, journeyReferenceDrilldownIds, journeyReferenceTotal, reconcileHeatmapStageCounts, repairJourneyThemeDisplay, repairStaleActionText, repairWeakClusterCauseTitle, resolveHeatmapDisplayPct, resolveRootCauseIdsForProcessItem, finalizeProcessImprovementRows, finalizeActionPlanRows, isOwnerFallbackAction, syncActionPlanRowCounts } from './drilldown-display';
 
 describe('drilldown-display (QA Finding 3 & 4)', () => {
   it('shows decimal percentage for small non-zero shares (Finding 3)', () => {
@@ -191,4 +191,17 @@ describe('drilldown-display (QA Finding 3 & 4)', () => {
     expect(journeyReferenceDrilldownIds(input)).toEqual(fullBucket);
     expect(journeyReferenceTotal(input)).toBe(3);
   });
+
+  it('syncs action title, impact, and sources to the same ID count', () => {
+    const synced = syncActionPlanRowCounts({
+      action: 'Launch a brand trust recovery program (99 linked feedback row(s))',
+      impact: '72 customer feedback row(s) clustered in this theme',
+      linkedFeedbackIds: [1, 2, 3, 3, 4],
+      linkedCount: 99,
+    });
+    expect(synced.linkedCount).toBe(4);
+    expect(synced.action).toContain('(4 linked feedback row(s))');
+    expect(synced.impact).toBe('4 customer feedback row(s) clustered in this theme');
+  });
+
 });

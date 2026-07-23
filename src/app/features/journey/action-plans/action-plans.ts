@@ -24,7 +24,7 @@ import { notifyCxReportLoadFailure } from '../../../core/utils/twitter-cx-report
 import { ImportProcessingService } from '../../../core/services/import-processing.service';
 import { RelatedFeedbackModal, RelatedFeedbackRow } from '../../../core/components/related-feedback-modal/related-feedback-modal';
 import { resolveAppCompanyId } from '../../../core/utils/company-scope';
-import { effectiveLinkedCount, alignLinkedCountInText, resolveDrilldownIds, finalizeActionPlanRows, priorityLabelFromClusterSize, resolveActionPlanRootCauseMeta, mergeRootCausesForDisplay } from '../../../core/utils/drilldown-display';
+import { effectiveLinkedCount, syncActionPlanRowCounts, resolveDrilldownIds, finalizeActionPlanRows, priorityLabelFromClusterSize, resolveActionPlanRootCauseMeta, mergeRootCausesForDisplay } from '../../../core/utils/drilldown-display';
 
 @Component({
   selector: 'app-action-plans',
@@ -217,14 +217,15 @@ export class ActionPlans implements OnInit, OnDestroy {
     });
     const collapsed = finalizeActionPlanRows(drafts);
     this.reportPlanRows.set(
-      collapsed.map((row) => ({
-        ...row,
-        owner: row.owner ?? '',
-        impact: row.impact ?? '',
-        horizon: row.horizon ?? '',
-        priority: priorityLabelFromClusterSize(row.linkedCount || 0),
-        action: alignLinkedCountInText(row.action, row.linkedCount || 0, 'linked feedback row(s)'),
-      }))
+      collapsed.map((row) => {
+        const synced = syncActionPlanRowCounts(row);
+        return {
+          ...synced,
+          owner: synced.owner ?? '',
+          horizon: synced.horizon ?? '',
+          priority: priorityLabelFromClusterSize(synced.linkedCount || 0),
+        };
+      })
     );
     const mapped = this.reportPlanRows().map((x, idx) => ({
       id: idx + 1,
@@ -286,9 +287,24 @@ export class ActionPlans implements OnInit, OnDestroy {
     interpretation?: string;
     linkedFeedbackIds?: number[];
     referenceFeedbackIds?: number[];
+    linkedCount?: number;
   }): string {
-    const count = this.referenceCount(row);
-    return alignLinkedCountInText(row.action, count, 'linked feedback row(s)');
+    return syncActionPlanRowCounts(row).action;
+  }
+
+  displayImpact(row: {
+    impact?: string;
+    linkedFeedbackIds?: number[];
+    referenceFeedbackIds?: number[];
+    linkedCount?: number;
+  }): string {
+    return syncActionPlanRowCounts({
+      action: '',
+      impact: row.impact || '',
+      linkedFeedbackIds: row.linkedFeedbackIds,
+      referenceFeedbackIds: row.referenceFeedbackIds,
+      linkedCount: row.linkedCount,
+    }).impact;
   }
 
   loadDrilldownPage(page: number): void {

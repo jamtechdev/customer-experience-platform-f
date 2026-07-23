@@ -120,7 +120,7 @@
                 <p class="plan-action">{{ displayAction(row) }}</p>
                 <div class="plan-meta">
                   <span><mat-icon>person</mat-icon>{{ row.owner }}</span>
-                  <span><mat-icon>trending_up</mat-icon>{{ row.impact }}</span>
+                  <span><mat-icon>trending_up</mat-icon>{{ displayImpact(row) }}</span>
                 </div>
                 @if (referenceCount(row) > 0) {
                   <button mat-stroked-button type="button" class="ref-link-btn" (click)="openReferences(row)">
@@ -151,7 +151,7 @@
               </ng-container>
               <ng-container matColumnDef="impact">
                 <th mat-header-cell *matHeaderCellDef>Impact expected</th>
-                <td mat-cell *matCellDef="let row" class="wrap-cell impact-text">{{ row.impact }}</td>
+                <td mat-cell *matCellDef="let row" class="wrap-cell impact-text">{{ displayImpact(row) }}</td>
               </ng-container>
               <ng-container matColumnDef="horizon">
                 <th mat-header-cell *matHeaderCellDef>Time horizon</th>
