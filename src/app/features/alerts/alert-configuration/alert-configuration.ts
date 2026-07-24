@@ -15,6 +15,7 @@ import { AuthService } from '../../../core/services/auth.service';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { OllamaLoader } from '../../../core/components/ollama-loader/ollama-loader';
 import { FirebaseNotificationService } from '../../../core/services/firebase-notification.service';
+import { resolveAppCompanyId } from '../../../core/utils/company-scope';
 
 @Component({
   selector: 'app-alert-configuration',
@@ -210,7 +211,7 @@ export class AlertConfiguration implements OnInit {
   }
 
   runCheck(): void {
-    const companyId = this.authService.currentUser()?.settings?.companyId ?? 1;
+    const companyId = resolveAppCompanyId(this.authService.currentUser());
     this.runningCheck.set(true);
     this.alertService.checkAlerts(companyId, this.form.valid ? this.form.value : undefined).subscribe({
       next: (res) => {

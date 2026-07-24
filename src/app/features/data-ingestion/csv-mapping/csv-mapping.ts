@@ -20,6 +20,7 @@ import {
 } from '../../../core/services/csv.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { ImportProcessingService } from '../../../core/services/import-processing.service';
+import { resolveAppCompanyId } from '../../../core/utils/company-scope';
 
 @Component({
   selector: 'app-csv-mapping',
@@ -67,7 +68,7 @@ export class CsvMapping implements OnInit {
   // systemField -> csvHeader (or null)
   fieldSelections = signal<Record<string, string | null>>({});
 
-  companyId = computed(() => this.authService.currentUser()?.settings?.companyId ?? 1);
+  companyId = computed(() => resolveAppCompanyId(this.authService.currentUser()));
 
   systemFieldsSorted = computed<SystemField[]>(() => {
     const previewFields = this.preview()?.systemFields ?? [];

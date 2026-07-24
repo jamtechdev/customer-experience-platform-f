@@ -16,6 +16,7 @@ import { Subscription } from 'rxjs';
 import { RelatedFeedbackModal, RelatedFeedbackRow } from '../../../core/components/related-feedback-modal/related-feedback-modal';
 import { ReportDateRangeFilter } from '../../../core/components/report-date-range-filter/report-date-range-filter';
 import { applyDashboardDatePreset, toLocalYmd } from '../../../core/utils/report-date-presets';
+import { resolveAppCompanyId } from '../../../core/utils/company-scope';
 
 interface KPICard {
   title: string;
@@ -263,11 +264,8 @@ export class MainDashboard implements OnInit, OnDestroy {
     this.dashboardTrends.set(null);
     this.kpiCards.set([]);
     
-    const user = this.authService.currentUser();
-    // Admin should see aggregated dashboard across all companies.
-    const companyId = user?.role === 'admin'
-      ? undefined
-      : (user?.settings?.companyId || 1);
+    const id = resolveAppCompanyId(this.authService.currentUser());
+    const companyId = id > 0 ? id : undefined;
     const startYmd = this.startDate();
     const endYmd = this.endDate();
     const start = startYmd ? new Date(`${startYmd}T00:00:00`) : undefined;
@@ -446,8 +444,8 @@ export class MainDashboard implements OnInit, OnDestroy {
     this.drilldownPage.set(page);
     this.drilldownLoading.set(true);
     this.drilldownRows.set([]);
-    const user = this.authService.currentUser();
-    const companyId = user?.role === 'admin' ? undefined : (user?.settings?.companyId || 1);
+    const id = resolveAppCompanyId(this.authService.currentUser());
+    const companyId = id > 0 ? id : undefined;
     this.analysisService
       .getAnalyticsDrilldown({
         companyId,

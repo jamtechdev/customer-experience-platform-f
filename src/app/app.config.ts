@@ -1,7 +1,7 @@
 import { ApplicationConfig, importProvidersFrom, provideBrowserGlobalErrorListeners } from '@angular/core';
 import { provideRouter, withComponentInputBinding } from '@angular/router';
 import { provideHttpClient, withInterceptors, withFetch } from '@angular/common/http';
-import { provideNoopAnimations } from '@angular/platform-browser/animations';
+import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
 import { MAT_SNACK_BAR_DEFAULT_OPTIONS, MatSnackBarModule } from '@angular/material/snack-bar';
 import { provideToastr } from 'ngx-toastr';
 
@@ -12,11 +12,12 @@ import {
   authInterceptor,
   errorInterceptor,
   languageInterceptor,
+  loaderInterceptor,
 } from './core/interceptors/http.interceptor';
 
 export const appConfig: ApplicationConfig = {
   providers: [
-    provideNoopAnimations(),
+    provideAnimationsAsync(),
     provideToastr({
       timeOut: 4500,
       extendedTimeOut: 1500,
@@ -42,7 +43,13 @@ export const appConfig: ApplicationConfig = {
     // Auth guards + login call AuthSessionBootstrap after a real session exists.
     provideHttpClient(
       withFetch(),
-      withInterceptors([apiUrlInterceptor, authInterceptor, languageInterceptor, errorInterceptor])
+      withInterceptors([
+        apiUrlInterceptor,
+        authInterceptor,
+        languageInterceptor,
+        loaderInterceptor,
+        errorInterceptor,
+      ])
     ),
   ],
 };

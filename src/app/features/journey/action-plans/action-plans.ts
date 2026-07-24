@@ -450,7 +450,8 @@ export class ActionPlans implements OnInit, OnDestroy {
 
   saveActionPlan(): void {
     if (this.form.invalid) return;
-    const companyId = this.authService.currentUser()?.settings?.companyId ?? 1;
+    const companyId = resolveAppCompanyId(this.authService.currentUser());
+    if (!companyId) return;
     const value = this.form.getRawValue();
     const body = {
       title: value.title,
@@ -481,7 +482,8 @@ export class ActionPlans implements OnInit, OnDestroy {
 
   generateSuggestions(): void {
     if (!this.canGenerateSuggestions()) return;
-    const companyId = this.authService.currentUser()?.settings?.companyId ?? 1;
+    const companyId = resolveAppCompanyId(this.authService.currentUser());
+    if (!companyId) return;
     this.generating.set(true);
     this.actionPlanService.generateFromRecommendations(companyId).subscribe({
       next: (res) => {

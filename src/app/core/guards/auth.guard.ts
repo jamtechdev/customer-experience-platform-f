@@ -77,7 +77,7 @@ export const adminGuard: CanActivateFn = (route, state) => {
       bootstrap.startIfNeeded();
       return authService.currentUser()?.role === UserRole.ADMIN
         ? true
-        : router.createUrlTree(['/app/reports/dashboard-reports']);
+        : router.createUrlTree(['/login'], { queryParams: { reason: 'admin-required' } });
     })
   );
 };

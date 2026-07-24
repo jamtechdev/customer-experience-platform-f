@@ -18,6 +18,7 @@ import { catchError } from 'rxjs/operators';
 import { OllamaLoader } from '../../../core/components/ollama-loader/ollama-loader';
 import { RelatedFeedbackModal, RelatedFeedbackRow } from '../../../core/components/related-feedback-modal/related-feedback-modal';
 import { drilldownModalTotal } from '../../../core/utils/drilldown-display';
+import { resolveAppCompanyId } from '../../../core/utils/company-scope';
 import { RootCauseCoverageStats } from '../../../core/models/analysis.model';
 
 interface RootCauseStructuredInsights {
@@ -571,18 +572,16 @@ export class RootCauseAnalysis implements OnInit, OnDestroy {
   }
 
   private currentCompanyId(): number {
-    return this.authService.currentUser()?.settings?.companyId || 1;
+    return resolveAppCompanyId(this.authService.currentUser());
   }
 
   private resolveCompanyId(): number {
-    const user = this.authService.currentUser();
-    if (user?.role === 'admin') return user?.settings?.companyId ?? 1;
-    return user?.settings?.companyId ?? 1;
+    return resolveAppCompanyId(this.authService.currentUser());
   }
 
   private listCompanyId(): number | undefined {
-    const user = this.authService.currentUser();
-    return user?.role === 'admin' ? undefined : (user?.settings?.companyId || 1);
+    const id = resolveAppCompanyId(this.authService.currentUser());
+    return id > 0 ? id : undefined;
   }
 
   private resolveCoverage(

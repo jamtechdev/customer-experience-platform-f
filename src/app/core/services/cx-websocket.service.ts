@@ -7,6 +7,7 @@ import { AuthService } from './auth.service';
 import { TwitterCxReportStore } from './twitter-cx-report.store';
 import { ImportProcessingService } from './import-processing.service';
 import { environment } from '../../../environments/environment';
+import { resolveAppCompanyId } from '../utils/company-scope';
 
 export type CSVImportStatusEvent = {
   importId: number;
@@ -183,7 +184,8 @@ export class CXWebSocketService {
 
     // Keep company room in sync with auth changes
     this.authService.currentUser$.subscribe((u) => {
-      this.latestCompanyId = u?.settings?.companyId ?? 1;
+      const id = resolveAppCompanyId(u);
+      this.latestCompanyId = id > 0 ? id : null;
       tryJoin();
     });
   }

@@ -34,6 +34,7 @@ import { OllamaLoader } from '../../../core/components/ollama-loader/ollama-load
 import { TranslationService } from '../../../core/services/translation.service';
 import { RelatedFeedbackModal, RelatedFeedbackRow } from '../../../core/components/related-feedback-modal/related-feedback-modal';
 import { ReportDateRangeFilter } from '../../../core/components/report-date-range-filter/report-date-range-filter';
+import { resolveAppCompanyId } from '../../../core/utils/company-scope';
 
 interface SentimentStats {
   positive: number;
@@ -705,16 +706,14 @@ export class SentimentAnalysis implements OnInit, OnDestroy {
   }
 
   getCompanyId(): number | undefined {
-    const user = this.authService.currentUser();
-    if (user?.role === 'admin') return undefined;
-    return user?.settings?.companyId ?? 1;
+    const id = resolveAppCompanyId(this.authService.currentUser());
+    return id > 0 ? id : undefined;
   }
 
-  /** Admin can delete in global scope (undefined companyId). */
+  /** Omit company when missing so API can use optional/global scope. */
   private effectiveCompanyIdForMutations(): number | undefined {
-    const user = this.authService.currentUser();
-    if (user?.role === 'admin') return undefined;
-    return user?.settings?.companyId ?? 1;
+    const id = resolveAppCompanyId(this.authService.currentUser());
+    return id > 0 ? id : undefined;
   }
 
   loadSentimentStats(withFilters: boolean = this.filtersApplied()): void {

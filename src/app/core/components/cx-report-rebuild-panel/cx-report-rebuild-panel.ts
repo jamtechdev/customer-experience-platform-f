@@ -9,6 +9,7 @@ import { AnalysisService } from '../../services/analysis.service';
 import { AuthService } from '../../services/auth.service';
 import { TwitterCxReportStore } from '../../services/twitter-cx-report.store';
 import { TranslationService } from '../../services/translation.service';
+import { resolveAppCompanyId } from '../../utils/company-scope';
 
 type SnapshotStatus = 'none' | 'pending' | 'ready' | 'failed';
 
@@ -54,8 +55,7 @@ export class CxReportRebuildPanel implements OnInit, OnDestroy {
   }
 
   private companyId(): number {
-    const user = this.auth.currentUser();
-    return user?.role === 'admin' ? 1 : (user?.settings?.companyId ?? 1);
+    return resolveAppCompanyId(this.auth.currentUser());
   }
 
   statusLabel(): string {

@@ -17,6 +17,7 @@ import { CXWebSocketService } from '../../../core/services/cx-websocket.service'
 import { TranslationService } from '../../../core/services/translation.service';
 import { RelatedFeedbackModal, RelatedFeedbackRow } from '../../../core/components/related-feedback-modal/related-feedback-modal';
 import { drilldownModalTotal } from '../../../core/utils/drilldown-display';
+import { resolveAppCompanyId } from '../../../core/utils/company-scope';
 
 interface PlatformData {
   platform: string;
@@ -118,8 +119,8 @@ export class SocialAnalysis implements OnInit, OnDestroy {
   }
 
   loadSocialMediaData(): void {
-    const user = this.authService.currentUser();
-    const companyId = user?.role === 'admin' ? undefined : (user?.settings?.companyId ?? 1);
+    const id = resolveAppCompanyId(this.authService.currentUser());
+    const companyId = id > 0 ? id : undefined;
     this.loading.set(true);
     this.error.set(null);
 
@@ -217,8 +218,8 @@ export class SocialAnalysis implements OnInit, OnDestroy {
     this.drilldownPage.set(page);
     this.drilldownLoading.set(true);
     this.drilldownRows.set([]);
-    const user = this.authService.currentUser();
-    const companyId = user?.role === 'admin' ? undefined : (user?.settings?.companyId ?? 1);
+    const id = resolveAppCompanyId(this.authService.currentUser());
+    const companyId = id > 0 ? id : undefined;
     this.analysisService.getAnalyticsDrilldown({
       companyId,
       ids: state.ids,

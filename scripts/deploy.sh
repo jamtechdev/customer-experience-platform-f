@@ -3,6 +3,9 @@ set -euo pipefail
 
 # Frontend production deploy — run from frontend repo on the server.
 #
+# Intentionally deploys the static browser build to nginx (not Angular SSR).
+# SSR output exists for local/serve:ssr but production hosting is SPA + API.
+#
 #   cd /var/www/customer-experience-platform-f
 #   npm run deploy
 #

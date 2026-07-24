@@ -27,6 +27,7 @@ import { Subscription } from 'rxjs';
 import { OllamaLoader } from '../../../core/components/ollama-loader/ollama-loader';
 import { RelatedFeedbackModal, RelatedFeedbackRow } from '../../../core/components/related-feedback-modal/related-feedback-modal';
 import { ReportDateRangeFilter } from '../../../core/components/report-date-range-filter/report-date-range-filter';
+import { resolveAppCompanyId } from '../../../core/utils/company-scope';
 
 interface NPSData {
   score: number;
@@ -149,9 +150,8 @@ export class NpsAnalysis implements OnInit, OnDestroy {
     if (!live || !this.npsData()) {
       this.loading.set(true);
     }
-    const user = this.authService.currentUser();
-    // Admin should aggregate across all companies
-    const companyId = user?.role === 'admin' ? undefined : (user?.settings?.companyId || 1);
+    const id = resolveAppCompanyId(this.authService.currentUser());
+    const companyId = id > 0 ? id : undefined;
 
     let start: Date | undefined;
     let end: Date | undefined;
@@ -336,8 +336,8 @@ export class NpsAnalysis implements OnInit, OnDestroy {
       end = new Date(range.endDate);
     }
 
-    const user = this.authService.currentUser();
-    const companyId = user?.role === 'admin' ? undefined : (user?.settings?.companyId || 1);
+    const id = resolveAppCompanyId(this.authService.currentUser());
+    const companyId = id > 0 ? id : undefined;
     this.drilldownPage.set(page);
     this.drilldownLoading.set(true);
     this.drilldownRows.set([]);

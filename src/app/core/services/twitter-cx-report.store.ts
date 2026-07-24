@@ -11,8 +11,6 @@ import {
 } from '../utils/twitter-cx-report-load';
 import { repairCxReportPayload } from '../utils/drilldown-display';
 
-import { DEFAULT_APP_COMPANY_ID } from '../utils/company-scope';
-
 /** Coalesces concurrent Twitter CX report loads — always reads from the database API (no client cache). */
 @Injectable({ providedIn: 'root' })
 export class TwitterCxReportStore {
@@ -87,6 +85,13 @@ export class TwitterCxReportStore {
     forceLive: boolean = false
   ): Observable<ApiResponse<TwitterCxReportDto>> {
     const scopedCompanyId = this.normalizeCompanyId(companyId);
+    if (scopedCompanyId <= 0) {
+      return of({
+        success: false,
+        message: 'company_required',
+        data: emptyTwitterCxReportDto(),
+      });
+    }
     const key = this.cacheKey(scopedCompanyId, csvImportId, startDate, endDate, forceLive);
 
     let obs = this.inflight.get(key);
@@ -236,7 +241,7 @@ export class TwitterCxReportStore {
   private normalizeCompanyId(companyId: number | undefined): number {
     return Number.isInteger(companyId) && (companyId as number) > 0
       ? (companyId as number)
-      : DEFAULT_APP_COMPANY_ID;
+      : 0;
   }
 
   private cacheKey(

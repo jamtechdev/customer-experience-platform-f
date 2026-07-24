@@ -196,10 +196,12 @@ export class AuthService {
     return this.accessToken;
   }
 
-  hasPermission(_permission: string): boolean {
+  hasPermission(permission: string): boolean {
     const user = this.currentUser();
     if (!user) return false;
-    return user.role === UserRole.ADMIN;
+    if (user.role === UserRole.ADMIN) return true;
+    const perms = Array.isArray(user.permissions) ? user.permissions : [];
+    return perms.includes(permission);
   }
 
   hasRole(roles: UserRole[]): boolean {

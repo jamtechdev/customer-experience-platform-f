@@ -9,6 +9,7 @@ import { DashboardService, ExecutiveDashboardData } from '../../../core/services
 import { AuthService } from '../../../core/services/auth.service';
 import { TranslationService } from '../../../core/services/translation.service';
 import { ReportService } from '../../../core/services/report.service';
+import { resolveAppCompanyId } from '../../../core/utils/company-scope';
 
 @Component({
   selector: 'app-executive-dashboard',
@@ -43,8 +44,7 @@ export class ExecutiveDashboard implements OnInit {
   loadDashboardData(): void {
     this.loading.set(true);
     
-    const user = this.authService.currentUser();
-    const companyId = user?.settings?.companyId || 1;
+    const companyId = resolveAppCompanyId(this.authService.currentUser());
 
     this.dashboardService.getExecutiveDashboard(companyId).subscribe({
       next: (response) => {
@@ -61,8 +61,7 @@ export class ExecutiveDashboard implements OnInit {
   }
 
   downloadReport(): void {
-    const user = this.authService.currentUser();
-    const companyId = user?.settings?.companyId || 1;
+    const companyId = resolveAppCompanyId(this.authService.currentUser());
     this.reportService.exportDashboardToPdf({ companyId }).subscribe({
       next: (blob) => {
         const url = URL.createObjectURL(blob);

@@ -33,6 +33,7 @@ import { ReportDateRangeFilter } from '../../../core/components/report-date-rang
 import { notifyCxReportLoadFailure, twitterCxReportFailureMessage } from '../../../core/utils/twitter-cx-report-load';
 import { ImportProcessingService } from '../../../core/services/import-processing.service';
 import { TwitterCxReportDto } from '../../../core/models';
+import { resolveAppCompanyId } from '../../../core/utils/company-scope';
 
 type SortDir = 'asc' | 'desc';
 
@@ -371,9 +372,8 @@ export class ArcelikTwitterCxReport implements OnInit, OnDestroy {
   }
 
   private sentimentCompanyId(): number | undefined {
-    const user = this.authService.currentUser();
-    if (user?.role === 'admin') return undefined;
-    return user?.settings?.companyId ?? 1;
+    const id = resolveAppCompanyId(this.authService.currentUser());
+    return id > 0 ? id : undefined;
   }
 
   reload(withFilters: boolean = this.filtersApplied()): void {
@@ -531,8 +531,8 @@ export class ArcelikTwitterCxReport implements OnInit, OnDestroy {
     this.drilldownLoading.set(true);
     this.drilldownPage.set(page);
     this.drilldownRows.set([]);
-    const user = this.authService.currentUser();
-    const companyId = user?.role === 'admin' ? undefined : (user?.settings?.companyId ?? 1);
+    const id = resolveAppCompanyId(this.authService.currentUser());
+    const companyId = id > 0 ? id : undefined;
     this.analysisService.getFeedbackByIds(companyId, this.drilldownIds, {
       page,
       limit: this.drilldownPageSize,

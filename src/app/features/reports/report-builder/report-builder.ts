@@ -21,6 +21,7 @@ import {
   type ReportDatePreset,
 } from '../../../core/utils/report-date-presets';
 import { ReportDateRangeFilter } from '../../../core/components/report-date-range-filter/report-date-range-filter';
+import { resolveAppCompanyId } from '../../../core/utils/company-scope';
 
 type ReportType = 'executive' | 'full';
 type ReportFormat = 'pdf' | 'excel';
@@ -72,7 +73,7 @@ export class ReportBuilder implements OnInit {
   private readonly maxStoredReports = 50;
 
   get companyId(): number {
-    return this.authService.currentUser()?.settings?.companyId ?? 1;
+    return resolveAppCompanyId(this.authService.currentUser());
   }
 
   ngOnInit(): void {

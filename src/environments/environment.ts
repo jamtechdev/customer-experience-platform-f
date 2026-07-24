@@ -34,7 +34,7 @@ export const environment = {
   },
 
   websocket: {
-    enabled: false,
+    enabled: getEnvBoolean('NG_APP_WEBSOCKET_ENABLED', true),
     url: (() => {
       const wsUrl = getEnv('NG_APP_WEBSOCKET_URL', '');
       if (wsUrl) return wsUrl;
@@ -101,7 +101,7 @@ export const environment = {
 
   analytics: {
     enabled: getEnvBoolean('NG_APP_ANALYTICS_ENABLED', prod),
-    googleAnalyticsId: getEnv('NG_APP_GOOGLE_ANALYTICS_ID', prod ? 'G-XXXXXXXXXX' : ''),
+    googleAnalyticsId: getEnv('NG_APP_GOOGLE_ANALYTICS_ID', ''),
   },
 
   logging: {

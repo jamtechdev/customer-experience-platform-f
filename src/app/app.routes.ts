@@ -58,8 +58,48 @@ export const routes: Routes = [
       },
       {
         path: 'admin-dashboard',
-        redirectTo: 'reports/dashboard-reports',
+        redirectTo: 'admin/dashboard',
         pathMatch: 'full'
+      },
+      {
+        path: 'admin',
+        children: [
+          {
+            path: '',
+            redirectTo: 'dashboard',
+            pathMatch: 'full'
+          },
+          {
+            path: 'dashboard',
+            loadComponent: () =>
+              import('./features/admin/dashboard/admin-dashboard/admin-dashboard').then((m) => m.AdminDashboard),
+            data: { title: 'Admin Dashboard', breadcrumb: 'Admin Dashboard' }
+          },
+          {
+            path: 'datasets',
+            loadComponent: () =>
+              import('./features/admin/datasets/admin-datasets').then((m) => m.AdminDatasets),
+            data: { title: 'Datasets', breadcrumb: 'Datasets' }
+          },
+          {
+            path: 'roles',
+            loadComponent: () =>
+              import('./features/admin/role-management/role-management').then((m) => m.RoleManagement),
+            data: { title: 'Role Management', breadcrumb: 'Role Management' }
+          },
+          {
+            path: 'settings',
+            loadComponent: () =>
+              import('./features/admin/system-settings/system-settings').then((m) => m.SystemSettings),
+            data: { title: 'System Settings', breadcrumb: 'System Settings' }
+          },
+          {
+            path: 'journey-stages',
+            loadComponent: () =>
+              import('./features/admin/journey-stage-config/journey-stage-config').then((m) => m.JourneyStageConfig),
+            data: { title: 'Journey Stages', breadcrumb: 'Journey Stages' }
+          }
+        ]
       },
       {
         path: 'executive-dashboard',

@@ -28,6 +28,7 @@ import { OllamaLoader } from '../../../core/components/ollama-loader/ollama-load
 import { RelatedFeedbackModal, RelatedFeedbackRow } from '../../../core/components/related-feedback-modal/related-feedback-modal';
 import { drilldownModalTotal } from '../../../core/utils/drilldown-display';
 import { ReportDateRangeFilter } from '../../../core/components/report-date-range-filter/report-date-range-filter';
+import { resolveAppCompanyId } from '../../../core/utils/company-scope';
 
 interface CompetitorData {
   id: number;
@@ -194,8 +195,7 @@ export class CompetitorComparison implements OnInit, OnDestroy {
 
   loadComparisonData(withFilters: boolean = this.filtersApplied()): void {
     this.loading.set(true);
-    const user = this.authService.currentUser();
-    const companyId = user?.settings?.companyId || 1;
+    const companyId = resolveAppCompanyId(this.authService.currentUser());
     let startDate: Date | undefined;
     let endDate: Date | undefined;
     if (withFilters) {
@@ -303,7 +303,7 @@ export class CompetitorComparison implements OnInit, OnDestroy {
     this.drilldownPage.set(page);
     this.drilldownLoading.set(true);
     this.drilldownRows.set([]);
-    const companyId = this.authService.currentUser()?.settings?.companyId ?? 1;
+    const companyId = resolveAppCompanyId(this.authService.currentUser());
     this.analysisService.getFeedbackByIds(companyId, this.drilldownIds, {
       page,
       limit: this.drilldownPageSize,
