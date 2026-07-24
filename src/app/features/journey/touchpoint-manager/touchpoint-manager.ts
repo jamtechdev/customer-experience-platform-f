@@ -105,6 +105,7 @@ export class TouchpointManager implements OnInit, OnDestroy {
   drilldownTotal = signal(0);
   readonly drilldownPageSize = 10;
   private drilldownIds: number[] = [];
+  private drilldownOpenedCount = 0;
   /** Snapshot rows use synthetic ids; CRUD applies to Admin touchpoint config only. */
   snapshotViewOnly = signal(true);
   showForm = signal(false);
@@ -243,7 +244,9 @@ export class TouchpointManager implements OnInit, OnDestroy {
     this.drilldownTitle.set(row.name);
     this.drilldownOpen.set(true);
     this.drilldownIds = ids;
-    this.drilldownTotal.set(drilldownModalTotal(this.drilldownIds) || total);
+    const opened = drilldownModalTotal(this.drilldownIds) || total;
+    this.drilldownOpenedCount = opened;
+    this.drilldownTotal.set(opened);
     this.loadDrilldownPage(1);
   }
 
@@ -265,24 +268,9 @@ export class TouchpointManager implements OnInit, OnDestroy {
       next: (res) => {
         this.drilldownLoading.set(false);
         this.drilldownRows.set(res?.data?.list || []);
-        const resolvedTotal = Number(res?.data?.total ?? 0);
-        const expected = drilldownModalTotal(this.drilldownIds);
-        const nextTotal = resolvedTotal > 0 ? resolvedTotal : this.drilldownRows().length > 0 ? this.drilldownRows().length : expected;
-        this.drilldownTotal.set(nextTotal);
-        const matchedIds = Array.isArray(res?.data?.matchedIds)
-          ? (res.data.matchedIds || []).map((id) => Number(id)).filter((id) => id > 0)
-          : [];
-        if (matchedIds.length && nextTotal > 0) {
-          this.drilldownIds = matchedIds.slice(0, nextTotal);
-          const title = this.drilldownTitle();
-          this.reportTouchpoints.update((rows) =>
-            rows.map((row) =>
-              row.name === title
-                ? { ...row, feedbackIds: this.drilldownIds, volume: nextTotal }
-                : row
-            )
-          );
-        }
+        // Keep list volume stable — modal footer uses the count from when the user opened it.
+        const opened = this.drilldownOpenedCount > 0 ? this.drilldownOpenedCount : drilldownModalTotal(this.drilldownIds);
+        this.drilldownTotal.set(opened);
       },
       error: () => {
         this.drilldownLoading.set(false);
@@ -298,6 +286,7 @@ export class TouchpointManager implements OnInit, OnDestroy {
     this.drilldownPage.set(1);
     this.drilldownTotal.set(0);
     this.drilldownIds = [];
+    this.drilldownOpenedCount = 0;
   }
 
   openCreate(): void {

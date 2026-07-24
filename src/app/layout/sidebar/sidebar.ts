@@ -111,9 +111,10 @@ export class Sidebar implements OnInit, OnDestroy {
       labelKey: 'nav.admin',
       icon: 'settings',
       children: [
-        { labelKey: 'nav.adminDashboard', icon: 'admin_panel_settings', route: '/app/admin/dashboard' },
+        // Hidden from sidebar:
+        // { labelKey: 'nav.adminDashboard', icon: 'admin_panel_settings', route: '/app/admin/dashboard' },
         { labelKey: 'nav.adminDatasets', icon: 'folder', route: '/app/admin/datasets' },
-        { labelKey: 'nav.roleManagement', icon: 'badge', route: '/app/admin/roles' },
+        // { labelKey: 'nav.roleManagement', icon: 'badge', route: '/app/admin/roles' },
         { labelKey: 'nav.journeyStages', icon: 'timeline', route: '/app/admin/journey-stages' },
         { labelKey: 'nav.systemSettings', icon: 'tune', route: '/app/admin/settings' }
       ]

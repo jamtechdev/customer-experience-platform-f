@@ -71,6 +71,7 @@ export class ProcessEnhancement implements OnInit, OnDestroy {
   private drilldownIds: number[] = [];
   private drilldownThemeTitle = '';
   private drilldownRowIndex = -1;
+  private drilldownOpenedCount = 0;
   private rootCauses: Array<{ cause?: string; interpretation?: string; feedbackIds?: number[] }> = [];
   /** Prevents infinite retry loops when IDs are genuinely missing. */
   private drilldownThemeOnlyRetryDone = false;
@@ -248,7 +249,9 @@ export class ProcessEnhancement implements OnInit, OnDestroy {
     this.drilldownTitle.set(this.displayText({ ...row, linkedFeedbackIds: ids, referenceFeedbackIds: ids, linkedCount: ids.length }));
     this.drilldownOpen.set(true);
     this.drilldownIds = ids;
-    this.drilldownTotal.set(ids.length);
+    const opened = ids.length;
+    this.drilldownOpenedCount = opened;
+    this.drilldownTotal.set(opened);
     this.drilldownThemeOnlyRetryDone = false;
     this.drilldownRefreshTriggered = false;
     this.loadDrilldownPage(1);
@@ -298,12 +301,10 @@ export class ProcessEnhancement implements OnInit, OnDestroy {
         const resolvedTotal = Number(res?.data?.total ?? 0);
         const expected = drilldownModalTotal(this.drilldownIds);
         const nextTotal = resolvedTotal > 0 ? resolvedTotal : list.length;
-        this.drilldownTotal.set(nextTotal);
-        const matchedIds = Array.isArray(res?.data?.matchedIds)
-          ? (res.data.matchedIds || []).map((id) => Number(id)).filter((id) => id > 0)
-          : [];
+        // Do not rewrite list/card counts when modal loads — keep the opened list count.
+        const opened = this.drilldownOpenedCount > 0 ? this.drilldownOpenedCount : nextTotal;
+        this.drilldownTotal.set(opened);
         if (nextTotal > 0) {
-          this.syncProcessReferenceCount(nextTotal, matchedIds);
           return;
         }
         // Snapshot IDs empty → rebuild from theme against the active CSV import.
@@ -349,28 +350,6 @@ export class ProcessEnhancement implements OnInit, OnDestroy {
     });
   }
 
-  /** Keep "View references (N)" equal to modal "of N". */
-  private syncProcessReferenceCount(total: number, matchedIds: number[]): void {
-    if (total <= 0) return;
-    const ids = resolveDrilldownIds(matchedIds.length ? matchedIds : this.drilldownIds).slice(0, total);
-    if (!ids.length) return;
-    this.drilldownIds = ids;
-    const idx = this.drilldownRowIndex;
-    if (idx < 0) return;
-    this.processImprovements.update((rows) =>
-      rows.map((row, i) =>
-        i === idx
-          ? {
-              ...row,
-              linkedFeedbackIds: ids,
-              referenceFeedbackIds: ids,
-              linkedCount: total,
-            }
-          : row
-      )
-    );
-  }
-
   closeDrilldown(): void {
     this.drilldownOpen.set(false);
     this.drilldownRows.set([]);
@@ -379,6 +358,8 @@ export class ProcessEnhancement implements OnInit, OnDestroy {
     this.drilldownIds = [];
     this.drilldownThemeTitle = '';
     this.drilldownRowIndex = -1;
+    this.drilldownOpenedCount = 0;
     this.drilldownThemeOnlyRetryDone = false;
+    this.drilldownRefreshTriggered = false;
   }
 }

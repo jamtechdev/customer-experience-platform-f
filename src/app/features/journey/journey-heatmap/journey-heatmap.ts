@@ -96,6 +96,7 @@ export class JourneyHeatmap implements OnInit, OnDestroy {
   readonly drilldownPageSize = 10;
   private drilldownState: { stage: StageRow; label: HeatmapSentiment; ids: number[] } | null = null;
   private drilldownIds: number[] = [];
+  private drilldownOpenedCount = 0;
   Math = Math;
   readonly t = (key: string, params?: Record<string, string | number>): string =>
     this.translationService.translate(key, params);
@@ -362,8 +363,10 @@ export class JourneyHeatmap implements OnInit, OnDestroy {
     if (!unique.length && displayCount <= 0) return;
     this.drilldownState = { stage, label, ids: unique };
     this.drilldownIds = unique.length ? unique : stage.feedbackIds.slice(0, displayCount);
-    this.drilldownTotal.set(unique.length || displayCount);
-    this.drilldownTitle.set(`${stage.stageName} · ${label} (${this.drilldownTotal().toLocaleString()} messages)`);
+    const opened = unique.length || displayCount;
+    this.drilldownOpenedCount = opened;
+    this.drilldownTotal.set(opened);
+    this.drilldownTitle.set(`${stage.stageName} · ${label} (${opened.toLocaleString()} messages)`);
     this.drilldownOpen.set(true);
     this.loadDrilldownPage(1);
   }
@@ -400,12 +403,14 @@ export class JourneyHeatmap implements OnInit, OnDestroy {
       next: (res) => {
         this.drilldownLoading.set(false);
         this.drilldownRows.set(res?.data?.list || []);
-        this.drilldownTotal.set(res?.data?.total ?? drilldownModalTotal(this.drilldownIds));
+        // Keep heatmap cell counts stable when modal opens.
+        const opened = this.drilldownOpenedCount > 0 ? this.drilldownOpenedCount : drilldownModalTotal(this.drilldownIds);
+        this.drilldownTotal.set(opened);
       },
       error: () => {
         this.drilldownLoading.set(false);
         this.drilldownRows.set([]);
-        this.drilldownTotal.set(0);
+        this.drilldownTotal.set(this.drilldownOpenedCount || 0);
       },
     });
   }
@@ -482,5 +487,6 @@ export class JourneyHeatmap implements OnInit, OnDestroy {
     this.drilldownPage.set(1);
     this.drilldownState = null;
     this.drilldownIds = [];
+    this.drilldownOpenedCount = 0;
   }
 }

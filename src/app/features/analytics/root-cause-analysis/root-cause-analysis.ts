@@ -91,6 +91,7 @@ export class RootCauseAnalysis implements OnInit, OnDestroy {
   drilldownTotal = signal(0);
   readonly drilldownPageSize = 10;
   private drilldownState: { row: RootCauseChartRow; allowRelink: boolean } | null = null;
+  private drilldownOpenedCount = 0;
   displayedColumns: string[] = ['title', 'category', 'priority', 'frequency', 'severity', 'actions'];
   pageSize = 10;
   pageIndex = 0;
@@ -461,6 +462,7 @@ export class RootCauseAnalysis implements OnInit, OnDestroy {
     this.drilldownPage.set(1);
     this.drilldownTotal.set(0);
     this.drilldownState = null;
+    this.drilldownOpenedCount = 0;
   }
 
   relinkRecords(row: RootCauseChartRow, causeId?: number): void {
@@ -514,7 +516,9 @@ export class RootCauseAnalysis implements OnInit, OnDestroy {
     this.drilldownTitle.set(row.cause);
     this.drilldownOpen.set(true);
     this.drilldownState = { row: { ...row, feedbackIds: ids }, allowRelink };
-    this.drilldownTotal.set(drilldownModalTotal(ids));
+    const opened = drilldownModalTotal(ids);
+    this.drilldownOpenedCount = opened;
+    this.drilldownTotal.set(opened);
     this.loadDrilldownPage(1);
   }
 
@@ -541,7 +545,12 @@ export class RootCauseAnalysis implements OnInit, OnDestroy {
             return;
           }
           this.drilldownRows.set(res.data.list);
-          this.drilldownTotal.set(res.data?.total ?? drilldownModalTotal(state.row.feedbackIds));
+          // Keep root-cause list frequency stable when modal opens.
+          const opened =
+            this.drilldownOpenedCount > 0
+              ? this.drilldownOpenedCount
+              : drilldownModalTotal(state.row.feedbackIds);
+          this.drilldownTotal.set(opened);
         } else {
           this.snackBar.open(res.message || 'Could not load related records', 'Close', { duration: 5000 });
           this.closeDrilldown();

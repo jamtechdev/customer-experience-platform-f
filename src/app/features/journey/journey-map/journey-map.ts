@@ -84,6 +84,8 @@ export class JourneyMap implements OnInit, OnDestroy {
   private drilldownIds: number[] = [];
   private drilldownStage = '';
   private drilldownPolarity: 'satisfaction' | 'dissatisfaction' | 'all' = 'satisfaction';
+  /** Count shown on the card when modal opened — do not rewrite list counts. */
+  private drilldownOpenedCount = 0;
   private heatmapByStage = signal<Record<string, { positive: number[]; negative: number[]; neutral: number[]; all: number[]; total: number }>>({});
   private refreshSub?: Subscription;
 
@@ -311,8 +313,10 @@ export class JourneyMap implements OnInit, OnDestroy {
     );
     this.drilldownOpen.set(true);
     this.drilldownIds = unique;
-    // Button count and modal footer must start from the same number.
-    this.drilldownTotal.set(unique.length > 0 ? unique.length : displayTotal);
+    // Button count and modal footer must start from the same number — never mutate list after open.
+    const opened = unique.length > 0 ? unique.length : displayTotal;
+    this.drilldownOpenedCount = opened;
+    this.drilldownTotal.set(opened);
     this.drilldownOriginalCount.set(null);
     this.drilldownUniqueCount.set(null);
     this.drilldownRows.set([]);
@@ -410,7 +414,9 @@ export class JourneyMap implements OnInit, OnDestroy {
     this.drilldownTitle.set(`${row.name} · all mapped feedback`);
     this.drilldownOpen.set(true);
     this.drilldownIds = ids;
-    this.drilldownTotal.set(ids.length > 0 ? drilldownModalTotal(ids) : total);
+    const opened = ids.length > 0 ? drilldownModalTotal(ids) : total;
+    this.drilldownOpenedCount = opened;
+    this.drilldownTotal.set(opened);
     this.drilldownOriginalCount.set(null);
     this.drilldownUniqueCount.set(null);
     this.drilldownRows.set([]);
@@ -448,18 +454,13 @@ export class JourneyMap implements OnInit, OnDestroy {
         this.drilldownLoading.set(false);
         const list = res?.data?.list || [];
         this.drilldownRows.set(list);
-        const resolvedTotal = Number(res?.data?.total ?? 0);
-        // Never keep a phantom "of 21" when the API returned an empty list.
-        const nextTotal = resolvedTotal > 0 ? resolvedTotal : list.length;
-        this.drilldownTotal.set(nextTotal);
-        const matchedIds = Array.isArray(res?.data?.matchedIds)
-          ? (res.data.matchedIds || []).map((id) => Number(id)).filter((id) => id > 0)
-          : [];
-        if (nextTotal > 0) {
-          this.syncJourneyReferenceCount(nextTotal, matchedIds);
-        }
         const original = Number((res?.data as { originalCount?: number } | undefined)?.originalCount);
         const unique = Number((res?.data as { uniqueCount?: number } | undefined)?.uniqueCount);
+        const resolvedTotal = Number(res?.data?.total ?? 0);
+        const nextTotal = resolvedTotal > 0 ? resolvedTotal : list.length;
+        // Keep modal footer on the count shown when the user opened the link — do not rewrite journey cards.
+        const opened = this.drilldownOpenedCount > 0 ? this.drilldownOpenedCount : nextTotal;
+        this.drilldownTotal.set(opened);
         this.drilldownOriginalCount.set(Number.isFinite(original) && original > 0 ? original : null);
         this.drilldownUniqueCount.set(Number.isFinite(unique) && unique > 0 ? unique : nextTotal || null);
         if (nextTotal === 0 && this.drilldownIds.length > 0) {
@@ -480,33 +481,6 @@ export class JourneyMap implements OnInit, OnDestroy {
     });
   }
 
-  /** Align card "View references (N)" with modal total after API filtering. */
-  private syncJourneyReferenceCount(total: number, matchedIds: number[]): void {
-    if (total <= 0 || !this.drilldownStage) return;
-    const polarity = this.drilldownPolarity;
-    if (polarity !== 'satisfaction' && polarity !== 'dissatisfaction') return;
-    const ids = resolveDrilldownIds(matchedIds.length ? matchedIds : this.drilldownIds).slice(0, total);
-    this.journeyStages.update((stages) =>
-      stages.map((row) => {
-        if (row.name !== this.drilldownStage) return row;
-        if (polarity === 'satisfaction') {
-          return {
-            ...row,
-            satisfactionCount: total,
-            satisfactionReferenceIds: ids.length ? ids : row.satisfactionReferenceIds,
-          };
-        }
-        return {
-          ...row,
-          dissatisfactionCount: total,
-          dissatisfactionReferenceIds: ids.length ? ids : row.dissatisfactionReferenceIds,
-        };
-      })
-    );
-    // Keep subsequent page loads on the synced ID list so totals stay stable.
-    if (ids.length) this.drilldownIds = ids;
-  }
-
   closeDrilldown(): void {
     this.drilldownOpen.set(false);
     this.drilldownRows.set([]);
@@ -516,6 +490,7 @@ export class JourneyMap implements OnInit, OnDestroy {
     this.drilldownUniqueCount.set(null);
     this.drilldownIds = [];
     this.drilldownStage = '';
+    this.drilldownOpenedCount = 0;
   }
 
   flowMilestoneMessage(): string {
