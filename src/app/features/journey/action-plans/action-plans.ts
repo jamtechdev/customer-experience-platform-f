@@ -151,6 +151,7 @@ export class ActionPlans implements OnInit, OnDestroy {
     this.twitterCxReportStore.loadTwitterCxReport(companyId, undefined, undefined, undefined, refreshFromServer).subscribe({
       next: (response) => {
         if (response.message === 'stale_response') {
+          // Superseded by a newer load (refresh) — that request owns the loader.
           return;
         }
         if (!response.success) {

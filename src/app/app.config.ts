@@ -12,7 +12,6 @@ import {
   authInterceptor,
   errorInterceptor,
   languageInterceptor,
-  loaderInterceptor,
 } from './core/interceptors/http.interceptor';
 
 export const appConfig: ApplicationConfig = {
@@ -41,15 +40,10 @@ export const appConfig: ApplicationConfig = {
     provideClientHydration(withEventReplay()),
     // Do not probe /auth/profile at boot — logged-out visits would 401 on every load.
     // Auth guards + login call AuthSessionBootstrap after a real session exists.
+    // No global HTTP loader — pages own a single OllamaLoader / local spinner.
     provideHttpClient(
       withFetch(),
-      withInterceptors([
-        apiUrlInterceptor,
-        authInterceptor,
-        languageInterceptor,
-        loaderInterceptor,
-        errorInterceptor,
-      ])
+      withInterceptors([apiUrlInterceptor, authInterceptor, languageInterceptor, errorInterceptor])
     ),
   ],
 };

@@ -63,6 +63,7 @@ export class ResetPassword {
     }
 
     this.errorMessage.set('');
+    this.loaderService.show();
 
     this.authService.resetPassword({
       email: this.email,
@@ -70,6 +71,7 @@ export class ResetPassword {
       newPassword: this.newPassword
     }).subscribe({
       next: (response) => {
+        this.loaderService.hide();
         if (response.success) {
           this.router.navigate(['/login'], { replaceUrl: true });
         } else {
@@ -77,6 +79,7 @@ export class ResetPassword {
         }
       },
       error: (error) => {
+        this.loaderService.hide();
         const message = error.error?.message || error.message || this.t('auth.resetPasswordError');
         this.errorMessage.set(message);
       }

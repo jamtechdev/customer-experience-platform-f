@@ -167,12 +167,17 @@ export class JourneyHeatmap implements OnInit, OnDestroy {
       next: (res) => {
         const hasData = res.success && hasCxReportPayload(res.data);
         if ((res.message === 'stale_response' || res.message === 'snapshot_still_building') && !hasData) {
+          clearTimeout(watchdog);
+          // Keep existing heatmap if any; hide loader so refresh does not stick forever.
+          this.loading.set(false);
           return;
         }
         clearTimeout(watchdog);
         if (!res.success) {
           if (isCxReportResponsePending(res, this.importProcessing.isActive())) {
+            // Pending snapshot — show empty loader only when there is nothing to display yet.
             if (!this.stages().length) this.loading.set(true);
+            else this.loading.set(false);
             return;
           }
           if (!this.stages().length) {

@@ -17,7 +17,15 @@ export class LoaderService {
   }
 
   hide(): void {
-    this._counter.update(count => Math.max(0, count - 1));
+    this._counter.update((count) => Math.max(0, count - 1));
+    if (this._counter() === 0) {
+      this._loadingMessage.set(null);
+    }
+  }
+
+  /** Force-clear (e.g. after navigation / failed auth). */
+  reset(): void {
+    this._counter.set(0);
     this._loadingMessage.set(null);
   }
 

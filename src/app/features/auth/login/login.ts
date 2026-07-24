@@ -56,9 +56,11 @@ export class Login implements OnInit {
     }
 
     this.errorMessage.set('');
+    this.loaderService.show('Signing in…');
 
     this.authService.login({ email: this.email, password: this.password }).subscribe({
       next: (response) => {
+        this.loaderService.hide();
         if (response.success && response.data) {
           const okMsg =
             (typeof response.message === 'string' && response.message) || 'Login successful';
@@ -73,6 +75,7 @@ export class Login implements OnInit {
         }
       },
       error: (error) => {
+        this.loaderService.hide();
         const message = error.error?.message || error.message || this.t('auth.loginError');
         this.errorMessage.set(message);
         this.toastr.error(message, 'Login failed');

@@ -139,6 +139,8 @@ export class TouchpointManager implements OnInit, OnDestroy {
           (response.message === 'stale_response' || response.message === 'snapshot_still_building') &&
           !(response.success && response.data)
         ) {
+          clearTimeout(watchdog);
+          this.loading.set(false);
           return;
         }
         clearTimeout(watchdog);

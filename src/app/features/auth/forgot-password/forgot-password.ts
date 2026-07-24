@@ -42,9 +42,11 @@ export class ForgotPassword {
     }
 
     this.errorMessage.set('');
+    this.loaderService.show();
 
     this.authService.forgotPassword(this.email).subscribe({
       next: (response) => {
+        this.loaderService.hide();
         if (response.success) {
           this.submitted.set(true);
         } else {
@@ -52,6 +54,7 @@ export class ForgotPassword {
         }
       },
       error: (error) => {
+        this.loaderService.hide();
         const message = error.error?.message || error.message || this.t('auth.forgotPasswordError');
         this.errorMessage.set(message);
       }

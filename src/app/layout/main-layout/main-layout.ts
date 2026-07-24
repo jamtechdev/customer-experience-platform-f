@@ -12,7 +12,6 @@ import { Header } from '../header/header';
 import { Footer } from '../footer/footer';
 import { TranslationService } from '../../core/services/translation.service';
 import { ImportLiveBanner } from '../../core/components/import-live-banner/import-live-banner';
-import { LoaderComponent } from '../../core/components/loader/loader.component';
 import { TwitterCxReportStore } from '../../core/services/twitter-cx-report.store';
 import { AuthService } from '../../core/services/auth.service';
 import { resolveAppCompanyId } from '../../core/utils/company-scope';
@@ -30,7 +29,6 @@ import { resolveAppCompanyId } from '../../core/utils/company-scope';
     Header,
     Footer,
     ImportLiveBanner,
-    LoaderComponent,
   ],
   templateUrl: './main-layout.html',
   styleUrl: './main-layout.css',

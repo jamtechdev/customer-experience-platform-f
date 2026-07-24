@@ -94,12 +94,16 @@ export class Methodology implements OnInit, OnDestroy {
     this.twitterCxReportStore.loadTwitterCxReport(companyId, undefined, undefined, undefined, refreshFromServer).subscribe({
       next: (res) => {
         if (res.message === 'stale_response') {
+          // Superseded by a newer refresh — keep waiting only if a follow-up load is in flight.
           return;
         }
         if (!res.success) {
           this.clearReport();
           notifyCxReportLoadFailure(this.snackBar, res.message, this.importProcessing.isActive(), this.t('app.close'));
-        } else if (res.data) {
+          this.loading.set(false);
+          return;
+        }
+        if (res.data) {
           this.applyReport(res.data);
         }
         this.loading.set(false);

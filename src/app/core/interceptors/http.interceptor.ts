@@ -2,11 +2,10 @@ import { Injector, inject, PLATFORM_ID } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { HttpRequest, HttpErrorResponse, HttpHandlerFn, HttpEvent } from '@angular/common/http';
 import { Observable, throwError } from 'rxjs';
-import { catchError, switchMap, finalize } from 'rxjs/operators';
+import { catchError, switchMap } from 'rxjs/operators';
 import { ToastrService } from 'ngx-toastr';
 import { AuthService } from '../services/auth.service';
 import { environment } from '../../../environments/environment';
-import { LoaderService } from '../services/loader.service';
 import { ImportProcessingService } from '../services/import-processing.service';
 import { SKIP_ERROR_TOAST } from '../http/http-context';
 
@@ -215,32 +214,12 @@ export function authInterceptor(
   return next(req);
 }
 
-function shouldSkipGlobalLoader(url: string): boolean {
-  if (isTwitterCxReportEndpoint(url)) return true;
-  const path = getRequestPath(url);
-  return /\/analysis\/(twitter-cx-report|sentiment|root-cause)/i.test(path);
-}
-
+/** Kept for compatibility; not registered — pages use a single local loader. */
 export function loaderInterceptor(
   req: HttpRequest<unknown>,
   next: HttpHandlerFn
 ): Observable<HttpEvent<unknown>> {
-  const loader = inject(LoaderService);
-
-  const base = environment.apiUrl || '';
-  const isBackendApi = req.url.startsWith('/api') || (base !== '' && req.url.startsWith(base));
-
-  if (!isBackendApi || shouldSkipGlobalLoader(req.url)) {
-    return next(req);
-  }
-
-  loader.show('Loading...');
-
-  return next(req).pipe(
-    finalize(() => {
-      loader.hide();
-    })
-  );
+  return next(req);
 }
 
 export function errorInterceptor(
